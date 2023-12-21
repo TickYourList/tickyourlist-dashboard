@@ -82,6 +82,7 @@ function CarModels() {
       description: (carModel && carModel.description) || "",
       year: (carModel && carModel.year) || "",
       status: (carModel && carModel.status ? 'Active' : 'InActive') || "",
+      modelImage: (carModel && carModel.media.url) || ""
     },
     validationSchema: Yup.object({
       modelName: Yup.string().required(
@@ -566,6 +567,7 @@ function CarModels() {
                       }}
                       type="file"
                     />
+                    {isEdit ? <div className="d-flex text-center margin-auto"><img src={validation.values.modelImage} width={100} height={65} className="mt-3"/></div> : ""}
                   </div>
                 </div>
               </Col>

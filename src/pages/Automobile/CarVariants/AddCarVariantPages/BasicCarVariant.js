@@ -20,14 +20,10 @@ import { useSelector, useDispatch } from "react-redux"
 import { getCarModels } from "store/automobiles/carModels/actions"
 import { useFormik } from "formik"
 
-const BasicCarVariant = ({ onValidChange, onFormValuesChange, onFormSubmit }) => {
+const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onFormSubmit }) => {
 
     //meta title
-    document.title = "Add Car Variant | Scrollit";
-
     const dispatch = useDispatch();
-
-    const [carVariant, setCarVariant] = useState([]);
     const [switch1, setswitch1] = useState(true);
     const [isEdit, setIsEdit] = useState(false);
 
@@ -36,8 +32,8 @@ const BasicCarVariant = ({ onValidChange, onFormValuesChange, onFormSubmit }) =>
         enableReinitialize: true,
 
         initialValues: {
-            variantName: (carVariant && carVariant.variantName) || "",
-            carModel: (carVariant && carVariant._id) || "",
+            variantName: (carVariant && carVariant.name) || "",
+            carModel: (carVariant && carVariant.carModel?._id) || "",
             variantStatus: (carVariant && carVariant.status ? 'Active' : 'InActive') || "",
             onRoadPrice: (carVariant && carVariant.basicInformation && carVariant.basicInformation.onRoadPrice) || "",
             userRating: (carVariant && carVariant.basicInformation && carVariant.basicInformation.userRating) || "",

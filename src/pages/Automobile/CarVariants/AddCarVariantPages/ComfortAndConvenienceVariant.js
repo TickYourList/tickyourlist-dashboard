@@ -23,7 +23,7 @@ import { getCarModels } from "store/automobiles/carModels/actions"
 import { useFormik } from "formik"
 import Switch from "react-switch";
 
-const ComfortAndConvenienceVariant = ({ onFormSubmit }) => {
+const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
 
     //meta title
     document.title = "Add Car Variant | Scrollit";
@@ -33,7 +33,6 @@ const ComfortAndConvenienceVariant = ({ onFormSubmit }) => {
     const [activeTab, setactiveTab] = useState("1")
     const [selectedGroup, setselectedGroup] = useState(null)
 
-    const [carVariant, setCarVariant] = useState([]);
     const [switch1, setswitch1] = useState(true);
     // const [carModelsList, setCarModelsList] = useState([]);
 

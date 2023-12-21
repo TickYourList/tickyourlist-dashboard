@@ -29,47 +29,8 @@ import classnames from "classnames"
 import { useSelector, useDispatch } from "react-redux"
 import { getCarModels } from "store/automobiles/carModels/actions"
 import { useFormik } from "formik"
-import Switch from "react-switch";
 
-const Offsymbol = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontSize: 12,
-                color: "#fff",
-                paddingRight: 2
-            }}
-        >
-            {" "}
-            No
-        </div>
-    );
-};
-
-const OnSymbol = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontSize: 12,
-                color: "#fff",
-                paddingRight: 2
-            }}
-        >
-            {" "}
-            Yes
-        </div>
-    );
-};
-
-const InteriorVariant = ({ onFormSubmit }) => {
+const InteriorVariant = ({ carVariant, onFormSubmit }) => {
 
     //meta title
     document.title = "Add Car Variant | Scrollit";
@@ -79,7 +40,6 @@ const InteriorVariant = ({ onFormSubmit }) => {
     const [activeTab, setactiveTab] = useState("1")
     const [selectedGroup, setselectedGroup] = useState(null)
 
-    const [carVariant, setCarVariant] = useState([]);
     const [switch1, setswitch1] = useState(true);
     // const [carModelsList, setCarModelsList] = useState([]);
 
@@ -182,7 +142,7 @@ const InteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.tachometer}
+                                checked={validation.values.tachometer}
                                 id="tachometer"
                                 onChange={(event) => {
                                     validation.setFieldValue("tachometer", event.target.checked);
@@ -205,7 +165,7 @@ const InteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.electronicutiTripmeter}
+                                checked={validation.values.electronicutiTripmeter}
                                 id="electronicutiTripmeter"
                                 onChange={(event) => {
                                     validation.setFieldValue("electronicutiTripmeter", event.target.checked);
@@ -227,7 +187,7 @@ const InteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.fabricUpholestry}
+                                checked={validation.values.fabricUpholestry}
                                 id="fabricUpholestry"
                                 onChange={(event) => {
                                     validation.setFieldValue("fabricUpholestry", event.target.checked);
@@ -249,7 +209,7 @@ const InteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.leatherSteeringWheel}
+                                checked={validation.values.leatherSteeringWheel}
                                 id="leatherSteeringWheel"
                                 onChange={(event) => {
                                     validation.setFieldValue("leatherSteeringWheel", event.target.checked);
@@ -274,7 +234,7 @@ const InteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.gloveCompartment}
+                                checked={validation.values.gloveCompartment}
                                 id="gloveCompartment"
                                 onChange={(event) => {
                                     validation.setFieldValue("gloveCompartment", event.target.checked);
@@ -297,7 +257,7 @@ const InteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.digitalClock}
+                                checked={validation.values.digitalClock}
                                 id="digitalClock"
                                 onChange={(event) => {
                                     validation.setFieldValue("digitalClock", event.target.checked);
@@ -320,7 +280,7 @@ const InteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.outsideTemperatureisplay}
+                                checked={validation.values.outsideTemperatureisplay}
                                 id="outsideTemperatureisplay"
                                 onChange={(event) => {
                                     validation.setFieldValue("outsideTemperatureisplay", event.target.checked);
@@ -343,7 +303,7 @@ const InteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.digitalOdometer}
+                                checked={validation.values.digitalOdometer}
                                 id="digitalOdometer"
                                 onChange={(event) => {
                                     validation.setFieldValue("digitalOdometer", event.target.checked);
@@ -366,7 +326,7 @@ const InteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.dualToneDashboard}
+                                checked={validation.values.dualToneDashboard}
                                 id="dualToneDashboard"
                                 onChange={(event) => {
                                     validation.setFieldValue("dualToneDashboard", event.target.checked);

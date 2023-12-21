@@ -71,7 +71,7 @@ const OnSymbol = () => {
 };
 
 
-const FuelPerformanceVariant = ({ onFormSubmit }) => {
+const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
 
     //meta title
     document.title = "Add Car Variant | Scrollit";
@@ -81,7 +81,6 @@ const FuelPerformanceVariant = ({ onFormSubmit }) => {
     const [activeTab, setactiveTab] = useState("1")
     const [selectedGroup, setselectedGroup] = useState(null)
 
-    const [carVariant, setCarVariant] = useState([]);
     const [switch1, setswitch1] = useState(true);
     // const [carModelsList, setCarModelsList] = useState([]);
 

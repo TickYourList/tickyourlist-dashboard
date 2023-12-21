@@ -2,7 +2,7 @@ import { takeEvery, put, call } from "redux-saga/effects"
 
 // Calender Redux States
 import { ADD_NEW_CAR_VARIANT, DELETE_ALL_CAR_VARIANT, DELETE_CAR_VARIANT, GET_CAR_VARIANTS, GET_COUNTRIES_LIST, GET_COUNTRIES_LIST_SUCCESS, UPDATE_CAR_VARIANT } from "./actionTypes"
-import { addCarVariant, deleteCarVariantData, fetchCarModelByBrand, fetchCountriesListData, getCarVariantsList, updateCarVariantData } from "helpers/automobile_helper_apis"
+import { addCarVariant, deleteCarVariantData, fetchCarModelByBrand, getCarVariantsList, updateCarVariantData } from "helpers/automobile_helper_apis"
 import { addCarVariantFail, addCarVariantSuccess, deleteAllCarVariantsFail, deleteAllCarVariantsSuccess, deleteCarVariantFail, deleteCarVariantSuccess, getCarVariantsFail, getCarVariantsSuccess, getCountriesListError, getCountriesListSuccess, updateCarVariantFail, updateCarVariantSuccess } from "./actions"
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
 
@@ -63,15 +63,6 @@ function* onDeleteAllCarVariant() {
     }
   }
 
-  function* fetchCountriesList() {
-    try {
-      const response = yield call(fetchCountriesListData);
-      yield put(getCountriesListSuccess(response.data));
-    }catch(error) {
-      yield put(getCountriesListError(error));
-    }
-  }
-
   function* fetchModelByBrand({ payload: { id } }) {
     try {
       const response = yield call(fetchCarModelByBrand, id);
@@ -88,7 +79,6 @@ function* carVariantSaga() {
   yield takeEvery(UPDATE_CAR_VARIANT, onUpdateCarVariant);
   yield takeEvery(DELETE_CAR_VARIANT, onDeleteCarVariant);
   yield takeEvery(DELETE_ALL_CAR_VARIANT, onDeleteAllCarVariant);
-  yield takeEvery(GET_COUNTRIES_LIST, fetchCountriesList);
 }
 
 export default carVariantSaga;

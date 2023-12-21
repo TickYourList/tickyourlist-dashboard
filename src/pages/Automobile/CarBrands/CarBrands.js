@@ -75,6 +75,7 @@ function CarBrands() {
         brandName: (carBrand && carBrand.brandName) || "",
         countryOfOrigin: carBrand && carBrand.countryOfOrigin || "",
         status: (carBrand && carBrand.status ? 'Active': 'InActive') || "",
+        brandImage: carBrand && carBrand.media.url || "",
       },
       validationSchema: Yup.object({
         brandName: Yup.string().required(
@@ -144,6 +145,7 @@ function CarBrands() {
     if (modal) {
       setModal(false);
       setCatBrand(null);
+      setIsEdit(false);
     } else {
       setModal(true);
     }
@@ -387,7 +389,7 @@ function CarBrands() {
                       </Label>
                       <Input 
                       type="select" 
-                      name="countryOfOrigin" 
+                      name="countryOfOrigin"
                       id="countryOfOrigin"
                       onChange={validation.handleChange}
                       onBlur={validation.handleBlur}
@@ -474,30 +476,8 @@ function CarBrands() {
                           type="file"
                         />
                       </div>
+                     {isEdit ? <div className="d-flex text-center margin-auto"><img src={validation.values.brandImage} width={100} height={65} className="mt-3"/></div> : ""}
                     </div>
-
-                    {/* <div className="mb-3">
-                      <Label className="form-label">
-                        Badge Class
-                      </Label>
-                      <Input
-                        name="badgeclass"
-                        type="select"
-                        className="form-select"
-                        onChange={
-                          validation.handleChange
-                        }
-                        onBlur={validation.handleBlur}
-                        value={
-                          validation.values
-                            .badgeclass || ""
-                        }
-                      >
-                        <option>success</option>
-                        <option>danger</option>
-                        <option>warning</option>
-                      </Input>
-                    </div> */}
 
                   </Col>
                 </Row>

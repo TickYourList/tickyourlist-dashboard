@@ -170,7 +170,9 @@ function CarVariants() {
   const handlecarVariantClick = arg => {
     const carVariant = arg;
     setcarVariant(carVariant);
-    setIsEdit(true);
+
+    console.log("saasas");
+    history(`/add-car-variant/${carVariant._id}`);
 
     toggle();
   };
@@ -279,12 +281,8 @@ function CarVariants() {
           return (
             <div className="d-flex gap-3">
               <Link
-                to="#"
+                to={`/edit-car-variant/${cellProps.row.original._id}`}
                 className="text-success"
-                onClick={() => {
-                  const carVariantData = cellProps.row.original;
-                  handlecarVariantClick(carVariantData);
-                }}
               >
                 <i className="mdi mdi-pencil font-size-18" id="edittooltip" />
                 <UncontrolledTooltip placement="top" target="edittooltip">

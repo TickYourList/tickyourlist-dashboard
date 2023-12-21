@@ -106,7 +106,7 @@ const orderSummary = [
     { id: 2, img: img7, productTitle: "Wireless Headphone", price: 225, qty: 1 },
 ]
 
-const EngineAndTransmissionVariant = ({ onFormSubmit }) => {
+const EngineAndTransmissionVariant = ({ carVariant,  onFormSubmit }) => {
 
     //meta title
     document.title = "Add Car Variant | Scrollit";
@@ -116,7 +116,6 @@ const EngineAndTransmissionVariant = ({ onFormSubmit }) => {
     const [activeTab, setactiveTab] = useState("1")
     const [selectedGroup, setselectedGroup] = useState(null)
 
-    const [carVariant, setCarVariant] = useState([]);
     const [switch1, setswitch1] = useState(true);
     // const [carModelsList, setCarModelsList] = useState([]);
 

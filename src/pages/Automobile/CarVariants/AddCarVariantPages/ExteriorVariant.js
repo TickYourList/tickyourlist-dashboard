@@ -71,7 +71,7 @@ const OnSymbol = () => {
     );
 };
 
-const ExteriorVariant = ({ onFormSubmit }) => {
+const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
 
     //meta title
     document.title = "Add Car Variant | Scrollit";
@@ -81,7 +81,6 @@ const ExteriorVariant = ({ onFormSubmit }) => {
     const [activeTab, setactiveTab] = useState("1")
     const [selectedGroup, setselectedGroup] = useState(null)
 
-    const [carVariant, setCarVariant] = useState([]);
     const [switch1, setswitch1] = useState(true);
     // const [carModelsList, setCarModelsList] = useState([]);
 
@@ -204,7 +203,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.fogLightsFront}
+                                checked={validation.values.fogLightsFront}
                                 id="fogLightsFront"
                                 onChange={(event) => {
                                     validation.setFieldValue("fogLightsFront", event.target.checked);
@@ -226,7 +225,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.powerAdjustableExteriorRearViewMirror}
+                                checked={validation.values.powerAdjustableExteriorRearViewMirror}
                                 id="powerAdjustableExteriorRearViewMirror"
                                 onChange={(event) => {
                                     validation.setFieldValue("powerAdjustableExteriorRearViewMirror", event.target.checked);
@@ -249,7 +248,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.manuallyAdjustableExtRearViewMirror}
+                                checked={validation.values.manuallyAdjustableExtRearViewMirror}
                                 id="manuallyAdjustableExtRearViewMirror"
                                 onChange={(event) => {
                                     validation.setFieldValue("manuallyAdjustableExtRearViewMirror", event.target.checked);
@@ -272,7 +271,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.electricFoldingRearViewMirror}
+                                checked={validation.values.electricFoldingRearViewMirror}
                                 id="electricFoldingRearViewMirror"
                                 onChange={(event) => {
                                     validation.setFieldValue("electricFoldingRearViewMirror", event.target.checked);
@@ -297,7 +296,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.rearWindowWiper}
+                                checked={validation.values.rearWindowWiper}
                                 id="rearWindowWiper"
                                 onChange={(event) => {
                                     validation.setFieldValue("rearWindowWiper", event.target.checked);
@@ -320,7 +319,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.rearWindowWasher}
+                                checked={validation.values.rearWindowWasher}
                                 id="rearWindowWasher"
                                 onChange={(event) => {
                                     validation.setFieldValue("rearWindowWasher", event.target.checked);
@@ -343,7 +342,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.rearWindowDefogger}
+                                checked={validation.values.rearWindowDefogger}
                                 id="rearWindowDefogger"
                                 onChange={(event) => {
                                     validation.setFieldValue("rearWindowDefogger", event.target.checked);
@@ -366,7 +365,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.wheelCovers}
+                                checked={validation.values.wheelCovers}
                                 id="wheelCovers"
                                 onChange={(event) => {
                                     validation.setFieldValue("wheelCovers", event.target.checked);
@@ -391,7 +390,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.alloyWheels}
+                                checked={validation.values.alloyWheels}
                                 id="alloyWheels"
                                 onChange={(event) => {
                                     validation.setFieldValue("alloyWheels", event.target.checked);
@@ -414,7 +413,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.powerAntenna}
+                                checked={validation.values.powerAntenna}
                                 id="powerAntenna"
                                 onChange={(event) => {
                                     validation.setFieldValue("powerAntenna", event.target.checked);
@@ -437,7 +436,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.rearSpoiler}
+                                checked={validation.values.rearSpoiler}
                                 id="rearSpoiler"
                                 onChange={(event) => {
                                     validation.setFieldValue("rearSpoiler", event.target.checked);
@@ -460,7 +459,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.outsideRearViewMirrorTurnIndicators}
+                                checked={validation.values.outsideRearViewMirrorTurnIndicators}
                                 id="outsideRearViewMirrorTurnIndicators"
                                 onChange={(event) => {
                                     validation.setFieldValue("outsideRearViewMirrorTurnIndicators", event.target.checked);
@@ -485,7 +484,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.integratedAntenna}
+                                checked={validation.values.integratedAntenna}
                                 id="integratedAntenna"
                                 onChange={(event) => {
                                     validation.setFieldValue("integratedAntenna", event.target.checked);
@@ -508,7 +507,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.chromeGrille}
+                                checked={validation.values.chromeGrille}
                                 id="chromeGrille"
                                 onChange={(event) => {
                                     validation.setFieldValue("chromeGrille", event.target.checked);
@@ -531,7 +530,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.chromeGarnish}
+                                checked={validation.values.chromeGarnish}
                                 id="chromeGarnish"
                                 onChange={(event) => {
                                     validation.setFieldValue("chromeGarnish", event.target.checked);
@@ -554,7 +553,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.projectorHeadlamps}
+                                checked={validation.values.projectorHeadlamps}
                                 id="projectorHeadlamps"
                                 onChange={(event) => {
                                     validation.setFieldValue("projectorHeadlamps", event.target.checked);
@@ -579,7 +578,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.halogenHeadlamps}
+                                checked={validation.values.halogenHeadlamps}
                                 id="halogenHeadlamps"
                                 onChange={(event) => {
                                     validation.setFieldValue("halogenHeadlamps", event.target.checked);
@@ -602,7 +601,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.roofRail}
+                                checked={validation.values.roofRail}
                                 id="roofRail"
                                 onChange={(event) => {
                                     validation.setFieldValue("roofRail", event.target.checked);
@@ -625,7 +624,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.ledDrls}
+                                checked={validation.values.ledDrls}
                                 id="ledDrls"
                                 onChange={(event) => {
                                     validation.setFieldValue("ledDrls", event.target.checked);
@@ -648,7 +647,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.ledHeadlights}
+                                checked={validation.values.ledHeadlights}
                                 id="ledHeadlights"
                                 onChange={(event) => {
                                     validation.setFieldValue("ledHeadlights", event.target.checked);
@@ -673,7 +672,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.ledTaillights}
+                                checked={validation.values.ledTaillights}
                                 id="ledTaillights"
                                 onChange={(event) => {
                                     validation.setFieldValue("ledTaillights", event.target.checked);
@@ -696,7 +695,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.ledFogLamps}
+                                checked={validation.values.ledFogLamps}
                                 id="ledFogLamps"
                                 onChange={(event) => {
                                     validation.setFieldValue("ledFogLamps", event.target.checked);
@@ -719,7 +718,7 @@ const ExteriorVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.fogLights}
+                                checked={validation.values.fogLights}
                                 id="fogLights"
                                 onChange={(event) => {
                                     validation.setFieldValue("fogLights", event.target.checked);

@@ -60,7 +60,7 @@ const OnSymbol = () => {
     );
 };
 
-const SafetyVariant = ({ onFormSubmit }) => {
+const SafetyVariant = ({ carVariant, onFormSubmit }) => {
 
     //meta title
     document.title = "Add Car Variant | Scrollit";
@@ -70,7 +70,6 @@ const SafetyVariant = ({ onFormSubmit }) => {
     const [activeTab, setactiveTab] = useState("1")
     const [selectedGroup, setselectedGroup] = useState(null)
 
-    const [carVariant, setCarVariant] = useState([]);
     const [switch1, setswitch1] = useState(true);
     // const [carModelsList, setCarModelsList] = useState([]);
 
@@ -191,7 +190,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.antiLockBrakingSystem}
+                                checked={validation.values.antiLockBrakingSystem}
                                 id="antiLockBrakingSystem"
                                 onChange={(event) => {
                                     validation.setFieldValue("antiLockBrakingSystem", event.target.checked);
@@ -214,7 +213,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.breakAssist}
+                                checked={validation.values.breakAssist}
                                 id="breakAssist"
                                 onChange={(event) => {
                                     validation.setFieldValue("breakAssist", event.target.checked);
@@ -237,7 +236,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.centralLocking}
+                                checked={validation.values.centralLocking}
                                 id="centralLocking"
                                 onChange={(event) => {
                                     validation.setFieldValue("centralLocking", event.target.checked);
@@ -260,7 +259,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.powerDoorLocks}
+                                checked={validation.values.powerDoorLocks}
                                 id="powerDoorLocks"
                                 onChange={(event) => {
                                     validation.setFieldValue("powerDoorLocks", event.target.checked);
@@ -285,7 +284,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.antiTheftAlarm}
+                                checked={validation.values.antiTheftAlarm}
                                 id="antiTheftAlarm"
                                 onChange={(event) => {
                                     validation.setFieldValue("antiTheftAlarm", event.target.checked);
@@ -308,7 +307,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.driverAirbag}
+                                checked={validation.values.driverAirbag}
                                 id="driverAirbag"
                                 onChange={(event) => {
                                     validation.setFieldValue("driverAirbag", event.target.checked);
@@ -331,7 +330,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.passengerAirbag}
+                                checked={validation.values.passengerAirbag}
                                 id="passengerAirbag"
                                 onChange={(event) => {
                                     validation.setFieldValue("passengerAirbag", event.target.checked);
@@ -353,7 +352,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.sideAirbagFront}
+                                checked={validation.values.sideAirbagFront}
                                 id="sideAirbagFront"
                                 onChange={(event) => {
                                     validation.setFieldValue("sideAirbagFront", event.target.checked);
@@ -378,7 +377,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.dayNightRearViewMirror}
+                                checked={validation.values.dayNightRearViewMirror}
                                 id="dayNightRearViewMirror"
                                 onChange={(event) => {
                                     validation.setFieldValue("dayNightRearViewMirror", event.target.checked);
@@ -401,7 +400,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.passengerSideRearViewMirror}
+                                checked={validation.values.passengerSideRearViewMirror}
                                 id="passengerSideRearViewMirror"
                                 onChange={(event) => {
                                     validation.setFieldValue("passengerSideRearViewMirror", event.target.checked);
@@ -424,7 +423,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.halogenHeadlamps}
+                                checked={validation.values.halogenHeadlamps}
                                 id="halogenHeadlamps"
                                 onChange={(event) => {
                                     validation.setFieldValue("halogenHeadlamps", event.target.checked);
@@ -447,7 +446,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.rearSeatBelts}
+                                checked={validation.values.rearSeatBelts}
                                 id="rearSeatBelts"
                                 onChange={(event) => {
                                     validation.setFieldValue("rearSeatBelts", event.target.checked);
@@ -472,7 +471,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.seatBeltWarning}
+                                checked={validation.values.seatBeltWarning}
                                 id="seatBeltWarning"
                                 onChange={(event) => {
                                     validation.setFieldValue("seatBeltWarning", event.target.checked);
@@ -495,7 +494,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.sideImpactBeams}
+                                checked={validation.values.sideImpactBeams}
                                 id="sideImpactBeams"
                                 onChange={(event) => {
                                     validation.setFieldValue("sideImpactBeams", event.target.checked);
@@ -518,7 +517,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.adjustableeats}
+                                checked={validation.values.adjustableeats}
                                 id="adjustableeats"
                                 onChange={(event) => {
                                     validation.setFieldValue("adjustableeats", event.target.checked);
@@ -541,7 +540,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.tyrePressureMonitor}
+                                checked={validation.values.tyrePressureMonitor}
                                 id="tyrePressureMonitor"
                                 onChange={(event) => {
                                     validation.setFieldValue("tyrePressureMonitor", event.target.checked);
@@ -566,7 +565,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.vehicletabilityControlSystem}
+                                checked={validation.values.vehicletabilityControlSystem}
                                 id="vehicletabilityControlSystem"
                                 onChange={(event) => {
                                     validation.setFieldValue("vehicletabilityControlSystem", event.target.checked);
@@ -589,7 +588,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.engineImmobilizer}
+                                checked={validation.values.engineImmobilizer}
                                 id="engineImmobilizer"
                                 onChange={(event) => {
                                     validation.setFieldValue("engineImmobilizer", event.target.checked);
@@ -612,7 +611,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.crashSensor}
+                                checked={validation.values.crashSensor}
                                 id="crashSensor"
                                 onChange={(event) => {
                                     validation.setFieldValue("crashSensor", event.target.checked);
@@ -635,7 +634,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.ebd}
+                                checked={validation.values.ebd}
                                 id="ebd"
                                 onChange={(event) => {
                                     validation.setFieldValue("ebd", event.target.checked);
@@ -660,7 +659,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.electronicStabilityControl}
+                                checked={validation.values.electronicStabilityControl}
                                 id="electronicStabilityControl"
                                 onChange={(event) => {
                                     validation.setFieldValue("electronicStabilityControl", event.target.checked);
@@ -683,7 +682,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.rearCamera}
+                                checked={validation.values.rearCamera}
                                 id="rearCamera"
                                 onChange={(event) => {
                                     validation.setFieldValue("rearCamera", event.target.checked);
@@ -706,7 +705,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.antiPinchPowerWindows}
+                                checked={validation.values.antiPinchPowerWindows}
                                 id="antiPinchPowerWindows"
                                 onChange={(event) => {
                                     validation.setFieldValue("antiPinchPowerWindows", event.target.checked);
@@ -729,7 +728,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.speedAlert}
+                                checked={validation.values.speedAlert}
                                 id="speedAlert"
                                 onChange={(event) => {
                                     validation.setFieldValue("speedAlert", event.target.checked);
@@ -754,7 +753,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.speedSensingAutoDoorLock}
+                                checked={validation.values.speedSensingAutoDoorLock}
                                 id="speedSensingAutoDoorLock"
                                 onChange={(event) => {
                                     validation.setFieldValue("speedSensingAutoDoorLock", event.target.checked);
@@ -777,7 +776,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.isoFixChildSeatMounts}
+                                checked={validation.values.isoFixChildSeatMounts}
                                 id="isoFixChildSeatMounts"
                                 onChange={(event) => {
                                     validation.setFieldValue("isoFixChildSeatMounts", event.target.checked);
@@ -800,7 +799,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.pretensionersAndForceLimiterSeatbelts}
+                                checked={validation.values.pretensionersAndForceLimiterSeatbelts}
                                 id="pretensionersAndForceLimiterSeatbelts"
                                 onChange={(event) => {
                                     validation.setFieldValue("pretensionersAndForceLimiterSeatbelts", event.target.checked);
@@ -823,7 +822,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.hillDescentControl}
+                                checked={validation.values.hillDescentControl}
                                 id="hillDescentControl"
                                 onChange={(event) => {
                                     validation.setFieldValue("hillDescentControl", event.target.checked);
@@ -846,7 +845,7 @@ const SafetyVariant = ({ onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                value={validation.values.hillAssist}
+                                checked={validation.values.hillAssist}
                                 id="hillAssist"
                                 onChange={(event) => {
                                     validation.setFieldValue("hillAssist", event.target.checked);
