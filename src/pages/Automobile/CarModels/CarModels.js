@@ -271,25 +271,6 @@ function CarModels() {
         }
       },
       {
-        Header: 'Add Model Variants',
-        accessor: 'modelVariants',
-        disableFilters: true,
-        Cell: (cellProps) => {
-          return (
-            <Button
-              type="button"
-              color="primary"
-              className="btn-sm btn-rounded"
-              onClick={e => {
-                toggleViewModal();
-                setCarModelData(cellProps.row.original);
-              }}
-            >
-              Add Model Variants
-            </Button>);
-        }
-      },
-      {
         Header: 'Action',
         accessor: 'action',
         disableFilters: true,

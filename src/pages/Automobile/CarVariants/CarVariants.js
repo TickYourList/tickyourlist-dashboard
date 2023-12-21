@@ -133,7 +133,7 @@ function CarVariants() {
     carBrands: state.CarBrand.carBrands,
     countries: state.CarBrand.countries,
     carModels: state.CarModel.carModels,
-    carVariants: state.CarVariant.carVariants
+    carVariants: state.carVariant.carVariants
   }));
 
   useEffect(() => {
@@ -222,7 +222,7 @@ function CarVariants() {
       },
       {
         Header: 'Variant Name',
-        accessor: 'variantName',
+        accessor: 'name',
         filterable: true,
         Cell: (cellProps) => {
           return <ModelName {...cellProps} />;
@@ -230,7 +230,7 @@ function CarVariants() {
       },
       {
         Header: 'Car Model',
-        accessor: 'modelName',
+        accessor: 'carModel.modelName',
         filterable: true,
         Cell: (cellProps) => {
           return <ModelName {...cellProps} />;
@@ -238,7 +238,7 @@ function CarVariants() {
       },
       {
         Header: 'Car Brand',
-        accessor: 'carBrand.brandName',
+        accessor: 'carModel.carBrand.brandName',
         filterable: true,
         Cell: (cellProps) => {
           return <CarBrand {...cellProps} />;
@@ -268,25 +268,6 @@ function CarVariants() {
               }}
             >
               View Model Details
-            </Button>);
-        }
-      },
-      {
-        Header: 'Add Model Variants',
-        accessor: 'modelVariants',
-        disableFilters: true,
-        Cell: (cellProps) => {
-          return (
-            <Button
-              type="button"
-              color="primary"
-              className="btn-sm btn-rounded"
-              onClick={e => {
-                toggleViewModal();
-                setcarVariantData(cellProps.row.original);
-              }}
-            >
-              Add Model Variants
             </Button>);
         }
       },
@@ -363,255 +344,6 @@ function CarVariants() {
           </Row>
         </div>
       </div>
-      {/* <Modal isOpen={modal} toggle={toggle}>
-        <ModalHeader toggle={toggle} tag="h4">
-          {!!isEdit ? "Edit Car Model" : "Add New Car Model"}
-        </ModalHeader>
-        <ModalBody>
-          <Form
-            onSubmit={e => {
-              e.preventDefault();
-              validation.handleSubmit();
-              return false;
-            }}
-          >
-            <Row form="true">
-              <Col className="col-12">
-                <div className="mb-3">
-                  <Label className="form-label">
-                    Model Name <span style={{ color: 'red' }}>*</span>
-                  </Label>
-                  <Input
-                    name="modelName"
-                    type="text"
-                    validate={{
-                      required: { value: true },
-                    }}
-                    onChange={
-                      validation.handleChange
-                    }
-                    onBlur={validation.handleBlur}
-                    value={
-                      validation.values
-                        .modelName || ""
-                    }
-                    invalid={
-                      validation.touched
-                        .modelName &&
-                        validation.errors
-                          .modelName
-                        ? true
-                        : false
-                    }
-                  />
-                  {validation.touched
-                    .modelName &&
-                    validation.errors
-                      .modelName ? (
-                    <FormFeedback type="invalid">
-                      {
-                        validation.errors
-                          .modelName
-                      }
-                    </FormFeedback>
-                  ) : null}
-                </div>
-                <div className="mb-3">
-                  <Label className="form-label">
-                    Car Brand <span style={{ color: 'red' }}>*</span>
-                  </Label>
-                  <Input
-                    type="select"
-                    name="carBrand"
-                    id="carBrand"
-                    onChange={validation.handleChange}
-                    onBlur={validation.handleBlur}
-                    value={validation.values.carBrand}
-                  >
-                    <option value="">Select a Car Brand</option>
-                    {carBrands?.map((carBrand, index) => (
-                      <option key={index} value={carBrand._id}>
-                        {carBrand.brandName}
-                      </option>
-                    ))}
-                  </Input>
-
-                  {validation.touched
-                    .carBrand &&
-                    validation.errors
-                      .carBrand ? (
-                    <FormFeedback type="invalid">
-                      {
-                        validation.errors
-                          .carBrand
-                      }
-                    </FormFeedback>
-                  ) : null}
-                </div>
-                <div className="mb-3">
-                  <Label className="form-label">
-                    Description <span style={{ color: 'red' }}>*</span>
-                  </Label>
-                  <Input
-                    name="description"
-                    type="textarea"
-                    validate={{
-                      required: { value: true },
-                    }}
-                    onChange={
-                      validation.handleChange
-                    }
-                    onBlur={validation.handleBlur}
-                    value={
-                      validation.values
-                        .description || ""
-                    }
-                    invalid={
-                      validation.touched
-                        .description &&
-                        validation.errors
-                          .description
-                        ? true
-                        : false
-                    }
-                  />
-                  {validation.touched
-                    .description &&
-                    validation.errors
-                      .description ? (
-                    <FormFeedback type="invalid">
-                      {
-                        validation.errors
-                          .description
-                      }
-                    </FormFeedback>
-                  ) : null}
-                </div>
-                <div className="mb-3">
-                  <Label className="form-label">
-                    Year <span style={{ color: 'red' }}>*</span>
-                  </Label>
-                  <Input
-                    name="year"
-                    type="text"
-                    validate={{
-                      required: { value: true },
-                    }}
-                    onChange={
-                      validation.handleChange
-                    }
-                    onBlur={validation.handleBlur}
-                    value={
-                      validation.values
-                        .year || ""
-                    }
-                    invalid={
-                      validation.touched
-                        .year &&
-                        validation.errors
-                          .year
-                        ? true
-                        : false
-                    }
-                  />
-                  {validation.touched
-                    .year &&
-                    validation.errors
-                      .year ? (
-                    <FormFeedback type="invalid">
-                      {
-                        validation.errors
-                          .year
-                      }
-                    </FormFeedback>
-                  ) : null}
-                </div>
-                <div className="mb-3">
-                  <Label className="form-label">
-                    Status <span style={{ color: 'red' }}>*</span>
-                  </Label>
-                  <Input
-                    name="status"
-                    type="select"
-                    className="form-select"
-                    onChange={
-                      validation.handleChange
-                    }
-                    onBlur={validation.handleBlur}
-                    value={
-                      validation.values
-                        .status || ""
-                    }
-                  >
-                    <option>Active</option>
-                    <option>InActive</option>
-                  </Input>
-                  {validation.touched
-                    .status &&
-                    validation.errors
-                      .status ? (
-                    <FormFeedback type="invalid">
-                      {
-                        validation.errors
-                          .status
-                      }
-                    </FormFeedback>
-                  ) : null}
-                </div>
-                <div className="mt-3 mb-3">
-                  <Label for="cimg">Model Image <span style={{ color: 'red' }}>*</span></Label>
-                  <div className="mh-50">
-                    <Input
-                      id="cimg"
-                      onChange={async e => {
-                        if (
-                          ["jpeg", "jpg", "png"].includes(
-                            e.target.files[0].name.split(".").pop()
-                          )
-                        ) {
-                          setToastDetails({
-                            title: "Image Uploaded",
-                            message: `${e.target.files[0].name} has been uploaded.`,
-                          })
-                          setToast(true)
-                          const image = await resizeFile(e.target.files[0])
-                        } else {
-                          setToastDetails({
-                            title: "Invalid image",
-                            message:
-                              "Please upload images with jpg, jpeg or png extension",
-                          })
-                          setToast(true)
-                        }
-                      }}
-                      type="file"
-                    />
-                  </div>
-                </div>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <div className="text-end">
-                  <button
-                    type="submit"
-                    className="btn btn-success save-user"
-                    disabled={!validation.isValid || !validation.dirty}
-                    onClick={() => {
-                      validation.setFieldTouched(
-                        "modelName",
-                        true
-                      );
-                    }}
-                  >
-                    Save
-                  </button>
-                </div>
-              </Col>
-            </Row>
-          </Form>
-        </ModalBody>
-      </Modal> */}
 
     </React.Fragment>
   );

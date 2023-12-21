@@ -67,6 +67,7 @@ const TableContainer = ({
   isJobListGlobalFilter,
   isAddOptions,
   isAddCarBrandOptions,
+  isAddCarBlogOptions,
   isAddCarModelOptions,
   isProductListAddOptions, 
   handleDownloadTemplate,
@@ -78,6 +79,8 @@ const TableContainer = ({
   handleOrderDeleteClicks,
   handleAddCarBrandClicks,
   handleCarBrandDeleteClicks,
+  handleAddCarBlogClicks,
+  handleCarBlogDeleteClicks,
   handleAddCarModelClicks,
   handleCarModelDeleteClicks,
   isAddcarVariantOptions,
@@ -219,6 +222,34 @@ const TableContainer = ({
               >
                 <i className="mdi mdi-plus me-1" />
                 Delete all Car Brands
+              </Button>
+            </div>
+            {/* </div> */}
+          </Col>
+        )}
+         {isAddCarBlogOptions && (
+          <Col sm="7" className="d-flex justify-content-end">
+            {/* <div className="text-sm-end"> */}
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="success"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleAddCarBlogClicks}
+              >
+                <i className="mdi mdi-plus me-1" />
+                Add New Car Blog
+              </Button>
+            </div>
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="danger"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleCarBlogDeleteClicks}
+              >
+                <i className="mdi mdi-plus me-1" />
+                Delete all Car Blogs
               </Button>
             </div>
             {/* </div> */}

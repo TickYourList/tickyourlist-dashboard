@@ -19,6 +19,7 @@ import {
     CardTitle,
     CardSubtitle,
     FormFeedback,
+    Button,
 } from "reactstrap"
 import Select from "react-select"
 import { Link } from "react-router-dom"
@@ -105,7 +106,7 @@ const orderSummary = [
     { id: 2, img: img7, productTitle: "Wireless Headphone", price: 225, qty: 1 },
 ]
 
-const EngineAndTransmissionVariant = () => {
+const EngineAndTransmissionVariant = ({ onFormSubmit }) => {
 
     //meta title
     document.title = "Add Car Variant | Scrollit";
@@ -124,6 +125,7 @@ const EngineAndTransmissionVariant = () => {
         enableReinitialize: true,
 
         initialValues: {
+            engineType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.engineType) || "",
             displacement: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.displacement) || "",
             noOfCylinders: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.noOfCylinders) || "",
             maxPower: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.maxPower) || "",
@@ -142,43 +144,63 @@ const EngineAndTransmissionVariant = () => {
             // year: (carModel && carModel.year) || "",
             // status: (carModel && carModel.status ? 'Active' : 'InActive') || "",
         },
-        validationSchema: Yup.object({
-            modelName: Yup.string().required(
-                "Please Enter Your Brand Name"
-            ),
-            carBrand: Yup.string().required(
-                "Please Enter Your CarBrand"
-            ),
-            description: Yup.string().required(
-                "Please Enter Your description"
-            ),
-            year: Yup.string().required(
-                "Please Enter Your Year"
-            ),
-            status: Yup.string().required(
-                "Please Enter Your Status"
-            )
-        }),
+        // validationSchema: Yup.object({
+        //     modelName: Yup.string().required(
+        //         "Please Enter Your Brand Name"
+        //     ),
+        //     carBrand: Yup.string().required(
+        //         "Please Enter Your CarBrand"
+        //     ),
+        //     description: Yup.string().required(
+        //         "Please Enter Your description"
+        //     ),
+        //     year: Yup.string().required(
+        //         "Please Enter Your Year"
+        //     ),
+        //     status: Yup.string().required(
+        //         "Please Enter Your Status"
+        //     )
+        // }),
         onSubmit: values => {
-            if (isEdit) {
-                const updCarModel = new FormData();
-                updCarModel.append("modelName", values["modelName"]);
-                updCarModel.append("description", values["description"]);
-                updCarModel.append("year", values["year"]);
-                updCarModel.append("status", values["status"] === 'Active' ? true : false);
-                updCarModel.append("image", modelImage ? modelImage : "broken!");
-                dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
+            // if (isEdit) {
+            //     const updCarModel = new FormData();
+            //     updCarModel.append("modelName", values["modelName"]);
+            //     updCarModel.append("description", values["description"]);
+            //     updCarModel.append("year", values["year"]);
+            //     updCarModel.append("status", values["status"] === 'Active' ? true : false);
+            //     updCarModel.append("image", modelImage ? modelImage : "broken!");
+            //     dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
 
-                validation.resetForm();
-            } else {
-                const newCarModel = new FormData();
-                newCarModel.append("modelName", values["modelName"]);
-                newCarModel.append("description", values["description"]);
-                newCarModel.append("year", values["year"]);
-                newCarModel.append("status", values["status"] === 'Active' ? true : false);
-                newCarModel.append("image", modelImage ? modelImage : "broken!");
-                dispatch(addNewCarModel(values['carBrand'], newCarModel));
-                validation.resetForm();
+            //     validation.resetForm();
+            // } else {
+            //     const newCarModel = new FormData();
+            //     newCarModel.append("modelName", values["modelName"]);
+            //     newCarModel.append("description", values["description"]);
+            //     newCarModel.append("year", values["year"]);
+            //     newCarModel.append("status", values["status"] === 'Active' ? true : false);
+            //     newCarModel.append("image", modelImage ? modelImage : "broken!");
+            //     dispatch(addNewCarModel(values['carBrand'], newCarModel));
+            //     validation.resetForm();
+            // }
+            console.log('values ', values);
+            if (onFormSubmit) {
+                const engineAndTransmission = {
+                    engineType: values.engineType,
+                    displacement: values.displacement,
+                    noOfCylinders: values.noOfCylinders,
+                    maxPower: values.maxPower,
+                    maxTorque: values.maxPower,
+                    valuePerCylinder: values.valuePerCylinder,
+                    fuelSupplySystem: values.fuelSupplySystem,
+                    compressionRatio: values.compressionRatio,
+                    turboCharge: values.turboCharge,
+                    transmissionType: values.transmissionType,
+                    gearBox: values.gearBox,
+                    mildHybrid: values.mildHybrid,
+                    driverType: values.driverType,
+                    cluchType: values.cluchType,
+                }
+                onFormSubmit('engineAndTransmission', values, '3');
             }
             toggle();
         },
@@ -205,17 +227,17 @@ const EngineAndTransmissionVariant = () => {
 
     return (
         <React.Fragment>
-                                      
                                                 <div>
                                                     <CardTitle>Engine And Transmission</CardTitle>
                                                     <p className="card-title-desc">
                                                         Fill all information below
                                                     </p>
-                                                    <Form>
+                                                    <Form onSubmit={validation.handleSubmit}>
+                                                        <Row>
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="engineType"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Engine Type <span style={{ color: 'red' }}>*</span>
@@ -233,11 +255,11 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
-
+                                                        </Col>
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="displacement"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Displacement <span style={{ color: 'red' }}>*</span>
@@ -255,11 +277,14 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
+                                                        </Row>
 
+                                                        <Row>
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="noOfCylinders"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Number of Cylinders <span style={{ color: 'red' }}>*</span>
@@ -277,10 +302,11 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="maxPower"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Max Power <span style={{ color: 'red' }}>*</span>
@@ -291,18 +317,44 @@ const EngineAndTransmissionVariant = () => {
                                                                     className="form-control"
                                                                     name="maxPower"
                                                                     id="maxPower"
-                                                                    placeholder="Enter your MaxPower"
+                                                                    placeholder="Enter your Max Power"
                                                                     onChange={validation.handleChange}
                                                                     onBlur={validation.handleBlur}
                                                                     value={validation.values.maxPower}
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
+                                                        </Row>
 
+                                                        <Row>
+                                                        <Col lg="6">
+                                                        <FormGroup className="mb-4" row>
+                                                            <Label
+                                                                htmlFor="maxPower"
+                                                                className="col-form-label"
+                                                            >
+                                                                Max Power <span style={{ color: 'red' }}>*</span>
+                                                            </Label>
+                                                            <Col md="10">
+                                                                <Input
+                                                                    type="text"
+                                                                    className="form-control"
+                                                                    name="maxTorque"
+                                                                    id="maxTorque"
+                                                                    placeholder="Enter your MaxTorque"
+                                                                    onChange={validation.handleChange}
+                                                                    onBlur={validation.handleBlur}
+                                                                    value={validation.values.maxTorque}
+                                                                />
+                                                            </Col>
+                                                        </FormGroup>
+                                                        </Col>
+
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="valuePerCylinder"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Value Per Cylinder <span style={{ color: 'red' }}>*</span>
@@ -320,11 +372,14 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
+                                                        </Row>
 
+                                                        <Row>
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="fuelSupplySystem"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Fuel Supply System <span style={{ color: 'red' }}>*</span>
@@ -342,11 +397,12 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
 
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="compressionRatio"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Compression Ratio <span style={{ color: 'red' }}>*</span>
@@ -364,11 +420,14 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
+                                                        </Row>
 
+                                                      <Row>
+                                                      <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="turboCharge"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Turbo Charge <span style={{ color: 'red' }}>*</span>
@@ -386,11 +445,11 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
-
+                                                        </Col>
+                                                      <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="transmissionType"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Transmission Type <span style={{ color: 'red' }}>*</span>
@@ -408,11 +467,14 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
+                                                        </Row>
 
+                                                        <Row>
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="gearBox"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Gear Box <span style={{ color: 'red' }}>*</span>
@@ -430,11 +492,12 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
 
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="mildHybrid"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Mild Hybrid <span style={{ color: 'red' }}>*</span>
@@ -452,11 +515,14 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
+                                                        </Row>
 
+                                                        <Row>
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="driverType"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 Driver Type <span style={{ color: 'red' }}>*</span>
@@ -474,11 +540,12 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
 
+                                                        <Col lg="6">
                                                         <FormGroup className="mb-4" row>
                                                             <Label
                                                                 htmlFor="cluchType"
-                                                                md="2"
                                                                 className="col-form-label"
                                                             >
                                                                 clutch Type <span style={{ color: 'red' }}>*</span>
@@ -496,12 +563,14 @@ const EngineAndTransmissionVariant = () => {
                                                                 />
                                                             </Col>
                                                         </FormGroup>
+                                                        </Col>
+                                                        </Row>
+                                                        <Button type="submit" color="primary" className={
+                                                            !validation.isValid ? "next disabled" : "next"
+                                                        }>Next</Button>
                                                     </Form>
-                                               
-                                        
-                                   
-                            
-                                <Row className="mt-4">
+                                                    
+                                {/* <Row className="mt-4">
                                     <Col sm="6">
                                         <Link
                                             to="/ecommerce-cart"
@@ -522,7 +591,7 @@ const EngineAndTransmissionVariant = () => {
                                             </Link>
                                         </div>
                                     </Col>
-                                </Row>
+                                </Row> */}
                             
                        
                     </div>

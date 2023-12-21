@@ -37,6 +37,10 @@ const deleteAllCarModels = () => del(url.DELETE_ALL_CAR_MODEL);
 // GET COUNTRIES LIST
 const fetchCountriesListData = () => get(url.GET_COUNTRIES_LIST_DATA);
 
+
+// fetch model by brand
+const fetchCarModelByBrand = id => get(`${url.GET_MODEL_BY_BRAND}/${id}`);
+
 // GET CAR CARIANTS LIST
 const getCarVariantsList = () => get(url.GET_CAR_VARIANTS);
 
@@ -51,6 +55,21 @@ const deleteCarVariantData = id => del(`${url.DELETE_CAR_VARIANT}/${id}`);
 
 // DELETE ALL CAR MODELS
 const deleteAllCarVariants = () => del(url.DELETE_ALL_CAR_VARIANT);
+
+// GET CAR BLOGS LIST
+const getCarBlogsList = () => get(url.GET_CAR_BLOGS);
+
+// ADD CAR BRAND
+const addCarBlog = data => postFormData(url.ADD_CAR_BLOG, data);
+
+// UPDATE CAR BRAND
+const updateCarBlogData = (userId, data) => putFormData(`${url.UPDATE_CAR_BLOG}/${userId}`, data);
+
+// DELETE CAR BRAND
+const deleteCarBlogData = id => del(`${url.DELETE_CAR_BLOG}/${id}`);
+
+// DELETE ALL CAR BRANDS
+const deleteAllCarBlogs = () => del(url.DELETE_ALL_CAR_BLOG);
 
 
 export {
@@ -69,5 +88,11 @@ export {
     updateCarVariantData,
     deleteCarVariantData,
     deleteAllCarVariants,
-    fetchCountriesListData
+    fetchCountriesListData,
+    getCarBlogsList,
+    addCarBlog,
+    updateCarBlogData,
+    deleteAllCarBlogs,
+    deleteCarBlogData,
+    fetchCarModelByBrand
 };

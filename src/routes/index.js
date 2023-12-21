@@ -1,17 +1,8 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 
-// Pages Component
-import Chat from "../pages/Chat/Chat";
-
-// File Manager
-import FileManager from "../pages/FileManager/index";
-
 // Profile
 import UserProfile from "../pages/Authentication/user-profile";
-
-// Pages Calendar
-import Calendar from "../pages/Calendar/index";
 
 // //Tasks
 import TasksList from "../pages/Tasks/tasks-list";
@@ -22,23 +13,6 @@ import ProjectsGrid from "../pages/Projects/projects-grid";
 import ProjectsList from "../pages/Projects/projects-list";
 import ProjectsOverview from "../pages/Projects/ProjectOverview/projects-overview";
 import ProjectsCreate from "../pages/Projects/projects-create";
-
-// //Ecommerce Pages
-import EcommerceProducts from "../pages/Ecommerce/EcommerceProducts/index";
-import EcommerceProductDetail from "../pages/Ecommerce/EcommerceProducts/EcommerceProductDetail";
-import EcommerceOrders from "../pages/Ecommerce/EcommerceOrders/index";
-import EcommerceCustomers from "../pages/Ecommerce/EcommerceCustomers/index";
-import EcommerceCart from "../pages/Ecommerce/EcommerceCart";
-import EcommerceCheckout from "../pages/Ecommerce/EcommerceCheckout";
-import EcommerceShops from "../pages/Ecommerce/EcommerceShops/index";
-import EcommerceAddProduct from "../pages/Ecommerce/EcommerceAddProduct";
-
-//Email
-import EmailInbox from "../pages/Email/email-inbox";
-import EmailRead from "../pages/Email/email-read";
-import EmailBasicTemplte from "../pages/Email/email-basic-templte";
-import EmailAlertTemplte from "../pages/Email/email-template-alert";
-import EmailTemplateBilling from "../pages/Email/email-template-billing";
 
 //Invoices
 import InvoicesList from "../pages/Invoices/invoices-list";
@@ -61,15 +35,6 @@ import DashboardSaas from "../pages/Dashboard-saas/index";
 import DashboardCrypto from "../pages/Dashboard-crypto/index";
 import Blog from "../pages/Dashboard-Blog/index";
 import DashboardJob from "../pages/DashboardJob/index";
-
-//Crypto
-import CryptoWallet from "../pages/Crypto/CryptoWallet/crypto-wallet";
-import CryptoBuySell from "../pages/Crypto/crypto-buy-sell";
-import CryptoExchange from "../pages/Crypto/crypto-exchange";
-import CryptoLending from "../pages/Crypto/crypto-lending";
-import CryptoOrders from "../pages/Crypto/CryptoOrders/crypto-orders";
-import CryptoKYCApplication from "../pages/Crypto/crypto-kyc-application";
-import CryptoIcoLanding from "../pages/Crypto/CryptoIcoLanding/index";
 
 // Charts
 import ChartApex from "../pages/Charts/Apexcharts";
@@ -96,11 +61,6 @@ import BasicTables from "../pages/Tables/BasicTables";
 import DatatableTables from "../pages/Tables/DatatableTables";
 import ResponsiveTables from "../pages/Tables/ResponsiveTables";
 import DragDropTables from "../pages/Tables/DragDropTables";
-
-//Blog
-import BlogList from "../pages/Blog/BlogList/index";
-import BlogGrid from "../pages/Blog/BlogGrid/index";
-import BlogDetails from "../pages/Blog/BlogDetails";
 
 //Job
 import JobGrid from "../pages/JobPages/JobGrid/index";
@@ -157,13 +117,6 @@ import PagesPricing from "../pages/Utility/pages-pricing";
 import Pages404 from "../pages/Utility/pages-404";
 import Pages500 from "../pages/Utility/pages-500";
 
-//Contacts
-import ContactsGrid from "../pages/Contacts/contacts-grid";
-import ContactsList from "../pages/Contacts/ContactList/contacts-list";
-import ContactsProfile from "../pages/Contacts/ContactsProfile/contacts-profile";
-import EcommerceCollections from "../pages/Collections/index";
-import AddCollection from "pages/Collections/AddCollection";
-import EcommerceCollectionDetails from "pages/Collections/CollectionDetails";
 import EcommerceProductList from "pages/Ecommerce/EcommerceProductList";
 import EcommerceGetDomain from "pages/Ecommerce/EcommerceGetDomain";
 import EcommerceBuyDomain from "pages/Ecommerce/EcommerceGetDomain/EcommerceBuyDomain";
@@ -178,6 +131,7 @@ import AddCarVariant from "pages/Automobile/CarVariants/AddCarVariant";
 import AutomobileCollections from "pages/Automobile/AutomobileCollections";
 import AddCarCollection from "pages/Automobile/AutomobileCollections/AddCarCollection";
 import CarModelCollectionDetails from "pages/Automobile/AutomobileCollections/CarModelCollectionDetails";
+import CarBlogs from "pages/Automobile/CarBlogs/CarBlogs";
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard /> },
@@ -196,39 +150,8 @@ const authProtectedRoutes = [
     path: "/automobile-collection-details/:_id",
     component: <CarModelCollectionDetails />,
   },
-  { path: "/ecommerce-product-list", component: <EcommerceProductList /> },
-
-  {
-    path: "/ecommerce-customer-detail/:id",
-    component: <EcommerceCustomerDetail />,
-  },
-  {
-    path: "/invoice",
-    component: <Invoice />,
-  },
-
-
-  { path: "/dashboard-saas", component: <DashboardSaas /> },
-  // { path: "/dashboard-crypto", component: <DashboardCrypto /> },
   { path: "/blog", component: <Blog /> },
   // { path: "/dashboard-job", component: <DashboardJob /> },
-
-  // //Crypto
-  // { path: "/crypto-wallet", component: <CryptoWallet /> },
-  // { path: "/crypto-buy-sell", component: <CryptoBuySell /> },
-  // { path: "/crypto-exchange", component: <CryptoExchange /> },
-  // { path: "/crypto-lending", component: <CryptoLending /> },
-  // { path: "/crypto-orders", component: <CryptoOrders /> },
-  // { path: "/crypto-kyc-application", component: <CryptoKYCApplication /> },
-
-  //chat
-  // { path: "/chat", component: <Chat /> },
-
-  //File Manager
-  // { path: "/apps-filemanager", component: <FileManager /> },
-
-  // //calendar
-  // { path: "/calendar", component: <Calendar /> },
 
   // //profile
   { path: "/profile", component: <UserProfile /> },
@@ -241,22 +164,7 @@ const authProtectedRoutes = [
 
   { path: "/add-car-variant", component: <AddCarVariant /> },
 
-  //Ecommerce
-  // { path: "/ecommerce-product-detail/:id", component: <EcommerceProductDetail /> },
-  // { path: "/ecommerce-products", component: <EcommerceProducts /> },
-  // { path: "/ecommerce-orders", component: <EcommerceOrders /> },
-  // { path: "/ecommerce-customers", component: <EcommerceCustomers /> },
-  // { path: "/ecommerce-cart", component: <EcommerceCart /> },
-  // { path: "/ecommerce-checkout", component: <EcommerceCheckout /> },
-  // { path: "/ecommerce-shops", component: <EcommerceShops /> },
-  // { path: "/ecommerce-add-product", component: <EcommerceAddProduct /> },
-
-  //Email
-  // { path: "/email-inbox", component: <EmailInbox /> },
-  // { path: "/email-read", component: <EmailRead /> },
-  // { path: "/email-template-basic", component: <EmailBasicTemplte /> },
-  // { path: "/email-template-alert", component: <EmailAlertTemplte /> },
-  // { path: "/email-template-billing", component: <EmailTemplateBilling /> },
+  { path: "/car-blogs", component: <CarBlogs /> },
 
   //Invoices
   { path: "/invoices-list", component: <InvoicesList /> },
@@ -274,11 +182,6 @@ const authProtectedRoutes = [
   { path: "/projects-overview/:id", component: <ProjectsOverview /> },
   { path: "/projects-create", component: <ProjectsCreate /> },
 
-  //Blog
-  // { path: "/blog-list", component: <BlogList /> },
-  // { path: "/blog-grid", component: <BlogGrid /> },
-  // { path: "/blog-details", component: <BlogDetails /> },
-
   //job
   { path: "/job-grid", component: <JobGrid /> },
   { path: "/job-details", component: <JobDetails /> },
@@ -287,11 +190,6 @@ const authProtectedRoutes = [
   { path: "/job-apply", component: <ApplyJobs /> },
   { path: "/candidate-list", component: <CandidateList /> },
   { path: "/candidate-overview", component: <CandidateOverview /> },
-
-  // Contacts
-  // { path: "/contacts-grid", component: <ContactsGrid /> },
-  // { path: "/contacts-list", component: <ContactsList /> },
-  // { path: "/contacts-profile", component: <ContactsProfile /> },
 
   //Charts
   { path: "/apex-charts", component: <ChartApex /> },
