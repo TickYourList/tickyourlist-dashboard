@@ -71,6 +71,21 @@ const deleteCarBlogData = id => del(`${url.DELETE_CAR_BLOG}/${id}`);
 // DELETE ALL CAR BRANDS
 const deleteAllCarBlogs = () => del(url.DELETE_ALL_CAR_BLOG);
 
+// GET CAR CUSTOMERS LIST
+const getCarCustomersList = () => get(url.GET_CAR_CUSTOMERS);
+
+// ADD CAR CUSTOMER
+const addCarCustomer = data => postFormData(url.ADD_CAR_CUSTOMER, data);
+
+// UPDATE CAR CUSTOMER
+const updateCarCustomerData = (userId, data) => putFormData(`${url.UPDATE_CAR_CUSTOMER}/${userId}`, data);
+
+// DELETE CAR CUSTOMER
+const deleteCarCustomerData = id => del(`${url.DELETE_CAR_CUSTOMER}/${id}`);
+
+// DELETE ALL CAR CUSTOMERS
+const deleteAllCarCustomers = () => del(url.DELETE_ALL_CAR_CUSTOMER);
+
 
 export {
     getCarBrandsList,
@@ -94,5 +109,10 @@ export {
     updateCarBlogData,
     deleteAllCarBlogs,
     deleteCarBlogData,
-    fetchCarModelByBrand
+    fetchCarModelByBrand,
+    getCarCustomersList,
+    addCarCustomer,
+    updateCarCustomerData,
+    deleteCarCustomerData,
+    deleteAllCarCustomers
 };

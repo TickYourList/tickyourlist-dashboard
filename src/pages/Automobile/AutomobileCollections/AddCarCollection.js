@@ -145,7 +145,7 @@ export default function AddCarCollection() {
     });
     console.log('collection data 1', collection);
      dispatch(
-      addCollection(collection, history, './automobile-collections')
+      addCollection(collection, history, '../automobile-collections')
     )
   } catch (error) {
     console.error(error);

@@ -133,6 +133,7 @@ import AddCarCollection from "pages/Automobile/AutomobileCollections/AddCarColle
 import CarModelCollectionDetails from "pages/Automobile/AutomobileCollections/CarModelCollectionDetails";
 import CarBlogs from "pages/Automobile/CarBlogs/CarBlogs";
 import EditCarVariant from "pages/Automobile/CarVariants/EditCarVariant";
+import CarCustomers from "pages/Automobile/CarCustomers/CarCustomers";
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard /> },
@@ -168,6 +169,8 @@ const authProtectedRoutes = [
   { path: "/edit-car-variant/:_id", component: <EditCarVariant /> },
 
   { path: "/car-blogs", component: <CarBlogs /> },
+
+  { path: "/car-customers", component: <CarCustomers /> },
 
   //Invoices
   { path: "/invoices-list", component: <InvoicesList /> },

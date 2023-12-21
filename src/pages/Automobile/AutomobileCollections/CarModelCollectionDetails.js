@@ -324,7 +324,7 @@ export default function CarModelCollectionDetails() {
                         <CardGroup>
                           {collectionCarModelIds?.map((id, i) => {
                             const prod = carModels?.find(
-                              carModel => carModel._id === id
+                              carModel => carModel._id === id._id
                             );
                             return renderCollectionProductPreview(
                               prod,

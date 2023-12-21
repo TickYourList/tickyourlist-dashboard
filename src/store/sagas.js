@@ -27,6 +27,7 @@ import carBrandSaga from "./automobiles/carbrands/saga";
 import carModelSaga from "./automobiles/carModels/saga";
 import carVariantSaga from "./automobiles/carVariants/saga";
 import carBlogSaga from "./automobiles/carBlogs/saga";
+import carCustomerSaga from "./automobiles/carCustomers/saga";
 
 export default function* rootSaga() {
   yield all([
@@ -56,6 +57,7 @@ export default function* rootSaga() {
     fork(carBrandSaga),
     fork(carModelSaga),
     fork(carVariantSaga),
-    fork(carBlogSaga)
+    fork(carBlogSaga),
+    fork(carCustomerSaga)
   ]);
 }

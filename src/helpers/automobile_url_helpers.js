@@ -23,4 +23,10 @@ export const UPDATE_CAR_BLOG = "/v1/automobile/update/carblog";
 export const DELETE_CAR_BLOG = "/v1/carblog/delete/blog";
 export const DELETE_ALL_CAR_BLOG = "/v1/carblog/delete/all/blogs";
 
+export const GET_CAR_CUSTOMERS = "v1/carcustomer/get/customer/submitted/all";
+export const ADD_CAR_CUSTOMER = "/v1/carblog/add/blog";
+export const UPDATE_CAR_CUSTOMER = "/v1/automobile/update/carblog";
+export const DELETE_CAR_CUSTOMER = "/v1/carcustomer/delete/customer";
+export const DELETE_ALL_CAR_CUSTOMER = "/v1/carcustomer/delete/all/customers";
+
 export const GET_MODEL_BY_BRAND = "/v1/automobile/carmodel/from/carbrand";
