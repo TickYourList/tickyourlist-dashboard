@@ -7,17 +7,26 @@ import {
   Table,
   ModalFooter,
   Button,
+  Row,
+  Col,
 } from "reactstrap";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { getCarVariantsFromModel } from "store/automobiles/carModels/actions";
 
-const CarBrandDetail = ({ isOpen, toggle, Data }) => {
+const CarModelDetail = ({ isOpen, toggle, Data }) => {
   const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+
+  const { carVariants } = useSelector((state) => ({
+    carVariants: state.CarModel.carVariants
+  }));
+
   useEffect(() => {
-    if (Data) {
-      setData(Data?.orderItems);
-    }
+      dispatch(getCarVariantsFromModel(Data._id));
   }, [Data]);
 
-  let subTotal = 0;
   return (
     <Modal
       isOpen={isOpen}
@@ -29,61 +38,61 @@ const CarBrandDetail = ({ isOpen, toggle, Data }) => {
       toggle={toggle}
     >
       <div className="modal-content">
-        <ModalHeader toggle={toggle}>Order Details</ModalHeader>
+        <ModalHeader toggle={toggle}>Model Details</ModalHeader>
         <ModalBody>
+          <div className="d-flex justify-content-center">
+        <img src={Data?.media?.url} alt={Data?.media?.altText} width={170} height={150} />
+        </div>
           <p className="mb-2">
-            <b>Order id:</b> <span className="text-primary">{Data?._id}</span>
+            <b>Model id:</b> <span className="text-primary">{Data?._id}</span>
           </p>
           <p className="mb-2">
-            <b>Billing Name: </b>
-            <span className="text-primary">{Data?.customerId?.username}</span>
+            <b>Model Name: </b>
+            <span className="text-primary">{Data?.modelName}</span>
+          </p>
+          <p className="mb-2">
+            <b>Year: </b>
+            <span className="text-primary">{Data?.year}</span>
           </p>
           <p className="mb-4">
-            <b>Address:</b>
-            <span className="text-primary">{` ${Data?.shippingAddress1}, ${Data?.state},${Data?.zip}`}</span>
+            <b>Description: </b>
+            <span className="text-primary">{Data?.description}</span>
           </p>
-
           <div className="table-responsive">
             <Table className="table align-middle table-nowrap">
               <thead>
                 <tr>
-                  <th scope="col">Product</th>
-                  <th scope="col">Product Name</th>
-                  <th scope="col">Price</th>
+                  <th scope="col">Variant Name</th>
+                  <th scope="col">Variant Image</th>
+                  {/* <th scope="col">Variant Data</th> */}
                 </tr>
               </thead>
               <tbody>
-                {data?.map((ele, idx) => {
-                  const price = ele?.product?.price;
-                  const quantity = ele?.quantity;
-                  const total = price * quantity;
-                  subTotal += total;
+                {carVariants?.map((ele, idx) => {
+                  {console.log('eleme', ele)}
                   return (
                     <tr key={idx}>
+                      <td>
+                        <div>
+                          <h5 className="text-truncate font-size-14">
+                            {ele?.name}
+                          </h5>
+                        </div>
+                      </td>
                       <th scope="row">
                         <div>
                           <img
-                            src={ele?.product?.media[0]?.url}
+                            src={ele?.media[0]?.url}
                             alt=""
                             className="avatar-sm"
                           />
                         </div>
                       </th>
-                      <td>
-                        <div>
-                          <h5 className="text-truncate font-size-14">
-                            {ele?.product?.name}
-                          </h5>
-                          <p className="text-muted mb-0">
-                            $ {price} x {quantity}
-                          </p>
-                        </div>
-                      </td>
-                      <td>$ {total}</td>
+                      {/* <td>$ {'total'}</td> */}
                     </tr>
                   );
                 })}
-                <tr>
+                {/* <tr>
                   <td colSpan="2">
                     <h6 className="m-0 text-end">Sub Total:</h6>
                   </td>
@@ -100,7 +109,7 @@ const CarBrandDetail = ({ isOpen, toggle, Data }) => {
                     <h6 className="m-0 text-end">Total:</h6>
                   </td>
                   <td>$ {Data?.totalPrice}</td>
-                </tr>
+                </tr> */}
               </tbody>
             </Table>
           </div>
@@ -115,10 +124,10 @@ const CarBrandDetail = ({ isOpen, toggle, Data }) => {
   );
 };
 
-CarBrandDetail.propTypes = {
+CarModelDetail.propTypes = {
   Data: PropTypes.object,
   toggle: PropTypes.func,
   isOpen: PropTypes.bool,
 };
 
-export default CarBrandDetail;
+export default CarModelDetail;

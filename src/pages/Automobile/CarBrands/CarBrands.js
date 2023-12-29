@@ -300,7 +300,7 @@ function CarBrands() {
 
   return (
     <React.Fragment>
-      <CarBrandModel isOpen={modal1} toggle={toggleViewModal} data={carBrandData} />
+      {/* <CarBrandModel isOpen={modal1} toggle={toggleViewModal} data={carBrandData} /> */}
       <CarBrandDetail isOpen={modal1} toggle={toggleViewModal} Data={carBrandData} />
       <DeleteModal
         show={deleteModal}

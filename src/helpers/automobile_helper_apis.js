@@ -21,6 +21,9 @@ const deleteAllCarBrands = () => del(url.DELETE_ALL_CAR_BRAND);
 // GET CAR MODELS LIST
 const getCarModelsList = () => get(url.GET_CAR_MODELS);
 
+// Get Car Variants from Car Model
+const getCarVariantsListFromCarModel = id => get(`${url.GET_CAR_VARIANTS_FROM_CAR_MODEL}/${id}`);
+
 // ADD CAR MODEL
 const addCarModel = (id, data) => postFormData(`${url.ADD_CAR_MODEL}/${id}`, data);
 
@@ -94,6 +97,7 @@ export {
     deleteCarBrandData,
     deleteAllCarBrands,
     getCarModelsList,
+    getCarVariantsListFromCarModel,
     addCarModel,
     updateCarModelData,
     deleteCarModelData,

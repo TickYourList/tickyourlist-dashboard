@@ -29,7 +29,7 @@ const CarBrandModel = ({ isOpen, toggle, Data }) => {
       toggle={toggle}
     >
       <div className="modal-content">
-        <ModalHeader toggle={toggle}>Order Details</ModalHeader>
+        <ModalHeader toggle={toggle}>Brand Details</ModalHeader>
         <ModalBody>
           <p className="mb-2">
             <b>Order id:</b> <span className="text-primary">{Data?._id}</span>

@@ -9,6 +9,7 @@ export const ADD_CAR_MODEL = "/v1/carmodel/add/carbrand";
 export const UPDATE_CAR_MODEL = "/v1/carmodel/update";
 export const DELETE_CAR_MODEL = "/v1/carmodel/delete";
 export const DELETE_ALL_CAR_MODEL = "/v1/carmodel/delete/all";
+export const GET_CAR_VARIANTS_FROM_CAR_MODEL = "v1/carvariant/from/carmodel";
 
 export const GET_CAR_VARIANTS = "v1/carvariant/get/submitted/all";
 export const ADD_CAR_VARIANT = "/v1/carvariant/add/carmodel";

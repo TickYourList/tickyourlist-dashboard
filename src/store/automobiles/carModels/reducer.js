@@ -1,9 +1,10 @@
-import { ADD_CAR_MODEL_FAIL, ADD_CAR_MODEL_SUCCESS, DELETE_ALL_CAR_MODEL_SUCCESS, DELETE_CAR_MODEL_FAIL, DELETE_CAR_MODEL_SUCCESS, GET_CAR_MODELS, GET_CAR_MODELS_FAIL, GET_CAR_MODELS_SUCCESS, GET_COUNTRIES_LIST, GET_COUNTRIES_LIST_ERROR, GET_COUNTRIES_LIST_SUCCESS, UPDATE_CAR_MODEL_FAIL, UPDATE_CAR_MODEL_SUCCESS } from "./actionTypes";
+import { ADD_CAR_MODEL_FAIL, ADD_CAR_MODEL_SUCCESS, DELETE_ALL_CAR_MODEL_SUCCESS, DELETE_CAR_MODEL_FAIL, DELETE_CAR_MODEL_SUCCESS, GET_CAR_MODELS, GET_CAR_MODELS_FAIL, GET_CAR_MODELS_SUCCESS, GET_CAR_VARIANTS_FROM_CARMODEL_SUCCESS, GET_COUNTRIES_LIST, GET_COUNTRIES_LIST_ERROR, GET_COUNTRIES_LIST_SUCCESS, UPDATE_CAR_MODEL_FAIL, UPDATE_CAR_MODEL_SUCCESS } from "./actionTypes";
 
 const INIT_STATE = {
     carModels: [],
     countries: [],
     error: {},
+    carVariants: []
 };
 
 const carModel = (state = INIT_STATE, action) => {
@@ -71,6 +72,11 @@ const carModel = (state = INIT_STATE, action) => {
                 ...state,
                 countries: action.payload
             }
+            case GET_CAR_VARIANTS_FROM_CARMODEL_SUCCESS:
+                return {
+                    ...state,
+                    carVariants: action.payload
+                }
         default:
             return state;
     }

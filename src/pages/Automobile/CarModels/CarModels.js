@@ -47,7 +47,7 @@ import {
   FormGroup,
 } from "reactstrap";
 import Select from "react-select";
-import CarBrandDetail from "./CarModelDetail";
+import CarModelDetail from "./CarModelDetail";
 import { getCarBrands } from "store/automobiles/carbrands/actions";
 import { useFormik } from "formik";
 import CarBrandModel from "./CarModelModel";
@@ -321,8 +321,7 @@ function CarModels() {
 
   return (
     <React.Fragment>
-      <CarBrandModel isOpen={modal1} toggle={toggleViewModal} data={carModelData} />
-      <CarBrandDetail isOpen={modal1} toggle={toggleViewModal} Data={carModelData} />
+      <CarModelDetail isOpen={modal1} toggle={toggleViewModal} Data={carModelData} />
       <DeleteModal
         show={deleteModal}
         onDeleteClick={handleDeletecarModel}

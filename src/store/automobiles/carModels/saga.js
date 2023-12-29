@@ -1,9 +1,9 @@
 import { takeEvery, put, call } from "redux-saga/effects"
 
 // Calender Redux States
-import { ADD_NEW_CAR_MODEL, DELETE_ALL_CAR_MODEL, DELETE_CAR_MODEL, GET_CAR_MODELS, GET_COUNTRIES_LIST, GET_COUNTRIES_LIST_SUCCESS, UPDATE_CAR_MODEL } from "./actionTypes"
-import { addCarModelFail, addCarModelSuccess, deleteAllCarModelsFail, deleteAllCarModelsSuccess, deleteCarModel, deleteCarModelFail, deleteCarModelSuccess, getCarModelsFail, getCarModelsSuccess, getCountriesListError, getCountriesListSuccess, updateCarModel, updateCarModelFail, updateCarModelSuccess } from "./actions"
-import { addCarModel, deleteAllCarModels, deleteCarModelData, fetchCountriesListData, getCarModelsList, updateCarModelData } from "helpers/automobile_helper_apis"
+import { ADD_NEW_CAR_MODEL, DELETE_ALL_CAR_MODEL, DELETE_CAR_MODEL, GET_CAR_MODELS, GET_CAR_VARIANTS_FROM_CARMODEL, GET_COUNTRIES_LIST, GET_COUNTRIES_LIST_SUCCESS, UPDATE_CAR_MODEL } from "./actionTypes"
+import { addCarModelFail, addCarModelSuccess, deleteAllCarModelsFail, deleteAllCarModelsSuccess, deleteCarModel, deleteCarModelFail, deleteCarModelSuccess, getCarModelsFail, getCarModelsSuccess, getCarVariantsFromModelFail, getCarVariantsFromModelSuccess, getCountriesListError, getCountriesListSuccess, updateCarModel, updateCarModelFail, updateCarModelSuccess } from "./actions"
+import { addCarModel, deleteAllCarModels, deleteCarModelData, fetchCountriesListData, getCarModelsList, getCarVariantsListFromCarModel, updateCarModelData } from "helpers/automobile_helper_apis"
 
 
 function* fetchCarModels() {
@@ -36,7 +36,6 @@ function* onUpdateCarModel({ payload: { carModelId, id, data } }) {
 function* onDeleteCarModel({ payload: carModel  }) {
   try {
     const response = yield call(deleteCarModelData, carModel._id );
-    console.log('response ', response);
     yield put(deleteCarModelSuccess(carModel))
   } catch (error) {
     yield put(deleteCarModelFail(error))
@@ -61,6 +60,16 @@ function* onDeleteAllCarModel() {
     }
   }
 
+  function* fetchCarVariantsFromCarModel({ payload: id }) {
+    try {
+      console.log('payloadcheck ', id);
+      const response = yield call(getCarVariantsListFromCarModel, id)
+      yield put(getCarVariantsFromModelSuccess(response.data.carVariantList))
+    } catch (error) {
+      yield put(getCarVariantsFromModelFail(error))
+    }
+  }
+
 function* carModelSaga() {
   yield takeEvery(GET_CAR_MODELS, fetchCarModels);
   yield takeEvery(ADD_NEW_CAR_MODEL, onAddCarModel);
@@ -68,6 +77,7 @@ function* carModelSaga() {
   yield takeEvery(DELETE_CAR_MODEL, onDeleteCarModel);
   yield takeEvery(DELETE_ALL_CAR_MODEL, onDeleteAllCarModel);
   yield takeEvery(GET_COUNTRIES_LIST, fetchCountriesList);
+  yield takeEvery(GET_CAR_VARIANTS_FROM_CARMODEL, fetchCarVariantsFromCarModel);
 }
 
 export default carModelSaga;
