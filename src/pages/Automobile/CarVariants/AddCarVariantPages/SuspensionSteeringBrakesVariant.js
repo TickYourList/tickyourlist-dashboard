@@ -141,7 +141,7 @@ const SuspensionSteeringBrakesVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="fontSuspension"
                             className="col-form-label"
                         >
-                            Font Suspension <span style={{ color: 'red' }}>*</span>
+                            Front Suspension <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -239,7 +239,7 @@ const SuspensionSteeringBrakesVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="turningRadius"
                             className="col-form-label"
                         >
-                            Turning Radius <span style={{ color: 'red' }}>*</span>
+                            Turning Radius (Metres) <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input

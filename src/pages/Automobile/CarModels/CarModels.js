@@ -44,6 +44,7 @@ import {
   Label,
   Input,
   FormFeedback,
+  FormGroup,
 } from "reactstrap";
 import Select from "react-select";
 import CarBrandDetail from "./CarModelDetail";
@@ -79,6 +80,7 @@ function CarModels() {
     initialValues: {
       modelName: (carModel && carModel.modelName) || "",
       carBrand: (carModel && carModel.carBrand && carModel.carBrand._id) || "",
+      bodyType: (carModel && carModel.bodyType) || "",
       description: (carModel && carModel.description) || "",
       year: (carModel && carModel.year) || "",
       status: (carModel && carModel.status ? 'Active' : 'InActive') || "",
@@ -90,6 +92,9 @@ function CarModels() {
       ),
       carBrand: Yup.string().required(
         "Please Enter Your CarBrand"
+      ),
+      bodyType: Yup.string().required(
+        "Please Enter Your BodyType"
       ),
       description: Yup.string().required(
         "Please Enter Your description"
@@ -106,6 +111,7 @@ function CarModels() {
         const updCarModel = new FormData();
         updCarModel.append("modelName", values["modelName"]);
         updCarModel.append("description", values["description"]);
+        newCarModel.append("bodyType", values["bodyType"]);
         updCarModel.append("year", values["year"]);
         updCarModel.append("status", values["status"] === 'Active' ? true : false);
         updCarModel.append("image", modelImage ? modelImage : "broken!");
@@ -115,6 +121,7 @@ function CarModels() {
       } else {
         const newCarModel = new FormData();
         newCarModel.append("modelName", values["modelName"]);
+        newCarModel.append("bodyType", values["bodyType"]);
         newCarModel.append("description", values["description"]);
         newCarModel.append("year", values["year"]);
         newCarModel.append("status", values["status"] === 'Active' ? true : false);
@@ -429,6 +436,36 @@ function CarModels() {
                     </FormFeedback>
                   ) : null}
                 </div>
+                 <FormGroup className="mb-4" row>
+                        <Label htmlFor="bodyType" className="col-form-label">
+                            Body Type <span style={{color: 'red'}}>*</span>
+                        </Label>
+                        <Col>
+                            <Input
+                                type="select"
+                                className="form-control"
+                                name="bodyType"
+                                id="bodyType"
+                                onChange={validation.handleChange}
+                                onBlur={validation.handleBlur}
+                                value={validation.values.bodyType}
+                            >
+                                <option value="">Select Body Type</option>
+                                <option value="SUV">SUV</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="Compact-Suv">Compact Suv</option>
+                                <option value="Compact-Sedan">Compact Sedan</option>
+                                <option value="Convertible">Convertible</option>
+                                <option value="Coupe">Coupe</option>
+                                <option value="Station-Wegon">Station Wegon</option>
+                                <option value="MuV">MUV</option>
+                                <option value="Luxury">Luxury</option>
+                                <option value="Minivan">Minivan</option>
+                                <option value="Truck">Truck</option>
+                            </Input>
+                        </Col>
+                    </FormGroup>
                 <div className="mb-3">
                   <Label className="form-label">
                     Description <span style={{ color: 'red' }}>*</span>

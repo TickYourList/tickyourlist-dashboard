@@ -5,6 +5,13 @@ import * as url from "./url_helper";
 // Register Method
 const postRegister = data => post(url.POST_REGISTER, data);
 
+const postVerification = token => post(`${url.POST_EMAIL_VERIFY}?token=${token}`);
+
+// Register Method
+const postForgotPassword = data => post(url.POST_RESET_PASSWORD, data);
+
+const postForgotPasswordVerification = (token, data) => post(`${url.POST_RESET_PASSWORD_VERIFY}?token=${token}`, data);
+
 //login
 const postLogin = data => post(url.POST_LOGIN, data);
 
@@ -145,6 +152,9 @@ export const getInvoiceDetail = id =>
 
 export {
   postRegister,
+  postVerification,
+  postForgotPassword,
+  postForgotPasswordVerification,
   postLogin,
   putJwtProfile,
   getTotalOrdersCountData,

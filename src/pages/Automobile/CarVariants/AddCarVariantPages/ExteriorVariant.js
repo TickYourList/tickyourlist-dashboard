@@ -161,9 +161,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
             //     dispatch(addNewCarModel(values['carBrand'], newCarModel));
             //     validation.resetForm();
             // }
-            if(onFormSubmit) {
+            if (onFormSubmit) {
                 onFormSubmit('exterior', values, '9');
-                }
+            }
             toggle();
         },
         handleError: e => { },
@@ -197,564 +197,573 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                 <Form onSubmit={validation.handleSubmit}>
 
                     <Row>
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.fogLightsFront}
-                                id="fogLightsFront"
-                                onChange={(event) => {
-                                    validation.setFieldValue("fogLightsFront", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="fogLightsFront"
-                            >
-                                Fog Light Front
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.fogLightsFront}
+                                        id="fogLightsFront"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("fogLightsFront", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="fogLightsFront"
+                                    >
+                                        Fog Light Front
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.powerAdjustableExteriorRearViewMirror}
-                                id="powerAdjustableExteriorRearViewMirror"
-                                onChange={(event) => {
-                                    validation.setFieldValue("powerAdjustableExteriorRearViewMirror", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="powerAdjustableExteriorRearViewMirror"
-                            >
-                                Power Adjustable Exterior Rear View Mirror
-                            </label>
+                                </div>
+                            </FormGroup>
+                        </Col>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.powerAdjustableExteriorRearViewMirror}
+                                        id="powerAdjustableExteriorRearViewMirror"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("powerAdjustableExteriorRearViewMirror", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="powerAdjustableExteriorRearViewMirror"
+                                    >
+                                        Power Adjustable Exterior Rear View Mirror
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.manuallyAdjustableExtRearViewMirror}
-                                id="manuallyAdjustableExtRearViewMirror"
-                                onChange={(event) => {
-                                    validation.setFieldValue("manuallyAdjustableExtRearViewMirror", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="manuallyAdjustableExtRearViewMirror"
-                            >
-                                Manually Adjustable Exterior Rear View Mirror
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.manuallyAdjustableExtRearViewMirror}
+                                        id="manuallyAdjustableExtRearViewMirror"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("manuallyAdjustableExtRearViewMirror", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="manuallyAdjustableExtRearViewMirror"
+                                    >
+                                        Manually Adjustable Exterior Rear View Mirror
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.electricFoldingRearViewMirror}
-                                id="electricFoldingRearViewMirror"
-                                onChange={(event) => {
-                                    validation.setFieldValue("electricFoldingRearViewMirror", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="electricFoldingRearViewMirror"
-                            >
-                                Electric folding Rear View Mirror
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.electricFoldingRearViewMirror}
+                                        id="electricFoldingRearViewMirror"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("electricFoldingRearViewMirror", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="electricFoldingRearViewMirror"
+                                    >
+                                        Electric folding Rear View Mirror
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
                     </Row>
 
                     <Row>
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.rearWindowWiper}
-                                id="rearWindowWiper"
-                                onChange={(event) => {
-                                    validation.setFieldValue("rearWindowWiper", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="rearWindowWiper"
-                            >
-                                Rear Window Wiper
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.rearWindowWiper}
+                                        id="rearWindowWiper"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("rearWindowWiper", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="rearWindowWiper"
+                                    >
+                                        Rear Window Wiper
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.rearWindowWasher}
-                                id="rearWindowWasher"
-                                onChange={(event) => {
-                                    validation.setFieldValue("rearWindowWasher", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="rearWindowWasher"
-                            >
-                                Rear Window Washer
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.rearWindowWasher}
+                                        id="rearWindowWasher"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("rearWindowWasher", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="rearWindowWasher"
+                                    >
+                                        Rear Window Washer
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.rearWindowDefogger}
-                                id="rearWindowDefogger"
-                                onChange={(event) => {
-                                    validation.setFieldValue("rearWindowDefogger", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="rearWindowDefogger"
-                            >
-                                Rear Window Defogger
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.rearWindowDefogger}
+                                        id="rearWindowDefogger"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("rearWindowDefogger", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="rearWindowDefogger"
+                                    >
+                                        Rear Window Defogger
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.wheelCovers}
-                                id="wheelCovers"
-                                onChange={(event) => {
-                                    validation.setFieldValue("wheelCovers", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="wheelCovers"
-                            >
-                                Wheel Covers
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.wheelCovers}
+                                        id="wheelCovers"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("wheelCovers", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="wheelCovers"
+                                    >
+                                        Wheel Covers
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
                     </Row>
 
                     <Row>
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.alloyWheels}
-                                id="alloyWheels"
-                                onChange={(event) => {
-                                    validation.setFieldValue("alloyWheels", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="alloyWheels"
-                            >
-                                Alloy Wheels
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.alloyWheels}
+                                        id="alloyWheels"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("alloyWheels", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="alloyWheels"
+                                    >
+                                        Alloy Wheels
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.powerAntenna}
-                                id="powerAntenna"
-                                onChange={(event) => {
-                                    validation.setFieldValue("powerAntenna", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="powerAntenna"
-                            >
-                                Power Antenna
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.powerAntenna}
+                                        id="powerAntenna"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("powerAntenna", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="powerAntenna"
+                                    >
+                                        Power Antenna
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.rearSpoiler}
-                                id="rearSpoiler"
-                                onChange={(event) => {
-                                    validation.setFieldValue("rearSpoiler", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="rearSpoiler"
-                            >
-                                Rear Spoiler
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.rearSpoiler}
+                                        id="rearSpoiler"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("rearSpoiler", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="rearSpoiler"
+                                    >
+                                        Rear Spoiler
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.outsideRearViewMirrorTurnIndicators}
-                                id="outsideRearViewMirrorTurnIndicators"
-                                onChange={(event) => {
-                                    validation.setFieldValue("outsideRearViewMirrorTurnIndicators", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="outsideRearViewMirrorTurnIndicators"
-                            >
-                                Outside Rear View Mirror Turn Indicators
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.outsideRearViewMirrorTurnIndicators}
+                                        id="outsideRearViewMirrorTurnIndicators"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("outsideRearViewMirrorTurnIndicators", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="outsideRearViewMirrorTurnIndicators"
+                                    >
+                                        Outside Rear View Mirror Turn Indicators
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
                     </Row>
 
                     <Row>
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.integratedAntenna}
-                                id="integratedAntenna"
-                                onChange={(event) => {
-                                    validation.setFieldValue("integratedAntenna", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="integratedAntenna"
-                            >
-                                Integrated Antenna
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.integratedAntenna}
+                                        id="integratedAntenna"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("integratedAntenna", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="integratedAntenna"
+                                    >
+                                        Integrated Antenna
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.chromeGrille}
-                                id="chromeGrille"
-                                onChange={(event) => {
-                                    validation.setFieldValue("chromeGrille", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="chromeGrille"
-                            >
-                                Chrome Grille
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.chromeGrille}
+                                        id="chromeGrille"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("chromeGrille", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="chromeGrille"
+                                    >
+                                        Chrome Grille
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.chromeGarnish}
-                                id="chromeGarnish"
-                                onChange={(event) => {
-                                    validation.setFieldValue("chromeGarnish", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="chromeGarnish"
-                            >
-                                Chrome Garnish
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.chromeGarnish}
+                                        id="chromeGarnish"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("chromeGarnish", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="chromeGarnish"
+                                    >
+                                        Chrome Garnish
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.projectorHeadlamps}
-                                id="projectorHeadlamps"
-                                onChange={(event) => {
-                                    validation.setFieldValue("projectorHeadlamps", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="projectorHeadlamps"
-                            >
-                                Projector Head Lamps
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.projectorHeadlamps}
+                                        id="projectorHeadlamps"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("projectorHeadlamps", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="projectorHeadlamps"
+                                    >
+                                        Projector Head Lamps
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
                     </Row>
 
                     <Row>
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.halogenHeadlamps}
-                                id="halogenHeadlamps"
-                                onChange={(event) => {
-                                    validation.setFieldValue("halogenHeadlamps", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="halogenHeadlamps"
-                            >
-                                Halogen Head Lamps
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.halogenHeadlamps}
+                                        id="halogenHeadlamps"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("halogenHeadlamps", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="halogenHeadlamps"
+                                    >
+                                        Halogen Head Lamps
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.roofRail}
-                                id="roofRail"
-                                onChange={(event) => {
-                                    validation.setFieldValue("roofRail", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="roofRail"
-                            >
-                                Roof Rails
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.roofRail}
+                                        id="roofRail"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("roofRail", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="roofRail"
+                                    >
+                                        Roof Rails
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.ledDrls}
-                                id="ledDrls"
-                                onChange={(event) => {
-                                    validation.setFieldValue("ledDrls", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="ledDrls"
-                            >
-                                Led Drls
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.ledDrls}
+                                        id="ledDrls"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("ledDrls", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="ledDrls"
+                                    >
+                                        Led Drls
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.ledHeadlights}
-                                id="ledHeadlights"
-                                onChange={(event) => {
-                                    validation.setFieldValue("ledHeadlights", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="ledHeadlights"
-                            >
-                                LED Head lights
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.ledHeadlights}
+                                        id="ledHeadlights"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("ledHeadlights", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="ledHeadlights"
+                                    >
+                                        LED Head lights
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
                     </Row>
 
                     <Row>
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.ledTaillights}
-                                id="ledTaillights"
-                                onChange={(event) => {
-                                    validation.setFieldValue("ledTaillights", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="ledTaillights"
-                            >
-                                LED Tail lights
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.ledTaillights}
+                                        id="ledTaillights"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("ledTaillights", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="ledTaillights"
+                                    >
+                                        LED Tail lights
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.ledFogLamps}
-                                id="ledFogLamps"
-                                onChange={(event) => {
-                                    validation.setFieldValue("ledFogLamps", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="ledFogLamps"
-                            >
-                                LED Fog Lamps
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.ledFogLamps}
+                                        id="ledFogLamps"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("ledFogLamps", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="ledFogLamps"
+                                    >
+                                        LED Fog Lamps
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
 
-                    <Col lg="3">
-                    <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={validation.values.fogLights}
-                                id="fogLights"
-                                onChange={(event) => {
-                                    validation.setFieldValue("fogLights", event.target.checked);
-                                }}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="fogLights"
-                            >
-                                LED Fog Lights
-                            </label>
+                        <Col lg="3">
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        checked={validation.values.fogLights}
+                                        id="fogLights"
+                                        onChange={(event) => {
+                                            validation.setFieldValue("fogLights", event.target.checked);
+                                        }}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="fogLights"
+                                    >
+                                        LED Fog Lights
+                                    </label>
 
-                        </div>
-                    </FormGroup>
-                    </Col>
+                                </div>
+                            </FormGroup>
+                        </Col>
                     </Row>
-                    
+
                     <FormGroup className="mb-4" row>
-                        <Label
-                            htmlFor="bodyType"
-                            md="2"
-                            className="col-form-label"
-                        >
+                        <Label htmlFor="bodyType" md="2" className="col-form-label">
                             Body Type
                         </Label>
                         <Col md="10">
                             <Input
-                                type="text"
+                                type="select"
                                 className="form-control"
                                 name="bodyType"
                                 id="bodyType"
-                                placeholder="Enter your Body Type"
                                 onChange={validation.handleChange}
                                 onBlur={validation.handleBlur}
                                 value={validation.values.bodyType}
-                            />
+                            >
+                                <option value="">Select Body Type</option>
+                                <option value="SUV">SUV</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="Compact-Suv">Compact Suv</option>
+                                <option value="Compact-Sedan">Compact Sedan</option>
+                                <option value="Convertible">Convertible</option>
+                                <option value="Coupe">Coupe</option>
+                                <option value="Station-Wegon">Station Wegon</option>
+                                <option value="MuV">MUV</option>
+                                <option value="Luxury">Luxury</option>
+                                <option value="Minivan">Minivan</option>
+                                <option value="Truck">Truck</option>
+                            </Input>
                         </Col>
                     </FormGroup>
 
@@ -789,16 +798,16 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             Additional Features
                         </Label>
                         <Col md="10">
-                        <textarea
-                                    className="form-control"
-                                    name="additionalFeatures"
-                                    id="additionalFeatures"
-                                    placeholder="Enter your Additional Features"
-                                    rows="3"
-                                    onChange={validation.handleChange}
-                                    onBlur={validation.handleBlur}
-                                    value={validation.values.additionalFeatures}
-                                  ></textarea>
+                            <textarea
+                                className="form-control"
+                                name="additionalFeatures"
+                                id="additionalFeatures"
+                                placeholder="Enter your Additional Features"
+                                rows="3"
+                                onChange={validation.handleChange}
+                                onBlur={validation.handleBlur}
+                                value={validation.values.additionalFeatures}
+                            ></textarea>
                         </Col>
                     </FormGroup>
 
@@ -957,8 +966,8 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                     </FormGroup>
 
                     <Button type="submit" color="primary" className={
-                            !validation.isValid ? "next disabled" : "next"
-                          }>Next</Button>
+                        !validation.isValid ? "next disabled" : "next"
+                    }>Next</Button>
                 </Form>
             </div>
         </React.Fragment>

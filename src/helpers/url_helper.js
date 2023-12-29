@@ -1,6 +1,12 @@
 //REGISTER
 export const POST_REGISTER = "/v1/signup/basic";
 
+export const POST_EMAIL_VERIFY = "/v1/signup/verify";
+
+export const POST_RESET_PASSWORD = "/v1/signup/reset-password";
+
+export const POST_RESET_PASSWORD_VERIFY = "/v1/signup/reset-password/verify";
+
 //Login
 export const POST_LOGIN = "/v1/login/basic";
 

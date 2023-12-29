@@ -2,6 +2,9 @@ import {
   REGISTER_USER,
   REGISTER_USER_SUCCESSFUL,
   REGISTER_USER_FAILED,
+  EMAIL_VERIFICATION,
+  EMAIL_VERIFICATION_SUCCESSFUL,
+  EMAIL_VERIFICATION_FAILED,
 } from "./actionTypes"
 
 const initialState = {
@@ -9,6 +12,8 @@ const initialState = {
   message: null,
   loading: false,
   user: null,
+  verificationLoad: false,
+  verification: null
 }
 
 const account = (state = initialState, action) => {
@@ -36,6 +41,30 @@ const account = (state = initialState, action) => {
         registrationError: action.payload,
       }
       break
+      case EMAIL_VERIFICATION:
+        state = {
+          ...state,
+          user: null,
+          verificationLoad: true,
+          verification: null
+        }
+        break
+        case EMAIL_VERIFICATION_SUCCESSFUL:
+        state = {
+          ...state,
+          user: null,
+          verificationLoad: true,
+          verification: true
+        }
+        break
+        case EMAIL_VERIFICATION_FAILED:
+        state = {
+          ...state,
+          user: null,
+          verificationLoad: false,
+          verification: false
+        }
+        break
     default:
       state = { ...state }
       break

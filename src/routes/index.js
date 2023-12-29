@@ -134,6 +134,11 @@ import CarModelCollectionDetails from "pages/Automobile/AutomobileCollections/Ca
 import CarBlogs from "pages/Automobile/CarBlogs/CarBlogs";
 import EditCarVariant from "pages/Automobile/CarVariants/EditCarVariant";
 import CarCustomers from "pages/Automobile/CarCustomers/CarCustomers";
+import EmailVerification from "pages/Authentication/EmailVerification";
+import ForgetPasswordPageDetails from "pages/Authentication/ForgetPasswordPageDetails";
+import ForgotPasswordEmailVerification from "pages/Authentication/ForgotPasswordEmailVerification";
+import ForgotPasswordSuccessful from "pages/Authentication/ForgotPasswordSuccessful";
+// import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard /> },
@@ -277,8 +282,12 @@ const authProtectedRoutes = [
 const publicRoutes = [
   { path: "/login", component: <Login /> },
   { path: "/register", component: <Register /> },
+  { path: "/verify", component: <EmailVerification /> },
+  { path: "/verification-successful", component: <ConfirmMail /> },
   { path: "/logout", component: <Logout /> },
-  { path: "/forgot-password", component: <Recoverpw /> },
+  { path: "/forgot-password", component: <ForgetPasswordPageDetails /> },
+  { path: "/reset-password/verify", component: <ForgotPasswordEmailVerification /> },
+  { path: "/forgot-password-successful", component: <ForgotPasswordSuccessful /> },
 
   { path: "/pages-maintenance", component: <PagesMaintenance /> },
   { path: "/pages-comingsoon", component: <PagesComingsoon /> },

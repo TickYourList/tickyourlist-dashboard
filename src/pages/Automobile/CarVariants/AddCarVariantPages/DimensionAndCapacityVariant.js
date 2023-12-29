@@ -136,7 +136,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="length"
                             className="col-form-label"
                         >
-                            Length <span style={{ color: 'red' }}>*</span>
+                            Length (mm) <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -159,7 +159,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="width"
                             className="col-form-label"
                         >
-                            Width <span style={{ color: 'red' }}>*</span>
+                            Width (mm)<span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -184,7 +184,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="height"
                             className="col-form-label"
                         >
-                            Height <span style={{ color: 'red' }}>*</span>
+                            Height (mm)<span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -207,7 +207,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="groundClearanceUnladen"
                             className="col-form-label"
                         >
-                            Ground Clearance Unladen <span style={{ color: 'red' }}>*</span>
+                            Ground Clearance Unladen (mm)<span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -232,7 +232,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="wheelBase"
                             className="col-form-label"
                         >
-                            Wheel Base <span style={{ color: 'red' }}>*</span>
+                            Wheel Base (mm) <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -255,7 +255,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="frontTread"
                             className="col-form-label"
                         >
-                            Front Tread <span style={{ color: 'red' }}>*</span>
+                            Front Tread (mm) <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -280,7 +280,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="rearTread"
                             className="col-form-label"
                         >
-                            Rear Tread <span style={{ color: 'red' }}>*</span>
+                            Rear Tread (mm) <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -303,7 +303,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="kerbWeight"
                             className="col-form-label"
                         >
-                            Kerb Weight <span style={{ color: 'red' }}>*</span>
+                            Kerb Weight (mm) <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -328,7 +328,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="grossWeight"
                             className="col-form-label"
                         >
-                            Gross Weight <span style={{ color: 'red' }}>*</span>
+                            Gross Weight (kg) <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -351,7 +351,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="seatingCapacity"
                             className="col-form-label"
                         >
-                            Gross Weight <span style={{ color: 'red' }}>*</span>
+                            Gross Weight (kg) <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input
@@ -376,7 +376,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="bootSpace"
                             className="col-form-label"
                         >
-                            Boot Space <span style={{ color: 'red' }}>*</span>
+                            Boot Space (Litres) <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input

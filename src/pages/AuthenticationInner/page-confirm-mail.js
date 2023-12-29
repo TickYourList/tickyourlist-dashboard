@@ -33,7 +33,7 @@ const ConfirmMail = () => {
                     className="auth-logo-light mx-auto"
                   />
                 </Link>
-                <p className="mt-3">React Admin & Dashboard Template</p>
+                <p className="mt-3">Websites for the Digital Age</p>
               </div>
             </Col>
           </Row>
@@ -51,9 +51,7 @@ const ConfirmMail = () => {
                       <div className="p-2 mt-4">
                         <h4>Success !</h4>
                         <p className="text-muted">
-                          At vero eos et accusamus et iusto odio dignissimos
-                          ducimus qui blanditiis praesentium voluptatum
-                          deleniti atque corrupti quos dolores et
+                          Your Verification is Successful and <br/> Please login again to access.
                         </p>
                         <div className="mt-4">
                           <Link to="/dashboard" className="btn btn-success">

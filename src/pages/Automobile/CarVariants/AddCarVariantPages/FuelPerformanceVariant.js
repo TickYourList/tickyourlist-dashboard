@@ -143,127 +143,132 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
                 </p>
                 <Form onSubmit={validation.handleSubmit}>
                     <Row>
-                    <Col lg="6">
-                    <FormGroup className="mb-4" row>
-                        <Label
-                            htmlFor="fuelType"
-                            className="col-form-label"
-                        >
-                            Fuel Type <span style={{ color: 'red' }}>*</span>
-                        </Label>
-                        <Col md="10">
-                            <Input
-                                type="text"
-                                className="form-control"
-                                name="fuelType"
-                                id="fuelType"
-                                placeholder="Enter your Fuel Type"
-                                onChange={validation.handleChange}
-                                onBlur={validation.handleBlur}
-                                value={validation.values.fuelType}
-                            />
-                        </Col>
-                    </FormGroup>
-                    </Col>
+                        <Col lg="6">
+                            <FormGroup className="mb-4" row>
+                                <Label htmlFor="fuelType" className="col-form-label">
+                                    Fuel Type <span style={{ color: 'red' }}>*</span>
+                                </Label>
+                                <Col md="10">
+                                    <Input
+                                        type="select"
+                                        className="form-control"
+                                        name="fuelType"
+                                        id="fuelType"
+                                        onChange={validation.handleChange}
+                                        onBlur={validation.handleBlur}
+                                        value={validation.values.fuelType}
+                                    >
+                                        <option value="">Select Fuel Type</option>
+                                        <option value="Petrol">Petrol</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="CNG">CNG</option>
+                                        <option value="Electric">Electric</option>
+                                        <option value="Hybrid">Hybrid</option>
+                                        {/* Add other fuel types here if necessary */}
+                                    </Input>
+                                </Col>
+                            </FormGroup>
 
-                    <Col lg="6">
-                    <FormGroup className="mb-4" row>
-                        <Label
-                            htmlFor="mileageCity"
-                            className="col-form-label"
-                        >
-                            City Mileage <span style={{ color: 'red' }}>*</span>
-                        </Label>
-                        <Col md="10">
-                            <Input
-                                type="text"
-                                className="form-control"
-                                name="mileageCity"
-                                id="mileageCity"
-                                placeholder="Enter your Mileage City"
-                                onChange={validation.handleChange}
-                                onBlur={validation.handleBlur}
-                                value={validation.values.mileageCity}
-                            />
                         </Col>
-                    </FormGroup>
-                    </Col>
+
+                        <Col lg="6">
+                            <FormGroup className="mb-4" row>
+                                <Label
+                                    htmlFor="mileageCity"
+                                    className="col-form-label"
+                                >
+                                    City Mileage <span style={{ color: 'red' }}>*</span>
+                                </Label>
+                                <Col md="10">
+                                    <Input
+                                        type="text"
+                                        className="form-control"
+                                        name="mileageCity"
+                                        id="mileageCity"
+                                        placeholder="Enter your Mileage City"
+                                        onChange={validation.handleChange}
+                                        onBlur={validation.handleBlur}
+                                        value={validation.values.mileageCity}
+                                    />
+                                </Col>
+                            </FormGroup>
+                        </Col>
                     </Row>
 
                     <Row>
-                    <Col lg="6">
-                    <FormGroup className="mb-4" row>
-                        <Label
-                            htmlFor="mileageArai"
-                            className="col-form-label"
-                        >
-                            Arai Mileage <span style={{ color: 'red' }}>*</span>
-                        </Label>
-                        <Col md="10">
-                            <Input
-                                type="text"
-                                className="form-control"
-                                name="mileageArai"
-                                id="mileageArai"
-                                placeholder="Enter your Mileage Arai"
-                                onChange={validation.handleChange}
-                                onBlur={validation.handleBlur}
-                                value={validation.values.mileageArai}
-                            />
+                        <Col lg="6">
+                            <FormGroup className="mb-4" row>
+                                <Label
+                                    htmlFor="mileageArai"
+                                    className="col-form-label"
+                                >
+                                    Arai Mileage <span style={{ color: 'red' }}>*</span>
+                                </Label>
+                                <Col md="10">
+                                    <Input
+                                        type="text"
+                                        className="form-control"
+                                        name="mileageArai"
+                                        id="mileageArai"
+                                        placeholder="Enter your Mileage Arai"
+                                        onChange={validation.handleChange}
+                                        onBlur={validation.handleBlur}
+                                        value={validation.values.mileageArai}
+                                    />
+                                </Col>
+                            </FormGroup>
                         </Col>
-                    </FormGroup>
-                    </Col>
 
-                    <Col lg="6">
-                    <FormGroup className="mb-4" row>
-                        <Label
-                            htmlFor="fuelTankCapacity"
-                            className="col-form-label"
-                        >
-                            Fuel Tank Capacity <span style={{ color: 'red' }}>*</span>
-                        </Label>
-                        <Col md="10">
-                            <Input
-                                type="text"
-                                className="form-control"
-                                name="fuelTankCapacity"
-                                id="fuelTankCapacity"
-                                placeholder="Enter your Fuel Tank Capacity"
-                                onChange={validation.handleChange}
-                                onBlur={validation.handleBlur}
-                                value={validation.values.fuelTankCapacity}
-                            />
+                        <Col lg="6">
+                            <FormGroup className="mb-4" row>
+                                <Label
+                                    htmlFor="fuelTankCapacity"
+                                    className="col-form-label"
+                                >
+                                    Fuel Tank Capacity <span style={{ color: 'red' }}>*</span>
+                                </Label>
+                                <Col md="10">
+                                    <Input
+                                        type="text"
+                                        className="form-control"
+                                        name="fuelTankCapacity"
+                                        id="fuelTankCapacity"
+                                        placeholder="Enter your Fuel Tank Capacity"
+                                        onChange={validation.handleChange}
+                                        onBlur={validation.handleBlur}
+                                        value={validation.values.fuelTankCapacity}
+                                    />
+                                </Col>
+                            </FormGroup>
                         </Col>
-                    </FormGroup>
-                    </Col>
                     </Row>
                     <Row>
-                    <Col lg="6">
-                    <FormGroup className="mb-4" row>
-                        <Label
-                            htmlFor="emissionNormCompliance"
-                            className="col-form-label"
-                        >
-                            Emission Norm Compliance <span style={{ color: 'red' }}>*</span>
-                        </Label>
-                        <Col md="10">
-                            <Input
-                                type="text"
-                                className="form-control"
-                                name="emissionNormCompliance"
-                                id="emissionNormCompliance"
-                                placeholder="Enter your Emission Norm Compliance"
-                                onChange={validation.handleChange}
-                                onBlur={validation.handleBlur}
-                                value={validation.values.emissionNormCompliance}
-                            />
+                        <Col lg="6">
+                            <FormGroup className="mb-4" row>
+                                <Label
+                                    htmlFor="emissionNormCompliance"
+                                    className="col-form-label"
+                                >
+                                    Emission Norm Compliance <span style={{ color: 'red' }}>*</span>
+                                </Label>
+                                <Col md="10">
+                                    <Input
+                                        type="text"
+                                        className="form-control"
+                                        name="emissionNormCompliance"
+                                        id="emissionNormCompliance"
+                                        placeholder="Enter your Emission Norm Compliance"
+                                        onChange={validation.handleChange}
+                                        onBlur={validation.handleBlur}
+                                        value={validation.values.emissionNormCompliance}
+                                    />
+                                </Col>
+                            </FormGroup>
                         </Col>
-                    </FormGroup>
-                    </Col>
                     </Row>
                     <Button type="submit" color="primary" className={
-                            !validation.isValid ? "next disabled" : "next"
-                          }>Next</Button>
+                        !validation.isValid ? "next disabled" : "next"
+                    }>Next</Button>
                 </Form>
 
 
