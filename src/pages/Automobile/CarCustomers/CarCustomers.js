@@ -331,7 +331,6 @@ function CarCustomers() {
 
   return (
     <React.Fragment>
-      <CarCustomerModel isOpen={modal1} toggle={toggleViewModal} data={carCustomerData} />
       <CarCustomerDetail isOpen={modal1} toggle={toggleViewModal} Data={carCustomerData} />
       <DeleteModal
         show={deleteModal}

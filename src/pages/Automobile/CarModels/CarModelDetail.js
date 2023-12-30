@@ -51,6 +51,10 @@ const CarModelDetail = ({ isOpen, toggle, Data }) => {
             <span className="text-primary">{Data?.modelName}</span>
           </p>
           <p className="mb-2">
+            <b>Body Type: </b>
+            <span className="text-primary">{Data?.bodyType}</span>
+          </p>
+          <p className="mb-2">
             <b>Year: </b>
             <span className="text-primary">{Data?.year}</span>
           </p>
@@ -69,7 +73,6 @@ const CarModelDetail = ({ isOpen, toggle, Data }) => {
               </thead>
               <tbody>
                 {carVariants?.map((ele, idx) => {
-                  {console.log('eleme', ele)}
                   return (
                     <tr key={idx}>
                       <td>

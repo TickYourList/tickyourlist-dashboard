@@ -56,7 +56,7 @@ import { addNewCarModel, deleteAllCarModels, deleteCarModel, getCarModels, updat
 function CarModels() {
 
   //meta title
-  document.title = "Car brands | Scrollit";
+  document.title = "Car models | Scrollit";
 
   const [modal, setModal] = useState(false);
   const [nestedModal, setNestedModal] = useState(false);
@@ -78,13 +78,13 @@ function CarModels() {
     enableReinitialize: true,
 
     initialValues: {
-      modelName: (carModel && carModel.modelName) || "",
-      carBrand: (carModel && carModel.carBrand && carModel.carBrand._id) || "",
-      bodyType: (carModel && carModel.bodyType) || "",
-      description: (carModel && carModel.description) || "",
-      year: (carModel && carModel.year) || "",
-      status: (carModel && carModel.status ? 'Active' : 'InActive') || "",
-      modelImage: (carModel && carModel.media.url) || ""
+      modelName: (carModel && carModel?.modelName) || "",
+      carBrand: (carModel && carModel?.carBrand && carModel?.carBrand?._id) || "",
+      bodyType: (carModel && carModel?.bodyType) || "",
+      description: (carModel && carModel?.description) || "",
+      year: (carModel && carModel?.year) || "",
+      status: (carModel && carModel?.status ? 'Active' : 'InActive') || "",
+      modelImage: (carModel && carModel?.media?.url) || ""
     },
     validationSchema: Yup.object({
       modelName: Yup.string().required(

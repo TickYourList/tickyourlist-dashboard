@@ -77,7 +77,7 @@ const AddCarVariant = () => {
     const [allValid, setAllValid] = useState(false);
     const [selectedGroup, setselectedGroup] = useState(null)
 
-    const [carVariant, setCarVariant] = useState([]);
+    const [carVariant, setCarVariant] = useState({});
     const [switch1, setswitch1] = useState(true);
     
     const [activeTabVartical, setoggleTabVertical] = useState(1)
@@ -398,31 +398,31 @@ const AddCarVariant = () => {
                         className="body"
                       >
                         <TabPane tabId={1}>
-                        <BasicCarVariant onValidChange={(isValid) => validateAllSections(isValid, false)} onFormSubmit={handleBasicCarFormSubmit} previousTabClick={previousTabClick} />
+                        <BasicCarVariant carVariant={carVariant} onValidChange={(isValid) => validateAllSections(isValid, false)} onFormSubmit={handleBasicCarFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                         <TabPane tabId={2}>
-                        <EngineAndTransmissionVariant onValidChange={(isValid) => validateAllSections(false, isValid)} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        <EngineAndTransmissionVariant carVariant={carVariant} onValidChange={(isValid) => validateAllSections(false, isValid)} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                         <TabPane tabId={3}>
-                        <FuelPerformanceVariant onValidChange={(isValid) => validateAllSections(false, isValid)} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        <FuelPerformanceVariant carVariant={carVariant} onValidChange={(isValid) => validateAllSections(false, isValid)} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                         <TabPane tabId={4}>
-                        <SuspensionSteeringBrakesVariant onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        <SuspensionSteeringBrakesVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                         <TabPane tabId={5}>
-                        <DimensionAndCapacityVariant onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        <DimensionAndCapacityVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                         <TabPane tabId={6}>
-                        <ComfortAndConvenienceVariant onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        <ComfortAndConvenienceVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                         <TabPane tabId={7}>
-                        <InteriorVariant onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        <InteriorVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                         <TabPane tabId={8}>
-                        <ExteriorVariant onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        <ExteriorVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                         <TabPane tabId={9}>
-                        <SafetyVariant onFormSubmit={handleFinalFormSubmit} previousTabClick={previousTabClick} />
+                        <SafetyVariant carVariant={carVariant} onFormSubmit={handleFinalFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                       </TabContent>
                     </div>

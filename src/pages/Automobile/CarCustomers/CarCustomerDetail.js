@@ -9,15 +9,23 @@ import {
   Button,
 } from "reactstrap";
 
-const CarBlogDetail = ({ isOpen, toggle, Data }) => {
-  const [data, setData] = useState([]);
-  useEffect(() => {
-    if (Data) {
-      setData(Data?.orderItems);
-    }
-  }, [Data]);
+const CarCustomerDetail = ({ isOpen, toggle, Data }) => {
 
-  let subTotal = 0;
+  const ConnectionDate = (cell) => {
+    if (!cell) {
+        return "";
+    }
+
+    const date = new Date(cell);
+
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed in JS
+    const day = date.getDate().toString().padStart(2, '0');
+
+    const dateOnlyString = `${day}-${month}-${year}`;
+    return dateOnlyString;
+};
+
   return (
     <Modal
       isOpen={isOpen}
@@ -29,81 +37,47 @@ const CarBlogDetail = ({ isOpen, toggle, Data }) => {
       toggle={toggle}
     >
       <div className="modal-content">
-        <ModalHeader toggle={toggle}>Order Details</ModalHeader>
+        <ModalHeader toggle={toggle}>Customer Details</ModalHeader>
         <ModalBody>
           <p className="mb-2">
-            <b>Order id:</b> <span className="text-primary">{Data?._id}</span>
+            <b>Customer id:</b> <span className="text-primary">{Data?._id}</span>
           </p>
           <p className="mb-2">
-            <b>Billing Name: </b>
-            <span className="text-primary">{Data?.customerId?.username}</span>
+            <b>Customer Name:</b> <span className="text-primary">{Data?.username}</span>
           </p>
-          <p className="mb-4">
-            <b>Address:</b>
-            <span className="text-primary">{` ${Data?.shippingAddress1}, ${Data?.state},${Data?.zip}`}</span>
+          <p className="mb-2">
+            <b>Email:</b> <span className="text-primary">{Data?.email}</span>
           </p>
-
-          <div className="table-responsive">
-            <Table className="table align-middle table-nowrap">
-              <thead>
-                <tr>
-                  <th scope="col">Product</th>
-                  <th scope="col">Product Name</th>
-                  <th scope="col">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.map((ele, idx) => {
-                  const price = ele?.product?.price;
-                  const quantity = ele?.quantity;
-                  const total = price * quantity;
-                  subTotal += total;
-                  return (
-                    <tr key={idx}>
-                      <th scope="row">
-                        <div>
-                          <img
-                            src={ele?.product?.media[0]?.url}
-                            alt=""
-                            className="avatar-sm"
-                          />
-                        </div>
-                      </th>
-                      <td>
-                        <div>
-                          <h5 className="text-truncate font-size-14">
-                            {ele?.product?.name}
-                          </h5>
-                          <p className="text-muted mb-0">
-                            $ {price} x {quantity}
-                          </p>
-                        </div>
-                      </td>
-                      <td>$ {total}</td>
-                    </tr>
-                  );
-                })}
-                <tr>
-                  <td colSpan="2">
-                    <h6 className="m-0 text-end">Sub Total:</h6>
-                  </td>
-                  <td>$ {subTotal}</td>
-                </tr>
-                <tr>
-                  <td colSpan="2">
-                    <h6 className="m-0 text-end">Shipping:</h6>
-                  </td>
-                  <td>Free</td>
-                </tr>
-                <tr>
-                  <td colSpan="2">
-                    <h6 className="m-0 text-end">Total:</h6>
-                  </td>
-                  <td>$ {Data?.totalPrice}</td>
-                </tr>
-              </tbody>
-            </Table>
-          </div>
+          <p className="mb-2">
+            <b>Phone Number:</b> <span className="text-primary">{Data?.phone}</span>
+          </p>
+          <p className="mb-2">
+            <b>PAN Details:</b> <span className="text-primary">{Data?.panDetails}</span>
+          </p>
+          <p className="mb-2">
+            <b>Car Brand:</b> <span className="text-primary">{Data?.carBrand?.brandName}</span>
+          </p>
+          <p className="mb-2">
+            <b>Car Model:</b> <span className="text-primary">{Data?.carModel?.modelName}</span>
+          </p>
+          <p className="mb-2">
+            <b>Car Variant:</b> <span className="text-primary">{Data?.carVariant?.name}</span>
+          </p>
+          <p className="mb-2">
+            <b>City:</b> <span className="text-primary">{Data?.city}</span>
+          </p>
+          <p className="mb-2">
+            <b>Buying Period: </b>
+            <span className="text-primary">{Data?.buyingPeriod}</span>
+          </p>
+          <p className="mb-2">
+            <b>Usage: </b>
+            <span className="text-primary">{Data?.usage}</span>
+          </p>
+          <p className="mb-2">
+            <b>Joining Date: </b>
+            <span className="text-primary">{ConnectionDate(Data?.joiningDate)}</span>
+          </p>
         </ModalBody>
         <ModalFooter>
           <Button type="button" color="secondary" onClick={toggle}>
@@ -115,10 +89,10 @@ const CarBlogDetail = ({ isOpen, toggle, Data }) => {
   );
 };
 
-CarBlogDetail.propTypes = {
+CarCustomerDetail.propTypes = {
   Data: PropTypes.object,
   toggle: PropTypes.func,
   isOpen: PropTypes.bool,
 };
 
-export default CarBlogDetail;
+export default CarCustomerDetail;

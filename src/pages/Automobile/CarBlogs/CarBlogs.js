@@ -72,7 +72,7 @@ function CarBlogs() {
   const [toastDetails, setToastDetails] = useState({ title: "", message: "" });
   const [blogImage, setBlogImage] = useState(null)
   const [isCarBrandLoading, setIsCarBrandLoading] = useState(true);
-  const [isCarModelLoading, setIsCarModelLoading] = useState(true);
+  const [isCarModelLoading, setIsCarModelLoading] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -83,11 +83,11 @@ function CarBlogs() {
 
     initialValues: {
       blogName: (carBlog && carBlog.blogName) || "",
-      carBrand: (carBlog && carBlog.carBrand) || "",
-      carModel: (carBlog && carBlog.carModel) || "",
+      carBrand: (carBlog && carBlog.carBrand && carBlog.carBrand._id) || "",
+      carModel: (carBlog && carBlog.carModel && carBlog.carModel._id) || "",
       status: (carBlog && carBlog.status ? 'Active' : 'InActive') || "",
       blogDescription: (carBlog && carBlog.blogDescription) || "",
-      blogImage: (carBlog && carBlog.blogImage) || ""
+      blogImage: (carBlog && carBlog?.media?.url) || ""
     },
     validationSchema: Yup.object({
       blogName: Yup.string().required(
@@ -105,9 +105,9 @@ function CarBlogs() {
       blogDescription: Yup.string().required(
         "Please Enter Your Car Model"
       ),
-      blogImage: Yup.object().required(
-        "Please Enter Your Blog Image"
-      ),
+      // blogImage: Yup.object().required(
+      //   "Please Enter Your Blog Image"
+      // ),
       status: Yup.string().required(
         "Please Enter Your Status"
       )
@@ -147,6 +147,7 @@ function CarBlogs() {
       dispatch(getCarVariants());
       setIsCarBrandLoading(true);
       dispatch(getCarBrands());
+      dispatch(getCarModels());
     }
   }, [dispatch]);
 
@@ -190,7 +191,7 @@ function CarBlogs() {
   };
 
   const handleCarBrandChange = (selectedBrandId) => {
-    // setIsCarModelLoading(true);
+    setIsCarModelLoading(true);
     console.log('selectedBrandId', selectedBrandId);
     dispatch(getCarModelsByBrand(selectedBrandId))
     validation.setFieldValue("carBrand", selectedBrandId);
@@ -346,7 +347,6 @@ function CarBlogs() {
 
   return (
     <React.Fragment>
-      <CarBlogModel isOpen={modal1} toggle={toggleViewModal} data={carBlogData} />
       <CarBlogDetail isOpen={modal1} toggle={toggleViewModal} Data={carBlogData} />
       <DeleteModal
         show={deleteModal}
@@ -534,14 +534,35 @@ function CarBlogs() {
                   ) : null}
                 </div>
                 <div className="mt-3 mb-3">
-                  <Label for="cimg">Blog Image <span style={{ color: 'red' }}>*</span></Label>
-                  <div className="mh-50">
-                    <Input
-                      id="blogImage"
-                      onChange={(e) => { validation.setFieldValue('blogImage', e) }}
-                      type="file"
-                    />
-                  </div>
+                  <Label for="blogImage">Blog Image <span style={{ color: 'red' }}>*</span></Label>
+                      <div className="mh-50">
+                        <Input
+                          id="blogImage"
+                          onChange={async e => {
+                            if (
+                              ["jpeg", "jpg", "png"].includes(
+                                e.target.files[0].name.split(".").pop()
+                              )
+                            ) {
+                              setToastDetails({
+                                title: "Image Uploaded",
+                                message: `${e.target.files[0].name} has been uploaded.`,
+                              })
+                              setToast(true)
+                              validation.setFieldValue('blogImage', e.target.files[0])
+                            } else {
+                              setToastDetails({
+                                title: "Invalid image",
+                                message:
+                                  "Please upload images with jpg, jpeg or png extension",
+                              })
+                              setToast(true)
+                            }
+                          }}
+                          type="file"
+                        />
+                      </div>
+                     {isEdit ? <div className="d-flex text-center margin-auto"><img src={validation.values.blogImage} width={100} height={65} className="mt-3"/></div> : ""}
                 </div>
               </Col>
             </Row>

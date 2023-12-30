@@ -46,16 +46,16 @@ import {
   FormFeedback,
 } from "reactstrap";
 import Select from "react-select";
-import CarBrandDetail from "./CarVariantDetail";
 import { getCarBrands } from "store/automobiles/carbrands/actions";
 import { useFormik } from "formik";
 import CarVariantModel from "./CarVariantModel";
 import { addNewCarVariant, deleteAllCarVariants, deleteCarVariant, getCarVariants, updateCarVariant } from "store/automobiles/carVariants/actions";
+import CarVariantDetail from "./CarVariantDetail";
 
 function CarVariants() {
 
   //meta title
-  document.title = "Car brands | Scrollit";
+  document.title = "Car variants | Scrollit";
 
   const [modal, setModal] = useState(false);
   const [nestedModal, setNestedModal] = useState(false);
@@ -255,7 +255,7 @@ function CarVariants() {
         }
       },
       {
-        Header: 'View Model Details',
+        Header: 'View Variant Details',
         accessor: 'view',
         disableFilters: true,
         Cell: (cellProps) => {
@@ -269,7 +269,7 @@ function CarVariants() {
                 setcarVariantData(cellProps.row.original);
               }}
             >
-              View Model Details
+              View Variant Details
             </Button>);
         }
       },
@@ -312,8 +312,7 @@ function CarVariants() {
 
   return (
     <React.Fragment>
-      <CarVariantModel isOpen={modal1} toggle={toggleViewModal} data={carVariantData} />
-      <CarBrandDetail isOpen={modal1} toggle={toggleViewModal} Data={carVariantData} />
+      <CarVariantDetail isOpen={modal1} toggle={toggleViewModal} Data={carVariantData} />
       <DeleteModal
         show={deleteModal}
         onDeleteClick={handleDeletecarVariant}
