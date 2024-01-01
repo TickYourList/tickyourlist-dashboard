@@ -87,7 +87,7 @@ export default function EcommerceCollections() {
               {filteredCollections.map(collection => (
                 <CollectionTile
                   key={collection._id}
-                  _id={collection._id}
+                  _id={collection._id} 
                   name={collection.name}
                   color={collection.color}
                   icon={collection.icon}

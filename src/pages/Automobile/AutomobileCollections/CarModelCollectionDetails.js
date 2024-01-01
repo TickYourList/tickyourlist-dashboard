@@ -82,7 +82,7 @@ export default function CarModelCollectionDetails() {
   );
   const [collectionImageUrl, setCollectionImageUrl] = useState(collection ? collection?.media?.url : undefined);
   const [collectionCarModelIds, setCollectionCarModelIds] = useState(
-    collection ? collection.carModels : []
+    collection ? collection.carModels.filter(model => model) : []
   );
   const [collectionColor, setCollectionColor] = useState(
     collection ? collection.color : ""
@@ -101,9 +101,11 @@ export default function CarModelCollectionDetails() {
   }, [carModels]);
 
   useEffect(() => {
-    if (collections && !collections?.length) {
+    if (!collections && !collections?.length) {
       dispatch(getCollections());
     }
+    console.log('collections ', collections);
+    console.log('carModels ', carModels);
   }, [collections]);
 
   // redirect to collections page if a wrong id is entered in the address bar by the user
@@ -115,12 +117,25 @@ export default function CarModelCollectionDetails() {
   }, [collection, carModels]);
 
   useEffect(() => {
+    if(carModels) {
     setCarModelList(carModels);
-  });
+    }
+  },[carModels]);
 
   useEffect(() => {
+    const modelsToAdd = carModels?.filter(carModel => {
+      // Check if carModel._id is not in collectionCarModelIds
+      return !collectionCarModelIds.some(modelId => {
+        if (typeof modelId === 'object') {
+          return modelId._id === carModel._id;
+        } else {
+          return modelId === carModel._id;
+        }
+      });
+    });
+    
     setCarModelsToAdd(
-      carModels?.filter(carModel => !collectionCarModelIds?.includes(carModel._id))
+      modelsToAdd
     );
   }, [collectionCarModelIds, carModels]);
 
@@ -323,9 +338,16 @@ export default function CarModelCollectionDetails() {
                       <Row>
                         <CardGroup>
                           {collectionCarModelIds?.map((id, i) => {
-                            const prod = carModels?.find(
-                              carModel => carModel._id === id._id
+                            let prod;
+                            if(typeof id === 'object') {
+                              prod = carModels?.find(
+                                carModel => carModel._id === id._id
+                              );
+                            }else {
+                             prod = carModels?.find(
+                              carModel => carModel._id === id
                             );
+                             }
                             return renderCollectionProductPreview(
                               prod,
                               i,
@@ -511,6 +533,7 @@ export default function CarModelCollectionDetails() {
             <ModalBody style={{ overflowY: "scroll" }}>
               <ListGroup style={{ maxHeight: "50vh" }}>
                 {/* {console.log('carmodels to add ', collectionCarModelIds)} */}
+                {/* {console.log('carModelsToAdd ', carModelsToAdd)} */}
                 {carModelsToAdd?.map(carModel => (
                   <ListGroupItem
                     onClick={() => {

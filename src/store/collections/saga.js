@@ -32,17 +32,16 @@ function* fetchCollections() {
   try {
     const products = yield call(getProductList);
     const carModels = yield call(getCarModelsList);
-    console.log('carModels ', carModels);
     const response = yield call(getCollections);
     yield put(
-      getCollectionsSuccess([ 
+      getCollectionsSuccess([
         {
           name: "All Products",
           _id: "all-products",
           icon: "ballot",
           color: "#7A8D96",
           products: products.data.products.map(product => product._id),
-          carModels: carModels.data.carModelsList.map(carModel => carModel._id)
+          carModels: carModels.data.carModelsList
         },
         ...response.data,
       ])
