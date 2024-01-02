@@ -143,9 +143,8 @@ export default function AddCarCollection() {
     collectionCarModelIds.forEach((carModelIds) => {
       collection.append("carModels[]", carModelIds);
     });
-    console.log('collection data 1', collection);
      dispatch(
-      addCollection(collection, history, '../automobile-collections')
+      addCollection(collection, history, '/automobile-collections')
     )
   } catch (error) {
     console.error(error);

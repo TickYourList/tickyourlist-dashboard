@@ -60,11 +60,10 @@ function* onUpdateCollection({ payload: { collection, history } }) {
     const response = yield call(updateCollection, collection, config);
     yield put(updateCollectionSuccess(response.data));
     showToastSuccess("Collection Updated successfully", "Success");
-    history("/ecommerce-collections");
+    history("/automobile-collections");
   } catch (error) {
     yield put(updateCollectionFail(error));
     showToastError("Sorry! Failed to update the collection", "Error");
-    history("/ecommerce-collections");
   }
 }
 
@@ -72,7 +71,9 @@ function* onDeleteCollection({ payload: { collectionId, history } }) {
   try {
     const response = yield call(deleteCollection, collectionId);
     yield put(deleteCollectionSuccess(collectionId));
-    history("/ecommerce-collections");
+    if(history) {
+      history("/ecommerce-collections");
+    }
     showToastSuccess("Collection Deleted successfully", "Success");
   } catch (error) {
     yield put(deleteCollectionFail(error));

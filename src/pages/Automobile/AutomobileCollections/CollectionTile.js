@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import {
   Button,
   Col,
@@ -12,19 +11,32 @@ import {
 import PropTypes from 'prop-types';
 import { useDispatch } from 'react-redux';
 import { deleteCollection } from 'store/collections/action';
+import { useNavigate } from 'react-router-dom';
 
 function CollectionTile({ _id, name, icon, color, image, productIds, carModelIds, isMutable }) {
   const dispatch = useDispatch();
-  const handleCollectionDelete = () => {
+  const history = useNavigate();
+
+  const handleCollectionDelete = (event) => {
+    event.stopPropagation();
     dispatch(deleteCollection(_id));
   };
 
+  const handleUpdateImageClick = (event) => {
+    event.stopPropagation(); // Prevent triggering parent click events
+    console.log('Update Image Clicked');
+  };
+
+  const handleCardClick = () => {
+    history(`/automobile-collection-details/${_id}`);
+  };
+
   return (
-  <div className="col-4 pt-4">
-      <Link
-        to={`/automobile-collection-details/${_id}`}
-        className={`${color ? '' : 'bg-secondary '} rounded d-flex flex-column justify-content-between`}
-        style={{ minHeight: '280px', background: color }}
+    <div className="col-4 pt-4">
+      <div
+        className={`${color ? '' : 'bg-secondary '} rounded d-flex flex-column justify-content-between text-white`}
+        style={{ minHeight: '280px', background: color, cursor: 'pointer' }}
+        onClick={handleCardClick}
       >
         <Row>
           <Col className="text-sm-end m-3 mx-4">
@@ -33,6 +45,7 @@ function CollectionTile({ _id, name, icon, color, image, productIds, carModelIds
                 tag={Button}
                 className="card-drop"
                 color="link"
+                onClick={(event) => event.stopPropagation()}
               >
                 <i className="mdi mdi-dots-horizontal mdi-24px text-white" />
               </DropdownToggle>
@@ -40,7 +53,7 @@ function CollectionTile({ _id, name, icon, color, image, productIds, carModelIds
                 <DropdownItem
                   tag={Button}
                   color="link"
-                  onClick={() => console.log('hello!!')}
+                  onClick={handleCardClick}
                 >
                   <i className="mdi mdi-file-image me-3" />
                   Update Image
@@ -59,11 +72,15 @@ function CollectionTile({ _id, name, icon, color, image, productIds, carModelIds
             </UncontrolledDropdown>
           </Col>
         </Row>
-        <div className="m-2 position-fixed-bottom text-white p-2 mx-3 font-size-18">
-          {name}
-          {productIds && productIds.length > 0 ? <span className="mx-2">{productIds ? productIds.length : 0}</span> : carModelIds && carModelIds.length > 0 ? <span className="mx-2">{carModelIds ? carModelIds.length : 0}</span> : ''}
+        <div className="p-2 mx-3 font-size-18">
+          <span>{name}</span>
+          {productIds && productIds.length > 0 ? (
+            <span className="mx-2">{productIds.length}</span>
+          ) : carModelIds && carModelIds.length > 0 ? (
+            <span className="mx-2">{carModelIds.length}</span>
+          ) : ''}
         </div>
-      </Link>
+      </div>
     </div>
   );
 }

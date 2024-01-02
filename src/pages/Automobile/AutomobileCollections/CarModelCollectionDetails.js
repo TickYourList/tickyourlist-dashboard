@@ -104,8 +104,6 @@ export default function CarModelCollectionDetails() {
     if (!collections && !collections?.length) {
       dispatch(getCollections());
     }
-    console.log('collections ', collections);
-    console.log('carModels ', carModels);
   }, [collections]);
 
   // redirect to collections page if a wrong id is entered in the address bar by the user
@@ -193,10 +191,13 @@ export default function CarModelCollectionDetails() {
       }
       collection.append("color", collectionColor);
       collection.append("icon", collectionIcon);
-      console.log('collectionCarModelIds ', collectionCarModelIds);
       collectionCarModelIds.forEach((carModelId) => {
-        console.log('carModelIds ', carModelId);
-        collection.append("carModels[]", carModelId);
+        console.log('carModelIdsassasa ', carModelId);
+        if(typeof carModelId == 'object') {
+          collection.append("carModels[]", carModelId._id);
+        } else {
+          collection.append("carModels[]", carModelId);
+        }
       });
       collection.append("_id", _id);
       dispatch(
