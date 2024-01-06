@@ -77,7 +77,7 @@ const AddCarVariant = () => {
     const [allValid, setAllValid] = useState(false);
     const [selectedGroup, setselectedGroup] = useState(null)
 
-    const [carVariant, setCarVariant] = useState({});
+    const [carVariant, setCarVariant] = useState();
     const [switch1, setswitch1] = useState(true);
     
     const [activeTabVartical, setoggleTabVertical] = useState(1)

@@ -102,7 +102,6 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
             //     validation.resetForm();
             // }
             onFormSubmit('dimensionAndCapacity', values, '6');
-            toggle();
         },
         handleError: e => { },
     });

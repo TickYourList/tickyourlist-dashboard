@@ -42,35 +42,35 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
             serviceCost: (carVariant && carVariant.basicInformation && carVariant.basicInformation.serviceCost) || "",
             selectedFiles: (carVariant && carVariant.media) || []
         },
-        validationSchema: Yup.object({
-            variantName: Yup.string().required(
-                "Please Enter Your Variant Name"
-            ),
-            carModel: Yup.string().required(
-                "Please Enter Your CarModel"
-            ),
-            variantStatus: Yup.string().required(
-                "Please Enter Your Variant Status"
-            ),
-            onRoadPrice: Yup.string().required(
-                "Please Enter Your on Road Price"
-            ),
-            userRating: Yup.string().required(
-                "Please Enter Your User Rating"
-            ),
-            startEmiAmount: Yup.string().required(
-                "Please Enter Your Start Emi Amount"
-            ),
-            startInsuranceAmount: Yup.string().required(
-                "Please Enter Your Start Insurance Amount"
-            ),
-            serviceCost: Yup.string().required(
-                "Please Enter Your Service Cost"
-            ),
-            selectedFiles: Yup.array()
-            .min(1, 'You must upload at least one image')
-            .required('Images are required')
-        }),
+        // validationSchema: Yup.object({
+        //     variantName: Yup.string().required(
+        //         "Please Enter Your Variant Name"
+        //     ),
+        //     carModel: Yup.string().required(
+        //         "Please Enter Your CarModel"
+        //     ),
+        //     variantStatus: Yup.string().required(
+        //         "Please Enter Your Variant Status"
+        //     ),
+        //     onRoadPrice: Yup.string().required(
+        //         "Please Enter Your on Road Price"
+        //     ),
+        //     userRating: Yup.string().required(
+        //         "Please Enter Your User Rating"
+        //     ),
+        //     startEmiAmount: Yup.string().required(
+        //         "Please Enter Your Start Emi Amount"
+        //     ),
+        //     startInsuranceAmount: Yup.string().required(
+        //         "Please Enter Your Start Insurance Amount"
+        //     ),
+        //     serviceCost: Yup.string().required(
+        //         "Please Enter Your Service Cost"
+        //     ),
+        //     selectedFiles: Yup.array()
+        //     .min(1, 'You must upload at least one image')
+        //     .required('Images are required')
+        // }),
         onSubmit: values => {
             if (isEdit) {
                 const updCarModel = new FormData();

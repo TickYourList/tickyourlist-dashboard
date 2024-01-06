@@ -3,11 +3,11 @@ import React from "react"
 import { Row, Col, Card, CardBody } from "reactstrap"
 import { Link } from "react-router-dom"
 
-import avatar1 from "../../assets/images/users/avatar-1.jpg"
-import profileImg from "../../assets/images/profile-img.png"
+import avatar1 from "../../../assets/images/users/avatar-1.jpg"
+import profileImg from "../../../assets/images/profile-img.png"
 import PropTypes from 'prop-types'
 
-const WelcomeComp = (props) => {
+const AutomobileWelcomeComp = (props) => {
   return (
     <React.Fragment>
       <Card className="overflow-hidden">
@@ -40,16 +40,6 @@ const WelcomeComp = (props) => {
 
             <Col sm="8">
               <div className="pt-4">
-                <Row>
-                  <Col xs="6">
-                    <h5 className="font-size-15">{ props.totalSales }</h5>
-                    <p className="text-muted mb-0">Projects</p>
-                  </Col>
-                  <Col xs="6">
-                    <h5 className="font-size-15">{props.totalRevenue}</h5>
-                    <p className="text-muted mb-0">Revenue</p>
-                  </Col>
-                </Row>
                 <div className="mt-4">
                   <Link
                     to="/profile"
@@ -67,9 +57,9 @@ const WelcomeComp = (props) => {
   )
 }
 
-WelcomeComp.propTypes = {
+AutomobileWelcomeComp.propTypes = {
   author: PropTypes.any,
   totalRevenue: PropTypes.any,
   totalSales: PropTypes.any
 }
-export default WelcomeComp
+export default AutomobileWelcomeComp

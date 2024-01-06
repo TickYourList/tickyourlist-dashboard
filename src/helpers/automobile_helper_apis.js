@@ -2,6 +2,11 @@ import axios from "axios";
 import { del, get, post, postFormData, put, putFormData } from "./api_helper";
 import * as url from "./automobile_url_helpers";
 
+// GET CAR DASHBOARD ACTIVITY COUNT LIST
+const getCarDashboardAvtivityList = () => get(url.GET_CAR_DASHBOARD_ACTIVITY);
+
+// GET CAR DASHBOARD ACTIVITY COUNT LIST
+const getCarTopSearchActivityList = () => get(url.GET_CAR_TOP_SEARCH_ACTIVITY);
 
 // GET CAR BRANDS LIST
 const getCarBrandsList = () => get(url.GET_CAR_BRANDS);
@@ -91,6 +96,8 @@ const deleteAllCarCustomers = () => del(url.DELETE_ALL_CAR_CUSTOMER);
 
 
 export {
+    getCarDashboardAvtivityList,
+    getCarTopSearchActivityList,
     getCarBrandsList,
     addCarBrand,
     updateCarBrandData,

@@ -462,7 +462,7 @@ export default function AddCarCollection() {
                       <div>
                         <img
                           style={{ maxWidth: "10vh" }}
-                          src={carModel.media.url}
+                          src={carModel?.media?.url}
                         />
                       </div>
                       <div className="w-100 mx-3 m-2">
@@ -472,7 +472,7 @@ export default function AddCarCollection() {
                         <div className="mt-1">
                           <strong>Brand Name: </strong>
                           {
-                            carModel.carBrand.brandName
+                            carModel?.carBrand?.brandName
                           }
                         </div>
                       </div>

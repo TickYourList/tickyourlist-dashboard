@@ -10,7 +10,13 @@ import {
     GET_REVENUE_TOTAL_DATA_ERROR,
     GET_ORDER_TOTAL_AVERAGE_PRICE,
     GET_ORDER_TOTAL_AVERAGE_PRICE_SUCCESS,
-    GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR
+    GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR,
+    CAR_DASHBOARD_ACTIVITY_COUNT,
+    CAR_DASHBOARD_ACTIVITY_COUNT_SUCCESS,
+    CAR_DASHBOARD_ACTIVITY_COUNT_ERROR,
+    CAR_SEARCHES_DASHBOARD_LIST,
+    CAR_SEARCHES_DASHBOARD_LIST_SUCCESS,
+    CAR_SEARCHES_DASHBOARD_LIST_ERROR
 } from "./actionTypes";
 
 export const apiSuccess = (actionType, data) => ({
@@ -69,4 +75,32 @@ export const getOrderTotalAveragePriceSuccess = (actionType, data) => ({
 export const getOrderTotalAveragePriceError = (actionType, error) => ({
     type: GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR,
     payload: { actionType, error },
+});
+
+export const getCarDashboardActivity = () => ({
+    type: CAR_DASHBOARD_ACTIVITY_COUNT
+})
+
+export const getCarDashboardActivitySuccess = (data) => ({
+    type: CAR_DASHBOARD_ACTIVITY_COUNT_SUCCESS,
+    payload: data,
+});
+
+export const getCarDashboardActivityError = (error) => ({
+    type: CAR_DASHBOARD_ACTIVITY_COUNT_ERROR,
+    payload: error,
+});
+
+export const getCarSearchDashboardActivity = () => ({
+    type: CAR_SEARCHES_DASHBOARD_LIST
+})
+
+export const getCarSearchDashboardActivitySuccess = (data) => ({
+    type: CAR_SEARCHES_DASHBOARD_LIST_SUCCESS,
+    payload: data,
+});
+
+export const getCarSearchDashboardActivityError = (error) => ({
+    type: CAR_SEARCHES_DASHBOARD_LIST_ERROR,
+    payload: error,
 });

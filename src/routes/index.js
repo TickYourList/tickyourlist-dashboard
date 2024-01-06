@@ -138,10 +138,12 @@ import EmailVerification from "pages/Authentication/EmailVerification";
 import ForgetPasswordPageDetails from "pages/Authentication/ForgetPasswordPageDetails";
 import ForgotPasswordEmailVerification from "pages/Authentication/ForgotPasswordEmailVerification";
 import ForgotPasswordSuccessful from "pages/Authentication/ForgotPasswordSuccessful";
+import AutomobileDashboard from "pages/Automobile/Dashboard/AutomobileDashboard";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard /> },
+  { path: "/automobile-dashboard", component: <AutomobileDashboard /> },
 
   // domain
   { path: "/ecommerce-get-domain", component: <EcommerceGetDomain /> },

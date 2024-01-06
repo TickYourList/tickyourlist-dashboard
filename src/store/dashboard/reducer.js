@@ -8,14 +8,18 @@ import {
     GET_REVENUE_TOTAL_DATA_SUCCESS,
     GET_REVENUE_TOTAL_DATA_ERROR,
     GET_ORDER_TOTAL_AVERAGE_PRICE_SUCCESS,
-    GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR
+    GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR,
+    CAR_DASHBOARD_ACTIVITY_COUNT_SUCCESS,
+    CAR_SEARCHES_DASHBOARD_LIST_SUCCESS
 } from "./actionTypes";
 
 const INIT_STATE = {
     chartsData: [],
     ordersCount: 0,
     totalRevenue: 0,
-    orderDataAveragePrice: 0
+    orderDataAveragePrice: 0,
+    dashboardActivity: {},
+    carSearchesList: []
 };
 
 const Dashboard = (state = INIT_STATE, action) => {
@@ -40,7 +44,7 @@ const Dashboard = (state = INIT_STATE, action) => {
                 default:
                     return state;
             }
-            case GET_ORDERS_COUNT_DATA_SUCCESS:
+        case GET_ORDERS_COUNT_DATA_SUCCESS:
             switch (action.payload.actionType) {
                 case GET_ORDERS_COUNT_DATA_SUCCESS:
                     return {
@@ -52,7 +56,7 @@ const Dashboard = (state = INIT_STATE, action) => {
                 default:
                     return state;
             }
-            case GET_ORDERS_COUNT_DATA_ERROR:
+        case GET_ORDERS_COUNT_DATA_ERROR:
             switch (action.payload.actionType) {
                 case GET_ORDERS_COUNT_DATA_ERROR:
                     return {
@@ -64,7 +68,7 @@ const Dashboard = (state = INIT_STATE, action) => {
                 default:
                     return state;
             }
-            case GET_REVENUE_TOTAL_DATA_SUCCESS:
+        case GET_REVENUE_TOTAL_DATA_SUCCESS:
             switch (action.payload.actionType) {
                 case GET_REVENUE_TOTAL_DATA_SUCCESS:
                     return {
@@ -76,7 +80,7 @@ const Dashboard = (state = INIT_STATE, action) => {
                 default:
                     return state;
             }
-            case GET_REVENUE_TOTAL_DATA_ERROR:
+        case GET_REVENUE_TOTAL_DATA_ERROR:
             switch (action.payload.actionType) {
                 case GET_REVENUE_TOTAL_DATA_ERROR:
                     return {
@@ -88,7 +92,7 @@ const Dashboard = (state = INIT_STATE, action) => {
                 default:
                     return state;
             }
-            case GET_ORDER_TOTAL_AVERAGE_PRICE_SUCCESS:
+        case GET_ORDER_TOTAL_AVERAGE_PRICE_SUCCESS:
             switch (action.payload.actionType) {
                 case GET_ORDER_TOTAL_AVERAGE_PRICE_SUCCESS:
                     return {
@@ -100,18 +104,27 @@ const Dashboard = (state = INIT_STATE, action) => {
                 default:
                     return state;
             }
-            case GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR:
+        case GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR:
             switch (action.payload.actionType) {
                 case GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR:
                     return {
                         ...state,
                         orderDataAveragePrice: 0
                     };
-
-
                 default:
                     return state;
             }
+        case CAR_DASHBOARD_ACTIVITY_COUNT_SUCCESS:
+            return {
+                ...state,
+                dashboardActivity: action.payload.data,
+            };
+        case CAR_SEARCHES_DASHBOARD_LIST_SUCCESS:
+            return {
+                ...state,
+                carSearchesList: action.payload,
+            };
+
         default:
             return state;
     }

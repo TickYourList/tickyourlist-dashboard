@@ -1,8 +1,8 @@
 import { call, put, takeEvery, all, fork } from "redux-saga/effects";
 
 // Crypto Redux States
-import { GET_CHARTS_DATA, GET_ORDERS_COUNT_DATA, GET_ORDERS_COUNT_DATA_ERROR, GET_ORDER_TOTAL_AVERAGE_PRICE, GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR, GET_ORDER_TOTAL_AVERAGE_PRICE_SUCCESS, GET_REVENUE_TOTAL_DATA, GET_REVENUE_TOTAL_DATA_ERROR } from "./actionTypes";
-import { apiSuccess, apiFail, getTotalOrdersCountApiSuccess, getTotalOrdersCountApiError, getRevenueTotalDataSuccess, getOrderTotalAveragePriceError, getRevenueTotalDataError } from "./actions";
+import { CAR_DASHBOARD_ACTIVITY_COUNT, CAR_SEARCHES_DASHBOARD_LIST, CAR_SEARCHES_DASHBOARD_LIST_ERROR, CAR_SEARCHES_DASHBOARD_LIST_SUCCESS, GET_CHARTS_DATA, GET_ORDERS_COUNT_DATA, GET_ORDERS_COUNT_DATA_ERROR, GET_ORDER_TOTAL_AVERAGE_PRICE, GET_ORDER_TOTAL_AVERAGE_PRICE_ERROR, GET_ORDER_TOTAL_AVERAGE_PRICE_SUCCESS, GET_REVENUE_TOTAL_DATA, GET_REVENUE_TOTAL_DATA_ERROR } from "./actionTypes";
+import { apiSuccess, apiFail, getTotalOrdersCountApiSuccess, getTotalOrdersCountApiError, getRevenueTotalDataSuccess, getOrderTotalAveragePriceError, getRevenueTotalDataError, getCarDashboardActivitySuccess, getCarDashboardActivityError, getCarSearchDashboardActivitySuccess, getCarSearchDashboardActivityError } from "./actions";
 
 //Include Both Helper File with needed methods
 import {
@@ -12,6 +12,8 @@ import {
 }
     from "../../helpers/fakebackend_helper";
 import { getOrderTotalAveragePriceApi, getTotalOrdersCountData, getTotalRevenueCountData } from "helpers/backend_helper";
+import { getCarDashboardAvtivityList, getCarTopSearchActivityList } from "helpers/automobile_helper_apis";
+import { GET_CAR_DASHBOARD_ACTIVITY } from "helpers/automobile_url_helpers";
 
 function* getChartsData({ payload: periodType }) {
     try {
@@ -29,6 +31,15 @@ function* getChartsData({ payload: periodType }) {
         yield put(apiSuccess(GET_CHARTS_DATA, response));
     } catch (error) {
         yield put(apiFail(GET_CHARTS_DATA, error));
+    }
+}
+
+function* getDashboardActivitiesCountList() {
+    try {
+        const response = yield call(getCarDashboardAvtivityList);
+        yield put(getCarDashboardActivitySuccess(response));
+    } catch(error) {
+        yield put(getCarDashboardActivityError({}));
     }
 }
 
@@ -62,11 +73,22 @@ function* getOrderTotalAveragePrice() {
     }
 }
 
+function* getCarTopSearchList() {
+    try {
+        const response = yield call(getCarTopSearchActivityList);
+        yield put(getCarSearchDashboardActivitySuccess(response.data.carCustomersList));
+    }catch(error) {
+        yield put(getCarSearchDashboardActivityError({}));
+    }
+}
+
 export function* watchGetChartsData() {
     yield takeEvery(GET_CHARTS_DATA, getChartsData);
     yield takeEvery(GET_ORDERS_COUNT_DATA, getOrdersCountData);
     yield takeEvery(GET_REVENUE_TOTAL_DATA, getRevenueTotalData);
     yield takeEvery(GET_ORDER_TOTAL_AVERAGE_PRICE, getOrderTotalAveragePrice);
+    yield takeEvery(CAR_DASHBOARD_ACTIVITY_COUNT, getDashboardActivitiesCountList);
+    yield takeEvery(CAR_SEARCHES_DASHBOARD_LIST, getCarTopSearchList);
 }
 
 function* dashboardSaga() {

@@ -168,7 +168,7 @@ export default function CarModelCollectionDetails() {
           key={prod?._id}
           index={index}
           id={prod?._id}
-          img={prod?.media?.url}
+          img={prod?.media?.[0]?.url ?? prod?.media?.url}
           text={prod?.modelName}
           moveCollectionProductPreview={moveCollectionProductPreview}
           deleteCollectionProductPreview={deleteCollectionProductPreview}
@@ -192,7 +192,6 @@ export default function CarModelCollectionDetails() {
       collection.append("color", collectionColor);
       collection.append("icon", collectionIcon);
       collectionCarModelIds.forEach((carModelId) => {
-        console.log('carModelIdsassasa ', carModelId);
         if(typeof carModelId == 'object') {
           collection.append("carModels[]", carModelId._id);
         } else {
@@ -552,8 +551,8 @@ export default function CarModelCollectionDetails() {
                         <img
                           style={{ maxWidth: "10vh" }}
                           src={
-                            carModel.media && carModel.media.url
-                              ? carModel.media.url
+                            carModel.media && carModel.media?.[0].url
+                              ? carModel.media?.[0]?.url
                               : "/default-image.jpg"
                           }
                         />

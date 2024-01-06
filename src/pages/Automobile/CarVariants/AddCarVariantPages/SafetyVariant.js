@@ -151,7 +151,6 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
             //     dispatch(addNewCarModel(values['carBrand'], newCarModel));
             //     validation.resetForm();
             // }
-            toggle();
         },
         handleError: e => { },
     });
@@ -187,14 +186,12 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                     <Col lg="3">
                     <FormGroup className="mb-4" row>
                     <div className="form-check form-check-end">
+                        {console.log('carVariant.safety ', carVariant?.safety)}
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.antiLockBrakingSystem}
                                 id="antiLockBrakingSystem"
-                                onChange={(event) => {
-                                    validation.setFieldValue("antiLockBrakingSystem", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('antiLockBrakingSystem')}
                             />
                             <label
                                 className="form-check-label"
@@ -213,11 +210,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.breakAssist}
                                 id="breakAssist"
-                                onChange={(event) => {
-                                    validation.setFieldValue("breakAssist", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('breakAssist')}
                             />
                             <label
                                 className="form-check-label"
@@ -236,11 +230,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.centralLocking}
                                 id="centralLocking"
-                                onChange={(event) => {
-                                    validation.setFieldValue("centralLocking", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('centralLocking')}
                             />
                             <label
                                 className="form-check-label"
@@ -259,11 +250,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.powerDoorLocks}
                                 id="powerDoorLocks"
-                                onChange={(event) => {
-                                    validation.setFieldValue("powerDoorLocks", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('powerDoorLocks')}
                             />
                             <label
                                 className="form-check-label"
@@ -284,11 +272,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.antiTheftAlarm}
                                 id="antiTheftAlarm"
-                                onChange={(event) => {
-                                    validation.setFieldValue("antiTheftAlarm", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('antiTheftAlarm')}
                             />
                             <label
                                 className="form-check-label"
@@ -307,11 +292,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.driverAirbag}
                                 id="driverAirbag"
-                                onChange={(event) => {
-                                    validation.setFieldValue("driverAirbag", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('driverAirbag')}
                             />
                             <label
                                 className="form-check-label"
@@ -330,11 +312,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.passengerAirbag}
                                 id="passengerAirbag"
-                                onChange={(event) => {
-                                    validation.setFieldValue("passengerAirbag", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('passengerAirbag')}
                             />
                             <label
                                 className="form-check-label"
@@ -352,11 +331,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.sideAirbagFront}
                                 id="sideAirbagFront"
-                                onChange={(event) => {
-                                    validation.setFieldValue("sideAirbagFront", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('sideAirbagFront')}
                             />
                             <label
                                 className="form-check-label"
@@ -377,11 +353,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.dayNightRearViewMirror}
                                 id="dayNightRearViewMirror"
-                                onChange={(event) => {
-                                    validation.setFieldValue("dayNightRearViewMirror", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('dayNightRearViewMirror')}
                             />
                             <label
                                 className="form-check-label"
@@ -400,11 +373,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.passengerSideRearViewMirror}
                                 id="passengerSideRearViewMirror"
-                                onChange={(event) => {
-                                    validation.setFieldValue("passengerSideRearViewMirror", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('passengerSideRearViewMirror')}
                             />
                             <label
                                 className="form-check-label"
@@ -423,11 +393,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.halogenHeadlamps}
                                 id="halogenHeadlamps"
-                                onChange={(event) => {
-                                    validation.setFieldValue("halogenHeadlamps", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('halogenHeadlamps')}
                             />
                             <label
                                 className="form-check-label"
@@ -446,11 +413,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.rearSeatBelts}
                                 id="rearSeatBelts"
-                                onChange={(event) => {
-                                    validation.setFieldValue("rearSeatBelts", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('rearSeatBelts')}
                             />
                             <label
                                 className="form-check-label"
@@ -471,11 +435,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.seatBeltWarning}
                                 id="seatBeltWarning"
-                                onChange={(event) => {
-                                    validation.setFieldValue("seatBeltWarning", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('seatBeltWarning')}
                             />
                             <label
                                 className="form-check-label"
@@ -494,11 +455,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.sideImpactBeams}
                                 id="sideImpactBeams"
-                                onChange={(event) => {
-                                    validation.setFieldValue("sideImpactBeams", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('sideImpactBeams')}
                             />
                             <label
                                 className="form-check-label"
@@ -517,11 +475,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.adjustableeats}
                                 id="adjustableeats"
-                                onChange={(event) => {
-                                    validation.setFieldValue("adjustableeats", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('adjustableeats')}
                             />
                             <label
                                 className="form-check-label"
@@ -540,11 +495,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.tyrePressureMonitor}
                                 id="tyrePressureMonitor"
-                                onChange={(event) => {
-                                    validation.setFieldValue("tyrePressureMonitor", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('tyrePressureMonitor')}
                             />
                             <label
                                 className="form-check-label"
@@ -565,11 +517,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.vehicletabilityControlSystem}
                                 id="vehicletabilityControlSystem"
-                                onChange={(event) => {
-                                    validation.setFieldValue("vehicletabilityControlSystem", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('vehicletabilityControlSystem')}
                             />
                             <label
                                 className="form-check-label"
@@ -588,11 +537,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.engineImmobilizer}
                                 id="engineImmobilizer"
-                                onChange={(event) => {
-                                    validation.setFieldValue("engineImmobilizer", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('engineImmobilizer')}
                             />
                             <label
                                 className="form-check-label"
@@ -611,11 +557,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.crashSensor}
                                 id="crashSensor"
-                                onChange={(event) => {
-                                    validation.setFieldValue("crashSensor", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('crashSensor')}
                             />
                             <label
                                 className="form-check-label"
@@ -634,11 +577,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.ebd}
                                 id="ebd"
-                                onChange={(event) => {
-                                    validation.setFieldValue("ebd", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('ebd')}
                             />
                             <label
                                 className="form-check-label"
@@ -659,11 +599,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.electronicStabilityControl}
                                 id="electronicStabilityControl"
-                                onChange={(event) => {
-                                    validation.setFieldValue("electronicStabilityControl", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('electronicStabilityControl')}
                             />
                             <label
                                 className="form-check-label"
@@ -682,11 +619,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.rearCamera}
                                 id="rearCamera"
-                                onChange={(event) => {
-                                    validation.setFieldValue("rearCamera", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('rearCamera')}
                             />
                             <label
                                 className="form-check-label"
@@ -705,11 +639,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.antiPinchPowerWindows}
                                 id="antiPinchPowerWindows"
-                                onChange={(event) => {
-                                    validation.setFieldValue("antiPinchPowerWindows", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('antiPinchPowerWindows')}
                             />
                             <label
                                 className="form-check-label"
@@ -728,11 +659,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.speedAlert}
                                 id="speedAlert"
-                                onChange={(event) => {
-                                    validation.setFieldValue("speedAlert", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('speedAlert')}
                             />
                             <label
                                 className="form-check-label"
@@ -753,11 +681,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.speedSensingAutoDoorLock}
                                 id="speedSensingAutoDoorLock"
-                                onChange={(event) => {
-                                    validation.setFieldValue("speedSensingAutoDoorLock", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('speedSensingAutoDoorLock')}
                             />
                             <label
                                 className="form-check-label"
@@ -776,11 +701,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.isoFixChildSeatMounts}
                                 id="isoFixChildSeatMounts"
-                                onChange={(event) => {
-                                    validation.setFieldValue("isoFixChildSeatMounts", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('isoFixChildSeatMounts')}
                             />
                             <label
                                 className="form-check-label"
@@ -799,11 +721,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.pretensionersAndForceLimiterSeatbelts}
                                 id="pretensionersAndForceLimiterSeatbelts"
-                                onChange={(event) => {
-                                    validation.setFieldValue("pretensionersAndForceLimiterSeatbelts", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('pretensionersAndForceLimiterSeatbelts')}
                             />
                             <label
                                 className="form-check-label"
@@ -822,11 +741,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.hillDescentControl}
                                 id="hillDescentControl"
-                                onChange={(event) => {
-                                    validation.setFieldValue("hillDescentControl", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('hillDescentControl')}
                             />
                             <label
                                 className="form-check-label"
@@ -845,11 +761,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.hillAssist}
                                 id="hillAssist"
-                                onChange={(event) => {
-                                    validation.setFieldValue("hillAssist", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('hillAssist')}
                             />
                             <label
                                 className="form-check-label"

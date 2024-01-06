@@ -181,7 +181,6 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
             //     dispatch(addNewCarModel(values['carBrand'], newCarModel));
             //     validation.resetForm();
             // }
-            console.log('values ', values);
             if (onFormSubmit) {
                 const engineAndTransmission = {
                     engineType: values.engineType,
@@ -201,7 +200,6 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
                 }
                 onFormSubmit('engineAndTransmission', values, '3');
             }
-            toggle();
         },
         handleError: e => { },
     });

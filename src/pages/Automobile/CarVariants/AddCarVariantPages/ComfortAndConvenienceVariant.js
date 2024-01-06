@@ -87,8 +87,6 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
             if(onFormSubmit) {
             onFormSubmit('comfortAndConvenience', values, '7');
             }
-            console.log('values ', values);
-            toggle();
         },
         handleError: e => { },
     });

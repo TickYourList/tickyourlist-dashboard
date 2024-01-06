@@ -276,7 +276,6 @@ const EntertainmentAndCommunicationVariant = () => {
                 dispatch(addNewCarModel(values['carBrand'], newCarModel));
                 validation.resetForm();
             }
-            toggle();
         },
         handleError: e => { },
     });

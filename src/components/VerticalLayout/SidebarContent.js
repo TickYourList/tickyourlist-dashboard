@@ -156,7 +156,7 @@ const SidebarContent = props => {
               </Link> */}
               {/* <ul className="sub-menu"> */}
                 <li>
-                  <Link to="/dashboard"><i className="bx bxs-dashboard"></i> {props.t("Dashboard")}</Link>
+                  <Link to="/automobile-dashboard"><i className="bx bxs-dashboard"></i> {props.t("Dashboard")}</Link>
                 </li>
                 {/* <li>
                   <Link to="/dashboard-saas">{props.t("Saas")}</Link>

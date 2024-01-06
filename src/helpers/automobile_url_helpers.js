@@ -1,3 +1,6 @@
+export const GET_CAR_DASHBOARD_ACTIVITY = "v1/cardashboard/get/dashboard/total-list";
+export const GET_CAR_TOP_SEARCH_ACTIVITY = "v1/carcustomer/get/customers/top-cars-list";
+
 export const GET_CAR_BRANDS = "v1/automobile/get/carbrand/submitted/all";
 export const ADD_CAR_BRAND = "/v1/automobile/add/carbrand";
 export const UPDATE_CAR_BRAND = "/v1/automobile/update/carbrand";

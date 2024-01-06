@@ -121,7 +121,6 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
                 emissionNormCompliance: values.emissionNormCompliance,
             };
             onFormSubmit('fuelAndPerformance', fuelAndPerformance, '4');
-            toggle();
         },
         handleError: e => { },
     });

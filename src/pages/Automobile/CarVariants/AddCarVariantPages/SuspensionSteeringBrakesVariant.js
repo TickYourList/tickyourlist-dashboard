@@ -103,7 +103,6 @@ const SuspensionSteeringBrakesVariant = ({ carVariant, onFormSubmit }) => {
             //     validation.resetForm();
             // }
             onFormSubmit('suspensionAndSteeringAndBrakes', values, '5');
-            toggle();
         },
         handleError: e => { },
     });

@@ -46,24 +46,24 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
     const validation = useFormik({
         // enableReinitialize : use this flag when initial values needs to be changed
         enableReinitialize: true,
+        simpleCheckbox: false,
 
         initialValues: {
-            tachometer: (carVariant && carVariant?.interior && carVariant?.interior?.tachometer)
-                ? carVariant?.interior?.tachometer
-                : false,
-            electronicutiTripmeter: (carVariant && carVariant.interior && carVariant.interior.electronicutiTripmeter) ? carVariant.interior.electronicutiTripmeter : false,
-            fabricUpholestry: (carVariant && carVariant.interior && carVariant.interior.fabricUpholestry) ? carVariant.interior.fabricUpholestry : false,
-            leatherSteeringWheel: (carVariant && carVariant.interior && carVariant.interior.leatherSteeringWheel) ? carVariant.interior.leatherSteeringWheel : false,
-            gloveCompartment: (carVariant && carVariant.interior && carVariant.interior.gloveCompartment) ? carVariant.interior.gloveCompartment : false,
-            digitalClock: (carVariant && carVariant.interior && carVariant.interior.digitalClock) ? carVariant.interior.digitalClock : false,
-            outsideTemperatureisplay: (carVariant && carVariant.interior && carVariant.interior.outsideTemperatureisplay) ? carVariant.interior.outsideTemperatureisplay : false,
-            digitalOdometer: (carVariant && carVariant.interior && carVariant.interior.digitalOdometer) ? carVariant.interior.digitalOdometer : false,
-            dualToneDashboard: (carVariant && carVariant.interior && carVariant.interior.dualToneDashboard) ? carVariant.interior.dualToneDashboard : false,
-            additionFeatures: (carVariant && carVariant.interior && carVariant.interior.additionFeatures) || "",
-            digitalCluster: (carVariant && carVariant.interior && carVariant.interior.digitalCluster) || "",
-            digitalClusterSize: (carVariant && carVariant.interior && carVariant.interior.digitalClusterSize) || 0,
-            upholstery: (carVariant && carVariant.interior && carVariant.interior.upholstery) || "",
+            tachometer: carVariant?.interior?.tachometer ?? false,
+            electronicutiTripmeter: carVariant?.interior?.electronicutiTripmeter ?? false,
+            fabricUpholestry: carVariant?.interior?.fabricUpholestry ?? false,
+            leatherSteeringWheel: carVariant?.interior?.leatherSteeringWheel ?? false,
+            gloveCompartment: carVariant?.interior?.gloveCompartment ?? false,
+            digitalClock: carVariant?.interior?.digitalClock ?? false,
+            outsideTemperatureisplay: carVariant?.interior?.outsideTemperatureisplay ?? false,
+            digitalOdometer: carVariant?.interior?.digitalOdometer ?? false,
+            dualToneDashboard: carVariant?.interior?.dualToneDashboard ?? false,
+            additionFeatures: carVariant?.interior?.additionFeatures || "",
+            digitalCluster: carVariant?.interior?.digitalCluster || "",
+            digitalClusterSize: carVariant?.interior?.digitalClusterSize || 0,
+            upholstery: carVariant?.interior?.upholstery || "",
         },
+        
         // validationSchema: Yup.object({
         //     modelName: Yup.string().required(
         //         "Please Enter Your Brand Name"
@@ -104,7 +104,6 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
             //     validation.resetForm();
             // }
             onFormSubmit('interior', values, '8');
-            toggle();
         },
         handleError: e => { },
     });
@@ -137,16 +136,13 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                 <Form onSubmit={validation.handleSubmit}>
                     <Row>
                         <Col lg="3">
-                            <FormGroup className="mb-4" row>
+                          <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
-                                        checked={validation.values.tachometer}
                                         id="tachometer"
-                                        onChange={(event) => {
-                                            validation.setFieldValue("tachometer", event.target.checked);
-                                        }}
+                                        {...validation.getFieldProps('tachometer')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -157,6 +153,8 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
 
                                 </div>
                             </FormGroup>
+                     
+
                         </Col>
 
                         <Col lg="3">
@@ -165,11 +163,8 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
-                                        checked={validation.values.electronicutiTripmeter}
                                         id="electronicutiTripmeter"
-                                        onChange={(event) => {
-                                            validation.setFieldValue("electronicutiTripmeter", event.target.checked);
-                                        }}
+                                        {...validation.getFieldProps('electronicutiTripmeter')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -187,11 +182,8 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
-                                        checked={validation.values.fabricUpholestry}
                                         id="fabricUpholestry"
-                                        onChange={(event) => {
-                                            validation.setFieldValue("fabricUpholestry", event.target.checked);
-                                        }}
+                                        {...validation.getFieldProps('fabricUpholestry')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -209,11 +201,8 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
-                                        checked={validation.values.leatherSteeringWheel}
                                         id="leatherSteeringWheel"
-                                        onChange={(event) => {
-                                            validation.setFieldValue("leatherSteeringWheel", event.target.checked);
-                                        }}
+                                        {...validation.getFieldProps('leatherSteeringWheel')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -234,11 +223,8 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
-                                        checked={validation.values.gloveCompartment}
                                         id="gloveCompartment"
-                                        onChange={(event) => {
-                                            validation.setFieldValue("gloveCompartment", event.target.checked);
-                                        }}
+                                        {...validation.getFieldProps('gloveCompartment')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -257,11 +243,8 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
-                                        checked={validation.values.digitalClock}
                                         id="digitalClock"
-                                        onChange={(event) => {
-                                            validation.setFieldValue("digitalClock", event.target.checked);
-                                        }}
+                                        {...validation.getFieldProps('digitalClock')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -280,11 +263,8 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
-                                        checked={validation.values.outsideTemperatureisplay}
                                         id="outsideTemperatureisplay"
-                                        onChange={(event) => {
-                                            validation.setFieldValue("outsideTemperatureisplay", event.target.checked);
-                                        }}
+                                        {...validation.getFieldProps('outsideTemperatureisplay')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -303,11 +283,8 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
-                                        checked={validation.values.digitalOdometer}
                                         id="digitalOdometer"
-                                        onChange={(event) => {
-                                            validation.setFieldValue("digitalOdometer", event.target.checked);
-                                        }}
+                                        {...validation.getFieldProps('digitalOdometer')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -326,11 +303,8 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                             <input
                                 className="form-check-input"
                                 type="checkbox"
-                                checked={validation.values.dualToneDashboard}
                                 id="dualToneDashboard"
-                                onChange={(event) => {
-                                    validation.setFieldValue("dualToneDashboard", event.target.checked);
-                                }}
+                                {...validation.getFieldProps('dualToneDashboard')}
                             />
                             <label
                                 className="form-check-label"
