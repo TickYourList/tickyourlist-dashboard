@@ -16,7 +16,7 @@ import {
   Total
 } from "./LatestCarSearchesCol";
 import TableContainer from "components/Common/TableContainer";
-import EcommerceOrdersModal from "pages/Ecommerce/EcommerceOrders/EcommerceOrdersModal";
+import CarSearchesModel from "./CarSearchesModel";
 
 const LatestCarSearches = props => {
 
@@ -87,10 +87,10 @@ const LatestCarSearches = props => {
 
   return (
     <React.Fragment>
-      <EcommerceOrdersModal isOpen={modal1} toggle={toggleViewModal} />
+      <CarSearchesModel carSearchesList={props.carSearchesList} isOpen={modal1} toggle={toggleViewModal} />
       <Card>
         <CardBody>
-          <div className="mb-4 h4 card-title">Top Cars - contacted by customers {props.carSearchesList?.length ?? 0}</div>
+          <div className="mb-4 h4 card-title">Top Cars Searched {props.carSearchesList?.length ?? 0}</div>
           <TableContainer
             columns={columns}
             data={props.carSearchesList}

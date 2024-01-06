@@ -304,7 +304,7 @@ const AutomobileDashboard = props => {
               setmodal(!modal);
             }}
           >
-            Order Details
+            Order Detail
           </ModalHeader>
           <ModalBody>
             <p className="mb-2">
