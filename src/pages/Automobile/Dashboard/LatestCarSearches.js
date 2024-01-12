@@ -84,7 +84,6 @@ const LatestCarSearches = props => {
     []
   );
 
-
   return (
     <React.Fragment>
       <CarSearchesModel carSearchesList={props.carSearchesList} isOpen={modal1} toggle={toggleViewModal} />

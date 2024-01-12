@@ -75,7 +75,7 @@ function CarBrands() {
         brandName: (carBrand && carBrand.brandName) || "",
         countryOfOrigin: carBrand && carBrand.countryOfOrigin || "",
         status: (carBrand && carBrand.status ? 'Active': 'InActive') || "",
-        brandImage: carBrand && carBrand.media.url || null,
+        brandImage: carBrand && carBrand.media?.url || null,
       },
       validationSchema: Yup.object({
         brandName: Yup.string().required(
