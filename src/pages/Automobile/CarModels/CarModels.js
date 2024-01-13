@@ -108,6 +108,10 @@ function CarModels() {
       bodyType: (carModel && carModel?.bodyType) || "",
       description: (carModel && carModel?.description) || "",
       year: (carModel && carModel?.year) || "",
+      minPrice: (carModel && carModel?.priceRange?.minPrice) || "",
+      minPriceType: (carModel && carModel?.priceRange?.minPriceType) || "Lakhs",
+      maxPrice: (carModel && carModel?.priceRange?.maxPrice) || "",
+      maxPriceType: (carModel && carModel?.priceRange?.maxPriceType) || "Lakhs",
       status: (carModel && carModel?.status ? 'Active' : 'InActive') || "",
       budget: (carModel && carModel?.budget) || "",
       fuelType: (carModel && carModel?.fuelType && convertArrayToSelectOptions(carModel?.fuelType)) || [],
@@ -125,6 +129,10 @@ function CarModels() {
       // year: Yup.string().required("Please Enter Your Year"),
       // year: Yup.number().required("Please Enter Your Year").min(1900, "Year must be after 1900").max(new Date().getFullYear(), `Year must be before or equal to ${new Date().getFullYear()}`),
       status: Yup.string().required("Please Enter Your Status"),
+      minPrice: Yup.number().required("Please Enter Your Min Price"),
+      maxPrice: Yup.number().required("Please Enter Your Max Price"),
+      // minPriceType: Yup.string().required("Please Enter Your Min Pice Type"),
+      // maxPriceType: Yup.string().required("Please Enter Your Max Price Type"),
       budget: Yup.string().required("Please Enter Your Budget"),
       fuelType: Yup.array().of(Yup.mixed()).required("Please Select Fuel Types"),
       mileage: Yup.string().required("Please Enter Mileage"),
@@ -137,9 +145,16 @@ function CarModels() {
     onSubmit: values => {
       if (isEdit) {
         const updCarModel = new FormData();
+        const priceRange = {
+          minPrice: values.minPrice,
+          minPriceType: values.minPriceType,
+          maxPrice: values.maxPrice,
+          maxPriceType: values.maxPriceType
+        }
         updCarModel.append("modelName", values["modelName"]);
         updCarModel.append("description", values["description"]);
         newCarModel.append("bodyType", values["bodyType"]);
+        newCarModel.append("priceRange", JSON.stringify(priceRange));
         newCarModel.append("budget", values["budget"]);
         newCarModel.append("mileage", values["mileage"]);
         newCarModel.append("seatingCapacity", values["seatingCapacity"]);
@@ -149,7 +164,7 @@ function CarModels() {
         updCarModel.append("images", modelImage ? modelImage : "broken!");
         fuelType?.forEach((type, index) => newCarModel.append(`fuelType`, type));
         transmisisonType?.forEach((type, index) => newCarModel.append(`transmissionType`, type));
-        values.modelImages.forEach((file, index) => newCarModel.append(`images`, file)); 
+        values.modelImages.forEach((file, index) => newCarModel.append(`images`, file));
         dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
 
         validation.resetForm();
@@ -157,10 +172,17 @@ function CarModels() {
         const fuelType = convertBackToArray(values["fuelType"]);
         const transmisisonType = convertBackToArray(values["transmissionType"]);
         const newCarModel = new FormData();
+        console.log('valuesdata ', values);
         newCarModel.append("modelName", values["modelName"]);
         newCarModel.append("bodyType", values["bodyType"]);
         newCarModel.append("description", values["description"]);
         newCarModel.append("year", values["year"]);
+        newCarModel.append("priceRange", JSON.stringify({
+          minPrice: values.minPrice,
+          minPriceType: values.minPriceType,
+          maxPrice: values.maxPrice,
+          maxPriceType: values.maxPriceType
+        }));
         newCarModel.append("budget", values["budget"]);
         newCarModel.append("mileage", values["mileage"]);
         newCarModel.append("seatingCapacity", values["seatingCapacity"]);
@@ -168,7 +190,7 @@ function CarModels() {
         newCarModel.append("status", values["status"] === 'Active' ? true : false);
         fuelType?.forEach((type, index) => newCarModel.append(`fuelType`, type));
         transmisisonType?.forEach((type, index) => newCarModel.append(`transmissionType`, type));
-        values.modelImages.forEach((file, index) => newCarModel.append(`images`, file)); 
+        values.modelImages.forEach((file, index) => newCarModel.append(`images`, file));
 
         dispatch(addNewCarModel(values['carBrand'], newCarModel));
         validation.resetForm();
@@ -273,7 +295,7 @@ function CarModels() {
       value: item
     }));
   }
-  
+
 
   function convertBackToArray(optionGroup) {
     return optionGroup?.map(option => option.value);
@@ -679,6 +701,79 @@ function CarModels() {
                         }
                       </FormFeedback>
                     ) : null}
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md="3" className="mb-3">
+                    <Label for="minPrice">Min Price <span style={{ color: 'red' }}>*</span></Label>
+                    <Input
+                      type="number"
+                      name="minPrice"
+                      id="minPrice"
+                      placeholder="Enter minimum price"
+                      value={validation.values.minPrice}
+                      onChange={validation.handleChange}
+                    />
+                    {validation.touched
+                      .minPrice &&
+                      validation.errors
+                        .minPrice ? (
+                      <FormFeedback type="invalid">
+                        {
+                          validation.errors
+                            .minPrice
+                        }
+                      </FormFeedback>
+                    ) : null}
+                  </Col>
+                  <Col md="3" className="mb-3">
+                    <Label for="minPriceType">Unit <span style={{ color: 'red' }}>*</span></Label>
+                    <Input
+                      type="select"
+                      name="minPriceType"
+                      id="minPriceType"
+                      value={validation.values.minPriceType}
+                      onChange={validation.handleChange}
+                    >
+                      <option value="lakhs">Lakhs</option>
+                      <option value="crores">Crores</option>
+                    </Input>
+                  </Col>
+                  <Col md="3" className="mb-3">
+                    <Label for="maxPrice">Max Price <span style={{ color: 'red' }}>*</span></Label>
+                    <Input
+                      type="number"
+                      name="maxPrice"
+                      id="maxPrice"
+                      placeholder="Enter maximum price"
+                      value={validation.values.maxPrice}
+                      onChange={validation.handleChange}
+                    />
+                    {validation.touched
+                      .maxPrice &&
+                      validation.errors
+                        .maxPrice ? (
+                      <FormFeedback type="invalid">
+                        {
+                          validation.errors
+                            .maxPrice
+                        }
+                      </FormFeedback>
+                    ) : null}
+                  </Col>
+                  <Col md="3" className="mb-3">
+                    <Label for="maxPriceType">Unit <span style={{ color: 'red' }}>*</span></Label>
+                    <Input
+                      type="select"
+                      name="maxPriceType"
+                      id="maxPriceType"
+                      value={validation.values.maxPriceType}
+                      onChange={validation.handleChange}
+                    >
+                      <option value="lakhs">Lakhs</option>
+                      <option value="crores">Crores</option>
+                    </Input>
                   </Col>
                 </Row>
 

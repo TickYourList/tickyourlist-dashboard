@@ -119,7 +119,7 @@ export default function AddCarCollection() {
           key={prod._id}
           index={index}
           id={prod._id}
-          img={prod.media.url}
+          img={prod.media?.[0].url}
           text={prod.modelName}
           moveCollectionProductPreview={moveCollectionProductPreview}
           collectionCarModelIds={collectionCarModelIds}
@@ -462,7 +462,7 @@ export default function AddCarCollection() {
                       <div>
                         <img
                           style={{ maxWidth: "10vh" }}
-                          src={carModel?.media?.url}
+                          src={carModel?.media[0]?.url}
                         />
                       </div>
                       <div className="w-100 mx-3 m-2">

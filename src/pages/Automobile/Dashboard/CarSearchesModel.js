@@ -27,7 +27,7 @@ const CarSearchesModel = props => {
         <ModalHeader toggle={toggle}>Car Search Details</ModalHeader>
         <ModalBody>
           <p className="mb-2">
-            Product id: <span className="text-primary">#SK2540</span>
+            Search Id: <span className="text-primary">{props.ca}</span>
           </p>
           <p className="mb-4">
             Billing Name: <span className="text-primary">Neal Matthews</span>
