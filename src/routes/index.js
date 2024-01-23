@@ -139,6 +139,7 @@ import ForgetPasswordPageDetails from "pages/Authentication/ForgetPasswordPageDe
 import ForgotPasswordEmailVerification from "pages/Authentication/ForgotPasswordEmailVerification";
 import ForgotPasswordSuccessful from "pages/Authentication/ForgotPasswordSuccessful";
 import AutomobileDashboard from "pages/Automobile/Dashboard/AutomobileDashboard";
+import CarDealers from "pages/Automobile/CarDealers/CarDealers";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 
 const authProtectedRoutes = [
@@ -178,6 +179,10 @@ const authProtectedRoutes = [
   { path: "/car-blogs", component: <CarBlogs /> },
 
   { path: "/car-customers", component: <CarCustomers /> },
+
+  { path: "/car-dealers", component: <CarDealers /> },
+
+  { path: "/testimonails", component: <CarCustomers /> },
 
   //Invoices
   { path: "/invoices-list", component: <InvoicesList /> },

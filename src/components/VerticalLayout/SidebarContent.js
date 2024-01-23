@@ -285,6 +285,16 @@ const SidebarContent = props => {
                     {props.t("Car Customers")}
                   </Link>
                 </li>
+                <li>
+                  <Link to="/car-dealers">
+                    {props.t("Car Dealers")}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/testimonials">
+                    {props.t("Testimonial")}
+                  </Link>
+                </li>
               </ul>
             </li>
 

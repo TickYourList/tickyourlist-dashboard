@@ -70,6 +70,7 @@ const TableContainer = ({
   isAddCarBlogOptions,
   isAddCarModelOptions,
   isAddCarCustomerOptions,
+  isAddCarDealerOptions,
   isProductListAddOptions, 
   handleDownloadTemplate,
   handleExportCustomers,
@@ -84,6 +85,8 @@ const TableContainer = ({
   handleCarBlogDeleteClicks,
   handleAddCarModelClicks,
   handleCarModelDeleteClicks,
+  handleAddCarDealerClicks,
+  handleCarDealerDeleteClicks,
   isAddcarVariantOptions,
   handleAddcarVariantClicks,
   handlecarVariantDeleteClicks,
@@ -273,6 +276,34 @@ const TableContainer = ({
             </div>
             {/* </div> */}
           </Col>
+        )}
+        {isAddCarDealerOptions && (
+          <Col sm="7" className="d-flex justify-content-end">
+          {/* <div className="text-sm-end"> */}
+          <div className="text-sm-end">
+            <Button
+              type="button"
+              color="success"
+              className="btn-rounded  mb-2 me-2"
+              onClick={handleAddCarDealerClicks}
+            >
+              <i className="mdi mdi-plus me-1" />
+              Add New Car Dealer
+            </Button>
+          </div>
+          <div className="text-sm-end">
+            <Button
+              type="button"
+              color="danger"
+              className="btn-rounded  mb-2 me-2"
+              onClick={handleCarDealerDeleteClicks}
+            >
+              <i className="mdi mdi-plus me-1" />
+              Delete all Car Dealers
+            </Button>
+          </div>
+          {/* </div> */}
+        </Col>
         )}
         {isAddCarModelOptions && (
           <Col sm="7" className="d-flex justify-content-end">

@@ -94,6 +94,21 @@ const deleteCarCustomerData = id => del(`${url.DELETE_CAR_CUSTOMER}/${id}`);
 // DELETE ALL CAR CUSTOMERS
 const deleteAllCarCustomers = () => del(url.DELETE_ALL_CAR_CUSTOMER);
 
+// GET CAR CUSTOMERS LIST
+const getCarDealersList = () => get(url.GET_CAR_DEALERS);
+
+// ADD CAR DEALER
+const addCarDealer = data => postFormData(url.ADD_CAR_DEALER, data);
+
+// UPDATE CAR CUSTOMER
+const updateCarDealerData = (userId, data) => putFormData(`${url.UPDATE_CAR_DEALER}/${userId}`, data);
+
+// DELETE CAR CUSTOMER
+const deleteCarDealerData = id => del(`${url.DELETE_CAR_DEALER}/${id}`);
+
+// DELETE ALL CAR CUSTOMERS
+const deleteAllCarDealers = () => del(url.DELETE_ALL_CAR_DEALER);
+
 
 export {
     getCarDashboardAvtivityList,
@@ -125,5 +140,10 @@ export {
     addCarCustomer,
     updateCarCustomerData,
     deleteCarCustomerData,
-    deleteAllCarCustomers
+    deleteAllCarCustomers,
+    getCarDealersList,
+    addCarDealer,
+    updateCarDealerData,
+    deleteCarDealerData,
+    deleteAllCarDealers
 };
