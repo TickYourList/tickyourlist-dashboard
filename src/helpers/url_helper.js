@@ -59,3 +59,10 @@ export const GET_INVOICE_DETAIL = "/invoice";
 export const CUSTOMER_INVOICE = "v1/orders/get/invoices";
 export const DELETE_ALL_INVOICE = "v1/orders/delete/customerinvoices";
 export const DELETE_INVOICE = "v1/orders/delete/customer";
+
+// Testimonials
+export const GET_TESTIMONIALS = "v1/testimonial/get/submitted/all";
+export const ADD_NEW_TESTIMONIAL = "/v1/testimonial/add/testimonial";
+export const UPDATE_TESTIMONIAL = "/v1/testimonial/update/testimonial";
+export const DELETE_TESTIMONIAL = "/v1/testimonial/delete/testimonial";
+export const DELETE_ALL_TESTIMONIALS = "/v1/testimonial/delete/all";

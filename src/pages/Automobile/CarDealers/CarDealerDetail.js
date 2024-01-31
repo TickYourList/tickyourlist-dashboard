@@ -43,40 +43,28 @@ const CarDealerDetail = ({ isOpen, toggle, Data }) => {
             <b>Dealer id:</b> <span className="text-primary">{Data?._id}</span>
           </p>
           <p className="mb-2">
-            <b>Dealer Name:</b> <span className="text-primary">{Data?.username}</span>
+            <b>Dealer Name:</b> <span className="text-primary">{Data?.dealerName}</span>
           </p>
           <p className="mb-2">
             <b>Email:</b> <span className="text-primary">{Data?.email}</span>
           </p>
           <p className="mb-2">
-            <b>Phone Number:</b> <span className="text-primary">{Data?.phone}</span>
+            <b>Phone Number:</b> <span className="text-primary">{Data?.phoneNumber}</span>
           </p>
           <p className="mb-2">
-            <b>PAN Details:</b> <span className="text-primary">{Data?.panDetails}</span>
+            <b>Address:</b> <span className="text-primary">{Data?.address}</span>
           </p>
           <p className="mb-2">
-            <b>Car Brand:</b> <span className="text-primary">{Data?.carBrand?.brandName}</span>
-          </p>
-          <p className="mb-2">
-            <b>Car Model:</b> <span className="text-primary">{Data?.carModel?.modelName}</span>
-          </p>
-          <p className="mb-2">
-            <b>Car Variant:</b> <span className="text-primary">{Data?.carVariant?.name}</span>
+            <b>State:</b> <span className="text-primary">{Data?.state}</span>
           </p>
           <p className="mb-2">
             <b>City:</b> <span className="text-primary">{Data?.city}</span>
           </p>
           <p className="mb-2">
-            <b>Buying Period: </b>
-            <span className="text-primary">{Data?.buyingPeriod}</span>
+            <b>Car Brand:</b> <span className="text-primary">{Data?.carBrand?.brandName}</span>
           </p>
           <p className="mb-2">
-            <b>Usage: </b>
-            <span className="text-primary">{Data?.usage}</span>
-          </p>
-          <p className="mb-2">
-            <b>Joining Date: </b>
-            <span className="text-primary">{ConnectionDate(Data?.joiningDate)}</span>
+            <b>Description:</b> <span className="text-primary">{Data?.description}</span>
           </p>
         </ModalBody>
         <ModalFooter>

@@ -129,7 +129,7 @@ function CarDealers() {
                 const dealerData = {
                     dealerName: values.dealerName,
                     carBrand: values.carBrand,
-                    dealerDescription: values.dealerDescription,
+                    description: values.dealerDescription,
                     address: values.address,
                     email: values.email,
                     phoneNumber: values.phoneNumber,
@@ -150,7 +150,7 @@ function CarDealers() {
                     phoneNumber: values.phoneNumber,
                     state: values.state,
                     city: values.city,
-                    status: values.status
+                    status: values.status === 'Active' ? true : false
                 };
                 dispatch(addNewCarDealer(dealerData));
                 validation.resetForm();
@@ -159,6 +159,7 @@ function CarDealers() {
         },
         handleError: e => { },
     });
+    
 
     const toggleViewModal = () => setModal1(!modal1);
 
@@ -241,7 +242,7 @@ function CarDealers() {
             dispatch(deleteCarDealer(carDealer));
             setDeleteModal(false);
         } else {
-            dispatch(deleteAllCarDealers(carDealer));
+            dispatch(deleteAllCarDealers());
             setDeleteModal(false);
         }
     };
@@ -255,6 +256,14 @@ function CarDealers() {
         setCarDealer();
         setDeleteModal(true);
     }
+
+    const handlecarDealerClick = arg => {
+        const carDealer = arg;
+        setCarDealer(carDealer);
+        setIsEdit(true);
+    
+        toggle();
+      };
 
     const columns = useMemo(
         () => [
@@ -275,7 +284,7 @@ function CarDealers() {
             },
             {
                 Header: 'Dealer Name',
-                accessor: 'username',
+                accessor: 'dealerName',
                 filterable: true,
                 Cell: (cellProps) => {
                     return <DealerName {...cellProps} />;
@@ -283,7 +292,7 @@ function CarDealers() {
             },
             {
                 Header: 'Phone Number',
-                accessor: 'phone',
+                accessor: 'phoneNumber',
                 filterable: true,
                 Cell: (cellProps) => {
                     return <DealerName {...cellProps} />;
@@ -298,19 +307,11 @@ function CarDealers() {
                 }
             },
             {
-                Header: 'Car Model',
-                accessor: 'carModel.modelName',
+                Header: 'Email',
+                accessor: 'email',
                 filterable: true,
                 Cell: (cellProps) => {
-                    return <CarModel {...cellProps} />;
-                }
-            },
-            {
-                Header: 'Connection Date',
-                accessor: 'joiningDate',
-                filterable: true,
-                Cell: (cellProps) => {
-                    return <ConnectionDate {...cellProps} />;
+                    return <CarBrand {...cellProps} />;
                 }
             },
             {
@@ -339,6 +340,19 @@ function CarDealers() {
                 Cell: (cellProps) => {
                     return (
                         <div className="d-flex gap-3">
+                            <Link
+                                to="#"
+                                className="text-success"
+                                onClick={() => {
+                                    const carDealerData = cellProps.row.original;
+                                    handlecarDealerClick(carDealerData);
+                                }}
+                            >
+                                <i className="mdi mdi-pencil font-size-18" id="edittooltip" />
+                                <UncontrolledTooltip placement="top" target="edittooltip">
+                                    Edit
+                                </UncontrolledTooltip>
+                            </Link>
                             <Link
                                 to="#"
                                 className="text-danger"

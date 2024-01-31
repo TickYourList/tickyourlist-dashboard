@@ -14,9 +14,9 @@ import { ADD_CAR_DEALER_FAIL, ADD_CAR_DEALER_SUCCESS, ADD_NEW_CAR_DEALER, DELETE
     payload: error,
   });
   
-  export const addNewCarDealer = (id, data) => ({
+  export const addNewCarDealer = (data) => ({
     type: ADD_NEW_CAR_DEALER,
-    payload: {id, data },
+    payload: { data },
   });
   
   export const addCarDealerSuccess = event => ({
@@ -44,9 +44,9 @@ import { ADD_CAR_DEALER_FAIL, ADD_CAR_DEALER_SUCCESS, ADD_NEW_CAR_DEALER, DELETE
     payload: error,
   });
   
-  export const deleteCarDealer = carModel => ({
+  export const deleteCarDealer = carDealer => ({
     type: DELETE_CAR_DEALER,
-    payload: carModel,
+    payload: carDealer,
   });
   
   export const deleteCarDealerSuccess = carModel => ({

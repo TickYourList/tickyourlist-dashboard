@@ -263,7 +263,6 @@ function CarModels() {
 
 
   const toggle = () => {
-    console.log('model ', modal);
     if (modal) {
       setModal(false);
       setCarModel(null);

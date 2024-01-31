@@ -16,9 +16,9 @@ function* fetchCarDealers() {
   }
 }
 
-function* onAddCarDealer({ payload: {id , data } }) {
+function* onAddCarDealer({ payload: {data } }) {
   try {
-    const response = yield call(addCarDealer, id, data)
+    const response = yield call(addCarDealer, data)
     yield put(addCarDealerSuccess(response.data))
     showToastSuccess("Car Model Added Successfully.","Success");
   } catch (error) { 

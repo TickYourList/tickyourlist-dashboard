@@ -71,6 +71,7 @@ const TableContainer = ({
   isAddCarModelOptions,
   isAddCarCustomerOptions,
   isAddCarDealerOptions,
+  isAddTestimonialOptions,
   isProductListAddOptions, 
   handleDownloadTemplate,
   handleExportCustomers,
@@ -87,6 +88,8 @@ const TableContainer = ({
   handleCarModelDeleteClicks,
   handleAddCarDealerClicks,
   handleCarDealerDeleteClicks,
+  handleAddTestimonialClicks,
+  handleTestimonialDeleteClicks,
   isAddcarVariantOptions,
   handleAddcarVariantClicks,
   handlecarVariantDeleteClicks,
@@ -300,6 +303,34 @@ const TableContainer = ({
             >
               <i className="mdi mdi-plus me-1" />
               Delete all Car Dealers
+            </Button>
+          </div>
+          {/* </div> */}
+        </Col>
+        )}
+        {isAddTestimonialOptions && (
+          <Col sm="7" className="d-flex justify-content-end">
+          {/* <div className="text-sm-end"> */}
+          <div className="text-sm-end">
+            <Button
+              type="button"
+              color="success"
+              className="btn-rounded  mb-2 me-2"
+              onClick={handleAddTestimonialClicks}
+            >
+              <i className="mdi mdi-plus me-1" />
+              Add New Testimonial
+            </Button>
+          </div>
+          <div className="text-sm-end">
+            <Button
+              type="button"
+              color="danger"
+              className="btn-rounded  mb-2 me-2"
+              onClick={handleTestimonialDeleteClicks}
+            >
+              <i className="mdi mdi-plus me-1" />
+              Delete all Testimonials
             </Button>
           </div>
           {/* </div> */}

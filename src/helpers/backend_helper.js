@@ -146,9 +146,20 @@ export const getInvoiceDetail = id =>
   del(`${url.DELETE_INVOICE}/${customerId}/customerinvoices/${invoiceId}`);
 
 
+// GET CAR CUSTOMERS LIST
+const getTestimonialsList = () => get(url.GET_TESTIMONIALS);
 
+// ADD CAR DEALER
+const addTestimonial = data => post(url.ADD_NEW_TESTIMONIAL, data);
 
+// UPDATE CAR CUSTOMER
+const updateTestimonialData = (userId, data) => put(`${url.UPDATE_TESTIMONIAL}/${userId}`, data);
 
+// DELETE CAR CUSTOMER
+const deleteTestimonialData = id => del(`${url.DELETE_TESTIMONIAL}/${id}`);
+
+// DELETE ALL CAR CUSTOMERS
+const deleteAllTestimonials = () => del(url.DELETE_ALL_TESTIMONIALS);
 
 export {
   postRegister,
@@ -168,5 +179,10 @@ export {
   domainAvailabilityApi,
   domainSuggestionApi,
   buyDomainApi,
-  onDomainOrderId
+  onDomainOrderId,
+  getTestimonialsList,
+  addTestimonial,
+  updateTestimonialData,
+  deleteTestimonialData,
+  deleteAllTestimonials
 };

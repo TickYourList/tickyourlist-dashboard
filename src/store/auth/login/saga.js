@@ -27,7 +27,7 @@ function* loginUser({ payload: { user, history } }) {
         showToastSuccess("Login is Successfull","Success")
       }
       yield put(loginSuccess(response));
-    history('/dashboard');
+    history('/automobile-dashboard');
   } catch (error) {
     showToastError("Email and Password does not match","Error")
     yield put(apiError(error));

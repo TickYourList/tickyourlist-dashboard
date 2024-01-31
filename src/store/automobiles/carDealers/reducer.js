@@ -24,7 +24,7 @@ const carDealer = (state = INIT_STATE, action) => {
         case ADD_CAR_DEALER_SUCCESS:
             return {
                 ...state,
-                carDealers: [...state.carDealers, action.payload.carDealer],
+                carDealers: [...state.carDealers, action.payload.carDealers],
             };
 
         case ADD_CAR_DEALER_FAIL:

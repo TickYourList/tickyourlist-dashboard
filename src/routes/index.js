@@ -140,6 +140,7 @@ import ForgotPasswordEmailVerification from "pages/Authentication/ForgotPassword
 import ForgotPasswordSuccessful from "pages/Authentication/ForgotPasswordSuccessful";
 import AutomobileDashboard from "pages/Automobile/Dashboard/AutomobileDashboard";
 import CarDealers from "pages/Automobile/CarDealers/CarDealers";
+import Testimonials from "pages/Testimonials/Testimonials";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 
 const authProtectedRoutes = [
@@ -182,7 +183,7 @@ const authProtectedRoutes = [
 
   { path: "/car-dealers", component: <CarDealers /> },
 
-  { path: "/testimonails", component: <CarCustomers /> },
+  { path: "/testimonials", component: <Testimonials /> }, 
 
   //Invoices
   { path: "/invoices-list", component: <InvoicesList /> },
