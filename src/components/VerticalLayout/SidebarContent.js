@@ -298,7 +298,7 @@ const SidebarContent = props => {
               </ul>
             </li>
 
-            <li>
+            {/* <li>
               <Link to="/#" className="has-arrow ">
                 <i className="bx bx-bitcoin"></i>
                 <span>{props.t("Crypto")}</span>
@@ -439,9 +439,9 @@ const SidebarContent = props => {
                   <Link to="/contacts-profile">{props.t("Profile")}</Link>
                 </li>
               </ul>
-            </li>
+            </li> */}
 
-            <li>
+            {/* <li>
               <Link to="/#" className="has-arrow">
                 <i className="bx bxs-detail" />
 
@@ -480,9 +480,9 @@ const SidebarContent = props => {
                   </ul>
                 </li>
               </ul>
-            </li>
+            </li> */}
 
-            <li className="menu-title">Pages</li>
+            {/* <li className="menu-title">Pages</li>
             <li>
               <Link to="/#" className="has-arrow">
                 <i className="bx bx-user-circle"></i>
@@ -580,9 +580,9 @@ const SidebarContent = props => {
                   <Link to="/pages-500">{props.t("Error 500")}</Link>
                 </li>
               </ul>
-            </li>
+            </li> */}
 
-            <li className="menu-title">{props.t("Components")}</li>
+            {/* <li className="menu-title">{props.t("Components")}</li>
 
             <li>
               <Link to="/#" className="has-arrow">
@@ -752,8 +752,8 @@ const SidebarContent = props => {
                   <Link to="/tables-dragndrop">{props.t("Drag & Drop Table")}</Link>
                 </li>
               </ul>
-            </li>
-
+            </li> */}
+{/* 
             <li>
               <Link to="/#" className="has-arrow ">
                 <i className="bx bxs-bar-chart-alt-2"></i>
@@ -826,9 +826,9 @@ const SidebarContent = props => {
                   <Link to="/maps-leaflet">{props.t("Leaflet Maps")}</Link>
                 </li>
               </ul>
-            </li>
+            </li> */}
 
-            <li>
+            {/* <li>
               <Link to="/#" className="has-arrow ">
                 <i className="bx bx-share-alt"></i>
                 <span>{props.t("Multi Level")}</span>
@@ -851,7 +851,7 @@ const SidebarContent = props => {
                   </ul>
                 </li>
               </ul>
-            </li>
+            </li> */}
           </ul>
         </div>
       </SimpleBar>
