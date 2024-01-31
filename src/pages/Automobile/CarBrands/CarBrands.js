@@ -10,7 +10,7 @@ import Breadcrumbs from '../../../components/Common/Breadcrumb';
 import DeleteModal from '../../../components/Common/DeleteModal';
 
 import {
-} from "../../../store/e-commerce/actions";
+} from "../../../store/e-commerce/actions"; 
 
 import {
   BrandId,
@@ -46,6 +46,7 @@ import CarBrandDetail from "./CarBrandDetail";
 import { addNewCarBrand, deleteAllCarBrands, deleteCarBrand, getCarBrands, getCountriesList, updateCarBrand } from "store/automobiles/carbrands/actions";
 import { useFormik } from "formik";
 import CarBrandModel from "./CarBrandModel";
+import countries from '../../../assets/helperJsonData/countries.json';
 
 function CarBrands() {
 
@@ -114,9 +115,9 @@ function CarBrands() {
 
   const toggleViewModal = () => setModal1(!modal1);
 
-  const { carBrands, countries } = useSelector(state => ({
+  const { carBrands } = useSelector(state => ({
     carBrands: state.CarBrand.carBrands,
-    countries: state.CarBrand.countries
+    // countries: state.CarBrand.countries
   }));
 
   useEffect(() => {
@@ -387,7 +388,7 @@ function CarBrands() {
                       <Label className="form-label">
                         Country Of Origin <span style={{color: 'red'}}>*</span>
                       </Label>
-                      <Input 
+                      <Input
                       type="select" 
                       name="countryOfOrigin"
                       id="countryOfOrigin"
@@ -396,7 +397,7 @@ function CarBrands() {
                       value={validation.values.countryOfOrigin}
                     >
                       <option value="">Select a country</option>
-                      {countries?.map((country, index) => (
+                      {countries?.data?.map((country, index) => (
                         <option key={index} value={country.country}>
                           {country.country}
                         </option>
