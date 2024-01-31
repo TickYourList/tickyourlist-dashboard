@@ -76,7 +76,7 @@ function Testimonials() {
     enableReinitialize: true,
 
     initialValues: {
-      testimonialName: (testimonial && testimonial.testimonialName) || "",
+      name: (testimonial && testimonial.name) || "",
       state: (testimonial && testimonial.state) || "",
       city: (testimonial && testimonial.city) || "",
       rating: (testimonial && testimonial.rating) || "",
@@ -84,7 +84,7 @@ function Testimonials() {
       status: (testimonial && testimonial.status ? 'Active' : 'InActive') || "",
     },
     validationSchema: Yup.object({
-      testimonialName: Yup.string().required(
+      name: Yup.string().required(
         "Please Enter Your Testimonial Name"
       ),
       state: Yup.string().required(
@@ -106,7 +106,7 @@ function Testimonials() {
     onSubmit: values => {
       if (isEdit) {
         const updTestimonial = new FormData();
-        updTestimonial.append("testimonialName", values["testimonialName"]);
+        updTestimonial.append("name", values["name"]);
         updTestimonial.append("countryOfOrigin", values["countryOfOrigin"]);
         updTestimonial.append("status", values["status"] === 'Active' ? true : false);
         updTestimonial.append("image", testimonialImage ? testimonialImage : "broken!");
@@ -114,12 +114,16 @@ function Testimonials() {
 
         validation.resetForm();
       } else {
-        const newTestimonial = new FormData();
-        newTestimonial.append("testimonialName", values["testimonialName"]);
-        newTestimonial.append("countryOfOrigin", values["countryOfOrigin"]);
-        newTestimonial.append("status", values["status"] === 'Active' ? true : false);
-        newTestimonial.append("image", testimonialImage ? testimonialImage : "broken!");
-        dispatch(addNewTestimonial(newTestimonial));
+        console.log('values ', values);
+        const data = {
+          name: values["name"],
+          state: values["state"],
+          city: values["city"],
+          rating: values["rating"],
+          description: values["description"],
+          status: values["status"] === 'Active' ? true : false
+        }
+        dispatch(addNewTestimonial(data));
         validation.resetForm();
       }
       toggle();
@@ -370,7 +374,7 @@ function Testimonials() {
                     Testimonial Name <span style={{ color: 'red' }}>*</span>
                   </Label>
                   <Input
-                    name="testimonialName"
+                    name="name"
                     type="text"
                     validate={{
                       required: { value: true },
@@ -381,25 +385,25 @@ function Testimonials() {
                     onBlur={validation.handleBlur}
                     value={
                       validation.values
-                        .testimonialName || ""
+                        .name || ""
                     }
                     invalid={
                       validation.touched
-                        .testimonialName &&
+                        .name &&
                         validation.errors
-                          .testimonialName
+                          .name
                         ? true
                         : false
                     }
                   />
                   {validation.touched
-                    .testimonialName &&
+                    .name &&
                     validation.errors
-                      .testimonialName ? (
+                      .name ? (
                     <FormFeedback type="invalid">
                       {
                         validation.errors
-                          .testimonialName
+                          .name
                       }
                     </FormFeedback>
                   ) : null}

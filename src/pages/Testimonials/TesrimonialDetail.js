@@ -43,10 +43,6 @@ const CarBrandDetail = ({ isOpen, toggle, Data }) => {
             <b>Rating: </b>
             <span className="text-primary">{Data?.rating}</span>
           </p>
-          <p className="mb-2">
-            <b>Status: </b>
-            <span className="text-primary">{Data?.status}</span>
-          </p>
           <p className="mb-4">
             <b>Description: </b>
             <span className="text-primary">{Data?.description}</span>
