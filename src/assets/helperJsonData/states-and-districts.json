@@ -201,7 +201,7 @@
       },
       {  
          "state":"Gujarat",
-         "districts":[  
+         "districts":[
             "Ahmedabad",
             "Amreli",
             "Anand",
@@ -264,7 +264,7 @@
             "Yamunanagar"
          ]
       },
-      {  
+      {
          "state":"Himachal Pradesh",
          "districts":[  
             "Bilaspur",
@@ -871,9 +871,9 @@
             "Varanasi"
          ]
       },
-      {  
+      {
          "state":"West Bengal",
-         "districts":[  
+         "districts":[
             "Alipurduar",
             "Bankura",
             "Birbhum",
