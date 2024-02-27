@@ -53,6 +53,7 @@ import { getCarVariants } from "store/automobiles/carVariants/actions";
 import { getCarModels } from "store/automobiles/carModels/actions";
 import { getCarBrands } from "store/actions";
 import statesAndDistricts from '../../../assets/helperJsonData/states-and-districts.json';
+import statesCitiesList from "../../../assets/helperJsonData/state-and-city.json";
 
 function CarDealers() {
 
@@ -75,9 +76,32 @@ function CarDealers() {
     const [isCarDealerLoading, setIsCarDealerLoading] = useState(true);
     const [selectedState, setSelectedState] = useState('');
     const [cities, setCities] = useState([]);
+    // State for the selected city and city options
+    const [selectedCity, setSelectedCity] = useState(null);
+    const [cityOptions, setCityOptions] = useState([]);
 
 
     const dispatch = useDispatch();
+
+    // Populate city options
+    useEffect(() => {
+        const loadedCityOptions = Object.keys(statesCitiesList).flatMap(state => (
+            statesCitiesList[state].map(city => ({
+                value: city.id.toString(),  // Convert to string if cityData is a string
+                label: city.city
+            }))
+        ));
+        setCityOptions(loadedCityOptions);
+    }, []);
+
+    // Prepopulate selected city based on cityData ID
+    useEffect(() => {
+        if (cityData !== null && cityOptions.length > 0) {
+            // Find the matching city by converting both values to the same type (string)
+            const matchingCity = cityOptions.find(option => option.value === cityData.toString());
+            setSelectedCity(matchingCity || null);
+        }
+    }, [cityData, cityOptions]);
 
     // validation
     const validation = useFormik({
