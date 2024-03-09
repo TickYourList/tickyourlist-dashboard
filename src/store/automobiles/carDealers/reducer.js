@@ -37,9 +37,9 @@ const carDealer = (state = INIT_STATE, action) => {
             return {
                 ...state,
                 carDealers: state.carDealers.map(carDealer =>
-                    carDealer.id.toString() === action.payload.id.toString()
-                        ? { carDealer, ...action.payload }
-                        : event
+                    carDealer._id.toString() === action.payload.id.toString()
+                        ? { carDealer, ...action.payload.data }
+                        : carDealer
                 ),
             };
 

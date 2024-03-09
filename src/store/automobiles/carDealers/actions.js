@@ -29,14 +29,14 @@ import { ADD_CAR_DEALER_FAIL, ADD_CAR_DEALER_SUCCESS, ADD_NEW_CAR_DEALER, DELETE
     payload: error,
   });
   
-  export const updateCarDealer = (carModelId, id, data) => ({
+  export const updateCarDealer = (id, data) => ({
     type: UPDATE_CAR_DEALER,
-    payload: { carModelId, id, data },
+    payload: { id, data },
   });
   
-  export const updateCarDealerSuccess = id => ({
+  export const updateCarDealerSuccess = (id, data) => ({
     type: UPDATE_CAR_DEALER_SUCCESS,
-    payload: id,
+    payload: { id, data },
   });
   
   export const updateCarDealerFail = error => ({

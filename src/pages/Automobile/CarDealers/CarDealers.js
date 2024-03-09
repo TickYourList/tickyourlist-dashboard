@@ -52,7 +52,7 @@ import { useFormik } from "formik";
 import { getCarVariants } from "store/automobiles/carVariants/actions";
 import { getCarModels } from "store/automobiles/carModels/actions";
 import { getCarBrands } from "store/actions";
-import statesAndDistricts from '../../../assets/helperJsonData/states-and-districts.json';
+// import statesAndDistricts from '../../../assets/helperJsonData/states-and-districts.json';
 import statesCitiesList from "../../../assets/helperJsonData/state-and-city.json";
 
 function CarDealers() {
@@ -83,26 +83,6 @@ function CarDealers() {
 
     const dispatch = useDispatch();
 
-    // Populate city options
-    useEffect(() => {
-        const loadedCityOptions = Object.keys(statesCitiesList).flatMap(state => (
-            statesCitiesList[state].map(city => ({
-                value: city.id.toString(),  // Convert to string if cityData is a string
-                label: city.city
-            }))
-        ));
-        setCityOptions(loadedCityOptions);
-    }, []);
-
-    // Prepopulate selected city based on cityData ID
-    useEffect(() => {
-        if (cityData !== null && cityOptions.length > 0) {
-            // Find the matching city by converting both values to the same type (string)
-            const matchingCity = cityOptions.find(option => option.value === cityData.toString());
-            setSelectedCity(matchingCity || null);
-        }
-    }, [cityData, cityOptions]);
-
     // validation
     const validation = useFormik({
         // enableReinitialize : use this flag when initial values needs to be changed
@@ -114,7 +94,8 @@ function CarDealers() {
             phoneNumber: (carDealer && carDealer.phoneNumber) || "",
             state: (carDealer && carDealer.state) || "",
             city: (carDealer && carDealer.city) || "",
-            carBrand: (carDealer && carDealer.carBrand) || "",
+            cityId: carDealer?.cityId || '',
+            carBrand: (carDealer && carDealer.carBrand?._id) || "",
             address: (carDealer && carDealer.address) || "",
             status: (carDealer && carDealer.status ? 'Active' : 'InActive') || "",
             dealerDescription: (carDealer && carDealer.description) || "",
@@ -159,11 +140,12 @@ function CarDealers() {
                     phoneNumber: values.phoneNumber,
                     state: values.state,
                     city: values.city,
-                    status: values.status,
-
+                    cityId: values?.cityId,
+                    status: values.status === 'Active' ? true : false
                 };
-                dispatch(updateCarDealer(dealerData));
+                dispatch(updateCarDealer(carDealer._id, dealerData));
                 validation.resetForm();
+                toggle();
             } else {
                 const dealerData = {
                     dealerName: values.dealerName,
@@ -174,6 +156,7 @@ function CarDealers() {
                     phoneNumber: values.phoneNumber,
                     state: values.state,
                     city: values.city,
+                    cityId: values.cityId,
                     status: values.status === 'Active' ? true : false
                 };
                 dispatch(addNewCarDealer(dealerData));
@@ -183,7 +166,7 @@ function CarDealers() {
         },
         handleError: e => { },
     });
-    
+
 
     const toggleViewModal = () => setModal1(!modal1);
 
@@ -229,19 +212,33 @@ function CarDealers() {
         }
     };
 
-    const handleStateChange = (selectedState) => {
-        setSelectedState(selectedState);
-        const stateObj = statesAndDistricts.states.find(state => state.state === selectedState);
-        setCities(stateObj ? stateObj.districts : []);
-        validation.setFieldValue('state', selectedState);
-        validation.setFieldValue('city', ''); // Reset city value when state changes
-    };
-
     const handleCarBrandChange = (selectedBrandId) => {
         // setIsCarDealerLoading(true);
         validation.setFieldValue("carBrand", selectedBrandId);
         validation.setFieldValue("carModel", ""); // Reset car model value
     };
+
+    // Function to handle state selection change
+    const handleStateChange = (selectedState) => {
+        console.log('selectedState ', selectedState);
+        setSelectedState(selectedState);
+        const citiesArray = statesCitiesList[selectedState] || [];
+        setCities(citiesArray); // Directly setting city objects
+        validation.setFieldValue('state', selectedState);
+        validation.setFieldValue('cityId', ''); // Reset city ID when state changes
+    };
+
+    // Now updates formik to use city ID
+    const handleCityChange = (event) => {
+        const { value } = event.target;
+        const cityObj = cities.find(city => city.id === value); // Find the city object based on the id
+        const cityName = cityObj ? cityObj.city : ''; // Extract the city name
+
+        validation.setFieldValue('city', cityName);
+        validation.setFieldValue('cityId', value);
+        // Additional logic can be placed here if needed
+    };
+
 
     //delete carDealer
     const [deleteModal, setDeleteModal] = useState(false);
@@ -285,9 +282,9 @@ function CarDealers() {
         const carDealer = arg;
         setCarDealer(carDealer);
         setIsEdit(true);
-    
+
         toggle();
-      };
+    };
 
     const columns = useMemo(
         () => [
@@ -530,10 +527,10 @@ function CarDealers() {
                                     <Col className="col">
                                         <FormGroup>
                                             <Label for="state">State <span style={{ color: 'red' }}>*</span></Label>
-                                            <Input type="select" name="state" id="state" onChange={(e) => handleStateChange(e.target.value)}>
+                                            <Input type="select" name="state" id="state" value={validation.values.state} onChange={(e) => handleStateChange(e.target.value)}>
                                                 <option value="">Select State</option>
-                                                {statesAndDistricts.states.map((stateObj, index) => (
-                                                    <option key={index} value={stateObj.state}>{stateObj.state}</option>
+                                                {Object.keys(statesCitiesList).map((stateName, index) => (
+                                                    <option key={index} value={stateName}>{stateName}</option>
                                                 ))}
                                             </Input>
                                         </FormGroup>
@@ -541,10 +538,10 @@ function CarDealers() {
                                     <Col className="col">
                                         <FormGroup>
                                             <Label for="city">City <span style={{ color: 'red' }}>*</span></Label>
-                                            <Input type="select" name="city" id="city" onChange={validation.handleChange} disabled={!selectedState}>
+                                            <Input type="select" name="cityId" id="city" value={validation.values.cityId} onChange={handleCityChange} disabled={!selectedState}>
                                                 <option value="">Select City</option>
-                                                {cities.map((city, index) => (
-                                                    <option key={index} value={city}>{city}</option>
+                                                {cities.map((cityObj, index) => (
+                                                    <option key={index} value={cityObj.id}>{cityObj.city}</option>
                                                 ))}
                                             </Input>
                                         </FormGroup>
@@ -560,7 +557,7 @@ function CarDealers() {
                                             <Input
                                                 name="email"
                                                 id="email"
-                                                type="text"
+                                                type="email"
                                                 validate={{
                                                     required: { value: true },
                                                 }}

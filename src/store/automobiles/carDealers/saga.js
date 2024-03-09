@@ -27,10 +27,10 @@ function* onAddCarDealer({ payload: {data } }) {
   }
 }
 
-function* onUpdateCarDealer({ payload: { carDealerId, id, data } }) {
+function* onUpdateCarDealer({ payload: { id, data } }) {
   try {
-    const response = yield call(updateCarDealerData, carDealerId, id, data )
-    yield put(updateCarDealerSuccess(id))
+    const response = yield call(updateCarDealerData, id, data )
+    yield put(updateCarDealerSuccess(id, response.data))
     showToastSuccess("Car Model Updated Successfully.","Success");
   } catch (error) {
     yield put(updateCarDealerFail(error))
