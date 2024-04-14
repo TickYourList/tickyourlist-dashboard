@@ -111,7 +111,7 @@ const Header = props => {
               </div>
             </form>
 
-            <Dropdown
+            {/* <Dropdown
               className="dropdown-mega d-none d-lg-block ms-2"
               isOpen={menu}
               toggle={() => setMenu(!menu)}
@@ -256,7 +256,7 @@ const Header = props => {
                   </Col>
                 </Row>
               </DropdownMenu>
-            </Dropdown>
+            </Dropdown> */}
           </div>
 
           <div className="d-flex">
@@ -297,7 +297,7 @@ const Header = props => {
               </div>
             </div>
 
-            <LanguageDropdown />
+            {/* <LanguageDropdown /> */}
 
             <Dropdown
               className="d-none d-lg-inline-block ms-1"

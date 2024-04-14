@@ -119,7 +119,11 @@ function CarModels() {
       seatingCapacity: (carModel && carModel?.seatingCapacity) || "",
       transmissionType: (carModel && carModel?.transmissionType && convertArrayToSelectOptions(carModel?.transmissionType)) || [],
       displacement: (carModel && carModel?.displacement) || "",
-      modelImages: (carModel && carModel?.media) || []
+      modelImages: (carModel && carModel?.media.map(image => ({
+        ...image,
+        preview: image.url,
+      }))) || [],
+      urlslug: (carModel && carModel?.urlslug) || ''
     },
     validationSchema: Yup.object({
       modelName: Yup.string().required("Please Enter Your Model Name"),
@@ -140,6 +144,7 @@ function CarModels() {
       transmissionType: Yup.array().of(Yup.mixed()).required("Please Select Transmission Types"),
       displacement: Yup.string().required("Please Enter Engine Displacement"),
       modelImages: Yup.array().of(Yup.mixed()).required("Please Upload Images").min(1, 'At least one image is required'),
+      urlslug: Yup.string().required("Please Enter URL Slug"),
 
     }),
     onSubmit: values => {
@@ -151,20 +156,24 @@ function CarModels() {
           maxPrice: values.maxPrice,
           maxPriceType: values.maxPriceType
         }
+        const fuelType = convertBackToArray(values["fuelType"]);
+        const transmisisonType = convertBackToArray(values["transmissionType"]);
         updCarModel.append("modelName", values["modelName"]);
         updCarModel.append("description", values["description"]);
-        newCarModel.append("bodyType", values["bodyType"]);
-        newCarModel.append("priceRange", JSON.stringify(priceRange));
-        newCarModel.append("budget", values["budget"]);
-        newCarModel.append("mileage", values["mileage"]);
-        newCarModel.append("seatingCapacity", values["seatingCapacity"]);
-        newCarModel.append("displacement", values["displacement"]);
+        updCarModel.append("bodyType", values["bodyType"]);
+        updCarModel.append("priceRange", JSON.stringify(priceRange));
+        updCarModel.append("budget", values["budget"]);
+        updCarModel.append("mileage", values["mileage"]);
+        updCarModel.append("seatingCapacity", values["seatingCapacity"]);
+        updCarModel.append("displacement", values["displacement"]);
         updCarModel.append("year", values["year"]);
         updCarModel.append("status", values["status"] === 'Active' ? true : false);
         updCarModel.append("images", modelImage ? modelImage : "broken!");
-        fuelType?.forEach((type, index) => newCarModel.append(`fuelType`, type));
-        transmisisonType?.forEach((type, index) => newCarModel.append(`transmissionType`, type));
-        values.modelImages.forEach((file, index) => newCarModel.append(`images`, file));
+        updCarModel.append("urlslug", values["urlslug"]);
+        fuelType?.forEach((type, index) => updCarModel.append(`fuelType`, type));
+        transmisisonType?.forEach((type, index) => updCarModel.append(`transmissionType`, type));
+        values.modelImages.forEach((file, index) => updCarModel.append(`images`, file));
+        console.log("catmOdel ", carModel);
         dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
 
         validation.resetForm();
@@ -191,6 +200,7 @@ function CarModels() {
         fuelType?.forEach((type, index) => newCarModel.append(`fuelType`, type));
         transmisisonType?.forEach((type, index) => newCarModel.append(`transmissionType`, type));
         values.modelImages.forEach((file, index) => newCarModel.append(`images`, file));
+        newCarModel.append("urlslug", values["urlslug"]);
 
         dispatch(addNewCarModel(values['carBrand'], newCarModel));
         validation.resetForm();
@@ -231,22 +241,20 @@ function CarModels() {
   }
 
   function handleAcceptedFiles(newFiles) {
-    let combinedFiles = [...validation.values.modelImages, ...newFiles];
-
-    if (combinedFiles.length > 5) {
-      alert("You can only upload up to 5 images");
-      combinedFiles = combinedFiles.slice(0, 5); // Keep only the first 5 files
+    // Start with new files, but limit the total count to 5
+    if (newFiles.length > 5) {
+        alert("You can only upload up to 5 images.");
+        newFiles = newFiles.slice(0, 5); // Keep only the first 5 files if more than 5 are dropped
     }
 
-    const formattedFiles = combinedFiles.map(file =>
-      Object.assign(file, {
+    const formattedFiles = newFiles.map(file => ({
+        ...file,
         preview: URL.createObjectURL(file),
-        formattedSize: formatBytes(file.size),
-      })
-    );
+        formattedSize: formatBytes(file.size)
+    }));
 
     validation.setFieldValue("modelImages", formattedFiles);
-  }
+}
 
   /**
 * Formats the size
@@ -939,6 +947,48 @@ function CarModels() {
 
                 </Row>
 
+                <Row>
+                <Col className="mb-3">
+                    <Label className="form-label">
+                      Url Slug <span style={{ color: 'red' }}>*</span>
+                    </Label>
+                <Input
+                      name="urlslug"
+                      type="text"
+                      validate={{
+                        required: { value: true },
+                      }}
+                      onChange={
+                        validation.handleChange
+                      }
+                      onBlur={validation.handleBlur}
+                      value={
+                        validation.values
+                          .urlslug || ""
+                      }
+                      invalid={
+                        validation.touched
+                          .urlslug &&
+                          validation.errors
+                            .urlslug
+                          ? true
+                          : false
+                      }
+                    />
+                    {validation.touched
+                      .urlslug &&
+                      validation.errors
+                        .urlslug ? (
+                      <FormFeedback type="invalid">
+                        {
+                          validation.errors
+                            .urlslug
+                        }
+                      </FormFeedback>
+                    ) : null}
+                    </Col>
+                </Row>
+
                 <div className="mt-3 mb-3">
                   <Label for="cimg">Model Image <span style={{ color: 'red' }}>*</span></Label>
                   <div className="mh-50">
@@ -993,7 +1043,6 @@ function CarModels() {
                         ))}
                       </div>
                     )}
-
                   </div>
                 </div>
               </Col>
