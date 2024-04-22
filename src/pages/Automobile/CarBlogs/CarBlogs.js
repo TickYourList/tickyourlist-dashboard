@@ -83,15 +83,20 @@ function CarBlogs() {
 
     initialValues: {
       blogName: (carBlog && carBlog.blogName) || "",
+      blogTagLine: (carBlog && carBlog.blogTagLine) || "",
       carBrand: (carBlog && carBlog.carBrand && carBlog.carBrand._id) || "",
       carModel: (carBlog && carBlog.carModel && carBlog.carModel._id) || "",
       status: (carBlog && carBlog.status ? 'Active' : 'InActive') || "",
       blogDescription: (carBlog && carBlog.blogDescription) || "",
-      blogImage: (carBlog && carBlog?.media?.url) || ""
+      blogImage: (carBlog && carBlog?.media?.url) || "",
+      urlslug: (carBlog && carBlog?.urlslug) || ""
     },
     validationSchema: Yup.object({
       blogName: Yup.string().required(
         "Please Enter Your Blog Name"
+      ),
+      blogTagLine: Yup.string().required(
+        "Please Enter Blog tagline"
       ),
       carBrand: Yup.string().required(
         "Please Enter Your Car Brand"
@@ -110,24 +115,33 @@ function CarBlogs() {
       // ),
       status: Yup.string().required(
         "Please Enter Your Status"
-      )
+      ),
+      urlslug: Yup.string().required("Please enter slug")
     }),
     onSubmit: values => {
       const newCarBlog = new FormData();
       const blogData = {
         blogName: values.blogName,
+        blogTagLine: values.blogTagLine,
         carBrand: values.carBrand,
         carModel: values.carModel,
         blogDescription: values.blogDescription,
-        status: values.status
+        status: values.status,
+        urlslug: values.urlslug
       };
       newCarBlog.append("data", JSON.stringify(blogData));
       if (values.blogImage) {
         newCarBlog.append("image", values.blogImage);
       }
-      dispatch(addNewCarBlog(newCarBlog));
-      validation.resetForm();
-      toggle();
+      if (!isEdit) {
+        dispatch(addNewCarBlog(newCarBlog));
+        validation.resetForm();
+        toggle();
+      } else {
+        dispatch(updateCarBlog(newCarBlog));
+        validation.resetForm();
+        toggle();
+      }
     },
     handleError: e => { },
   });
@@ -430,6 +444,46 @@ function CarBlogs() {
                     </FormFeedback>
                   ) : null}
                 </div>
+                <div className="mb-3">
+                  <Label className="form-label">
+                    Blog TagLine <span style={{ color: 'red' }}>*</span>
+                  </Label>
+                  <Input
+                    name="blogTagLine"
+                    id="blogTagLine"
+                    type="text"
+                    validate={{
+                      required: { value: true },
+                    }}
+                    onChange={
+                      validation.handleChange
+                    }
+                    onBlur={validation.handleBlur}
+                    value={
+                      validation.values
+                        .blogTagLine || ""
+                    }
+                    invalid={
+                      validation.touched
+                        .blogTagLine &&
+                        validation.errors
+                          .blogTagLine
+                        ? true
+                        : false
+                    }
+                  />
+                  {validation.touched
+                    .blogTagLine &&
+                    validation.errors
+                      .blogTagLine ? (
+                    <FormFeedback type="invalid">
+                      {
+                        validation.errors
+                          .blogTagLine
+                      }
+                    </FormFeedback>
+                  ) : null}
+                </div>
                 <FormGroup>
                   <Label for="carBrand">Car Brand <span style={{ color: 'red' }}>*</span></Label>
                   <Input
@@ -503,6 +557,35 @@ function CarBlogs() {
                 </div>
                 <div className="mb-3">
                   <Label className="form-label">
+                    Url Slug <span style={{ color: 'red' }}>*</span>
+                  </Label>
+                  <Input
+                    name="urlslug"
+                    id="urlslug"
+                    type="text"
+                    validate={{
+                      required: { value: true },
+                    }}
+                    onChange={
+                      validation.handleChange
+                    }
+                    onBlur={validation.handleBlur}
+                    value={
+                      validation.values
+                        .urlslug || ""
+                    }
+                    invalid={
+                      validation.touched
+                        .urlslug &&
+                        validation.errors
+                          .urlslug
+                        ? true
+                        : false
+                    }
+                  />
+                </div>
+                <div className="mb-3">
+                  <Label className="form-label">
                     Status <span style={{ color: 'red' }}>*</span>
                   </Label>
                   <Input
@@ -535,34 +618,34 @@ function CarBlogs() {
                 </div>
                 <div className="mt-3 mb-3">
                   <Label for="blogImage">Blog Image <span style={{ color: 'red' }}>*</span></Label>
-                      <div className="mh-50">
-                        <Input
-                          id="blogImage"
-                          onChange={async e => {
-                            if (
-                              ["jpeg", "jpg", "png"].includes(
-                                e.target.files[0].name.split(".").pop()
-                              )
-                            ) {
-                              setToastDetails({
-                                title: "Image Uploaded",
-                                message: `${e.target.files[0].name} has been uploaded.`,
-                              })
-                              setToast(true)
-                              validation.setFieldValue('blogImage', e.target.files[0])
-                            } else {
-                              setToastDetails({
-                                title: "Invalid image",
-                                message:
-                                  "Please upload images with jpg, jpeg or png extension",
-                              })
-                              setToast(true)
-                            }
-                          }}
-                          type="file"
-                        />
-                      </div>
-                     {isEdit ? <div className="d-flex text-center margin-auto"><img src={validation.values.blogImage} width={100} height={65} className="mt-3"/></div> : ""}
+                  <div className="mh-50">
+                    <Input
+                      id="blogImage"
+                      onChange={async e => {
+                        if (
+                          ["jpeg", "jpg", "png"].includes(
+                            e.target.files[0].name.split(".").pop()
+                          )
+                        ) {
+                          setToastDetails({
+                            title: "Image Uploaded",
+                            message: `${e.target.files[0].name} has been uploaded.`,
+                          })
+                          setToast(true)
+                          validation.setFieldValue('blogImage', e.target.files[0])
+                        } else {
+                          setToastDetails({
+                            title: "Invalid image",
+                            message:
+                              "Please upload images with jpg, jpeg or png extension",
+                          })
+                          setToast(true)
+                        }
+                      }}
+                      type="file"
+                    />
+                  </div>
+                  {isEdit ? <div className="d-flex text-center margin-auto"><img src={validation.values.blogImage} width={100} height={65} className="mt-3" /></div> : ""}
                 </div>
               </Col>
             </Row>

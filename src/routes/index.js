@@ -141,6 +141,15 @@ import ForgotPasswordSuccessful from "pages/Authentication/ForgotPasswordSuccess
 import AutomobileDashboard from "pages/Automobile/Dashboard/AutomobileDashboard";
 import CarDealers from "pages/Automobile/CarDealers/CarDealers";
 import Testimonials from "pages/Testimonials/Testimonials";
+import Aboutus from "pages/Settings/aboutus";
+import Careerwithus from "pages/Settings/careerwithus";
+import Termsandconditions from "pages/Settings/termsandconditions";
+import PrivacyPolicy from "pages/Settings/privacyPolicy";
+import CorporatePolicy from "pages/Settings/corporatePolicy";
+import Investors from "pages/Settings/investors";
+import Faqs from "pages/Settings/faqs";
+import Contactus from "pages/Settings/contactus";
+import AdvertiseWithUs from "pages/Settings/AdvertiseWithUs";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 
 const authProtectedRoutes = [
@@ -184,6 +193,17 @@ const authProtectedRoutes = [
   { path: "/car-dealers", component: <CarDealers /> },
 
   { path: "/testimonials", component: <Testimonials /> }, 
+
+  // settings
+  { path: "/about", component: <Aboutus /> },
+  { path: "/careerwithus", component: <Careerwithus /> }, 
+  { path: "/termsandcondition", component: <Termsandconditions /> }, 
+  { path: "/privacypolicy", component: <PrivacyPolicy /> }, 
+  { path: "/corporatepolicy", component: <CorporatePolicy /> }, 
+  { path: "/investors", component: <Investors /> }, 
+  { path: "/faqs", component: <Faqs /> },
+  { path: "/contactus", component: <Contactus /> },
+  { path: "/advertisewithus", component: <AdvertiseWithUs /> },
 
   //Invoices
   { path: "/invoices-list", component: <InvoicesList /> },
