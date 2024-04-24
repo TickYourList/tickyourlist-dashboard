@@ -23,7 +23,7 @@ export const GET_COUNTRIES_LIST_DATA = "https://countriesnow.space/api/v0.1/coun
 
 export const GET_CAR_BLOGS = "v1/carblog/get/carblog/submitted/all";
 export const ADD_CAR_BLOG = "/v1/carblog/add/blog";
-export const UPDATE_CAR_BLOG = "/v1/automobile/update/carblog";
+export const UPDATE_CAR_BLOG = "/v1/carblog/update/blog";
 export const DELETE_CAR_BLOG = "/v1/carblog/delete/blog";
 export const DELETE_ALL_CAR_BLOG = "/v1/carblog/delete/all/blogs";
 

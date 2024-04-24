@@ -138,7 +138,7 @@ function CarBlogs() {
         validation.resetForm();
         toggle();
       } else {
-        dispatch(updateCarBlog(newCarBlog));
+        dispatch(updateCarBlog(carBlog?._id,newCarBlog));
         validation.resetForm();
         toggle();
       }
