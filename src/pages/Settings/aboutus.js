@@ -19,11 +19,6 @@ import { useFormik } from "formik";
 //redux
 import { useSelector, useDispatch } from "react-redux";
 import withRouter from "components/Common/withRouter";
-
-//Import Breadcrumb
-import Breadcrumb from "../../components/Common/Breadcrumb";
-
-import avatar from "../../assets/images/users/avatar-1.jpg";
 // actions
 import { editProfile, resetProfileFlag } from "../../store/actions";
 import termsandconditions from "./termsandconditions";
@@ -112,50 +107,7 @@ const AboutUs = () => {
 
   return (
     <React.Fragment>
-      <div className="page-content">
-        <Container fluid>
-          {/* Render Breadcrumb */}
-          <Breadcrumb title="Scrollit" breadcrumbItem="About" />
-
-          <Card>
-            <CardBody>
-              <Form
-                className="form-horizontal"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  validation.handleSubmit();
-                  return false;
-                }}
-              >
-                <div className="form-group">
-                  <Label className="form-label">About Us</Label>
-                  <Input
-                    name="aboutus"
-                    className="form-control"
-                    placeholder="Enter First Name"
-                    type="textarea"
-                    onChange={validation.handleChange}
-                    onBlur={validation.handleBlur}
-                    value={validation.values.firstName || ""}
-                    invalid={
-                      validation.touched.firstName && validation.errors.firstName ? true : false
-                    }
-                  />
-                  {validation.touched.firstName && validation.errors.firstName ? (
-                    <FormFeedback type="invalid">{validation.errors.firstName}</FormFeedback>
-                  ) : null}
-                  <Input name="idx" value={idx} type="hidden" />
-                </div>
-                <div className="text-center mt-4">
-                  <Button type="submit" color="danger">
-                    Update About Us
-                  </Button>
-                </div>
-              </Form>
-            </CardBody>
-          </Card>
-        </Container>
-      </div>
+     <>hi</>
     </React.Fragment>
   );
 };

@@ -14,10 +14,6 @@ import {
 } from "../../../store/e-commerce/actions";
 
 import {
-  BrandId,
-  BrandName,
-  CountryOfOrigin,
-  TotalCars,
   Status,
   ModelName,
   CarBrand,
@@ -45,7 +41,11 @@ import {
   Label,
   Input,
   FormFeedback,
+  NavItem,
+  NavLink,
   FormGroup,
+  TabContent,
+  TabPane,
 } from "reactstrap";
 import Select from "react-select";
 import CarModelDetail from "./CarModelDetail";
@@ -53,6 +53,7 @@ import { getCarBrands } from "store/automobiles/carbrands/actions";
 import { useFormik } from "formik";
 import CarBrandModel from "./CarModelModel";
 import { addNewCarModel, deleteAllCarModels, deleteCarModel, getCarModels, updateCarModel } from "store/automobiles/carModels/actions";
+import classnames from "classnames"
 
 const optionGroup = [
   {
@@ -79,7 +80,6 @@ const optionGroupTransmissionType = [
 ];
 
 function CarModels() {
-
   //meta title
   document.title = "Car models | Scrollit";
 
@@ -95,6 +95,11 @@ function CarModels() {
   const [toast, setToast] = useState(false);
   const [toastDetails, setToastDetails] = useState({ title: "", message: "" });
   const [modelImage, setModelImage] = useState(null)
+  const [activeTab, setactiveTab] = useState(1)
+  const [activeTabVartical, setoggleTabVertical] = useState(1)
+
+  const [passedSteps, setPassedSteps] = useState([1])
+  const [passedStepsVertical, setPassedStepsVertical] = useState([1])
   const dispatch = useDispatch();
 
   // // validation
@@ -269,7 +274,6 @@ function CarModels() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i]
   }
 
-
   const toggle = () => {
     if (modal) {
       setModal(false);
@@ -303,7 +307,6 @@ function CarModels() {
     }));
   }
 
-
   function convertBackToArray(optionGroup) {
     return optionGroup?.map(option => option.value);
   }
@@ -334,6 +337,27 @@ function CarModels() {
   const handleCarModelDeleteClicks = () => {
     setCarModel();
     setDeleteModal(true);
+  }
+
+  function toggleTab(tab) {
+    if (activeTab !== tab) {
+      var modifiedSteps = [...passedSteps, tab]
+      if (tab >= 1 && tab <= 4) {
+        setactiveTab(tab)
+        setPassedSteps(modifiedSteps)
+      }
+    }
+  }
+
+  function toggleTabVertical(tab) {
+    if (activeTabVartical !== tab) {
+      var modifiedSteps = [...passedStepsVertical, tab]
+
+      if (tab >= 1 && tab <= 4) {
+        setoggleTabVertical(tab)
+        setPassedStepsVertical(modifiedSteps)
+      }
+    }
   }
 
   const columns = useMemo(
@@ -396,7 +420,7 @@ function CarModels() {
               className="btn-sm btn-rounded"
               onClick={e => {
                 toggleViewModal();
-                setCarModelData(cellProps.row.original);
+                setCarModelData(cellProps.row.original); 
               }}
             >
               View Model Details
@@ -407,7 +431,7 @@ function CarModels() {
         Header: 'Action',
         accessor: 'action',
         disableFilters: true,
-        Cell: (cellProps) => {
+        Cell: (cellProps) => { 
           return (
             <div className="d-flex gap-3">
               <Link
@@ -443,6 +467,202 @@ function CarModels() {
     ],
     []
   );
+
+  const getKeyFeatures = () => {
+    return (
+      <Form>
+      <Row>
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-pancard-input5">
+              PAN
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-pancard-input5"
+              placeholder="Enter Your PAN No."
+            />
+          </div>
+        </Col>
+
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-vatno-input6">
+              VAT/TIN No.
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-vatno-input6"
+              placeholder="Enter Your VAT/TIN No."
+            />
+          </div>
+        </Col>
+      </Row>
+      <Row>
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-cstno-input7">
+              CST No.
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-cstno-input7"
+              placeholder="Enter Your CST No."
+            />
+          </div>
+        </Col>
+
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-servicetax-input8">
+              Service Tax No.
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-servicetax-input8"
+              placeholder="Enter Your Service Tax No."
+            />
+          </div>
+        </Col>
+      </Row>
+      <Row>
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-companyuin-input9">
+              Company UIN
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-companyuin-input9"
+              placeholder="Enter Your Company UIN"
+            />
+          </div>
+        </Col>
+
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-declaration-input10">
+              Declaration
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-Declaration-input10"
+              placeholder="Declaration Details"
+            />
+          </div>
+        </Col>
+      </Row>
+    </Form>
+    )
+  }
+
+  const getExteriorUI = () => {
+    return (
+      <Form>
+      <Row>
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-namecard-input11">
+              Name on Card
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-namecard-input11"
+              placeholder="Enter Your Name on Card"
+            />
+          </div>
+        </Col>
+
+        <Col lg="6">
+          <div className="mb-3">
+            <Label>Credit Card Type</Label>
+            <select className="form-select">
+              <option defaultValue>
+                Select Card Type
+              </option>
+              <option value="AE">
+                American Express
+              </option>
+              <option value="VI">Visa</option>
+              <option value="MC">MasterCard</option>
+              <option value="DI">Discover</option>
+            </select>
+          </div>
+        </Col>
+      </Row>
+      <Row>
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-cardno-input12">
+              Credit Card Number
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-cardno-input12"
+              placeholder="Credit Card Number"
+            />
+          </div>
+        </Col>
+
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-card-verification-input0">
+              Card Verification Number
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-card-verification-input0"
+              placeholder="Credit Verification Number"
+            />
+          </div>
+        </Col>
+      </Row>
+      <Row>
+        <Col lg="6">
+          <div className="mb-3">
+            <Label for="basicpill-expiration-input13">
+              Expiration Date
+            </Label>
+            <Input
+              type="text"
+              className="form-control"
+              id="basicpill-expiration-input13"
+              placeholder="Card Expiration Date"
+            />
+          </div>
+        </Col>
+      </Row>
+    </Form>
+    );
+  }
+
+  const getInteriorUI = () => {
+    return (
+      <Col lg="6">
+      <div className="text-center">
+        <div className="mb-4">
+          <i className="mdi mdi-check-circle-outline text-success display-4" />
+        </div>
+        <div>
+          <h5>Confirm Detail</h5>
+          <p className="text-muted">
+            If several languages coalesce, the grammar
+            of the resulting
+          </p>
+        </div>
+      </div>
+    </Col>
+    )
+  }
 
   return (
     <React.Fragment>
@@ -480,7 +700,71 @@ function CarModels() {
           {!!isEdit ? "Edit Car Model" : "Add New Car Model"}
         </ModalHeader>
         <ModalBody>
-          <Form
+        <Row>
+            <Col lg="12">
+              <Card>
+                <CardBody>
+                  <div className="wizard clearfix">
+                    <div className="steps clearfix">
+                      <ul className="d-flex flex-row">
+                        <NavItem
+                          className={classnames({ current: activeTab === 1 })}
+                        >
+                          <NavLink
+                            className={classnames({ current: activeTab === 1 })}
+                            onClick={() => {
+                              setactiveTab(1)
+                            }}
+                            disabled={!(passedSteps || []).includes(1)}
+                          >
+                            <span className="number">1.</span> Model Details
+                          </NavLink>
+                        </NavItem>
+                        <NavItem
+                          className={classnames({ current: activeTab === 2 })}
+                        >
+                          <NavLink
+                            className={classnames({ active: activeTab === 2 })}
+                            onClick={() => {
+                              setactiveTab(2)
+                            }}
+                            disabled={!(passedSteps || []).includes(2)}
+                          >
+                            <span className="number">2.</span> Key Features
+                          </NavLink>
+                        </NavItem>
+                        <NavItem
+                          className={classnames({ current: activeTab === 3 })}
+                        >
+                          <NavLink
+                            className={classnames({ active: activeTab === 3 })}
+                            onClick={() => {
+                              setactiveTab(3)
+                            }}
+                            disabled={!(passedSteps || []).includes(3)}
+                          >
+                            <span className="number">3.</span> Exterior
+                          </NavLink>
+                        </NavItem>
+                        <NavItem
+                          className={classnames({ current: activeTab === 4 })}
+                        >
+                          <NavLink
+                            className={classnames({ active: activeTab === 4 })}
+                            onClick={() => {
+                              setactiveTab(4)
+                            }}
+                            disabled={!(passedSteps || []).includes(4)}
+                          >
+                            <span className="number">4.</span> Interior
+                          </NavLink>
+                        </NavItem>
+                      </ul>
+                    </div>
+                    <div className="content clearfix">
+                      <TabContent activeTab={activeTab} className="body">
+                        <TabPane tabId={1}>
+                        <Form
             onSubmit={e => {
               e.preventDefault();
               validation.handleSubmit();
@@ -1067,6 +1351,133 @@ function CarModels() {
               </Col>
             </Row>
           </Form>
+                          {/* <Form>
+                            <Row>
+                              <Col lg="6">
+                                <div className="mb-3">
+                                  <Label for="basicpill-firstname-input1">
+                                    First name
+                                  </Label>
+                                  <Input
+                                    type="text"
+                                    className="form-control"
+                                    id="basicpill-firstname-input1"
+                                    placeholder="Enter Your First Name"
+                                  />
+                                </div>
+                              </Col>
+                              <Col lg="6">
+                                <div className="mb-3">
+                                  <Label for="basicpill-lastname-input2">
+                                    Last name
+                                  </Label>
+                                  <Input
+                                    type="text"
+                                    className="form-control"
+                                    id="basicpill-lastname-input2"
+                                    placeholder="Enter Your Last Name"
+                                  />
+                                </div>
+                              </Col>
+                            </Row>
+
+                            <Row>
+                              <Col lg="6">
+                                <div className="mb-3">
+                                  <Label for="basicpill-phoneno-input3">
+                                    Phone
+                                  </Label>
+                                  <Input
+                                    type="text"
+                                    className="form-control"
+                                    id="basicpill-phoneno-input3"
+                                    placeholder="Enter Your Phone No."
+                                  />
+                                </div>
+                              </Col>
+                              <Col lg="6">
+                                <div className="mb-3">
+                                  <Label for="basicpill-email-input4">
+                                    Email
+                                  </Label>
+                                  <Input
+                                    type="email"
+                                    className="form-control"
+                                    id="basicpill-email-input4"
+                                    placeholder="Enter Your Email ID"
+                                  />
+                                </div>
+                              </Col>
+                            </Row>
+                            <Row>
+                              <Col lg="12">
+                                <div className="mb-3">
+                                  <Label for="basicpill-address-input1">
+                                    Address
+                                  </Label>
+                                  <textarea
+                                    id="basicpill-address-input1"
+                                    className="form-control"
+                                    rows="2"
+                                    placeholder="Enter Your Address"
+                                  />
+                                </div>
+                              </Col>
+                            </Row>
+                          </Form> */}
+                        </TabPane>
+                        <TabPane tabId={2}>
+                          <div>
+                           {getKeyFeatures()}
+                          </div>
+                        </TabPane>
+                        <TabPane tabId={3}>
+                          <div>
+                           {getExteriorUI()}
+                          </div>
+                        </TabPane>
+                        <TabPane tabId={4}>
+                          <div className="row justify-content-center">
+                          {getInteriorUI()}
+                          </div>
+                        </TabPane>
+                      </TabContent>
+                    </div>
+                    <div className="actions clearfix">
+                      <ul>
+                        <li
+                          className={
+                            activeTab === 1 ? "previous disabled" : "previous"
+                          }
+                        >
+                          <Link
+                            to="#"
+                            onClick={() => {
+                              toggleTab(activeTab - 1)
+                            }}
+                          >
+                            Previous
+                          </Link>
+                        </li>
+                        <li
+                          className={activeTab === 4 ? "next disabled" : "next"}
+                        >
+                          <Link
+                            to="#"
+                            onClick={() => {
+                              toggleTab(activeTab + 1)
+                            }}
+                          >
+                            Next
+                          </Link>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
         </ModalBody>
       </Modal>
 

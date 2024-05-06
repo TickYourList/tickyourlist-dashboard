@@ -196,8 +196,8 @@ const authProtectedRoutes = [
 
   // settings
   { path: "/about", component: <Aboutus /> },
-  { path: "/careerwithus", component: <Careerwithus /> }, 
-  { path: "/termsandcondition", component: <Termsandconditions /> }, 
+  { path: "/careerwithus", component: <Careerwithus /> },
+  { path: "/termsandcondition", component: <Termsandconditions /> },
   { path: "/privacypolicy", component: <PrivacyPolicy /> }, 
   { path: "/corporatepolicy", component: <CorporatePolicy /> }, 
   { path: "/investors", component: <Investors /> }, 
