@@ -5,6 +5,7 @@ import { isEmpty } from "lodash";
 import '../../../../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import TableContainer from '../../../components/Common/TableContainer';
 import Dropzone from "react-dropzone";
+import { v4 as uuidv4 } from 'uuid';
 
 //import components
 import Breadcrumbs from '../../../components/Common/Breadcrumb';
@@ -124,11 +125,23 @@ function CarModels() {
       seatingCapacity: (carModel && carModel?.seatingCapacity) || "",
       transmissionType: (carModel && carModel?.transmissionType && convertArrayToSelectOptions(carModel?.transmissionType)) || [],
       displacement: (carModel && carModel?.displacement) || "",
-      modelImages: (carModel && carModel?.media.map(image => ({
+      modelImages: (carModel && carModel?.media?.map(image => ({
         ...image,
         preview: image.url,
       }))) || [],
-      urlslug: (carModel && carModel?.urlslug) || ''
+      urlslug: (carModel && carModel?.urlslug) || '',
+      keyFeatures: (carModel && carModel?.keyFeatures) || [
+        { id: 1, featureType: '', featureDescription: '', image: null }
+      ],
+      exterior: (carModel && carModel?.exterior) || [
+        { id: 1, featureType: '', featureDescription: '', image: null }
+      ],
+      interior: (carModel && carModel?.interior) || [
+        { id: 1, featureType: '', featureDescription: '', image: null }
+      ],
+      imagesByColor: (carModel && carModel?.imagesByColor) || [
+        { id: 1, colorCode: "", colorDescription: "", image: null }
+      ]
     },
     validationSchema: Yup.object({
       modelName: Yup.string().required("Please Enter Your Model Name"),
@@ -150,9 +163,17 @@ function CarModels() {
       displacement: Yup.string().required("Please Enter Engine Displacement"),
       modelImages: Yup.array().of(Yup.mixed()).required("Please Upload Images").min(1, 'At least one image is required'),
       urlslug: Yup.string().required("Please Enter URL Slug"),
+      // keyFeatures: Yup.array().of(
+      //   Yup.object({
+      //     featureType: Yup.string().required("Feature type is required"),
+      //     featureDescription: Yup.string().required("Feature description is required"),
+      //     image: Yup.mixed().required("Feature image is required")
+      //   })
+      // )
 
     }),
     onSubmit: values => {
+      console.log('values ', values);
       if (isEdit) {
         const updCarModel = new FormData();
         const priceRange = {
@@ -206,11 +227,52 @@ function CarModels() {
         transmisisonType?.forEach((type, index) => newCarModel.append(`transmissionType`, type));
         values.modelImages.forEach((file, index) => newCarModel.append(`images`, file));
         newCarModel.append("urlslug", values["urlslug"]);
+        newCarModel.append('keyFeatures', JSON.stringify(values.keyFeatures.map(feature => ({
+          ...feature,
+          image: undefined
+        }))));
+        values.keyFeatures.forEach((feature, index) => {
+          if (feature.image) {
+            newCarModel.append(`keyFeatureImages`, feature.image);
+          }
+        });
+
+        newCarModel.append('exterior', JSON.stringify(values.exterior.map(feature => ({
+          ...feature,
+          image: undefined
+        }))));
+        values.exterior.forEach((feature, index) => {
+          if (feature.image) {
+            newCarModel.append(`exteriorImages`, feature.image);
+          }
+        });
+
+        newCarModel.append('interior', JSON.stringify(values.interior.map(feature => ({
+          ...feature,
+          image: undefined
+        }))));
+        values.interior.forEach((feature, index) => {
+          if (feature.image) {
+            newCarModel.append(`interiorImages`, feature.image);
+          }
+        });
+
+        newCarModel.append('imagesByColor', JSON.stringify(values.imagesByColor.map(feature => ({
+          ...feature,
+          image: undefined
+        }))));
+        values.imagesByColor.forEach((feature, index) => {
+          if (feature.image) {
+            newCarModel.append(`colorImages`, feature.image);
+          }
+        });
+
+        console.log('formData ', newCarModel);
 
         dispatch(addNewCarModel(values['carBrand'], newCarModel));
-        validation.resetForm();
+        // validation.resetForm();
       }
-      toggle();
+      // toggle();
     },
     handleError: e => { },
   });
@@ -248,18 +310,18 @@ function CarModels() {
   function handleAcceptedFiles(newFiles) {
     // Start with new files, but limit the total count to 5
     if (newFiles.length > 5) {
-        alert("You can only upload up to 5 images.");
-        newFiles = newFiles.slice(0, 5); // Keep only the first 5 files if more than 5 are dropped
+      alert("You can only upload up to 5 images.");
+      newFiles = newFiles.slice(0, 5); // Keep only the first 5 files if more than 5 are dropped
     }
 
     const formattedFiles = newFiles.map(file => ({
-        ...file,
-        preview: URL.createObjectURL(file),
-        formattedSize: formatBytes(file.size)
+      ...file,
+      preview: URL.createObjectURL(file),
+      formattedSize: formatBytes(file.size)
     }));
 
     validation.setFieldValue("modelImages", formattedFiles);
-}
+  }
 
   /**
 * Formats the size
@@ -342,7 +404,7 @@ function CarModels() {
   function toggleTab(tab) {
     if (activeTab !== tab) {
       var modifiedSteps = [...passedSteps, tab]
-      if (tab >= 1 && tab <= 4) {
+      if (tab >= 1 && tab <= 5) {
         setactiveTab(tab)
         setPassedSteps(modifiedSteps)
       }
@@ -420,7 +482,7 @@ function CarModels() {
               className="btn-sm btn-rounded"
               onClick={e => {
                 toggleViewModal();
-                setCarModelData(cellProps.row.original); 
+                setCarModelData(cellProps.row.original);
               }}
             >
               View Model Details
@@ -431,7 +493,7 @@ function CarModels() {
         Header: 'Action',
         accessor: 'action',
         disableFilters: true,
-        Cell: (cellProps) => { 
+        Cell: (cellProps) => {
           return (
             <div className="d-flex gap-3">
               <Link
@@ -470,199 +532,358 @@ function CarModels() {
 
   const getKeyFeatures = () => {
     return (
-      <Form>
-      <Row>
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-pancard-input5">
-              PAN
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-pancard-input5"
-              placeholder="Enter Your PAN No."
-            />
-          </div>
-        </Col>
-
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-vatno-input6">
-              VAT/TIN No.
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-vatno-input6"
-              placeholder="Enter Your VAT/TIN No."
-            />
-          </div>
-        </Col>
-      </Row>
-      <Row>
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-cstno-input7">
-              CST No.
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-cstno-input7"
-              placeholder="Enter Your CST No."
-            />
-          </div>
-        </Col>
-
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-servicetax-input8">
-              Service Tax No.
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-servicetax-input8"
-              placeholder="Enter Your Service Tax No."
-            />
-          </div>
-        </Col>
-      </Row>
-      <Row>
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-companyuin-input9">
-              Company UIN
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-companyuin-input9"
-              placeholder="Enter Your Company UIN"
-            />
-          </div>
-        </Col>
-
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-declaration-input10">
-              Declaration
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-Declaration-input10"
-              placeholder="Declaration Details"
-            />
-          </div>
-        </Col>
-      </Row>
-    </Form>
+      <div>
+        {validation.values.keyFeatures.map((feature, index) => (
+          <Row key={feature.id}>
+            <Col md="3">
+              <FormGroup>
+                <Label>Feature Type</Label>
+                <Input
+                  type="text"
+                  name={`keyFeatures[${index}].featureType`}
+                  value={feature.featureType}
+                  onChange={validation.handleChange}
+                  onBlur={validation.handleBlur}
+                />
+                {validation.touched.keyFeatures && validation.touched.keyFeatures[index] && validation.touched.keyFeatures[index].featureType && validation.errors.keyFeatures && validation.errors.keyFeatures[index] && validation.errors.keyFeatures[index].featureType && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.keyFeatures[index].featureType}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="3">
+              <FormGroup>
+                <Label>Feature Description</Label>
+                <Input
+                  type="text"
+                  name={`keyFeatures[${index}].featureDescription`}
+                  value={feature.featureDescription}
+                  onChange={validation.handleChange}
+                  onBlur={validation.handleBlur}
+                />
+                {validation.touched.keyFeatures && validation.touched.keyFeatures[index] && validation.touched.keyFeatures[index].featureDescription && validation.errors.keyFeatures && validation.errors.keyFeatures[index] && validation.errors.keyFeatures[index].featureDescription && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.keyFeatures[index].featureDescription}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="4">
+              <FormGroup>
+                <Label>Feature Image</Label>
+                <Input
+                  type="file"
+                  name={`keyFeatures[${index}].image`}
+                  onChange={(event) => {
+                    const file = event.currentTarget.files[0];
+                    validation.setFieldValue(`keyFeatures[${index}].image`, file);
+                  }}
+                />
+                {validation.touched.keyFeatures && validation.touched.keyFeatures[index] && validation.touched.keyFeatures[index].image && validation.errors.keyFeatures && validation.errors.keyFeatures[index] && validation.errors.keyFeatures[index].image && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.keyFeatures[index].image}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="2" className="mt-auto mb-auto">
+              <Button color="danger" onClick={() => handleRemoveFeature(feature.id)} style={{ marginTop: '0.7rem' }}>Remove Feature</Button>
+            </Col>
+          </Row>
+        ))}
+        <Button color="success" onClick={handleAddFeature}>Add Feature</Button>
+      </div>
     )
-  }
-
-  const getExteriorUI = () => {
-    return (
-      <Form>
-      <Row>
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-namecard-input11">
-              Name on Card
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-namecard-input11"
-              placeholder="Enter Your Name on Card"
-            />
-          </div>
-        </Col>
-
-        <Col lg="6">
-          <div className="mb-3">
-            <Label>Credit Card Type</Label>
-            <select className="form-select">
-              <option defaultValue>
-                Select Card Type
-              </option>
-              <option value="AE">
-                American Express
-              </option>
-              <option value="VI">Visa</option>
-              <option value="MC">MasterCard</option>
-              <option value="DI">Discover</option>
-            </select>
-          </div>
-        </Col>
-      </Row>
-      <Row>
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-cardno-input12">
-              Credit Card Number
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-cardno-input12"
-              placeholder="Credit Card Number"
-            />
-          </div>
-        </Col>
-
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-card-verification-input0">
-              Card Verification Number
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-card-verification-input0"
-              placeholder="Credit Verification Number"
-            />
-          </div>
-        </Col>
-      </Row>
-      <Row>
-        <Col lg="6">
-          <div className="mb-3">
-            <Label for="basicpill-expiration-input13">
-              Expiration Date
-            </Label>
-            <Input
-              type="text"
-              className="form-control"
-              id="basicpill-expiration-input13"
-              placeholder="Card Expiration Date"
-            />
-          </div>
-        </Col>
-      </Row>
-    </Form>
-    );
   }
 
   const getInteriorUI = () => {
     return (
-      <Col lg="6">
-      <div className="text-center">
-        <div className="mb-4">
-          <i className="mdi mdi-check-circle-outline text-success display-4" />
-        </div>
-        <div>
-          <h5>Confirm Detail</h5>
-          <p className="text-muted">
-            If several languages coalesce, the grammar
-            of the resulting
-          </p>
-        </div>
+      <div>
+        {validation.values.interior?.map((interior, index) => (
+          <Row key={interior.id}>
+            <Col md="3">
+              <FormGroup>
+                <Label>Interior Type</Label>
+                <Input
+                  type="text"
+                  name={`interior[${index}].featureType`}
+                  value={interior.featureType}
+                  onChange={validation.handleChange}
+                  onBlur={validation.handleBlur}
+                />
+                {validation.touched.interior && validation.touched.interior[index] && validation.touched.interior[index].featureType && validation.errors.interior && validation.errors.interior[index] && validation.errors.interior[index].featureType && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.interior[index].featureType}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="3">
+              <FormGroup>
+                <Label>Interior Description</Label>
+                <Input
+                  type="text"
+                  name={`interior[${index}].featureDescription`}
+                  value={interior.featureDescription}
+                  onChange={validation.handleChange}
+                  onBlur={validation.handleBlur}
+                />
+                {validation.touched.interior && validation.touched.interior[index] && validation.touched.interior[index].featureDescription && validation.errors.interior && validation.errors.interior[index] && validation.errors.interior[index].featureDescription && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.interior[index].featureDescription}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="4">
+              <FormGroup>
+                <Label>Interior Image</Label>
+                <Input
+                  type="file"
+                  name={`interior[${index}].image`}
+                  onChange={(event) => {
+                    const file = event.currentTarget.files[0];
+                    validation.setFieldValue(`interior[${index}].image`, file);
+                  }}
+                />
+                {validation.touched.interior && validation.touched.interior[index] && validation.touched.interior[index].image && validation.errors.interior && validation.errors.interior[index] && validation.errors.interior[index].image && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.interior[index].image}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="2" className="mt-auto mb-auto">
+              <Button color="danger" onClick={() => handleRemoveInterior(interior.id)} style={{ marginTop: '0.7rem' }}>Remove Interior</Button>
+            </Col>
+          </Row>
+        ))}
+        <Button color="success" onClick={handleAddInterior}>Add more</Button>
       </div>
-    </Col>
-    )
+    );
   }
+
+  const getImagesByColorUI = () => {
+    return (
+      <div>
+        {validation.values.imagesByColor?.map((imagesByColor, index) => (
+          <Row key={imagesByColor.id}>
+            <Col md="3">
+              <FormGroup>
+                <Label>Color Code</Label>
+                <Input
+                  type="text"
+                  name={`imagesByColor[${index}].colorCode`}
+                  value={imagesByColor.colorCode}
+                  onChange={validation.handleChange}
+                  onBlur={validation.handleBlur}
+                />
+                {validation.touched.imagesByColor && validation.touched.imagesByColor[index] && validation.touched.imagesByColor[index].colorCode && validation.errors.imagesByColor && validation.errors.imagesByColor[index] && validation.errors.imagesByColor[index].colorCode && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.imagesByColor[index].colorCode}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="3">
+              <FormGroup>
+                <Label>Color Description</Label>
+                <Input
+                  type="text"
+                  name={`imagesByColor[${index}].colorDescription`}
+                  value={imagesByColor.colorDescription}
+                  onChange={validation.handleChange}
+                  onBlur={validation.handleBlur}
+                />
+                {validation.touched.imagesByColor && validation.touched.imagesByColor[index] && validation.touched.imagesByColor[index].colorDescription && validation.errors.imagesByColor && validation.errors.imagesByColor[index] && validation.errors.interior[index].colorDescription && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.interior[index].colorDescription}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="4">
+              <FormGroup>
+                <Label>Car Image</Label>
+                <Input
+                  type="file"
+                  name={`imagesByColor[${index}].image`}
+                  onChange={(event) => {
+                    const file = event.currentTarget.files[0];
+                    validation.setFieldValue(`imagesByColor[${index}].image`, file);
+                  }}
+                />
+                {validation.touched.imagesByColor && validation.touched.imagesByColor[index] && validation.touched.imagesByColor[index].image && validation.errors.imagesByColor && validation.errors.imagesByColor[index] && validation.errors.imagesByColor[index].image && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.imagesByColor[index].image}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="2" className="mt-auto mb-auto">
+              <Button color="danger" onClick={() => handleRemoveImageByColor(imagesByColor.id)} style={{ marginTop: '0.7rem' }}>Remove Color</Button>
+            </Col>
+          </Row>
+        ))}
+        <Button color="success" onClick={handleAddImageByColor}>Add more</Button>
+      </div>
+    );
+  }
+
+  const getExteriorUI = () => {
+    return (
+      <div>
+        {validation.values.exterior?.map((exterior, index) => (
+          <Row key={exterior.id}>
+            <Col md="3">
+              <FormGroup>
+                <Label>Exterior Type</Label>
+                <Input
+                  type="text"
+                  name={`exterior[${index}].featureType`}
+                  value={exterior.featureType}
+                  onChange={validation.handleChange}
+                  onBlur={validation.handleBlur}
+                />
+                {validation.touched.exterior && validation.touched.exterior[index] && validation.touched.exterior[index].featureType && validation.errors.exterior && validation.errors.exterior[index] && validation.errors.exterior[index].featureType && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.exterior[index].featureType}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="3">
+              <FormGroup>
+                <Label>Exterior Description</Label>
+                <Input
+                  type="text"
+                  name={`exterior[${index}].featureDescription`}
+                  value={exterior.featureDescription}
+                  onChange={validation.handleChange}
+                  onBlur={validation.handleBlur}
+                />
+                {validation.touched.exterior && validation.touched.exterior[index] && validation.touched.exterior[index].featureDescription && validation.errors.exterior && validation.errors.exterior[index] && validation.errors.exterior[index].featureDescription && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.exterior[index].featureDescription}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="4">
+              <FormGroup>
+                <Label>Exterior Image</Label>
+                <Input
+                  type="file"
+                  name={`exterior[${index}].image`}
+                  onChange={(event) => {
+                    const file = event.currentTarget.files[0];
+                    validation.setFieldValue(`exterior[${index}].image`, file);
+                  }}
+                />
+                {validation.touched.exterior && validation.touched.exterior[index] && validation.touched.exterior[index].image && validation.errors.exterior && validation.errors.exterior[index] && validation.errors.exterior[index].image && (
+                  <FormFeedback type="invalid">
+                    {validation.errors.exterior[index].image}
+                  </FormFeedback>
+                )}
+              </FormGroup>
+            </Col>
+            <Col md="2" className="mt-auto mb-auto">
+              <Button color="danger" onClick={() => handleRemoveExterior(exterior.id)} style={{ marginTop: '0.7rem' }}>Remove Exterior</Button>
+            </Col>
+          </Row>
+        ))}
+        <Button color="success" onClick={handleAddExterior}>Add more</Button>
+      </div>
+    );
+  }
+
+  const handleAddFeature = () => {
+    const newFeature = {
+      id: uuidv4(),  // Use UUID for unique identifier
+      featureType: '',
+      featureDescription: '',
+      image: null,
+      preview: '' // Placeholder for image preview
+    };
+    const updatedFeatures = [...validation.values.keyFeatures, newFeature];
+    console.log("keyFeatures ", updatedFeatures);
+    validation.setFieldValue('keyFeatures', updatedFeatures);
+  };
+
+  const handleRemoveFeature = id => {
+    const updatedFeatures = validation.values.keyFeatures.filter(feature => feature.id !== id);
+    validation.setFieldValue('keyFeatures', updatedFeatures);
+  };
+
+  const handleAddExterior = () => {
+    const newFeature = {
+      id: uuidv4(),  // Use UUID for unique identifier
+      featureType: '',
+      featureDescription: '',
+      image: null,
+      preview: '' // Placeholder for image preview
+    };
+    const updatedFeatures = [...validation.values.exterior, newFeature];
+    console.log("exterior ", updatedFeatures);
+    validation.setFieldValue('exterior', updatedFeatures);
+  };
+
+  const handleRemoveExterior = id => {
+    const updatedFeatures = validation.values.exterior.filter(feature => feature.id !== id);
+    validation.setFieldValue('exterior', updatedFeatures);
+  };
+
+  const handleAddInterior = () => {
+    const newFeature = {
+      id: uuidv4(),
+      colorCode: '',
+      colorDescription: '',
+      image: null,
+      preview: ''
+    };
+    const updatedFeatures = [...validation.values.interior, newFeature];
+    validation.setFieldValue('interior', updatedFeatures);
+  };
+
+  const handleRemoveInterior = id => {
+    const updatedFeatures = validation.values.interior.filter(feature => feature.id !== id);
+    validation.setFieldValue('interior', updatedFeatures);
+  };
+
+  const handleAddImageByColor = () => {
+    const newFeature = {
+      id: uuidv4(),
+      featureType: '',
+      featureDescription: '',
+      image: null,
+      preview: ''
+    };
+    const updatedFeatures = [...validation.values.imagesByColor, newFeature];
+    validation.setFieldValue('imagesByColor', updatedFeatures);
+  };
+
+  const handleRemoveImageByColor = id => {
+    const updatedFeatures = validation.values.imagesByColor.filter(feature => feature.id !== id);
+    validation.setFieldValue('imagesByColor', updatedFeatures);
+  };
+
+  // const handleimageChange = (event, index) => {
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     const updatedFeatures = validation.values.keyFeatures.map((feature, idx) => {
+  //       if (idx === index) {
+  //         return {
+  //           ...feature,
+  //           image: file,
+  //           preview: URL.createObjectURL(file)  // Create a preview of the image
+  //         };
+  //       }
+  //       return feature;
+  //     });
+  //     validation.setFieldValue('keyFeatures', updatedFeatures);
+  //   }
+  // };
 
   return (
     <React.Fragment>
@@ -695,12 +916,12 @@ function CarModels() {
           </Row>
         </div>
       </div>
-      <Modal size="lg" isOpen={modal} toggle={toggle}>
+      <Modal size="xl" isOpen={modal} toggle={toggle}>
         <ModalHeader toggle={toggle} tag="h4">
           {!!isEdit ? "Edit Car Model" : "Add New Car Model"}
         </ModalHeader>
         <ModalBody>
-        <Row>
+          <Row>
             <Col lg="12">
               <Card>
                 <CardBody>
@@ -759,598 +980,592 @@ function CarModels() {
                             <span className="number">4.</span> Interior
                           </NavLink>
                         </NavItem>
+                        <NavItem
+                          className={classnames({ current: activeTab === 5 })}
+                        >
+                          <NavLink
+                            className={classnames({ active: activeTab === 5 })}
+                            onClick={() => {
+                              setactiveTab(5)
+                            }}
+                            disabled={!(passedSteps || []).includes(5)}
+                          >
+                            <span className="number">4.</span> Images By Color
+                          </NavLink>
+                        </NavItem>
                       </ul>
                     </div>
                     <div className="content clearfix">
                       <TabContent activeTab={activeTab} className="body">
                         <TabPane tabId={1}>
-                        <Form
-            onSubmit={e => {
-              e.preventDefault();
-              validation.handleSubmit();
-              return false;
-            }}
-          >
-            <Row form="true">
-              <Col className="col-12">
-                <Row>
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Model Name <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Input
-                      name="modelName"
-                      type="text"
-                      validate={{
-                        required: { value: true },
-                      }}
-                      onChange={
-                        validation.handleChange
-                      }
-                      onBlur={validation.handleBlur}
-                      value={
-                        validation.values
-                          .modelName || ""
-                      }
-                      invalid={
-                        validation.touched
-                          .modelName &&
-                          validation.errors
-                            .modelName
-                          ? true
-                          : false
-                      }
-                    />
-                    {validation.touched
-                      .modelName &&
-                      validation.errors
-                        .modelName ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .modelName
-                        }
-                      </FormFeedback>
-                    ) : null}
-
-                  </Col>
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Car Brand <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Input
-                      type="select"
-                      name="carBrand"
-                      id="carBrand"
-                      onChange={validation.handleChange}
-                      onBlur={validation.handleBlur}
-                      value={validation.values.carBrand}
-                    >
-                      <option value="">Select a Car Brand</option>
-                      {carBrands?.map((carBrand, index) => (
-                        <option key={index} value={carBrand._id}>
-                          {carBrand.brandName}
-                        </option>
-                      ))}
-                    </Input>
-
-                    {validation.touched
-                      .carBrand &&
-                      validation.errors
-                        .carBrand ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .carBrand
-                        }
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-                </Row>
-                <Row>
-                  <Col>
-                    <FormGroup className="mb-4" row>
-                      <Label htmlFor="bodyType" className="col-form-label">
-                        Body Type <span style={{ color: 'red' }}>*</span>
-                      </Label>
-                      <Col>
-                        <Input
-                          type="select"
-                          className="form-control"
-                          name="bodyType"
-                          id="bodyType"
-                          onChange={validation.handleChange}
-                          onBlur={validation.handleBlur}
-                          value={validation.values.bodyType}
-                        >
-                          <option value="">Select Body Type</option>
-                          <option value="SUV">SUV</option>
-                          <option value="Hatchback">Hatchback</option>
-                          <option value="Sedan">Sedan</option>
-                          <option value="Compact-Suv">Compact Suv</option>
-                          <option value="Compact-Sedan">Compact Sedan</option>
-                          <option value="Convertible">Convertible</option>
-                          <option value="Coupe">Coupe</option>
-                          <option value="Station-Wegon">Station Wegon</option>
-                          <option value="MuV">MUV</option>
-                          <option value="Luxury">Luxury</option>
-                          <option value="Minivan">Minivan</option>
-                          <option value="Truck">Truck</option>
-                        </Input>
-                      </Col>
-                    </FormGroup>
-                  </Col>
-
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Description <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Input
-                      name="description"
-                      type="textarea"
-                      validate={{
-                        required: { value: true },
-                      }}
-                      onChange={
-                        validation.handleChange
-                      }
-                      onBlur={validation.handleBlur}
-                      value={
-                        validation.values
-                          .description || ""
-                      }
-                      invalid={
-                        validation.touched
-                          .description &&
-                          validation.errors
-                            .description
-                          ? true
-                          : false
-                      }
-                    />
-                    {validation.touched
-                      .description &&
-                      validation.errors
-                        .description ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .description
-                        }
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-                </Row>
-                <Row>
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Year <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Input
-                      name="year"
-                      type="text"
-                      validate={{
-                        required: { value: true },
-                      }}
-                      onChange={
-                        validation.handleChange
-                      }
-                      onBlur={validation.handleBlur}
-                      value={
-                        validation.values
-                          .year || ""
-                      }
-                      invalid={
-                        validation.touched
-                          .year &&
-                          validation.errors
-                            .year
-                          ? true
-                          : false
-                      }
-                    />
-                    {validation.touched
-                      .year &&
-                      validation.errors
-                        .year ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .year
-                        }
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Status <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Input
-                      name="status"
-                      type="select"
-                      className="form-select"
-                      onChange={
-                        validation.handleChange
-                      }
-                      onBlur={validation.handleBlur}
-                      value={
-                        validation.values
-                          .status || ""
-                      }
-                    >
-                      <option>Active</option>
-                      <option>InActive</option>
-                    </Input>
-                    {validation.touched
-                      .status &&
-                      validation.errors
-                        .status ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .status
-                        }
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col md="3" className="mb-3">
-                    <Label for="minPrice">Min Price <span style={{ color: 'red' }}>*</span></Label>
-                    <Input
-                      type="number"
-                      name="minPrice"
-                      id="minPrice"
-                      placeholder="Enter minimum price"
-                      value={validation.values.minPrice}
-                      onChange={validation.handleChange}
-                    />
-                    {validation.touched
-                      .minPrice &&
-                      validation.errors
-                        .minPrice ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .minPrice
-                        }
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-                  <Col md="3" className="mb-3">
-                    <Label for="minPriceType">Unit <span style={{ color: 'red' }}>*</span></Label>
-                    <Input
-                      type="select"
-                      name="minPriceType"
-                      id="minPriceType"
-                      value={validation.values.minPriceType}
-                      onChange={validation.handleChange}
-                    >
-                      <option value="lakhs">Lakhs</option>
-                      <option value="crores">Crores</option>
-                    </Input>
-                  </Col>
-                  <Col md="3" className="mb-3">
-                    <Label for="maxPrice">Max Price <span style={{ color: 'red' }}>*</span></Label>
-                    <Input
-                      type="number"
-                      name="maxPrice"
-                      id="maxPrice"
-                      placeholder="Enter maximum price"
-                      value={validation.values.maxPrice}
-                      onChange={validation.handleChange}
-                    />
-                    {validation.touched
-                      .maxPrice &&
-                      validation.errors
-                        .maxPrice ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .maxPrice
-                        }
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-                  <Col md="3" className="mb-3">
-                    <Label for="maxPriceType">Unit <span style={{ color: 'red' }}>*</span></Label>
-                    <Input
-                      type="select"
-                      name="maxPriceType"
-                      id="maxPriceType"
-                      value={validation.values.maxPriceType}
-                      onChange={validation.handleChange}
-                    >
-                      <option value="lakhs">Lakhs</option>
-                      <option value="crores">Crores</option>
-                    </Input>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Budget <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Input
-                      type="select"
-                      name="budget"
-                      id="budget"
-                      onChange={validation.handleChange}
-                      onBlur={validation.handleBlur}
-                      value={validation.values.budget}
-                    >
-                      <option value="">Select a Car Budget</option>
-                      <option value="under_5">Under 5 Lakh</option>
-                      <option value="under_10">Under 10 Lakh</option>
-                      <option value="under_15">Under 15 Lakh</option>
-                      <option value="under_20">Under 20 Lakh</option>
-                      <option value="under_25">Under 25 Lakh</option>
-                      <option value="under_30">Under 30 Lakh</option>
-                      <option value="above_30">Above 30 Lakh</option>
-                    </Input>
-
-                    {validation.touched.budget && validation.errors.budget ? (
-                      <FormFeedback type="invalid">
-                        {validation.errors.budget}
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Fuel Type <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Select
-                      value={validation.values.fuelType}
-                      isMulti={true}
-                      onChange={handleMultiFuelTypes}
-                      options={optionGroup}
-                      className="select2-selection"
-                    />
-                    {validation.touched
-                      .fuelType &&
-                      validation.errors
-                        .fuelType ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .fuelType
-                        }
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Seating Capacity <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Input
-                      type="select"
-                      name="seatingCapacity"
-                      id="seatingCapacity"
-                      onChange={validation.handleChange}
-                      onBlur={validation.handleBlur}
-                      value={validation.values.seatingCapacity}
-                    >
-                      <option value="">Select seating capacity</option>
-                      <option value="5_seater">5 Seater</option>
-                      <option value="6_seater">6 Seater</option>
-                      <option value="7_seater">7 Seater</option>
-                      <option value="8_seater">8 Seater</option>
-                    </Input>
-
-                    {validation.touched.seatingCapacity && validation.errors.seatingCapacity ? (
-                      <FormFeedback type="invalid">
-                        {validation.errors.seatingCapacity}
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      TransmissionType Type <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Select
-                      value={validation.values.transmissionType}
-                      isMulti={true}
-                      onChange={handleMultiTransmissions}
-                      options={optionGroupTransmissionType}
-                      className="select2-selection"
-                    />
-                    {validation.touched
-                      .transmissionType &&
-                      validation.errors
-                        .transmissionType ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .transmissionType
-                        }
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Mileage (kmpl) <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Input
-                      type="select"
-                      name="mileage"
-                      id="mileage"
-                      onChange={validation.handleChange}
-                      onBlur={validation.handleBlur}
-                      value={validation.values.mileage}
-                    >
-                      <option value="">Select Mileage</option>
-                      <option value="under_10">Under 10 kmpl</option>
-                      <option value="10_15">10-15 kmpl</option>
-                      <option value="above_15">15 kmpl and above</option>
-                    </Input>
-
-                    {validation.touched.mileage && validation.errors.mileage ? (
-                      <FormFeedback type="invalid">
-                        {validation.errors.mileage}
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-
-                  <Col className="mb-3">
-                    <Label className="form-label">
-                      Engine Displacement <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                    <Input
-                      type="select"
-                      name="displacement"
-                      id="displacement"
-                      onChange={validation.handleChange}
-                      onBlur={validation.handleBlur}
-                      value={validation.values.displacement}
-                    >
-                      <option value="">Select engine displacement</option>
-                      <option value="below_1000">Below 1000cc Cars</option>
-                      <option value="1000_1500">1000-1500cc Cars</option>
-                      <option value="1500_2000">1500-2000cc Cars</option>
-                      <option value="2000_3000">2000-3000cc Cars</option>
-                      <option value="3000_4000">3000-4000cc Cars</option>
-                      <option value="above_4000">Above 4000cc Cars</option>
-                    </Input>
-
-                    {validation.touched.displacement && validation.errors.displacement ? (
-                      <FormFeedback type="invalid">
-                        {validation.errors.displacement}
-                      </FormFeedback>
-                    ) : null}
-                  </Col>
-
-                </Row>
-
-                <Row>
-                <Col className="mb-3">
-                    <Label className="form-label">
-                      Url Slug <span style={{ color: 'red' }}>*</span>
-                    </Label>
-                <Input
-                      name="urlslug"
-                      type="text"
-                      validate={{
-                        required: { value: true },
-                      }}
-                      onChange={
-                        validation.handleChange
-                      }
-                      onBlur={validation.handleBlur}
-                      value={
-                        validation.values
-                          .urlslug || ""
-                      }
-                      invalid={
-                        validation.touched
-                          .urlslug &&
-                          validation.errors
-                            .urlslug
-                          ? true
-                          : false
-                      }
-                    />
-                    {validation.touched
-                      .urlslug &&
-                      validation.errors
-                        .urlslug ? (
-                      <FormFeedback type="invalid">
-                        {
-                          validation.errors
-                            .urlslug
-                        }
-                      </FormFeedback>
-                    ) : null}
-                    </Col>
-                </Row>
-
-                <div className="mt-3 mb-3">
-                  <Label for="cimg">Model Image <span style={{ color: 'red' }}>*</span></Label>
-                  <div className="mh-50">
-                    <Dropzone
-                      onDrop={acceptedFiles => handleAcceptedFiles(acceptedFiles)}
-                      style={{ width: '300px', height: '100px', border: '2px dashed #000' }}
-                    >
-                      {({ getRootProps, getInputProps }) => (
-                        <div className="dropzone">
-                          <div
-                            className="dz-message needsclick mt-2"
-                            {...getRootProps()}
+                          <Form
+                            onSubmit={e => {
+                              e.preventDefault();
+                              validation.handleSubmit();
+                              return false;
+                            }}
                           >
-                            <input {...getInputProps()} />
-                            <div className="mb-3">
-                              <i className="display-4 text-muted bx bxs-cloud-upload" />
-                            </div>
-                            <h4>Drop files here or click to upload.</h4>
-                          </div>
-                        </div>
-                      )}
-                    </Dropzone>
+                            <Row form="true">
+                              <Col className="col-12">
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Model Name <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      name="modelName"
+                                      type="text"
+                                      validate={{
+                                        required: { value: true },
+                                      }}
+                                      onChange={
+                                        validation.handleChange
+                                      }
+                                      onBlur={validation.handleBlur}
+                                      value={
+                                        validation.values
+                                          .modelName || ""
+                                      }
+                                      invalid={
+                                        validation.touched
+                                          .modelName &&
+                                          validation.errors
+                                            .modelName
+                                          ? true
+                                          : false
+                                      }
+                                    />
+                                    {validation.touched
+                                      .modelName &&
+                                      validation.errors
+                                        .modelName ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .modelName
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
 
-                    {validation.values.modelImages.length > 0 && (
-                      <div className="dropzone-previews mt-3" id="file-previews">
-                        {validation.values.modelImages.map((file, index) => (
-                          <Card
-                            className="mt-1 mb-0 shadow-none border dz-processing dz-image-preview dz-success dz-complete"
-                            key={index}
-                          >
-                            <div className="p-2">
-                              <Row className="align-items-center">
-                                <Col className="col-auto">
-                                  <img
-                                    height="80"
-                                    className="avatar-sm rounded bg-light"
-                                    alt={file.name}
-                                    src={file.preview}
-                                  />
-                                </Col>
-                                <Col>
-                                  <Link to="#" className="text-muted font-weight-bold">
-                                    {file.name}
-                                  </Link>
-                                  <p className="mb-0">
-                                    <strong>{file.formattedSize}</strong>
-                                  </p>
-                                </Col>
-                              </Row>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <div className="text-end">
-                  <button
-                    type="submit"
-                    className="btn btn-success save-user"
-                    disabled={!validation.isValid || !validation.dirty}
-                    onClick={() => {
-                      validation.setFieldTouched(
-                        "modelName",
-                        true
-                      );
-                    }}
-                  >
-                    Save
-                  </button>
-                </div>
-              </Col>
-            </Row>
-          </Form>
+                                  </Col>
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Car Brand <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      type="select"
+                                      name="carBrand"
+                                      id="carBrand"
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                      value={validation.values.carBrand}
+                                    >
+                                      <option value="">Select a Car Brand</option>
+                                      {carBrands?.map((carBrand, index) => (
+                                        <option key={index} value={carBrand._id}>
+                                          {carBrand.brandName}
+                                        </option>
+                                      ))}
+                                    </Input>
+
+                                    {validation.touched
+                                      .carBrand &&
+                                      validation.errors
+                                        .carBrand ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .carBrand
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+                                </Row>
+                                <Row>
+                                  <Col>
+                                    <FormGroup className="mb-4" row>
+                                      <Label htmlFor="bodyType" className="col-form-label">
+                                        Body Type <span style={{ color: 'red' }}>*</span>
+                                      </Label>
+                                      <Col>
+                                        <Input
+                                          type="select"
+                                          className="form-control"
+                                          name="bodyType"
+                                          id="bodyType"
+                                          onChange={validation.handleChange}
+                                          onBlur={validation.handleBlur}
+                                          value={validation.values.bodyType}
+                                        >
+                                          <option value="">Select Body Type</option>
+                                          <option value="SUV">SUV</option>
+                                          <option value="Hatchback">Hatchback</option>
+                                          <option value="Sedan">Sedan</option>
+                                          <option value="Compact-Suv">Compact Suv</option>
+                                          <option value="Compact-Sedan">Compact Sedan</option>
+                                          <option value="Convertible">Convertible</option>
+                                          <option value="Coupe">Coupe</option>
+                                          <option value="Station-Wegon">Station Wegon</option>
+                                          <option value="MuV">MUV</option>
+                                          <option value="Luxury">Luxury</option>
+                                          <option value="Minivan">Minivan</option>
+                                          <option value="Truck">Truck</option>
+                                        </Input>
+                                      </Col>
+                                    </FormGroup>
+                                  </Col>
+
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Description <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      name="description"
+                                      type="textarea"
+                                      validate={{
+                                        required: { value: true },
+                                      }}
+                                      onChange={
+                                        validation.handleChange
+                                      }
+                                      onBlur={validation.handleBlur}
+                                      value={
+                                        validation.values
+                                          .description || ""
+                                      }
+                                      invalid={
+                                        validation.touched
+                                          .description &&
+                                          validation.errors
+                                            .description
+                                          ? true
+                                          : false
+                                      }
+                                    />
+                                    {validation.touched
+                                      .description &&
+                                      validation.errors
+                                        .description ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .description
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+                                </Row>
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Year <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      name="year"
+                                      type="text"
+                                      validate={{
+                                        required: { value: true },
+                                      }}
+                                      onChange={
+                                        validation.handleChange
+                                      }
+                                      onBlur={validation.handleBlur}
+                                      value={
+                                        validation.values
+                                          .year || ""
+                                      }
+                                      invalid={
+                                        validation.touched
+                                          .year &&
+                                          validation.errors
+                                            .year
+                                          ? true
+                                          : false
+                                      }
+                                    />
+                                    {validation.touched
+                                      .year &&
+                                      validation.errors
+                                        .year ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .year
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Status <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      name="status"
+                                      type="select"
+                                      className="form-select"
+                                      onChange={
+                                        validation.handleChange
+                                      }
+                                      onBlur={validation.handleBlur}
+                                      value={
+                                        validation.values
+                                          .status || ""
+                                      }
+                                    >
+                                      <option>Active</option>
+                                      <option>InActive</option>
+                                    </Input>
+                                    {validation.touched
+                                      .status &&
+                                      validation.errors
+                                        .status ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .status
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+                                </Row>
+
+                                <Row>
+                                  <Col md="3" className="mb-3">
+                                    <Label for="minPrice">Min Price <span style={{ color: 'red' }}>*</span></Label>
+                                    <Input
+                                      type="number"
+                                      name="minPrice"
+                                      id="minPrice"
+                                      placeholder="Enter minimum price"
+                                      value={validation.values.minPrice}
+                                      onChange={validation.handleChange}
+                                    />
+                                    {validation.touched
+                                      .minPrice &&
+                                      validation.errors
+                                        .minPrice ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .minPrice
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+                                  <Col md="3" className="mb-3">
+                                    <Label for="minPriceType">Unit <span style={{ color: 'red' }}>*</span></Label>
+                                    <Input
+                                      type="select"
+                                      name="minPriceType"
+                                      id="minPriceType"
+                                      value={validation.values.minPriceType}
+                                      onChange={validation.handleChange}
+                                    >
+                                      <option value="lakhs">Lakhs</option>
+                                      <option value="crores">Crores</option>
+                                    </Input>
+                                  </Col>
+                                  <Col md="3" className="mb-3">
+                                    <Label for="maxPrice">Max Price <span style={{ color: 'red' }}>*</span></Label>
+                                    <Input
+                                      type="number"
+                                      name="maxPrice"
+                                      id="maxPrice"
+                                      placeholder="Enter maximum price"
+                                      value={validation.values.maxPrice}
+                                      onChange={validation.handleChange}
+                                    />
+                                    {validation.touched
+                                      .maxPrice &&
+                                      validation.errors
+                                        .maxPrice ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .maxPrice
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+                                  <Col md="3" className="mb-3">
+                                    <Label for="maxPriceType">Unit <span style={{ color: 'red' }}>*</span></Label>
+                                    <Input
+                                      type="select"
+                                      name="maxPriceType"
+                                      id="maxPriceType"
+                                      value={validation.values.maxPriceType}
+                                      onChange={validation.handleChange}
+                                    >
+                                      <option value="lakhs">Lakhs</option>
+                                      <option value="crores">Crores</option>
+                                    </Input>
+                                  </Col>
+                                </Row>
+
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Budget <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      type="select"
+                                      name="budget"
+                                      id="budget"
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                      value={validation.values.budget}
+                                    >
+                                      <option value="">Select a Car Budget</option>
+                                      <option value="under_5">Under 5 Lakh</option>
+                                      <option value="under_10">Under 10 Lakh</option>
+                                      <option value="under_15">Under 15 Lakh</option>
+                                      <option value="under_20">Under 20 Lakh</option>
+                                      <option value="under_25">Under 25 Lakh</option>
+                                      <option value="under_30">Under 30 Lakh</option>
+                                      <option value="above_30">Above 30 Lakh</option>
+                                    </Input>
+
+                                    {validation.touched.budget && validation.errors.budget ? (
+                                      <FormFeedback type="invalid">
+                                        {validation.errors.budget}
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Fuel Type <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Select
+                                      value={validation.values.fuelType}
+                                      isMulti={true}
+                                      onChange={handleMultiFuelTypes}
+                                      options={optionGroup}
+                                      className="select2-selection"
+                                    />
+                                    {validation.touched
+                                      .fuelType &&
+                                      validation.errors
+                                        .fuelType ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .fuelType
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+                                </Row>
+
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Seating Capacity <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      type="select"
+                                      name="seatingCapacity"
+                                      id="seatingCapacity"
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                      value={validation.values.seatingCapacity}
+                                    >
+                                      <option value="">Select seating capacity</option>
+                                      <option value="5_seater">5 Seater</option>
+                                      <option value="6_seater">6 Seater</option>
+                                      <option value="7_seater">7 Seater</option>
+                                      <option value="8_seater">8 Seater</option>
+                                    </Input>
+
+                                    {validation.touched.seatingCapacity && validation.errors.seatingCapacity ? (
+                                      <FormFeedback type="invalid">
+                                        {validation.errors.seatingCapacity}
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      TransmissionType Type <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Select
+                                      value={validation.values.transmissionType}
+                                      isMulti={true}
+                                      onChange={handleMultiTransmissions}
+                                      options={optionGroupTransmissionType}
+                                      className="select2-selection"
+                                    />
+                                    {validation.touched
+                                      .transmissionType &&
+                                      validation.errors
+                                        .transmissionType ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .transmissionType
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+                                </Row>
+
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Mileage (kmpl) <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      type="select"
+                                      name="mileage"
+                                      id="mileage"
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                      value={validation.values.mileage}
+                                    >
+                                      <option value="">Select Mileage</option>
+                                      <option value="under_10">Under 10 kmpl</option>
+                                      <option value="10_15">10-15 kmpl</option>
+                                      <option value="above_15">15 kmpl and above</option>
+                                    </Input>
+
+                                    {validation.touched.mileage && validation.errors.mileage ? (
+                                      <FormFeedback type="invalid">
+                                        {validation.errors.mileage}
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Engine Displacement <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      type="select"
+                                      name="displacement"
+                                      id="displacement"
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                      value={validation.values.displacement}
+                                    >
+                                      <option value="">Select engine displacement</option>
+                                      <option value="below_1000">Below 1000cc Cars</option>
+                                      <option value="1000_1500">1000-1500cc Cars</option>
+                                      <option value="1500_2000">1500-2000cc Cars</option>
+                                      <option value="2000_3000">2000-3000cc Cars</option>
+                                      <option value="3000_4000">3000-4000cc Cars</option>
+                                      <option value="above_4000">Above 4000cc Cars</option>
+                                    </Input>
+
+                                    {validation.touched.displacement && validation.errors.displacement ? (
+                                      <FormFeedback type="invalid">
+                                        {validation.errors.displacement}
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+
+                                </Row>
+
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label className="form-label">
+                                      Url Slug <span style={{ color: 'red' }}>*</span>
+                                    </Label>
+                                    <Input
+                                      name="urlslug"
+                                      type="text"
+                                      validate={{
+                                        required: { value: true },
+                                      }}
+                                      onChange={
+                                        validation.handleChange
+                                      }
+                                      onBlur={validation.handleBlur}
+                                      value={
+                                        validation.values
+                                          .urlslug || ""
+                                      }
+                                      invalid={
+                                        validation.touched
+                                          .urlslug &&
+                                          validation.errors
+                                            .urlslug
+                                          ? true
+                                          : false
+                                      }
+                                    />
+                                    {validation.touched
+                                      .urlslug &&
+                                      validation.errors
+                                        .urlslug ? (
+                                      <FormFeedback type="invalid">
+                                        {
+                                          validation.errors
+                                            .urlslug
+                                        }
+                                      </FormFeedback>
+                                    ) : null}
+                                  </Col>
+                                </Row>
+
+                                <div className="mt-3 mb-3">
+                                  <Label for="cimg">Model Image <span style={{ color: 'red' }}>*</span></Label>
+                                  <div className="mh-50">
+                                    <Dropzone
+                                      onDrop={acceptedFiles => handleAcceptedFiles(acceptedFiles)}
+                                      style={{ width: '300px', height: '100px', border: '2px dashed #000' }}
+                                    >
+                                      {({ getRootProps, getInputProps }) => (
+                                        <div className="dropzone">
+                                          <div
+                                            className="dz-message needsclick mt-2"
+                                            {...getRootProps()}
+                                          >
+                                            <input {...getInputProps()} />
+                                            <div className="mb-3">
+                                              <i className="display-4 text-muted bx bxs-cloud-upload" />
+                                            </div>
+                                            <h4>Drop files here or click to upload.</h4>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </Dropzone>
+
+                                    {validation.values.modelImages.length > 0 && (
+                                      <div className="dropzone-previews mt-3" id="file-previews">
+                                        {validation.values.modelImages.map((file, index) => (
+                                          <Card
+                                            className="mt-1 mb-0 shadow-none border dz-processing dz-image-preview dz-success dz-complete"
+                                            key={index}
+                                          >
+                                            <div className="p-2">
+                                              <Row className="align-items-center">
+                                                <Col className="col-auto">
+                                                  <img
+                                                    height="80"
+                                                    className="avatar-sm rounded bg-light"
+                                                    alt={file.name}
+                                                    src={file.preview}
+                                                  />
+                                                </Col>
+                                                <Col>
+                                                  <Link to="#" className="text-muted font-weight-bold">
+                                                    {file.name}
+                                                  </Link>
+                                                  <p className="mb-0">
+                                                    <strong>{file.formattedSize}</strong>
+                                                  </p>
+                                                </Col>
+                                              </Row>
+                                            </div>
+                                          </Card>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </Col>
+                            </Row>
+                          </Form>
                           {/* <Form>
                             <Row>
                               <Col lg="6">
@@ -1428,17 +1643,22 @@ function CarModels() {
                         </TabPane>
                         <TabPane tabId={2}>
                           <div>
-                           {getKeyFeatures()}
+                            {getKeyFeatures()}
                           </div>
                         </TabPane>
                         <TabPane tabId={3}>
                           <div>
-                           {getExteriorUI()}
+                            {getExteriorUI()}
                           </div>
                         </TabPane>
                         <TabPane tabId={4}>
                           <div className="row justify-content-center">
-                          {getInteriorUI()}
+                            {getInteriorUI()}
+                          </div>
+                        </TabPane>
+                        <TabPane tabId={5}>
+                          <div className="row justify-content-center">
+                            {getImagesByColorUI()}
                           </div>
                         </TabPane>
                       </TabContent>
@@ -1460,7 +1680,7 @@ function CarModels() {
                           </Link>
                         </li>
                         <li
-                          className={activeTab === 4 ? "next disabled" : "next"}
+                          className={activeTab === 5 ? "next d-none" : "next"}
                         >
                           <Link
                             to="#"
@@ -1471,6 +1691,20 @@ function CarModels() {
                             Next
                           </Link>
                         </li>
+                        {activeTab === 5 && <li className={activeTab === 5 ? "next" : "next"}>
+                          <Button
+                            color="success"
+                            className="mb-1"
+                            disabled={!validation.isValid || !validation.dirty}
+                            onClick={() => {
+                              // This will trigger Formik's handleSubmit method
+                              validation.handleSubmit();
+                            }}
+                          >
+                            Save
+                          </Button>
+                        </li>
+                        }
                       </ul>
                     </div>
                   </div>
