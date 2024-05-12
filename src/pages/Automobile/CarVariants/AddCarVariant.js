@@ -46,25 +46,7 @@ import InteriorVariant from "./AddCarVariantPages/InteriorVariant";
 import ExteriorVariant from "./AddCarVariantPages/ExteriorVariant";
 import SafetyVariant from "./AddCarVariantPages/SafetyVariant";
 import { addNewCarVariant } from "store/automobiles/carVariants/actions";
-
-const OnSymbol = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontSize: 12,
-                color: "#fff",
-                paddingRight: 2
-            }}
-        >
-            {" "}
-            Yes
-        </div>
-    );
-};
+import EntertainmentAndCommunicationVariant from "./AddCarVariantPages/EntertainmentAndCommunicationVariant";
 
 const AddCarVariant = () => {
 
@@ -98,7 +80,7 @@ const AddCarVariant = () => {
         interior: {},
         exterior: {},
         safety: {},
-        // entertainmentAndCommunication: {},
+        entertainmentAndCommunication: {},
         // warranty: {},
         status: {},
         media: []
@@ -390,6 +372,26 @@ const AddCarVariant = () => {
                             <span className="number">9.</span> Safety
                           </NavLink>
                         </NavItem>
+                        <NavItem
+                          className={classnames({
+                            current: activeTabVartical === 10,
+                          })}
+                        >
+                          <NavLink
+                            className={
+                              (classnames({
+                                active: activeTabVartical === 10,
+                              }),
+                                "done")
+                            }
+                            onClick={() => {
+                              toggleTabVertical(9)
+                            }}
+                            disabled={!(passedStepsVertical || []).includes(9)}
+                          >
+                            <span className="number">10.</span> Entertainment And Communication
+                          </NavLink>
+                        </NavItem>
                       </ul>
                     </div>
                     <div className="content clearfix">
@@ -422,7 +424,10 @@ const AddCarVariant = () => {
                         <ExteriorVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                         <TabPane tabId={9}>
-                        <SafetyVariant carVariant={carVariant} onFormSubmit={handleFinalFormSubmit} previousTabClick={previousTabClick} />
+                        <SafetyVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        </TabPane>
+                        <TabPane tabId={10}>
+                        <EntertainmentAndCommunicationVariant carVariant={carVariant} onFormSubmit={handleFinalFormSubmit} previousTabClick={previousTabClick} />
                         </TabPane>
                       </TabContent>
                     </div>

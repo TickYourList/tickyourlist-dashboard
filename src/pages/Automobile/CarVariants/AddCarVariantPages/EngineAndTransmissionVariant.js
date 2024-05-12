@@ -1,110 +1,19 @@
 import React, { useEffect, useState } from "react"
 
 import {
-    Container,
     Row,
     Col,
-    Table,
     Input,
-    Nav,
-    NavItem,
-    NavLink,
-    TabContent,
-    TabPane,
-    Card,
     Form,
     FormGroup,
     Label,
-    CardBody,
     CardTitle,
-    CardSubtitle,
-    FormFeedback,
     Button,
 } from "reactstrap"
-import Select from "react-select"
-import { Link } from "react-router-dom"
-import * as Yup from "yup";
-
-import classnames from "classnames"
-
-//Import Breadcrumb
-import Breadcrumbs from "../../../../components/Common/Breadcrumb"
-
-//Import Images
-import img1 from "../../../../assets/images/product/img-1.png"
-import img7 from "../../../../assets/images/product/img-7.png"
 import { useSelector, useDispatch } from "react-redux"
 import { getCarModels } from "store/automobiles/carModels/actions"
 import { useFormik } from "formik"
-import Switch from "react-switch";
-
-const Offsymbol = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontSize: 12,
-                color: "#fff",
-                paddingRight: 2
-            }}
-        >
-            {" "}
-            No
-        </div>
-    );
-};
-
-const OnSymbol = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontSize: 12,
-                color: "#fff",
-                paddingRight: 2
-            }}
-        >
-            {" "}
-            Yes
-        </div>
-    );
-};
-
-const optionGroup = [
-    {
-        label: "Picnic",
-        options: [
-            { label: "Mustard", value: "Mustard" },
-            { label: "Ketchup", value: "Ketchup" },
-            { label: "Relish", value: "Relish" },
-        ],
-    },
-    {
-        label: "Camping",
-        options: [
-            { label: "Tent", value: "Tent" },
-            { label: "Flashlight", value: "Flashlight" },
-            { label: "Toilet Paper", value: "Toilet Paper" },
-        ],
-    },
-]
-
-const orderSummary = [
-    {
-        id: 1,
-        img: img1,
-        productTitle: "Half sleeve T-shirt (64GB)",
-        price: 450,
-        qty: 1,
-    },
-    { id: 2, img: img7, productTitle: "Wireless Headphone", price: 225, qty: 1 },
-]
+import * as Yup from "yup";
 
 const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
 
@@ -112,11 +21,7 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
     document.title = "Add Car Variant | Scrollit";
 
     const dispatch = useDispatch();
-
-    const [activeTab, setactiveTab] = useState("1")
     const [selectedGroup, setselectedGroup] = useState(null)
-
-    const [switch1, setswitch1] = useState(true);
     // const [carModelsList, setCarModelsList] = useState([]);
 
     const validation = useFormik({
@@ -138,28 +43,51 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
             mildHybrid: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.mildHybrid) || "",
             driverType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.driverType) || "",
             cluchType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.cluchType) || "",
-
-            // description: (carModel && carModel.description) || "",
-            // year: (carModel && carModel.year) || "",
-            // status: (carModel && carModel.status ? 'Active' : 'InActive') || "",
         },
-        // validationSchema: Yup.object({
-        //     modelName: Yup.string().required(
-        //         "Please Enter Your Brand Name"
-        //     ),
-        //     carBrand: Yup.string().required(
-        //         "Please Enter Your CarBrand"
-        //     ),
-        //     description: Yup.string().required(
-        //         "Please Enter Your description"
-        //     ),
-        //     year: Yup.string().required(
-        //         "Please Enter Your Year"
-        //     ),
-        //     status: Yup.string().required(
-        //         "Please Enter Your Status"
-        //     )
-        // }),
+        validationSchema: Yup.object({
+            // engineType: Yup.string().required(
+            //     "Please Enter the Engine Type"
+            // ),
+            // displacement: Yup.string().required(
+            //     "Please Enter the displacement"
+            // ),
+            // noOfCylinders: Yup.string().required(
+            //     "Please Enter Number of Cylinders"
+            // ),
+            // maxPower: Yup.string().required(
+            //     "Please Enter the max power"
+            // ),
+            // maxTorque: Yup.string().required(
+            //     "Please Enter the max torque"
+            // ),
+            // valuePerCylinder: Yup.string().required(
+            //     "Please Enter the values Per Cylinder"
+            // ),
+            // fuelSupplySystem: Yup.string().required(
+            //     "Please Enter Fuel Supply System"
+            // ),
+            // compressionRatio: Yup.string().required(
+            //     "Please Enter Compression Rate"
+            // ),
+            // turboCharge: Yup.string().required(
+            //     "Please Enter Turbo Charge"
+            // ),
+            // transmissionType: Yup.string().required(
+            //     "Please Enter Transmission type"
+            // ),
+            // gearBox: Yup.string().required(
+            //     "Please Enter Geat Box"
+            // ),
+            // mildHybrid: Yup.string().required(
+            //     "Please Enter Mild Hybrid"
+            // ),
+            // driverType: Yup.string().required(
+            //     "Please Enter Driver Type"
+            // ),
+            // cluchType: Yup.string().required(
+            //     "Please Enter Clutch Type"
+            // )
+        }),
         onSubmit: values => {
             // if (isEdit) {
             //     const updCarModel = new FormData();
@@ -181,25 +109,8 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
             //     dispatch(addNewCarModel(values['carBrand'], newCarModel));
             //     validation.resetForm();
             // }
-            if (onFormSubmit) {
-                const engineAndTransmission = {
-                    engineType: values.engineType,
-                    displacement: values.displacement,
-                    noOfCylinders: values.noOfCylinders,
-                    maxPower: values.maxPower,
-                    maxTorque: values.maxPower,
-                    valuePerCylinder: values.valuePerCylinder,
-                    fuelSupplySystem: values.fuelSupplySystem,
-                    compressionRatio: values.compressionRatio,
-                    turboCharge: values.turboCharge,
-                    transmissionType: values.transmissionType,
-                    gearBox: values.gearBox,
-                    mildHybrid: values.mildHybrid,
-                    driverType: values.driverType,
-                    cluchType: values.cluchType,
-                }
                 onFormSubmit('engineAndTransmission', values, '3');
-            }
+        
         },
         handleError: e => { },
     });

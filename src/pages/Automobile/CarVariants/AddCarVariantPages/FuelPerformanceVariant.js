@@ -32,44 +32,6 @@ import { getCarModels } from "store/automobiles/carModels/actions"
 import { useFormik } from "formik"
 import Switch from "react-switch";
 
-const Offsymbol = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontSize: 12,
-                color: "#fff",
-                paddingRight: 2
-            }}
-        >
-            {" "}
-            No
-        </div>
-    );
-};
-
-const OnSymbol = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontSize: 12,
-                color: "#fff",
-                paddingRight: 2
-            }}
-        >
-            {" "}
-            Yes
-        </div>
-    );
-};
-
 
 const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
 
@@ -95,32 +57,26 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
             fuelTankCapacity: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.fuelTankCapacity) || "",
             emissionNormCompliance: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.emissionNormCompliance) || "",
         },
-        // validationSchema: Yup.object({
-        //     modelName: Yup.string().required(
-        //         "Please Enter Your Brand Name"
-        //     ),
-        //     carBrand: Yup.string().required(
-        //         "Please Enter Your CarBrand"
-        //     ),
-        //     description: Yup.string().required(
-        //         "Please Enter Your description"
-        //     ),
-        //     year: Yup.string().required(
-        //         "Please Enter Your Year"
-        //     ),
-        //     status: Yup.string().required(
-        //         "Please Enter Your Status"
-        //     )
-        // }),
+        validationSchema: Yup.object({
+            // fuelType: Yup.string().required(
+            //     "Please Enter Fuel Type"
+            // ),
+            // mileageCity: Yup.string().required(
+            //     "Please Enter Mileage City"
+            // ),
+            // mileageArai: Yup.string().required(
+            //     "Please Enter Mileage Arai"
+            // ),
+            // fuelTankCapacity: Yup.string().required(
+            //     "Please Enter Fuel Tank Capacity"
+            // ),
+            // emissionNormCompliance: Yup.string().required(
+            //     "Please Enter Emission Norm Compliance"
+            // )
+        }),
         onSubmit: values => {
-            const fuelAndPerformance = {
-                fuelType: values.fuelType,
-                mileageCity: values.mileageCity,
-                mileageArai: values.mileageArai,
-                fuelTankCapacity: values.fuelTankCapacity,
-                emissionNormCompliance: values.emissionNormCompliance,
-            };
-            onFormSubmit('fuelAndPerformance', fuelAndPerformance, '4');
+            console.log("values ", values);
+            onFormSubmit('fuelAndPerformance', values, '4');
         },
         handleError: e => { },
     });

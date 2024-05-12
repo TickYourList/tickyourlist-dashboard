@@ -108,7 +108,8 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
             isoFixChildSeatMounts: (carVariant && carVariant.safety && carVariant.safety.isoFixChildSeatMounts) || false,
             pretensionersAndForceLimiterSeatbelts: (carVariant && carVariant.safety && carVariant.safety.pretensionersAndForceLimiterSeatbelts) || false,
             hillDescentControl: (carVariant && carVariant.safety && carVariant.safety.hillDescentControl) || false,
-            hillAssist: (carVariant && carVariant.safety && carVariant.safety.hillAssist) || false
+            hillAssist: (carVariant && carVariant.safety && carVariant.safety.hillAssist) || false,
+            additionalFeatures: carVariant?.safety?.additionalFeatures || ""
         },
         // validationSchema: Yup.object({
         //     modelName: Yup.string().required(
@@ -128,6 +129,7 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
         //     )
         // }),
         onSubmit: values => {
+            console.log("safety", values);
             if(onFormSubmit) {
                 onFormSubmit('safety', values, '9');
                 }
@@ -186,7 +188,6 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                     <Col lg="3">
                     <FormGroup className="mb-4" row>
                     <div className="form-check form-check-end">
-                        {console.log('carVariant.safety ', carVariant?.safety)}
                             <input
                                 className="form-check-input"
                                 type="checkbox"
@@ -818,12 +819,35 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                             </Col>
                         </FormGroup>
 
+                        <FormGroup className="mb-4" row>
+                        <Label
+                            htmlFor="additionalFeatures"
+                            md="2"
+                            className="col-form-label"
+                        >
+                            Additional Features
+                        </Label>
+                        <Col md="10">
+                            <textarea
+                                className="form-control"
+                                name="additionalFeatures"
+                                id="additionalFeatures"
+                                placeholder="Enter your Additional Features"
+                                rows="3"
+                                onChange={validation.handleChange}
+                                onBlur={validation.handleBlur}
+                                value={validation.values.additionalFeatures}
+                            ></textarea>
+                        </Col>
+                    </FormGroup>
 
+                        <Button type="submit" color="primary" className={
+                        !validation.isValid ? "next disabled" : "next"
+                    }>Next</Button>
 
-
-                    <Button type="submit" color="primary" className={
+                    {/* <Button type="submit" color="primary" className={
                             !validation.isValid ? "next disabled" : "next"
-                          }>Submit</Button>
+                          }>Submit</Button> */}
                 </Form>
             </div>
         </React.Fragment>

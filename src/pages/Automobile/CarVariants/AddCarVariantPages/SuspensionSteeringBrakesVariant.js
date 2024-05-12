@@ -1,34 +1,20 @@
 import React, { useEffect, useState } from "react"
 
 import {
-    Container,
     Row,
     Col,
-    Table,
     Input,
-    Nav,
-    NavItem,
-    NavLink,
-    TabContent,
-    TabPane,
-    Card,
     Form,
     FormGroup,
     Label,
-    CardBody,
     CardTitle,
-    CardSubtitle,
-    FormFeedback,
     Button,
 } from "reactstrap"
-import Select from "react-select"
-import { Link } from "react-router-dom"
-import * as Yup from "yup";
-
 import classnames from "classnames"
 import { useSelector, useDispatch } from "react-redux"
 import { getCarModels } from "store/automobiles/carModels/actions"
 import { useFormik } from "formik"
+import * as Yup from "yup";
 
 const SuspensionSteeringBrakesVariant = ({ carVariant, onFormSubmit }) => {
 
@@ -64,23 +50,53 @@ const SuspensionSteeringBrakesVariant = ({ carVariant, onFormSubmit }) => {
             alloyWheelSizeRear: (carVariant && carVariant.suspensionAndSteeringAndBrakes && carVariant.suspensionAndSteeringAndBrakes.alloyWheelSizeRear) || "",
             bootSpace: (carVariant && carVariant.suspensionAndSteeringAndBrakes && carVariant.suspensionAndSteeringAndBrakes.bootSpace) || "",
         },
-        // validationSchema: Yup.object({
-        //     modelName: Yup.string().required(
-        //         "Please Enter Your Brand Name"
-        //     ),
-        //     carBrand: Yup.string().required(
-        //         "Please Enter Your CarBrand"
-        //     ),
-        //     description: Yup.string().required(
-        //         "Please Enter Your description"
-        //     ),
-        //     year: Yup.string().required(
-        //         "Please Enter Your Year"
-        //     ),
-        //     status: Yup.string().required(
-        //         "Please Enter Your Status"
-        //     )
-        // }),
+        validationSchema: Yup.object({
+            // fontSuspension: Yup.string().required(
+            //     "Please Enter Front Suspension"
+            // ),
+            // rearSuspension: Yup.string().required(
+            //     "Please Enter Rear Suspension"
+            // ),
+            // steeringType: Yup.string().required(
+            //     "Please Enter Steering Type"
+            // ),
+            // steeringColumn: Yup.string().required(
+            //     "Please Enter Steering Column"
+            // ),
+            // turningRadius: Yup.string().required(
+            //     "Please Enter Turning Radius"
+            // ),
+            // frontBrakeType: Yup.string().required(
+            //     "Please Enter Front Brake Type"
+            // ),
+            // rearBrakeType: Yup.string().required(
+            //     "Please Enter Rear Brake Type"
+            // ),
+            // emissionNormCompliance: Yup.string().required(
+            //     "Please Enter Emission Norm Compliance"
+            // ),
+            // tyreSize: Yup.string().required(
+            //     "Please Enter Tyre Size"
+            // ),
+            // tyreType: Yup.string().required(
+            //     "Please Enter Tyre Type"
+            // ),
+            // wheelSize: Yup.string().required(
+            //     "Please Enter Wheel Size"
+            // ),
+            // alloyWheelSize: Yup.string().required(
+            //     "Please Enter Alloy Wheel Size"
+            // ),
+            // alloyWheelSizeFront:  Yup.string().required(
+            //     "Please Enter Alloy Wheel Size Front"
+            // ),
+            // alloyWheelSizeRear: Yup.string().required(
+            //     "Please Enter Alloy Wheel Size Rear"
+            // ),
+            // bootSpace: Yup.string().required(
+            //     "Please Enter Boot Space"
+            // )
+        }),
         onSubmit: values => {
             // if (isEdit) {
             //     const updCarModel = new FormData();
@@ -424,29 +440,6 @@ const SuspensionSteeringBrakesVariant = ({ carVariant, onFormSubmit }) => {
                     </Row>
 
                     <Row>
-                    <Col lg="6">
-                    <FormGroup className="mb-4" row>
-                        <Label
-                            htmlFor="alloyWheelSizeFront"
-                            className="col-form-label"
-                        >
-                            Alloy Wheel Size Front <span style={{ color: 'red' }}>*</span>
-                        </Label>
-                        <Col md="10">
-                            <Input
-                                type="text"
-                                className="form-control"
-                                name="alloyWheelSizeFront"
-                                id="alloyWheelSizeFront"
-                                placeholder="Enter your Alloy Wheel Size Front"
-                                onChange={validation.handleChange}
-                                onBlur={validation.handleBlur}
-                                value={validation.values.alloyWheelSizeFront}
-                            />
-                        </Col>
-                    </FormGroup>
-                    </Col>
-
                     <Col lg="6">
                     <FormGroup className="mb-4" row>
                         <Label

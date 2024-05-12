@@ -1,24 +1,13 @@
 import React, { useEffect, useState } from "react"
 
 import {
-    Container,
     Row,
     Col,
-    Table,
     Input,
-    Nav,
-    NavItem,
-    NavLink,
-    TabContent,
-    TabPane,
-    Card,
     Form,
     FormGroup,
     Label,
-    CardBody,
     CardTitle,
-    CardSubtitle,
-    FormFeedback,
     Button,
 } from "reactstrap"
 import Select from "react-select"
@@ -63,24 +52,46 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
             bootSpace: (carVariant && carVariant.dimensionAndCapacity && carVariant.dimensionAndCapacity.bootSpace) || "",
             noOfDoors: (carVariant && carVariant.dimensionAndCapacity && carVariant.dimensionAndCapacity.noOfDoors) || "",
         },
-        // validationSchema: Yup.object({
-        //     modelName: Yup.string().required(
-        //         "Please Enter Your Brand Name"
-        //     ),
-        //     carBrand: Yup.string().required(
-        //         "Please Enter Your CarBrand"
-        //     ),
-        //     description: Yup.string().required(
-        //         "Please Enter Your description"
-        //     ),
-        //     year: Yup.string().required(
-        //         "Please Enter Your Year"
-        //     ),
-        //     status: Yup.string().required(
-        //         "Please Enter Your Status"
-        //     )
-        // }),
+        validationSchema: Yup.object({
+            // length: Yup.string().required(
+            //     "Please Enter the length"
+            // ),
+            // width: Yup.string().required(
+            //     "Please Enter the width"
+            // ),
+            // height: Yup.string().required(
+            //     "Please Enter the height"
+            // ),
+            // groundClearanceUnladen: Yup.string().required(
+            //     "Please Enter ther ground cleanrance unleaden"
+            // ),
+            // wheelBase: Yup.string().required(
+            //     "Please Enter the wheelbase"
+            // ),
+            // frontTread: Yup.string().required(
+            //     "Please Enter the front Tread"
+            // ),
+            // rearTread: Yup.string().required(
+            //     "Please Enter the rear Tread"
+            // ),
+            // kerbWeight: Yup.string().required(
+            //     "Please Enter the Kerb Weight"
+            // ),
+            // grossWeight: Yup.string().required(
+            //     "Please Enter the gross weight"
+            // ),
+            // seatingCapacity: Yup.string().required(
+            //     "Please Enter the seating capacity"
+            // ),
+            // bootSpace: Yup.string().required(
+            //     "Please Enter the boot space"
+            // ),
+            // noOfDoors: Yup.string().required(
+            //     "Please Enter number of doors"
+            // ),
+        }),
         onSubmit: values => {
+            console.log("values ", values);
             // if (isEdit) {
             //     const updCarModel = new FormData();
             //     updCarModel.append("modelName", values["modelName"]);
