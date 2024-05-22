@@ -40,3 +40,5 @@ export const DELETE_CAR_DEALER = "/v1/cardealer/delete/dealer";
 export const DELETE_ALL_CAR_DEALER = "/v1/cardealer/delete/all";
 
 export const GET_MODEL_BY_BRAND = "/v1/automobile/carmodel/from/carbrand";
+
+export const ADD_CAR_VARIANT_PRICING = "/v1/carvariantpricing/add/carvariant";

@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 //import components
 import Breadcrumbs from '../../../components/Common/Breadcrumb';
 import DeleteModal from '../../../components/Common/DeleteModal';
+import ColorPicker from "@vtaits/react-color-picker";
 
 import {
 } from "../../../store/e-commerce/actions";
@@ -101,6 +102,8 @@ function CarModels() {
 
   const [passedSteps, setPassedSteps] = useState([1])
   const [passedStepsVertical, setPassedStepsVertical] = useState([1])
+  const [colorRgb, setcolorRgb] = useState("red");
+  const [simple_color1, setsimple_color1] = useState(0);
   const dispatch = useDispatch();
 
   // // validation
@@ -411,6 +414,23 @@ function CarModels() {
     }
   }
 
+  const onDragRgb = (color, index) => {
+    handleColorChange(color, index);
+  };
+
+  function handleColorChange(color, index) {
+    const updatedColors = validation.values.imagesByColor.map((colorItem, colorIndex) => {
+      if (colorIndex === index) {
+        return {
+          ...colorItem,
+          colorCode: color
+        };
+      }
+      return colorItem;
+    });
+    validation.setFieldValue('imagesByColor', updatedColors);
+  }
+
   function toggleTabVertical(tab) {
     if (activeTabVartical !== tab) {
       var modifiedSteps = [...passedStepsVertical, tab]
@@ -672,13 +692,45 @@ function CarModels() {
             <Col md="3">
               <FormGroup>
                 <Label>Color Code</Label>
-                <Input
-                  type="text"
-                  name={`imagesByColor[${index}].colorCode`}
-                  value={imagesByColor.colorCode}
-                  onChange={validation.handleChange}
-                  onBlur={validation.handleBlur}
-                />
+                <div
+                  className="input-group colorpicker-default"
+                  title="Using format option"
+                >
+                  <input
+                    readOnly
+                    value={imagesByColor.colorCode}
+                    name={`imagesByColor[${index}].colorCode`}
+                    type="text"
+                    className="form-control input-lg"
+                    onChange={validation.handleChange}
+                  />
+                  <span className="input-group-append">
+                    <span
+                      className="input-group-text colorpicker-input-addon"
+                      onClick={() => {
+                        setsimple_color1(!simple_color1);
+                      }}
+                    >
+                      <i
+                        style={{
+                          height: "16px",
+                          width: "16px",
+                          background: imagesByColor.colorCode
+                        }}
+                      />
+                    </span>
+                  </span>
+                </div>
+
+                {simple_color1 ? (
+                  <ColorPicker
+                    saturationHeight={100}
+                    saturationWidth={100}
+                    value={imagesByColor.colorCode}
+                    onDrag={(color) => onDragRgb(color, index)}
+                  />
+                ) : null}
+
                 {validation.touched.imagesByColor && validation.touched.imagesByColor[index] && validation.touched.imagesByColor[index].colorCode && validation.errors.imagesByColor && validation.errors.imagesByColor[index] && validation.errors.imagesByColor[index].colorCode && (
                   <FormFeedback type="invalid">
                     {validation.errors.imagesByColor[index].colorCode}
@@ -854,10 +906,9 @@ function CarModels() {
   const handleAddImageByColor = () => {
     const newFeature = {
       id: uuidv4(),
-      featureType: '',
-      featureDescription: '',
-      image: null,
-      preview: ''
+      colorCode: '',
+      colorDescription: '',
+      image: null
     };
     const updatedFeatures = [...validation.values.imagesByColor, newFeature];
     validation.setFieldValue('imagesByColor', updatedFeatures);

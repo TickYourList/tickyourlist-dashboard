@@ -49,6 +49,9 @@ const fetchCountriesListData = () => get(url.GET_COUNTRIES_LIST_DATA);
 // fetch model by brand
 const fetchCarModelByBrand = id => get(`${url.GET_MODEL_BY_BRAND}/${id}`);
 
+// fetch model by brand
+const addCarModelByBrand = (id, data) => post(`${url.ADD_CAR_VARIANT_PRICING}/${id}`, data);
+
 // GET CAR CARIANTS LIST
 const getCarVariantsList = () => get(url.GET_CAR_VARIANTS);
 
@@ -145,5 +148,6 @@ export {
     addCarDealer,
     updateCarDealerData,
     deleteCarDealerData,
-    deleteAllCarDealers
+    deleteAllCarDealers,
+    addCarModelByBrand
 };

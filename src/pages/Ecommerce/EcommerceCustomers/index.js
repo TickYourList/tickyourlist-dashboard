@@ -345,7 +345,7 @@ const EcommerceCustomers = props => {
     <React.Fragment>
       <EcommerceCustomersImportModal
         isOpen={modal1}
-        toggle={toggleViewModal}
+        toggle={toggleViewModal} 
         customers={customerList}
         dataFields={dataFields}
       />
@@ -370,7 +370,7 @@ const EcommerceCustomers = props => {
                     handleCustomerClick={handleCustomerClicks}
                     handleDownloadTemplate = {handleDownloadTemplate}
                     handleExportCustomers = {handleExportCustomers}
-                    toggleViewModal = {toggleViewModal}
+                    toggleViewModal = {toggleViewModal} 
                     customPageSize={10}
                     className="custom-header-css"
                   />

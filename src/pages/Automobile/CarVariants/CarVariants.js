@@ -4,10 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { isEmpty } from "lodash";
 import '../../../../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import TableContainer from '../../../components/Common/TableContainer';
+import * as XLSX from "xlsx";
 
 //import components
 import Breadcrumbs from '../../../components/Common/Breadcrumb';
 import DeleteModal from '../../../components/Common/DeleteModal';
+import statesCitiesList from "../../../assets/helperJsonData/state-and-city.json";
 
 import {
 } from "../../../store/e-commerce/actions";
@@ -22,13 +24,11 @@ import {
   CarBrand,
   ModelId,
   Year,
-}
-  from "./CarVariantsCol";
+} from "./CarVariantsCol";
 import * as Yup from "yup";
 
 //redux
 import { useSelector, useDispatch } from "react-redux";
-// import CarBrandssModal from "./CarBrandssModal";
 
 import {
   Button,
@@ -49,34 +49,69 @@ import Select from "react-select";
 import { getCarBrands } from "store/automobiles/carbrands/actions";
 import { useFormik } from "formik";
 import CarVariantModel from "./CarVariantModel";
-import { addNewCarVariant, deleteAllCarVariants, deleteCarVariant, getCarVariants, updateCarVariant } from "store/automobiles/carVariants/actions";
+import { addNewCarVariant, addVariantData, deleteAllCarVariants, deleteCarVariant, getCarVariants, updateCarVariant } from "store/automobiles/carVariants/actions";
 import CarVariantDetail from "./CarVariantDetail";
+import CarVariantPricingModal from "./CarVariantPricingModal";
+
+// Function to generate dynamic data fields array
+const generateDataFields = (numOthersFields = 2) => {
+  const baseFields = [
+    "CarBrand",
+    "BrandName",
+    "CarModel",
+    "ModelName",
+    "CarVariant",
+    "VariantName",
+    "State",
+    "City",
+    "CityCode",
+    "Ex-Showroom Price",
+    "RTO",
+    "Insurance",
+  ];
+
+  const othersFields = [];
+  for (let i = 1; i <= numOthersFields; i++) {
+    othersFields.push(`Others-Key-${i}`, `Others-Value-${i}`);
+  }
+
+  return [...baseFields, ...othersFields];
+};
 
 function CarVariants() {
+  // Define number of "Others" fields
+  const numOthersFields = 5; // Adjust this number as needed
+  const dataFields = generateDataFields(numOthersFields);
 
-  //meta title
+  // Meta title
   document.title = "Car variants | Scrollit";
 
+  // State declarations
   const [modal, setModal] = useState(false);
   const [nestedModal, setNestedModal] = useState(false);
   const [modal1, setModal1] = useState(false);
+  const [variantPricingModal, setVariantPricingModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-
   const [carVariantsList, setcarVariantsList] = useState([]);
   const [carVariant, setcarVariant] = useState(null);
   const [carVariantData, setcarVariantData] = useState({});
-  const [closeAll, setCloseAll] = useState(false);
-  const [toast, setToast] = useState(false);
-  const [toastDetails, setToastDetails] = useState({ title: "", message: "" });
-  const [variantImage, setvariantImage] = useState(null)
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [variantImage, setvariantImage] = useState(null);
   const dispatch = useDispatch();
   const history = useNavigate();
+  const toggleViewModal = () => setModal1(!modal1);
+  const toggleVariantPricingModal = () => setVariantPricingModal(!variantPricingModal);
 
-  // // validation
+  const { carBrands, countries, carModels, carVariants } = useSelector(state => ({
+    carBrands: state.CarBrand.carBrands,
+    countries: state.CarBrand.countries,
+    carModels: state.CarModel.carModels,
+    carVariants: state.carVariant.carVariants
+  }));
+
+  // Form validation
   const validation = useFormik({
-    // enableReinitialize : use this flag when initial values needs to be changed
     enableReinitialize: true,
-
     initialValues: {
       modelName: (carVariant && carVariant.modelName) || "",
       carBrand: (carVariant && carVariant.carBrand && carVariant.carBrand._id) || "",
@@ -85,21 +120,11 @@ function CarVariants() {
       status: (carVariant && carVariant.status ? 'Active' : 'InActive') || "",
     },
     validationSchema: Yup.object({
-      modelName: Yup.string().required(
-        "Please Enter Your Brand Name"
-      ),
-      carBrand: Yup.string().required(
-        "Please Enter Your CarBrand"
-      ),
-      description: Yup.string().required(
-        "Please Enter Your description"
-      ),
-      year: Yup.string().required(
-        "Please Enter Your Year"
-      ),
-      status: Yup.string().required(
-        "Please Enter Your Status"
-      )
+      modelName: Yup.string().required("Please Enter Your Brand Name"),
+      carBrand: Yup.string().required("Please Enter Your CarBrand"),
+      description: Yup.string().required("Please Enter Your description"),
+      year: Yup.string().required("Please Enter Your Year"),
+      status: Yup.string().required("Please Enter Your Status")
     }),
     onSubmit: values => {
       if (isEdit) {
@@ -110,7 +135,6 @@ function CarVariants() {
         updcarVariant.append("status", values["status"] === 'Active' ? true : false);
         updcarVariant.append("image", variantImage ? variantImage : "broken!");
         dispatch(updateCarVariant(carVariant._id, values['carBrand'], updcarVariant));
-
         validation.resetForm();
       } else {
         const newcarVariant = new FormData();
@@ -127,15 +151,7 @@ function CarVariants() {
     handleError: e => { },
   });
 
-  const toggleViewModal = () => setModal1(!modal1);
-
-  const { carBrands, countries, carModels, carVariants } = useSelector(state => ({
-    carBrands: state.CarBrand.carBrands,
-    countries: state.CarBrand.countries,
-    carModels: state.CarModel.carModels,
-    carVariants: state.carVariant.carVariants
-  }));
-
+  // Effect hooks
   useEffect(() => {
     if (carVariants && !carVariants.length) {
       dispatch(getCarBrands());
@@ -170,15 +186,9 @@ function CarVariants() {
   const handlecarVariantClick = arg => {
     const carVariant = arg;
     setcarVariant(carVariant);
-
-    console.log("saasas");
     history(`/add-car-variant/${carVariant._id}`);
-
     toggle();
   };
-
-  //delete carBrand
-  const [deleteModal, setDeleteModal] = useState(false);
 
   const onClickDelete = (carVariant) => {
     setcarVariant(carVariant);
@@ -194,16 +204,49 @@ function CarVariants() {
       setDeleteModal(false);
     }
   };
+
   const handleAddcarVariantClicks = () => {
-    // setcarVariantsList("");
-    // setIsEdit(false);
-    // toggle();
     history('/add-car-variant');
   };
 
   const handlecarVariantDeleteClicks = () => {
     setcarVariant();
     setDeleteModal(true);
+  };
+
+  const handleDownloadTemplateForVariantPricing = format => {
+    const book = XLSX.utils.book_new();
+    let newArray = [];
+
+    for (let state in statesCitiesList) {
+      for (let { id, city } of statesCitiesList[state]) {
+        let arrayValue = [
+          carVariantData?.carModel?.carBrand?._id ?? "",
+          carVariantData?.carModel?.carBrand?.brandName ?? "",
+          carVariantData?.carModel?._id ?? "",
+          carVariantData?.carModel?.modelName ?? "",
+          carVariantData?._id ?? "",
+          carVariantData?.name ?? "",
+          state,
+          city,
+          id,
+          "",
+          "",
+          "",
+          "",
+          ""
+        ];
+        newArray.push(arrayValue);
+      }
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet([dataFields, ...newArray]);
+    XLSX.utils.book_append_sheet(book, ws, "CarVariant");
+    XLSX.writeFile(book, `CarVariant Pricing Template.${format}`);
+  };
+
+  const saveVariantPricing = (variantId, tableData) => {
+    dispatch(addVariantData(variantId, tableData))
   }
 
   const columns = useMemo(
@@ -274,6 +317,25 @@ function CarVariants() {
         }
       },
       {
+        Header: 'Connect/View Variant Pricing',
+        accessor: 'connect',
+        disableFilters: true,
+        Cell: (cellProps) => {
+          return (
+            <Button
+              type="button"
+              color="primary"
+              className="btn-sm btn-rounded"
+              onClick={e => {
+                toggleVariantPricingModal();
+                setcarVariantData(cellProps.row.original);
+              }}
+            >
+              Connect/View Variant Pricing
+            </Button>);
+        }
+      },
+      {
         Header: 'Action',
         accessor: 'action',
         disableFilters: true,
@@ -313,6 +375,13 @@ function CarVariants() {
   return (
     <React.Fragment>
       <CarVariantDetail isOpen={modal1} toggle={toggleViewModal} Data={carVariantData} />
+      <CarVariantPricingModal
+        isOpen={variantPricingModal}
+        toggle={toggleVariantPricingModal}
+        Data={carVariantData}
+        handleDownloadTemplateForVariantPricing={handleDownloadTemplateForVariantPricing}
+        saveVariantPricing={saveVariantPricing}
+      />
       <DeleteModal
         show={deleteModal}
         onDeleteClick={handleDeletecarVariant}
@@ -341,14 +410,12 @@ function CarVariants() {
           </Row>
         </div>
       </div>
-
     </React.Fragment>
   );
 }
+
 CarVariants.propTypes = {
   preGlobalFilteredRows: PropTypes.any,
-
 };
-
 
 export default CarVariants;

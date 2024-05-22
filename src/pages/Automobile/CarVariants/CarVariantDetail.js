@@ -15,7 +15,6 @@ import {
   TabContent,
   TabPane,
 } from "reactstrap";
-// import { NavLink } from "react-router-dom";
 import classnames from "classnames";
 
 const CarVariantDetail = ({ isOpen, toggle, Data }) => {
@@ -64,7 +63,6 @@ const CarVariantDetail = ({ isOpen, toggle, Data }) => {
               })}
             </div>
           </div>
-
 
           <Nav tabs className="nav-tabs-custom nav-justified">
             <NavItem>

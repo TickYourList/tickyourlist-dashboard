@@ -188,7 +188,7 @@ const authProtectedRoutes = [
 
   { path: "/car-blogs", component: <CarBlogs /> },
 
-  { path: "/car-customers", component: <CarCustomers /> },
+  { path: "/car-customers", component: <CarCustomers /> },,
 
   { path: "/car-dealers", component: <CarDealers /> },
 

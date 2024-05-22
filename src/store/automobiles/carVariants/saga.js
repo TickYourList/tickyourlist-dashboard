@@ -1,9 +1,9 @@
 import { takeEvery, put, call } from "redux-saga/effects"
 
 // Calender Redux States
-import { ADD_NEW_CAR_VARIANT, DELETE_ALL_CAR_VARIANT, DELETE_CAR_VARIANT, GET_CAR_VARIANTS, GET_COUNTRIES_LIST, GET_COUNTRIES_LIST_SUCCESS, UPDATE_CAR_VARIANT } from "./actionTypes"
-import { addCarVariant, deleteCarVariantData, fetchCarModelByBrand, getCarVariantsList, updateCarVariantData } from "helpers/automobile_helper_apis"
-import { addCarVariantFail, addCarVariantSuccess, deleteAllCarVariantsFail, deleteAllCarVariantsSuccess, deleteCarVariantFail, deleteCarVariantSuccess, getCarVariantsFail, getCarVariantsSuccess, getCountriesListError, getCountriesListSuccess, updateCarVariantFail, updateCarVariantSuccess } from "./actions"
+import { ADD_ALL_VARIANT_PRICING, ADD_NEW_CAR_VARIANT, DELETE_ALL_CAR_VARIANT, DELETE_CAR_VARIANT, GET_CAR_VARIANTS, GET_COUNTRIES_LIST, GET_COUNTRIES_LIST_SUCCESS, UPDATE_CAR_VARIANT } from "./actionTypes"
+import { addCarModelByBrand, addCarVariant, deleteCarVariantData, fetchCarModelByBrand, getCarVariantsList, updateCarVariantData } from "helpers/automobile_helper_apis"
+import { addCarVariantFail, addCarVariantSuccess, addVariantDataError, addVariantDataSuccess, deleteAllCarVariantsFail, deleteAllCarVariantsSuccess, deleteCarVariantFail, deleteCarVariantSuccess, getCarVariantsFail, getCarVariantsSuccess, getCountriesListError, getCountriesListSuccess, updateCarVariantFail, updateCarVariantSuccess } from "./actions"
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
 
 
@@ -73,12 +73,23 @@ function* onDeleteAllCarVariant() {
     }
   }
 
+  function* onAddAllVariantPricing({ payload: { id, data } }) {
+    try {
+      console.log('id, data ', data, id);
+      const response = yield call(addCarModelByBrand, id, data);
+      yield put(addVariantDataSuccess(response.data.carModelsList));
+    }catch(error) {
+      yield put(addVariantDataError(error));
+    }
+  }
+ 
 function* carVariantSaga() {
   yield takeEvery(GET_CAR_VARIANTS, fetchCarVariants);
   yield takeEvery(ADD_NEW_CAR_VARIANT, onAddCarVariant);
   yield takeEvery(UPDATE_CAR_VARIANT, onUpdateCarVariant);
   yield takeEvery(DELETE_CAR_VARIANT, onDeleteCarVariant);
   yield takeEvery(DELETE_ALL_CAR_VARIANT, onDeleteAllCarVariant);
+  yield takeEvery(ADD_ALL_VARIANT_PRICING, onAddAllVariantPricing);
 }
 
 export default carVariantSaga;
