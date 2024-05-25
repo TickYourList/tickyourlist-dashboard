@@ -41,7 +41,7 @@ const CarModelDetail = ({ isOpen, toggle, Data }) => {
         <ModalHeader toggle={toggle}>Model Details</ModalHeader>
         <ModalBody>
           <div className="d-flex justify-content-center">
-        <img src={Data?.media?.[0].url ?? Data?.media?.url} alt={Data?.media?.altText} width={170} height={150} />
+        <img src={Data?.media?.[0]?.url ?? Data?.media?.url} alt={Data?.media?.altText} width={170} height={150} />
         </div>
           <p className="mb-2">
             <b>Model id:</b> <span className="text-primary">{Data?._id}</span>

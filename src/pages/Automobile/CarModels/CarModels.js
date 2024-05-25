@@ -53,7 +53,6 @@ import Select from "react-select";
 import CarModelDetail from "./CarModelDetail";
 import { getCarBrands } from "store/automobiles/carbrands/actions";
 import { useFormik } from "formik";
-import CarBrandModel from "./CarModelModel";
 import { addNewCarModel, deleteAllCarModels, deleteCarModel, getCarModels, updateCarModel } from "store/automobiles/carModels/actions";
 import classnames from "classnames"
 
@@ -106,9 +105,7 @@ function CarModels() {
   const [simple_color1, setsimple_color1] = useState(0);
   const dispatch = useDispatch();
 
-  // // validation
   const validation = useFormik({
-    // enableReinitialize : use this flag when initial values needs to be changed
     enableReinitialize: true,
 
     initialValues: {
@@ -134,16 +131,16 @@ function CarModels() {
       }))) || [],
       urlslug: (carModel && carModel?.urlslug) || '',
       keyFeatures: (carModel && carModel?.keyFeatures) || [
-        { id: 1, featureType: '', featureDescription: '', image: null }
+        { id: uuidv4(), featureType: '', featureDescription: '', image: null }
       ],
       exterior: (carModel && carModel?.exterior) || [
-        { id: 1, featureType: '', featureDescription: '', image: null }
+        { id: uuidv4(), featureType: '', featureDescription: '', image: null }
       ],
       interior: (carModel && carModel?.interior) || [
-        { id: 1, featureType: '', featureDescription: '', image: null }
+        { id: uuidv4(), featureType: '', featureDescription: '', image: null }
       ],
       imagesByColor: (carModel && carModel?.imagesByColor) || [
-        { id: 1, colorCode: "", colorDescription: "", image: null }
+        { id: uuidv4(), colorCode: "", colorDescription: "", image: null }
       ]
     },
     validationSchema: Yup.object({
@@ -151,13 +148,9 @@ function CarModels() {
       carBrand: Yup.string().required("Please Enter Your Car Brand"),
       bodyType: Yup.string().required("Please Enter Your Body Type"),
       description: Yup.string().required("Please Enter Your Description"),
-      // year: Yup.string().required("Please Enter Your Year"),
-      // year: Yup.number().required("Please Enter Your Year").min(1900, "Year must be after 1900").max(new Date().getFullYear(), `Year must be before or equal to ${new Date().getFullYear()}`),
       status: Yup.string().required("Please Enter Your Status"),
       minPrice: Yup.number().required("Please Enter Your Min Price"),
       maxPrice: Yup.number().required("Please Enter Your Max Price"),
-      // minPriceType: Yup.string().required("Please Enter Your Min Pice Type"),
-      // maxPriceType: Yup.string().required("Please Enter Your Max Price Type"),
       budget: Yup.string().required("Please Enter Your Budget"),
       fuelType: Yup.array().of(Yup.mixed()).required("Please Select Fuel Types"),
       mileage: Yup.string().required("Please Enter Mileage"),
@@ -166,17 +159,8 @@ function CarModels() {
       displacement: Yup.string().required("Please Enter Engine Displacement"),
       modelImages: Yup.array().of(Yup.mixed()).required("Please Upload Images").min(1, 'At least one image is required'),
       urlslug: Yup.string().required("Please Enter URL Slug"),
-      // keyFeatures: Yup.array().of(
-      //   Yup.object({
-      //     featureType: Yup.string().required("Feature type is required"),
-      //     featureDescription: Yup.string().required("Feature description is required"),
-      //     image: Yup.mixed().required("Feature image is required")
-      //   })
-      // )
-
     }),
     onSubmit: values => {
-      console.log('values ', values);
       if (isEdit) {
         const updCarModel = new FormData();
         const priceRange = {
@@ -197,20 +181,61 @@ function CarModels() {
         updCarModel.append("displacement", values["displacement"]);
         updCarModel.append("year", values["year"]);
         updCarModel.append("status", values["status"] === 'Active' ? true : false);
-        updCarModel.append("images", modelImage ? modelImage : "broken!");
         updCarModel.append("urlslug", values["urlslug"]);
         fuelType?.forEach((type, index) => updCarModel.append(`fuelType`, type));
         transmisisonType?.forEach((type, index) => updCarModel.append(`transmissionType`, type));
-        values.modelImages.forEach((file, index) => updCarModel.append(`images`, file));
-        console.log("catmOdel ", carModel);
-        dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
+        values.modelImages.forEach((file, index) => {
+          if (file instanceof File) {
+            updCarModel.append(`images`, file);
+          }
+        });
 
+        values.keyFeatures.forEach((feature, index) => {
+          if (feature.image instanceof File) {
+            updCarModel.append(`keyFeatureImages`, feature.image);
+          }
+        });
+        updCarModel.append('keyFeatures', JSON.stringify(values.keyFeatures.map(feature => ({
+          ...feature,
+          image: undefined
+        }))));
+
+        values.exterior.forEach((feature, index) => {
+          if (feature.image instanceof File) {
+            updCarModel.append(`exteriorImages`, feature.image);
+          }
+        });
+        updCarModel.append('exterior', JSON.stringify(values.exterior.map(feature => ({
+          ...feature,
+          image: undefined
+        }))));
+
+        values.interior.forEach((feature, index) => {
+          if (feature.image instanceof File) {
+            updCarModel.append(`interiorImages`, feature.image);
+          }
+        });
+        updCarModel.append('interior', JSON.stringify(values.interior.map(feature => ({
+          ...feature,
+          image: undefined
+        }))));
+
+        values.imagesByColor.forEach((feature, index) => {
+          if (feature.image instanceof File) {
+            updCarModel.append(`colorImages`, feature.image);
+          }
+        });
+        updCarModel.append('imagesByColor', JSON.stringify(values.imagesByColor.map(feature => ({
+          ...feature,
+          image: undefined
+        }))));
+
+        dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
         validation.resetForm();
       } else {
         const fuelType = convertBackToArray(values["fuelType"]);
         const transmisisonType = convertBackToArray(values["transmissionType"]);
         const newCarModel = new FormData();
-        console.log('valuesdata ', values);
         newCarModel.append("modelName", values["modelName"]);
         newCarModel.append("bodyType", values["bodyType"]);
         newCarModel.append("description", values["description"]);
@@ -270,14 +295,9 @@ function CarModels() {
           }
         });
 
-        console.log('formData ', newCarModel);
-
         dispatch(addNewCarModel(values['carBrand'], newCarModel));
-        // validation.resetForm();
       }
-      // toggle();
     },
-    handleError: e => { },
   });
 
   const toggleViewModal = () => setModal1(!modal1);
@@ -323,12 +343,9 @@ function CarModels() {
       formattedSize: formatBytes(file.size)
     }));
 
-    validation.setFieldValue("modelImages", formattedFiles);
+    validation.setFieldValue("modelImages", [...validation.values.modelImages, ...formattedFiles]);
   }
 
-  /**
-* Formats the size
-*/
   function formatBytes(bytes, decimals = 2) {
     if (bytes === 0) return "0 Bytes"
     const k = 1024
@@ -376,7 +393,6 @@ function CarModels() {
     return optionGroup?.map(option => option.value);
   }
 
-  //delete carBrand
   const [deleteModal, setDeleteModal] = useState(false);
 
   const onClickDelete = (carModel) => {
@@ -393,6 +409,7 @@ function CarModels() {
       setDeleteModal(false);
     }
   };
+
   const handleAddCarModelClicks = () => {
     setCarModelsList("");
     setIsEdit(false);
@@ -592,6 +609,11 @@ function CarModels() {
             <Col md="4">
               <FormGroup>
                 <Label>Feature Image</Label>
+                {feature.image && (
+                  <div className="mb-2">
+                    <img src={feature.image.url || URL.createObjectURL(feature.image)} alt={feature.image.altText} style={{ width: '100px', height: '100px' }} />
+                  </div>
+                )}
                 <Input
                   type="file"
                   name={`keyFeatures[${index}].image`}
@@ -659,6 +681,11 @@ function CarModels() {
             <Col md="4">
               <FormGroup>
                 <Label>Interior Image</Label>
+                {interior.image && (
+                  <div className="mb-2">
+                    <img src={interior.image.url || URL.createObjectURL(interior.image)} alt={interior.image.altText} style={{ width: '100px', height: '100px' }} />
+                  </div>
+                )}
                 <Input
                   type="file"
                   name={`interior[${index}].image`}
@@ -758,6 +785,11 @@ function CarModels() {
             <Col md="4">
               <FormGroup>
                 <Label>Car Image</Label>
+                {imagesByColor.image && (
+                  <div className="mb-2">
+                    <img src={imagesByColor.image.url || URL.createObjectURL(imagesByColor.image)} alt={imagesByColor.image.altText} style={{ width: '100px', height: '100px' }} />
+                  </div>
+                )}
                 <Input
                   type="file"
                   name={`imagesByColor[${index}].image`}
@@ -825,6 +857,11 @@ function CarModels() {
             <Col md="4">
               <FormGroup>
                 <Label>Exterior Image</Label>
+                {exterior.image && (
+                  <div className="mb-2">
+                    <img src={exterior.image.url || URL.createObjectURL(exterior.image)} alt={exterior.image.altText} style={{ width: '100px', height: '100px' }} />
+                  </div>
+                )}
                 <Input
                   type="file"
                   name={`exterior[${index}].image`}
@@ -859,7 +896,6 @@ function CarModels() {
       preview: '' // Placeholder for image preview
     };
     const updatedFeatures = [...validation.values.keyFeatures, newFeature];
-    console.log("keyFeatures ", updatedFeatures);
     validation.setFieldValue('keyFeatures', updatedFeatures);
   };
 
@@ -877,7 +913,6 @@ function CarModels() {
       preview: '' // Placeholder for image preview
     };
     const updatedFeatures = [...validation.values.exterior, newFeature];
-    console.log("exterior ", updatedFeatures);
     validation.setFieldValue('exterior', updatedFeatures);
   };
 
@@ -918,23 +953,6 @@ function CarModels() {
     const updatedFeatures = validation.values.imagesByColor.filter(feature => feature.id !== id);
     validation.setFieldValue('imagesByColor', updatedFeatures);
   };
-
-  // const handleimageChange = (event, index) => {
-  //   const file = event.target.files[0];
-  //   if (file) {
-  //     const updatedFeatures = validation.values.keyFeatures.map((feature, idx) => {
-  //       if (idx === index) {
-  //         return {
-  //           ...feature,
-  //           image: file,
-  //           preview: URL.createObjectURL(file)  // Create a preview of the image
-  //         };
-  //       }
-  //       return feature;
-  //     });
-  //     validation.setFieldValue('keyFeatures', updatedFeatures);
-  //   }
-  // };
 
   return (
     <React.Fragment>
@@ -1437,7 +1455,7 @@ function CarModels() {
 
                                   <Col className="mb-3">
                                     <Label className="form-label">
-                                      TransmissionType Type <span style={{ color: 'red' }}>*</span>
+                                      Transmission Type <span style={{ color: 'red' }}>*</span>
                                     </Label>
                                     <Select
                                       value={validation.values.transmissionType}
@@ -1617,80 +1635,6 @@ function CarModels() {
                               </Col>
                             </Row>
                           </Form>
-                          {/* <Form>
-                            <Row>
-                              <Col lg="6">
-                                <div className="mb-3">
-                                  <Label for="basicpill-firstname-input1">
-                                    First name
-                                  </Label>
-                                  <Input
-                                    type="text"
-                                    className="form-control"
-                                    id="basicpill-firstname-input1"
-                                    placeholder="Enter Your First Name"
-                                  />
-                                </div>
-                              </Col>
-                              <Col lg="6">
-                                <div className="mb-3">
-                                  <Label for="basicpill-lastname-input2">
-                                    Last name
-                                  </Label>
-                                  <Input
-                                    type="text"
-                                    className="form-control"
-                                    id="basicpill-lastname-input2"
-                                    placeholder="Enter Your Last Name"
-                                  />
-                                </div>
-                              </Col>
-                            </Row>
-
-                            <Row>
-                              <Col lg="6">
-                                <div className="mb-3">
-                                  <Label for="basicpill-phoneno-input3">
-                                    Phone
-                                  </Label>
-                                  <Input
-                                    type="text"
-                                    className="form-control"
-                                    id="basicpill-phoneno-input3"
-                                    placeholder="Enter Your Phone No."
-                                  />
-                                </div>
-                              </Col>
-                              <Col lg="6">
-                                <div className="mb-3">
-                                  <Label for="basicpill-email-input4">
-                                    Email
-                                  </Label>
-                                  <Input
-                                    type="email"
-                                    className="form-control"
-                                    id="basicpill-email-input4"
-                                    placeholder="Enter Your Email ID"
-                                  />
-                                </div>
-                              </Col>
-                            </Row>
-                            <Row>
-                              <Col lg="12">
-                                <div className="mb-3">
-                                  <Label for="basicpill-address-input1">
-                                    Address
-                                  </Label>
-                                  <textarea
-                                    id="basicpill-address-input1"
-                                    className="form-control"
-                                    rows="2"
-                                    placeholder="Enter Your Address"
-                                  />
-                                </div>
-                              </Col>
-                            </Row>
-                          </Form> */}
                         </TabPane>
                         <TabPane tabId={2}>
                           <div>
@@ -1748,7 +1692,6 @@ function CarModels() {
                             className="mb-1"
                             disabled={!validation.isValid || !validation.dirty}
                             onClick={() => {
-                              // This will trigger Formik's handleSubmit method
                               validation.handleSubmit();
                             }}
                           >
@@ -1765,14 +1708,11 @@ function CarModels() {
           </Row>
         </ModalBody>
       </Modal>
-
     </React.Fragment>
   );
 }
 CarModels.propTypes = {
   preGlobalFilteredRows: PropTypes.any,
-
 };
-
 
 export default CarModels;
