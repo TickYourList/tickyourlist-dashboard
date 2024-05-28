@@ -16,8 +16,8 @@ export const GET_CAR_VARIANTS_FROM_CAR_MODEL = "v1/carvariant/from/carmodel";
 
 export const GET_CAR_VARIANTS = "v1/carvariant/get/submitted/all";
 export const ADD_CAR_VARIANT = "/v1/carvariant/add/carmodel";
-export const UPDATE_CAR_VARIANT = "/v1/carmodel/update";
-export const DELETE_CAR_VARIANT = "/v1/carmodel/delete";
+export const UPDATE_CAR_VARIANT = "/v1/carvariant/update";
+export const DELETE_CAR_VARIANT = "/v1/carvariant/delete";
 export const DELETE_ALL_CAR_VARIANT = "/v1/carmodel/delete/all";
 export const GET_COUNTRIES_LIST_DATA = "https://countriesnow.space/api/v0.1/countries";
 

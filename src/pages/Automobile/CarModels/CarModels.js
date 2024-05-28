@@ -2,59 +2,23 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { isEmpty } from "lodash";
-import '../../../../node_modules/bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import TableContainer from '../../../components/Common/TableContainer';
 import Dropzone from "react-dropzone";
 import { v4 as uuidv4 } from 'uuid';
-
-//import components
 import Breadcrumbs from '../../../components/Common/Breadcrumb';
 import DeleteModal from '../../../components/Common/DeleteModal';
 import ColorPicker from "@vtaits/react-color-picker";
-
-import {
-} from "../../../store/e-commerce/actions";
-
-import {
-  Status,
-  ModelName,
-  CarBrand,
-  ModelId,
-  Year,
-}
-  from "./CarModelsCol";
+import { Status, ModelName, CarBrand, ModelId, Year } from "./CarModelsCol";
 import * as Yup from "yup";
-
-//redux
 import { useSelector, useDispatch } from "react-redux";
-// import CarBrandssModal from "./CarBrandssModal";
-
-import {
-  Button,
-  Col,
-  Row,
-  UncontrolledTooltip,
-  Card,
-  CardBody,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  Form,
-  Label,
-  Input,
-  FormFeedback,
-  NavItem,
-  NavLink,
-  FormGroup,
-  TabContent,
-  TabPane,
-} from "reactstrap";
+import { Button, Col, Row, UncontrolledTooltip, Card, CardBody, Modal, ModalHeader, ModalBody, Form, Label, Input, FormFeedback, NavItem, NavLink, FormGroup, TabContent, TabPane } from "reactstrap";
 import Select from "react-select";
-import CarModelDetail from "./CarModelDetail";
 import { getCarBrands } from "store/automobiles/carbrands/actions";
-import { useFormik } from "formik";
 import { addNewCarModel, deleteAllCarModels, deleteCarModel, getCarModels, updateCarModel } from "store/automobiles/carModels/actions";
-import classnames from "classnames"
+import classnames from "classnames";
+import CarModelDetail from "./CarModelDetail";
+import { useFormik } from "formik";
 
 const optionGroup = [
   {
@@ -65,7 +29,6 @@ const optionGroup = [
       { label: "CNG", value: "CNG" },
       { label: "Electric", value: "Electric" },
       { label: "Hybrid", value: "Hybrid" }
-      // Add other fuel types here if necessary
     ]
   }
 ];
@@ -81,67 +44,52 @@ const optionGroupTransmissionType = [
 ];
 
 function CarModels() {
-  //meta title
   document.title = "Car models | Scrollit";
 
   const [modal, setModal] = useState(false);
   const [nestedModal, setNestedModal] = useState(false);
   const [modal1, setModal1] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-
   const [carModelsList, setCarModelsList] = useState([]);
   const [carModel, setCarModel] = useState(null);
   const [carModelData, setCarModelData] = useState({});
   const [closeAll, setCloseAll] = useState(false);
   const [toast, setToast] = useState(false);
   const [toastDetails, setToastDetails] = useState({ title: "", message: "" });
-  const [modelImage, setModelImage] = useState(null)
-  const [activeTab, setactiveTab] = useState(1)
-  const [activeTabVartical, setoggleTabVertical] = useState(1)
-
-  const [passedSteps, setPassedSteps] = useState([1])
-  const [passedStepsVertical, setPassedStepsVertical] = useState([1])
+  const [modelImage, setModelImage] = useState(null);
+  const [activeTab, setactiveTab] = useState(1);
+  const [activeTabVartical, setoggleTabVertical] = useState(1);
+  const [passedSteps, setPassedSteps] = useState([1]);
+  const [passedStepsVertical, setPassedStepsVertical] = useState([1]);
   const [colorRgb, setcolorRgb] = useState("red");
   const [simple_color1, setsimple_color1] = useState(0);
   const dispatch = useDispatch();
 
   const validation = useFormik({
     enableReinitialize: true,
-
     initialValues: {
-      modelName: (carModel && carModel?.modelName) || "",
-      carBrand: (carModel && carModel?.carBrand && carModel?.carBrand?._id) || "",
-      bodyType: (carModel && carModel?.bodyType) || "",
-      description: (carModel && carModel?.description) || "",
-      year: (carModel && carModel?.year) || "",
-      minPrice: (carModel && carModel?.priceRange?.minPrice) || "",
-      minPriceType: (carModel && carModel?.priceRange?.minPriceType) || "Lakhs",
-      maxPrice: (carModel && carModel?.priceRange?.maxPrice) || "",
-      maxPriceType: (carModel && carModel?.priceRange?.maxPriceType) || "Lakhs",
-      status: (carModel && carModel?.status ? 'Active' : 'InActive') || "",
-      budget: (carModel && carModel?.budget) || "",
-      fuelType: (carModel && carModel?.fuelType && convertArrayToSelectOptions(carModel?.fuelType)) || [],
-      mileage: (carModel && carModel?.mileage) || "",
-      seatingCapacity: (carModel && carModel?.seatingCapacity) || "",
-      transmissionType: (carModel && carModel?.transmissionType && convertArrayToSelectOptions(carModel?.transmissionType)) || [],
-      displacement: (carModel && carModel?.displacement) || "",
-      modelImages: (carModel && carModel?.media?.map(image => ({
-        ...image,
-        preview: image.url,
-      }))) || [],
-      urlslug: (carModel && carModel?.urlslug) || '',
-      keyFeatures: (carModel && carModel?.keyFeatures) || [
-        { id: uuidv4(), featureType: '', featureDescription: '', image: null }
-      ],
-      exterior: (carModel && carModel?.exterior) || [
-        { id: uuidv4(), featureType: '', featureDescription: '', image: null }
-      ],
-      interior: (carModel && carModel?.interior) || [
-        { id: uuidv4(), featureType: '', featureDescription: '', image: null }
-      ],
-      imagesByColor: (carModel && carModel?.imagesByColor) || [
-        { id: uuidv4(), colorCode: "", colorDescription: "", image: null }
-      ]
+      modelName: carModel?.modelName || "",
+      carBrand: carModel?.carBrand?._id || "",
+      bodyType: carModel?.bodyType || "",
+      description: carModel?.description || "",
+      year: carModel?.year || "",
+      minPrice: carModel?.priceRange?.minPrice || "",
+      minPriceType: carModel?.priceRange?.minPriceType || "Lakhs",
+      maxPrice: carModel?.priceRange?.maxPrice || "",
+      maxPriceType: carModel?.priceRange?.maxPriceType || "Lakhs",
+      status: carModel?.status ? 'Active' : 'InActive',
+      budget: carModel?.budget || "",
+      fuelType: convertArrayToSelectOptions(carModel?.fuelType) || [],
+      mileage: carModel?.mileage || "",
+      seatingCapacity: carModel?.seatingCapacity || "",
+      transmissionType: convertArrayToSelectOptions(carModel?.transmissionType) || [],
+      displacement: carModel?.displacement || "",
+      modelImages: carModel?.media?.map(image => ({ ...image, preview: image.url })) || [],
+      urlslug: carModel?.urlslug || '',
+      keyFeatures: carModel?.keyFeatures || [{ id: 1, featureType: '', featureDescription: '', image: null }],
+      exterior: carModel?.exterior || [{ id: 1, featureType: '', featureDescription: '', image: null }],
+      interior: carModel?.interior || [{ id: 1, featureType: '', featureDescription: '', image: null }],
+      imagesByColor: carModel?.imagesByColor || [{ id: 1, colorCode: "", colorDescription: "", image: null }]
     },
     validationSchema: Yup.object({
       modelName: Yup.string().required("Please Enter Your Model Name"),
@@ -300,6 +248,31 @@ function CarModels() {
     },
   });
 
+  const generateInitialValues = (carModel) => ({
+    modelName: carModel?.modelName || "",
+    carBrand: carModel?.carBrand?._id || "",
+    bodyType: carModel?.bodyType || "",
+    description: carModel?.description || "",
+    year: carModel?.year || "",
+    minPrice: carModel?.priceRange?.minPrice || "",
+    minPriceType: carModel?.priceRange?.minPriceType || "Lakhs",
+    maxPrice: carModel?.priceRange?.maxPrice || "",
+    maxPriceType: carModel?.priceRange?.maxPriceType || "Lakhs",
+    status: carModel?.status ? 'Active' : 'InActive',
+    budget: carModel?.budget || "",
+    fuelType: convertArrayToSelectOptions(carModel?.fuelType) || [],
+    mileage: carModel?.mileage || "",
+    seatingCapacity: carModel?.seatingCapacity || "",
+    transmissionType: convertArrayToSelectOptions(carModel?.transmissionType) || [],
+    displacement: carModel?.displacement || "",
+    modelImages: carModel?.media?.map(image => ({ ...image, preview: image.url })) || [],
+    urlslug: carModel?.urlslug || '',
+    keyFeatures: carModel?.keyFeatures || [{ id: uuidv4(), featureType: '', featureDescription: '', image: null }],
+    exterior: carModel?.exterior || [{ id: uuidv4(), featureType: '', featureDescription: '', image: null }],
+    interior: carModel?.interior || [{ id: uuidv4(), featureType: '', featureDescription: '', image: null }],
+    imagesByColor: carModel?.imagesByColor || [{ id: uuidv4(), colorCode: "", colorDescription: "", image: null }]
+  });
+  
   const toggleViewModal = () => setModal1(!modal1);
 
   const { carBrands, countries, carModels } = useSelector(state => ({
@@ -313,28 +286,28 @@ function CarModels() {
       dispatch(getCarBrands());
       dispatch(getCarModels());
     }
-  }, [dispatch]);
+  }, [dispatch, carModels]);
 
   useEffect(() => {
-    setCarModelsList(carModels);
-  }, [carModels]);
-
-  useEffect(() => {
-    if (!isEmpty(carModels) && !!isEdit) {
+    if (!isEmpty(carModels) && isEdit) {
       setCarModelsList(carModels);
       setIsEdit(false);
     }
+  }, [carModels, isEdit]);
+  
+  useEffect(() => {
+    setCarModelsList(carModels);
   }, [carModels]);
+  
 
   const resizeFile = file => {
     setModelImage(file);
   }
 
   function handleAcceptedFiles(newFiles) {
-    // Start with new files, but limit the total count to 5
     if (newFiles.length > 5) {
       alert("You can only upload up to 5 images.");
-      newFiles = newFiles.slice(0, 5); // Keep only the first 5 files if more than 5 are dropped
+      newFiles = newFiles.slice(0, 5);
     }
 
     const formattedFiles = newFiles.map(file => ({
@@ -366,12 +339,11 @@ function CarModels() {
   };
 
   const handlecarModelClick = arg => {
-    const carModel = arg;
-    console.log('carModel ', carModel);
-    setCarModel(carModel);
-    setIsEdit(true);
-
-    toggle();
+    if (carModel?._id !== arg._id) { // Only update if the selected model is different
+      setCarModel(arg);
+      setIsEdit(true);
+      toggle();
+    }
   };
 
   function handleMultiFuelTypes(selectedMulti) {
@@ -383,7 +355,7 @@ function CarModels() {
   }
 
   function convertArrayToSelectOptions(array) {
-    return array.map(item => ({
+    return array?.map(item => ({
       label: item,
       value: item
     }));
@@ -423,7 +395,7 @@ function CarModels() {
 
   function toggleTab(tab) {
     if (activeTab !== tab) {
-      var modifiedSteps = [...passedSteps, tab]
+      const modifiedSteps = [...passedSteps, tab]
       if (tab >= 1 && tab <= 5) {
         setactiveTab(tab)
         setPassedSteps(modifiedSteps)
@@ -450,8 +422,7 @@ function CarModels() {
 
   function toggleTabVertical(tab) {
     if (activeTabVartical !== tab) {
-      var modifiedSteps = [...passedStepsVertical, tab]
-
+      const modifiedSteps = [...passedStepsVertical, tab]
       if (tab >= 1 && tab <= 4) {
         setoggleTabVertical(tab)
         setPassedStepsVertical(modifiedSteps)
@@ -471,319 +442,302 @@ function CarModels() {
           background: "#0000",
         },
         filterable: true,
-        Cell: (cellProps) => {
-          return <ModelId {...cellProps} />;
-        }
+        Cell: (cellProps) => <ModelId {...cellProps} />
       },
       {
         Header: 'Model Name',
         accessor: 'modelName',
         filterable: true,
-        Cell: (cellProps) => {
-          return <ModelName {...cellProps} />;
-        }
+        Cell: (cellProps) => <ModelName {...cellProps} />
       },
       {
         Header: 'Car Brand',
         accessor: 'carBrand.brandName',
         filterable: true,
-        Cell: (cellProps) => {
-          return <CarBrand {...cellProps} />;
-        }
+        Cell: (cellProps) => <CarBrand {...cellProps} />
       },
       {
         Header: 'Year',
         accessor: 'year',
         filterable: true,
-        Cell: (cellProps) => {
-          return <Year {...cellProps} />;
-        }
+        Cell: (cellProps) => <Year {...cellProps} />
       },
       {
         Header: 'Status',
         accessor: 'status',
         filterable: true,
-        Cell: (cellProps) => {
-          return <Status {...cellProps} />;
-        }
+        Cell: (cellProps) => <Status {...cellProps} />
       },
       {
         Header: 'View Model Details',
         accessor: 'view',
         disableFilters: true,
-        Cell: (cellProps) => {
-          return (
-            <Button
-              type="button"
-              color="primary"
-              className="btn-sm btn-rounded"
-              onClick={e => {
-                toggleViewModal();
-                setCarModelData(cellProps.row.original);
-              }}
-            >
-              View Model Details
-            </Button>);
-        }
+        Cell: (cellProps) => (
+          <Button
+            type="button"
+            color="primary"
+            className="btn-sm btn-rounded"
+            onClick={() => {
+              toggleViewModal();
+              setCarModelData(cellProps.row.original);
+            }}
+          >
+            View Model Details
+          </Button>
+        )
       },
       {
         Header: 'Action',
         accessor: 'action',
         disableFilters: true,
-        Cell: (cellProps) => {
-          return (
-            <div className="d-flex gap-3">
-              <Link
-                to="#"
-                className="text-success"
-                onClick={() => {
-                  const carModelData = cellProps.row.original;
-                  handlecarModelClick(carModelData);
-                }}
-              >
-                <i className="mdi mdi-pencil font-size-18" id="edittooltip" />
-                <UncontrolledTooltip placement="top" target="edittooltip">
-                  Edit
-                </UncontrolledTooltip>
-              </Link>
-              <Link
-                to="#"
-                className="text-danger"
-                onClick={() => {
-                  const carModelData = cellProps.row.original;
-                  onClickDelete(carModelData);
-                }}
-              >
-                <i className="mdi mdi-delete font-size-18" id="deletetooltip" />
-                <UncontrolledTooltip placement="top" target="deletetooltip">
-                  Delete
-                </UncontrolledTooltip>
-              </Link>
-            </div>
-          );
-        }
-      },
+        Cell: (cellProps) => (
+          <div className="d-flex gap-3">
+            <Link
+              to="#"
+              className="text-success"
+              onClick={() => {
+                const carModelData = cellProps.row.original;
+                handlecarModelClick(carModelData);
+              }}
+            >
+              <i className="mdi mdi-pencil font-size-18" id="edittooltip" />
+              <UncontrolledTooltip placement="top" target="edittooltip">
+                Edit
+              </UncontrolledTooltip>
+            </Link>
+            <Link
+              to="#"
+              className="text-danger"
+              onClick={() => {
+                const carModelData = cellProps.row.original;
+                onClickDelete(carModelData);
+              }}
+            >
+              <i className="mdi mdi-delete font-size-18" id="deletetooltip" />
+              <UncontrolledTooltip placement="top" target="deletetooltip">
+                Delete
+              </UncontrolledTooltip>
+            </Link>
+          </div>
+        )
+      }
     ],
     []
   );
 
-  const getKeyFeatures = () => {
-    return (
-      <div>
-        {validation.values.keyFeatures.map((feature, index) => (
-          <Row key={feature.id}>
-            <Col md="3">
-              <FormGroup>
-                <Label>Feature Type</Label>
-                <Input
-                  type="text"
-                  name={`keyFeatures[${index}].featureType`}
-                  value={feature.featureType}
-                  onChange={validation.handleChange}
-                  onBlur={validation.handleBlur}
-                />
-                {validation.touched.keyFeatures && validation.touched.keyFeatures[index] && validation.touched.keyFeatures[index].featureType && validation.errors.keyFeatures && validation.errors.keyFeatures[index] && validation.errors.keyFeatures[index].featureType && (
-                  <FormFeedback type="invalid">
-                    {validation.errors.keyFeatures[index].featureType}
-                  </FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="3">
-              <FormGroup>
-                <Label>Feature Description</Label>
-                <Input
-                  type="text"
-                  name={`keyFeatures[${index}].featureDescription`}
-                  value={feature.featureDescription}
-                  onChange={validation.handleChange}
-                  onBlur={validation.handleBlur}
-                />
-                {validation.touched.keyFeatures && validation.touched.keyFeatures[index] && validation.touched.keyFeatures[index].featureDescription && validation.errors.keyFeatures && validation.errors.keyFeatures[index] && validation.errors.keyFeatures[index].featureDescription && (
-                  <FormFeedback type="invalid">
-                    {validation.errors.keyFeatures[index].featureDescription}
-                  </FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="4">
-              <FormGroup>
-                <Label>Feature Image</Label>
-                {feature.image && (
-                  <div className="mb-2">
-                    <img src={feature.image.url || URL.createObjectURL(feature.image)} alt={feature.image.altText} style={{ width: '100px', height: '100px' }} />
-                  </div>
-                )}
-                <Input
-                  type="file"
-                  name={`keyFeatures[${index}].image`}
-                  onChange={(event) => {
-                    const file = event.currentTarget.files[0];
-                    validation.setFieldValue(`keyFeatures[${index}].image`, file);
-                  }}
-                />
-                {validation.touched.keyFeatures && validation.touched.keyFeatures[index] && validation.touched.keyFeatures[index].image && validation.errors.keyFeatures && validation.errors.keyFeatures[index] && validation.errors.keyFeatures[index].image && (
-                  <FormFeedback type="invalid">
-                    {validation.errors.keyFeatures[index].image}
-                  </FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="2" className="mt-auto mb-auto">
-              <Button color="danger" onClick={() => handleRemoveFeature(feature.id)} style={{ marginTop: '0.7rem' }}>Remove Feature</Button>
-            </Col>
-          </Row>
-        ))}
-        <Button color="success" onClick={handleAddFeature}>Add Feature</Button>
-      </div>
-    )
-  }
-
-  const getInteriorUI = () => {
-    return (
-      <div>
-        {validation.values.interior?.map((interior, index) => (
-          <Row key={interior.id}>
-            <Col md="3">
-              <FormGroup>
-                <Label>Interior Type</Label>
-                <Input
-                  type="text"
-                  name={`interior[${index}].featureType`}
-                  value={interior.featureType}
-                  onChange={validation.handleChange}
-                  onBlur={validation.handleBlur}
-                />
-                {validation.touched.interior && validation.touched.interior[index] && validation.touched.interior[index].featureType && validation.errors.interior && validation.errors.interior[index] && validation.errors.interior[index].featureType && (
-                  <FormFeedback type="invalid">
-                    {validation.errors.interior[index].featureType}
-                  </FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="3">
-              <FormGroup>
-                <Label>Interior Description</Label>
-                <Input
-                  type="text"
-                  name={`interior[${index}].featureDescription`}
-                  value={interior.featureDescription}
-                  onChange={validation.handleChange}
-                  onBlur={validation.handleBlur}
-                />
-                {validation.touched.interior && validation.touched.interior[index] && validation.touched.interior[index].featureDescription && validation.errors.interior && validation.errors.interior[index] && validation.errors.interior[index].featureDescription && (
-                  <FormFeedback type="invalid">
-                    {validation.errors.interior[index].featureDescription}
-                  </FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="4">
-              <FormGroup>
-                <Label>Interior Image</Label>
-                {interior.image && (
-                  <div className="mb-2">
-                    <img src={interior.image.url || URL.createObjectURL(interior.image)} alt={interior.image.altText} style={{ width: '100px', height: '100px' }} />
-                  </div>
-                )}
-                <Input
-                  type="file"
-                  name={`interior[${index}].image`}
-                  onChange={(event) => {
-                    const file = event.currentTarget.files[0];
-                    validation.setFieldValue(`interior[${index}].image`, file);
-                  }}
-                />
-                {validation.touched.interior && validation.touched.interior[index] && validation.touched.interior[index].image && validation.errors.interior && validation.errors.interior[index] && validation.errors.interior[index].image && (
-                  <FormFeedback type="invalid">
-                    {validation.errors.interior[index].image}
-                  </FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="2" className="mt-auto mb-auto">
-              <Button color="danger" onClick={() => handleRemoveInterior(interior.id)} style={{ marginTop: '0.7rem' }}>Remove Interior</Button>
-            </Col>
-          </Row>
-        ))}
-        <Button color="success" onClick={handleAddInterior}>Add more</Button>
-      </div>
-    );
-  }
-
-  const getImagesByColorUI = () => {
-    return (
-      <div>
-        {validation.values.imagesByColor?.map((imagesByColor, index) => (
-          <Row key={imagesByColor.id}>
-            <Col md="3">
-              <FormGroup>
-                <Label>Color Code</Label>
-                <div
-                  className="input-group colorpicker-default"
-                  title="Using format option"
-                >
-                  <input
-                    readOnly
-                    value={imagesByColor.colorCode}
-                    name={`imagesByColor[${index}].colorCode`}
-                    type="text"
-                    className="form-control input-lg"
-                    onChange={validation.handleChange}
-                  />
-                  <span className="input-group-append">
-                    <span
-                      className="input-group-text colorpicker-input-addon"
-                      onClick={() => {
-                        setsimple_color1(!simple_color1);
-                      }}
-                    >
-                      <i
-                        style={{
-                          height: "16px",
-                          width: "16px",
-                          background: imagesByColor.colorCode
-                        }}
-                      />
-                    </span>
-                  </span>
+  const getKeyFeatures = () => (
+    <div>
+      {validation.values.keyFeatures.map((feature, index) => (
+        <Row key={feature.id}>
+          <Col md="3">
+            <FormGroup>
+              <Label>Feature Type</Label>
+              <Input
+                type="text"
+                name={`keyFeatures[${index}].featureType`}
+                value={feature.featureType}
+                onChange={validation.handleChange}
+                onBlur={validation.handleBlur}
+              />
+              {validation.touched.keyFeatures?.[index]?.featureType && validation.errors.keyFeatures?.[index]?.featureType && (
+                <FormFeedback type="invalid">
+                  {validation.errors.keyFeatures[index].featureType}
+                </FormFeedback>
+              )}
+            </FormGroup>
+          </Col>
+          <Col md="3">
+            <FormGroup>
+              <Label>Feature Description</Label>
+              <Input
+                type="text"
+                name={`keyFeatures[${index}].featureDescription`}
+                value={feature.featureDescription}
+                onChange={validation.handleChange}
+                onBlur={validation.handleBlur}
+              />
+              {validation.touched.keyFeatures?.[index]?.featureDescription && validation.errors.keyFeatures?.[index]?.featureDescription && (
+                <FormFeedback type="invalid">
+                  {validation.errors.keyFeatures[index].featureDescription}
+                </FormFeedback>
+              )}
+            </FormGroup>
+          </Col>
+          <Col md="4">
+            <FormGroup>
+              <Label>Feature Image</Label>
+              {feature.image && (
+                <div className="mb-2">
+                  <img src={feature.image.url || URL.createObjectURL(feature.image)} alt={feature.image.altText} style={{ width: '100px', height: '100px' }} />
                 </div>
+              )}
+              <Input
+                type="file"
+                name={`keyFeatures[${index}].image`}
+                onChange={(event) => {
+                  const file = event.currentTarget.files[0];
+                  validation.setFieldValue(`keyFeatures[${index}].image`, file);
+                }}
+              />
+              {validation.touched.keyFeatures?.[index]?.image && validation.errors.keyFeatures?.[index]?.image && (
+                <FormFeedback type="invalid">
+                  {validation.errors.keyFeatures[index].image}
+                </FormFeedback>
+              )}
+            </FormGroup>
+          </Col>
+          <Col md="2" className="mt-auto mb-auto">
+            <Button color="danger" onClick={() => handleRemoveFeature(feature.id)} style={{ marginTop: '0.7rem' }}>Remove Feature</Button>
+          </Col>
+        </Row>
+      ))}
+      <Button color="success" onClick={handleAddFeature}>Add Feature</Button>
+    </div>
+  )
 
-                {simple_color1 ? (
-                  <ColorPicker
-                    saturationHeight={100}
-                    saturationWidth={100}
-                    value={imagesByColor.colorCode}
-                    onDrag={(color) => onDragRgb(color, index)}
-                  />
-                ) : null}
+  const getInteriorUI = () => (
+    <div>
+      {validation.values.interior?.map((interior, index) => (
+        <Row key={interior.id}>
+          <Col md="3">
+            <FormGroup>
+              <Label>Interior Type</Label>
+              <Input
+                type="text"
+                name={`interior[${index}].featureType`}
+                value={interior.featureType}
+                onChange={validation.handleChange}
+                onBlur={validation.handleBlur}
+              />
+              {validation.touched.interior?.[index]?.featureType && validation.errors.interior?.[index]?.featureType && (
+                <FormFeedback type="invalid">
+                  {validation.errors.interior[index].featureType}
+                </FormFeedback>
+              )}
+            </FormGroup>
+          </Col>
+          <Col md="3">
+            <FormGroup>
+              <Label>Interior Description</Label>
+              <Input
+                type="text"
+                name={`interior[${index}].featureDescription`}
+                value={interior.featureDescription}
+                onChange={validation.handleChange}
+                onBlur={validation.handleBlur}
+              />
+              {validation.touched.interior?.[index]?.featureDescription && validation.errors.interior?.[index]?.featureDescription && (
+                <FormFeedback type="invalid">
+                  {validation.errors.interior[index].featureDescription}
+                </FormFeedback>
+              )}
+            </FormGroup>
+          </Col>
+          <Col md="4">
+            <FormGroup>
+              <Label>Interior Image</Label>
+              {interior.image && (
+                <div className="mb-2">
+                  <img src={interior.image.url || URL.createObjectURL(interior.image)} alt={interior.image.altText} style={{ width: '100px', height: '100px' }} />
+                </div>
+              )}
+              <Input
+                type="file"
+                name={`interior[${index}].image`}
+                onChange={(event) => {
+                  const file = event.currentTarget.files[0];
+                  validation.setFieldValue(`interior[${index}].image`, file);
+                }}
+              />
+              {validation.touched.interior?.[index]?.image && validation.errors.interior?.[index]?.image && (
+                <FormFeedback type="invalid">
+                  {validation.errors.interior[index].image}
+                </FormFeedback>
+              )}
+            </FormGroup>
+          </Col>
+          <Col md="2" className="mt-auto mb-auto">
+            <Button color="danger" onClick={() => handleRemoveInterior(interior.id)} style={{ marginTop: '0.7rem' }}>Remove Interior</Button>
+          </Col>
+        </Row>
+      ))}
+      <Button color="success" onClick={handleAddInterior}>Add more</Button>
+    </div>
+  )
 
-                {validation.touched.imagesByColor && validation.touched.imagesByColor[index] && validation.touched.imagesByColor[index].colorCode && validation.errors.imagesByColor && validation.errors.imagesByColor[index] && validation.errors.imagesByColor[index].colorCode && (
-                  <FormFeedback type="invalid">
-                    {validation.errors.imagesByColor[index].colorCode}
-                  </FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="3">
-              <FormGroup>
-                <Label>Color Description</Label>
-                <Input
+  const getImagesByColorUI = () => (
+    <div>
+      {validation.values.imagesByColor?.map((imagesByColor, index) => (
+        <Row key={imagesByColor.id}>
+          <Col md="3">
+            <FormGroup>
+              <Label>Color Code</Label>
+              <div
+                className="input-group colorpicker-default"
+                title="Using format option"
+              >
+                <input
+                  readOnly
+                  value={imagesByColor.colorCode}
+                  name={`imagesByColor[${index}].colorCode`}
                   type="text"
-                  name={`imagesByColor[${index}].colorDescription`}
-                  value={imagesByColor.colorDescription}
+                  className="form-control input-lg"
                   onChange={validation.handleChange}
-                  onBlur={validation.handleBlur}
                 />
-                {validation.touched.imagesByColor && validation.touched.imagesByColor[index] && validation.touched.imagesByColor[index].colorDescription && validation.errors.imagesByColor && validation.errors.imagesByColor[index] && validation.errors.interior[index].colorDescription && (
-                  <FormFeedback type="invalid">
-                    {validation.errors.interior[index].colorDescription}
-                  </FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="4">
-              <FormGroup>
+                <span className="input-group-append">
+                  <span
+                    className="input-group-text colorpicker-input-addon"
+                    onClick={() => {
+                      setsimple_color1(!simple_color1);
+                    }}
+                  >
+                    <i
+                      style={{
+                        height: "16px",
+                        width: "16px",
+                        background: imagesByColor.colorCode
+                      }}
+                    />
+                  </span>
+                </span>
+              </div>
+
+              {simple_color1 ? (
+                <ColorPicker
+                  saturationHeight={100}
+                  saturationWidth={100}
+                  value={imagesByColor.colorCode}
+                  onDrag={(color) => onDragRgb(color, index)}
+                />
+              ) : null}
+
+              {validation.touched.imagesByColor?.[index]?.colorCode && validation.errors.imagesByColor?.[index]?.colorCode && (
+                <FormFeedback type="invalid">
+                  {validation.errors.imagesByColor[index].colorCode}
+                </FormFeedback>
+              )}
+            </FormGroup>
+          </Col>
+          <Col md="3">
+            <FormGroup>
+              <Label>Color Description</Label>
+              <Input
+                type="text"
+                name={`imagesByColor[${index}].colorDescription`}
+                value={imagesByColor.colorDescription}
+                onChange={validation.handleChange}
+                onBlur={validation.handleBlur}
+              />
+              {validation.touched.imagesByColor?.[index]?.colorDescription && validation.errors.imagesByColor?.[index]?.colorDescription && (
+                <FormFeedback type="invalid">
+                  {validation.errors.interior[index].colorDescription}
+                </FormFeedback>
+              )}
+            </FormGroup>
+          </Col>
+          <Col md="4">
+            <FormGroup>
+
                 <Label>Car Image</Label>
                 {imagesByColor.image && (
                   <div className="mb-2">
@@ -813,7 +767,6 @@ function CarModels() {
         <Button color="success" onClick={handleAddImageByColor}>Add more</Button>
       </div>
     );
-  }
 
   const getExteriorUI = () => {
     return (
