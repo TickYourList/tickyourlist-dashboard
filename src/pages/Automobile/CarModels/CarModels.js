@@ -109,168 +109,85 @@ function CarModels() {
       urlslug: Yup.string().required("Please Enter URL Slug"),
     }),
     onSubmit: values => {
-      if (isEdit) {
-        const updCarModel = new FormData();
-        const priceRange = {
-          minPrice: values.minPrice,
-          minPriceType: values.minPriceType,
-          maxPrice: values.maxPrice,
-          maxPriceType: values.maxPriceType
-        }
-        const fuelType = convertBackToArray(values["fuelType"]);
-        const transmisisonType = convertBackToArray(values["transmissionType"]);
-        updCarModel.append("modelName", values["modelName"]);
-        updCarModel.append("description", values["description"]);
-        updCarModel.append("bodyType", values["bodyType"]);
-        updCarModel.append("priceRange", JSON.stringify(priceRange));
-        updCarModel.append("budget", values["budget"]);
-        updCarModel.append("mileage", values["mileage"]);
-        updCarModel.append("seatingCapacity", values["seatingCapacity"]);
-        updCarModel.append("displacement", values["displacement"]);
-        updCarModel.append("year", values["year"]);
-        updCarModel.append("status", values["status"] === 'Active' ? true : false);
-        updCarModel.append("urlslug", values["urlslug"]);
-        fuelType?.forEach((type, index) => updCarModel.append(`fuelType`, type));
-        transmisisonType?.forEach((type, index) => updCarModel.append(`transmissionType`, type));
-        values.modelImages.forEach((file, index) => {
-          if (file instanceof File) {
-            updCarModel.append(`images`, file);
-          }
-        });
-
-        values.keyFeatures.forEach((feature, index) => {
-          if (feature.image instanceof File) {
-            updCarModel.append(`keyFeatureImages`, feature.image);
-          }
-        });
-        updCarModel.append('keyFeatures', JSON.stringify(values.keyFeatures.map(feature => ({
-          ...feature,
-          image: undefined
-        }))));
-
-        values.exterior.forEach((feature, index) => {
-          if (feature.image instanceof File) {
-            updCarModel.append(`exteriorImages`, feature.image);
-          }
-        });
-        updCarModel.append('exterior', JSON.stringify(values.exterior.map(feature => ({
-          ...feature,
-          image: undefined
-        }))));
-
-        values.interior.forEach((feature, index) => {
-          if (feature.image instanceof File) {
-            updCarModel.append(`interiorImages`, feature.image);
-          }
-        });
-        updCarModel.append('interior', JSON.stringify(values.interior.map(feature => ({
-          ...feature,
-          image: undefined
-        }))));
-
-        values.imagesByColor.forEach((feature, index) => {
-          if (feature.image instanceof File) {
-            updCarModel.append(`colorImages`, feature.image);
-          }
-        });
-        updCarModel.append('imagesByColor', JSON.stringify(values.imagesByColor.map(feature => ({
-          ...feature,
-          image: undefined
-        }))));
-
-        dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
-        validation.resetForm();
-      } else {
-        const fuelType = convertBackToArray(values["fuelType"]);
-        const transmisisonType = convertBackToArray(values["transmissionType"]);
-        const newCarModel = new FormData();
-        newCarModel.append("modelName", values["modelName"]);
-        newCarModel.append("bodyType", values["bodyType"]);
-        newCarModel.append("description", values["description"]);
-        newCarModel.append("year", values["year"]);
-        newCarModel.append("priceRange", JSON.stringify({
-          minPrice: values.minPrice,
-          minPriceType: values.minPriceType,
-          maxPrice: values.maxPrice,
-          maxPriceType: values.maxPriceType
-        }));
-        newCarModel.append("budget", values["budget"]);
-        newCarModel.append("mileage", values["mileage"]);
-        newCarModel.append("seatingCapacity", values["seatingCapacity"]);
-        newCarModel.append("displacement", values["displacement"]);
-        newCarModel.append("status", values["status"] === 'Active' ? true : false);
-        fuelType?.forEach((type, index) => newCarModel.append(`fuelType`, type));
-        transmisisonType?.forEach((type, index) => newCarModel.append(`transmissionType`, type));
-        values.modelImages.forEach((file, index) => newCarModel.append(`images`, file));
-        newCarModel.append("urlslug", values["urlslug"]);
-        newCarModel.append('keyFeatures', JSON.stringify(values.keyFeatures.map(feature => ({
-          ...feature,
-          image: undefined
-        }))));
-        values.keyFeatures.forEach((feature, index) => {
-          if (feature.image) {
-            newCarModel.append(`keyFeatureImages`, feature.image);
-          }
-        });
-
-        newCarModel.append('exterior', JSON.stringify(values.exterior.map(feature => ({
-          ...feature,
-          image: undefined
-        }))));
-        values.exterior.forEach((feature, index) => {
-          if (feature.image) {
-            newCarModel.append(`exteriorImages`, feature.image);
-          }
-        });
-
-        newCarModel.append('interior', JSON.stringify(values.interior.map(feature => ({
-          ...feature,
-          image: undefined
-        }))));
-        values.interior.forEach((feature, index) => {
-          if (feature.image) {
-            newCarModel.append(`interiorImages`, feature.image);
-          }
-        });
-
-        newCarModel.append('imagesByColor', JSON.stringify(values.imagesByColor.map(feature => ({
-          ...feature,
-          image: undefined
-        }))));
-        values.imagesByColor.forEach((feature, index) => {
-          if (feature.image) {
-            newCarModel.append(`colorImages`, feature.image);
-          }
-        });
-
-        dispatch(addNewCarModel(values['carBrand'], newCarModel));
+      console.log("values ", values);
+      const formData = new FormData();
+      const priceRange = {
+        minPrice: values.minPrice,
+        minPriceType: values.minPriceType,
+        maxPrice: values.maxPrice,
+        maxPriceType: values.maxPriceType
       }
-    },
-  });
+      const fuelType = convertBackToArray(values["fuelType"]);
+      const transmisisonType = convertBackToArray(values["transmissionType"]);
+      
+      formData.append("modelName", values["modelName"]);
+      formData.append("description", values["description"]);
+      formData.append("bodyType", values["bodyType"]);
+      formData.append("priceRange", JSON.stringify(priceRange));
+      formData.append("budget", values["budget"]);
+      formData.append("mileage", values["mileage"]);
+      formData.append("seatingCapacity", values["seatingCapacity"]);
+      formData.append("displacement", values["displacement"]);
+      formData.append("year", values["year"]);
+      formData.append("status", values["status"] === 'Active' ? true : false);
+      formData.append("urlslug", values["urlslug"]);
+      fuelType?.forEach(type => formData.append(`fuelType`, type));
+      transmisisonType?.forEach(type => formData.append(`transmissionType`, type));
 
-  const generateInitialValues = (carModel) => ({
-    modelName: carModel?.modelName || "",
-    carBrand: carModel?.carBrand?._id || "",
-    bodyType: carModel?.bodyType || "",
-    description: carModel?.description || "",
-    year: carModel?.year || "",
-    minPrice: carModel?.priceRange?.minPrice || "",
-    minPriceType: carModel?.priceRange?.minPriceType || "Lakhs",
-    maxPrice: carModel?.priceRange?.maxPrice || "",
-    maxPriceType: carModel?.priceRange?.maxPriceType || "Lakhs",
-    status: carModel?.status ? 'Active' : 'InActive',
-    budget: carModel?.budget || "",
-    fuelType: convertArrayToSelectOptions(carModel?.fuelType) || [],
-    mileage: carModel?.mileage || "",
-    seatingCapacity: carModel?.seatingCapacity || "",
-    transmissionType: convertArrayToSelectOptions(carModel?.transmissionType) || [],
-    displacement: carModel?.displacement || "",
-    modelImages: carModel?.media?.map(image => ({ ...image, preview: image.url })) || [],
-    urlslug: carModel?.urlslug || '',
-    keyFeatures: carModel?.keyFeatures || [{ id: uuidv4(), featureType: '', featureDescription: '', image: null }],
-    exterior: carModel?.exterior || [{ id: uuidv4(), featureType: '', featureDescription: '', image: null }],
-    interior: carModel?.interior || [{ id: uuidv4(), featureType: '', featureDescription: '', image: null }],
-    imagesByColor: carModel?.imagesByColor || [{ id: uuidv4(), colorCode: "", colorDescription: "", image: null }]
+      values.modelImages.forEach((file, index) => {
+        if (file.file instanceof File) {
+          formData.append(`images`, file?.file);
+        }
+      });
+
+      values.keyFeatures.forEach(feature => {
+        if (feature.image instanceof File) {
+          formData.append(`keyFeatureImages`, feature.image);
+        }
+      });
+      formData.append('keyFeatures', JSON.stringify(values.keyFeatures.map(feature => ({
+        ...feature,
+        image: undefined
+      }))));
+
+      values.exterior.forEach(feature => {
+        if (feature.image instanceof File) {
+          formData.append(`exteriorImages`, feature.image);
+        }
+      });
+      formData.append('exterior', JSON.stringify(values.exterior.map(feature => ({
+        ...feature,
+        image: undefined
+      }))));
+
+      values.interior.forEach(feature => {
+        if (feature.image instanceof File) {
+          formData.append(`interiorImages`, feature.image);
+        }
+      });
+      formData.append('interior', JSON.stringify(values.interior.map(feature => ({
+        ...feature,
+        image: undefined
+      }))));
+
+      values.imagesByColor.forEach(feature => {
+        if (feature.image instanceof File) {
+          formData.append(`colorImages`, feature.image);
+        }
+      });
+      formData.append('imagesByColor', JSON.stringify(values.imagesByColor.map(feature => ({
+        ...feature,
+        image: undefined
+      }))));
+
+      if (isEdit) {
+        dispatch(updateCarModel(carModel._id, values['carBrand'], formData));
+      } else {
+        dispatch(addNewCarModel(values['carBrand'], formData));
+      }
+
+      validation.resetForm();
+    },
   });
   
   const toggleViewModal = () => setModal1(!modal1);
@@ -309,15 +226,15 @@ function CarModels() {
       alert("You can only upload up to 5 images.");
       newFiles = newFiles.slice(0, 5);
     }
-
+  
     const formattedFiles = newFiles.map(file => ({
-      ...file,
-      preview: URL.createObjectURL(file),
-      formattedSize: formatBytes(file.size)
+      file,
+      preview: URL.createObjectURL(file)
     }));
-
-    validation.setFieldValue("modelImages", [...validation.values.modelImages, ...formattedFiles]);
+  
+    validation.setFieldValue("modelImages", formattedFiles);
   }
+  
 
   function formatBytes(bytes, decimals = 2) {
     if (bytes === 0) return "0 Bytes"
