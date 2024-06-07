@@ -40,7 +40,7 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
             startEmiAmount: (carVariant && carVariant.basicInformation && carVariant.basicInformation.startEmiAmount) || "",
             startInsuranceAmount: (carVariant && carVariant.basicInformation && carVariant.basicInformation.startInsuranceAmount) || "",
             serviceCost: (carVariant && carVariant.basicInformation && carVariant.basicInformation.serviceCost) || "",
-            selectedFiles: (carVariant && carVariant.media) || []
+            // selectedFiles: (carVariant && carVariant.media) || []
         },
         validationSchema: Yup.object({
             // variantName: Yup.string().required(
@@ -78,7 +78,7 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
                 updCarModel.append("description", values["description"]);
                 updCarModel.append("year", values["year"]);
                 updCarModel.append("status", values["status"] === 'Active' ? true : false);
-                updCarModel.append("image", modelImage ? modelImage : "broken!");
+                // updCarModel.append("image", modelImage ? modelImage : "broken!");
                 dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
 
                 validation.resetForm();
@@ -114,27 +114,27 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
         }
     }, [dispatch, carModels]);
 
-    function handleAcceptedFiles(newFiles) {
-        // Combine old and new files
-        let combinedFiles = [...validation.values.selectedFiles, ...newFiles];
+    // function handleAcceptedFiles(newFiles) {
+    //     // Combine old and new files
+    //     let combinedFiles = [...validation.values.selectedFiles, ...newFiles];
       
-        // Check if the combined files exceed 5
-        if (combinedFiles.length > 5) {
-          alert("You can only upload up to 5 images");
-          combinedFiles = combinedFiles.slice(0, 5); // Keep only the first 5 files
-        }
+    //     // Check if the combined files exceed 5
+    //     if (combinedFiles.length > 5) {
+    //       alert("You can only upload up to 5 images");
+    //       combinedFiles = combinedFiles.slice(0, 5); // Keep only the first 5 files
+    //     }
       
-        // Add properties to the new files
-        const formattedFiles = combinedFiles.map(file =>
-          Object.assign(file, {
-            preview: URL.createObjectURL(file),
-            formattedSize: formatBytes(file.size),
-          })
-        );
+    //     // Add properties to the new files
+    //     const formattedFiles = combinedFiles.map(file =>
+    //       Object.assign(file, {
+    //         preview: URL.createObjectURL(file),
+    //         formattedSize: formatBytes(file.size),
+    //       })
+    //     );
 
-        validation.setFieldValue("selectedFiles", formattedFiles);
-        // setselectedFiles(formattedFiles);
-      }
+    //     validation.setFieldValue("selectedFiles", formattedFiles);
+    //     // setselectedFiles(formattedFiles);
+    //   }
       
     
 
@@ -421,7 +421,7 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
                             </FormGroup>
                         </Col>
                     </Row>
-                    <Row>
+                    {/* <Row>
                         <Col className="col-12">
                                     <h6 className="card-title">Upload Car Variant Images</h6>
                                     <p>Maximum 5 Images to be uploaded.</p>
@@ -484,7 +484,7 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
                                     </Form>
                            
                         </Col>
-                    </Row>
+                    </Row> */}
                     <Button type="submit" color="primary" className={
                         !validation.isValid ? "next disabled" : "next"
                     }>Next</Button>

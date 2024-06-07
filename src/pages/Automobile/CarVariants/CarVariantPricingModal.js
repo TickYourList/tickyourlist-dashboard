@@ -14,7 +14,7 @@ import {
 } from "reactstrap";
 import * as XLSX from "xlsx";
 //redux
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 
 const CarVariantPricingModal = ({
   isOpen,

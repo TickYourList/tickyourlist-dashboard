@@ -147,14 +147,11 @@ const AddCarVariant = () => {
 
     const handleFinalFormSubmit = (childKey, childData, movement) => {
         const addVariantForm = new FormData();
-        setFormData({
+          setFormData({
             ...formData,
             [childKey]: { ...formData[childKey], ...childData }
         });
         addVariantForm.append("data", JSON.stringify(formData));
-        formData.media.forEach((image) => {
-          addVariantForm.append("images", image);
-        });
         dispatch(addNewCarVariant(formData.carModel ,addVariantForm, history));
     }
     

@@ -1,201 +1,84 @@
 import React, { useEffect, useState } from "react"
-
 import {
-    Container,
-    Row,
     Col,
-    Table,
-    Input,
-    Nav,
-    NavItem,
-    NavLink,
-    TabContent,
-    TabPane,
-    Card,
     Form,
     FormGroup,
     Label,
-    CardBody,
     CardTitle,
-    CardSubtitle,
-    FormFeedback,
     Button,
+    Input,
+    Row,
 } from "reactstrap"
-import Select from "react-select"
-import { Link } from "react-router-dom"
-import * as Yup from "yup";
-
-import classnames from "classnames"
-
-
 import { useSelector, useDispatch } from "react-redux"
 import { getCarModels } from "store/automobiles/carModels/actions"
 import { useFormik } from "formik"
-import Switch from "react-switch";
-
-const Offsymbol = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontSize: 12,
-                color: "#fff",
-                paddingRight: 2
-            }}
-        >
-            {" "}
-            No
-        </div>
-    );
-};
-
-const OnSymbol = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontSize: 12,
-                color: "#fff",
-                paddingRight: 2
-            }}
-        >
-            {" "}
-            Yes
-        </div>
-    );
-};
 
 const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
 
-    //meta title
-    document.title = "Add Car Variant | Scrollit";
+    document.title = "Add Car Variant | Scrollit"
 
-    const dispatch = useDispatch();
-
-    const [activeTab, setactiveTab] = useState("1")
-    const [selectedGroup, setselectedGroup] = useState(null)
-
-    const [switch1, setswitch1] = useState(true);
-    // const [carModelsList, setCarModelsList] = useState([]);
+    const dispatch = useDispatch()
 
     const validation = useFormik({
-        // enableReinitialize : use this flag when initial values needs to be changed
         enableReinitialize: true,
-
         initialValues: {
-            bodyType: (carVariant && carVariant.exterior && carVariant.exterior.bodyType) || "",
-            adjustableHeadlights: (carVariant && carVariant.exterior && carVariant.exterior.adjustableHeadlights) ? carVariant.exterior.adjustableHeadlights : "",
-            fogLightsFront: (carVariant && carVariant.exterior && carVariant.exterior.fogLightsFront) ? carVariant.exterior.fogLightsFront : false,
-            powerAdjustableExteriorRearViewMirror: (carVariant && carVariant.exterior && carVariant.exterior.powerAdjustableExteriorRearViewMirror) ? carVariant.exterior.powerAdjustableExteriorRearViewMirror : false,
-            manuallyAdjustableExtRearViewMirror: (carVariant && carVariant.exterior && carVariant.exterior.manuallyAdjustableExtRearViewMirror) ? carVariant.exterior.manuallyAdjustableExtRearViewMirror : false,
-            electricFoldingRearViewMirror: (carVariant && carVariant.exterior && carVariant.exterior.electricFoldingRearViewMirror) ? carVariant.exterior.electricFoldingRearViewMirror : false,
-            rearWindowWiper: (carVariant && carVariant.exterior && carVariant.exterior.rearWindowWiper) ? carVariant.exterior.rearWindowWiper : false,
-            rearWindowWasher: (carVariant && carVariant.exterior && carVariant.exterior.rearWindowWasher) ? carVariant.exterior.rearWindowWasher : false,
-            rearWindowDefogger: (carVariant && carVariant.exterior && carVariant.exterior.rearWindowDefogger) ? carVariant.exterior.rearWindowDefogger : false,
-            wheelCovers: (carVariant && carVariant.exterior && carVariant.exterior.wheelCovers) ? carVariant.exterior.wheelCovers : false,
-            alloyWheels: (carVariant && carVariant.exterior && carVariant.exterior.alloyWheels) ? carVariant.exterior.alloyWheels : false,
-            powerAntenna: (carVariant && carVariant.exterior && carVariant.exterior.powerAntenna) ? carVariant.exterior.powerAntenna : false,
-            rearSpoiler: (carVariant && carVariant.exterior && carVariant.exterior.rearSpoiler) ? carVariant.exterior.rearSpoiler : false,
-            outsideRearViewMirrorTurnIndicators: (carVariant && carVariant.exterior && carVariant.exterior.outsideRearViewMirrorTurnIndicators) ? carVariant.exterior.outsideRearViewMirrorTurnIndicators : false,
-            integratedAntenna: (carVariant && carVariant.exterior && carVariant.exterior.integratedAntenna) ? carVariant.exterior.integratedAntenna : false,
-            chromeGrille: (carVariant && carVariant.exterior && carVariant.exterior.chromeGrille) ? carVariant.exterior.chromeGrille : false,
-            chromeGarnish: (carVariant && carVariant.exterior && carVariant.exterior.chromeGarnish) ? carVariant.exterior.chromeGarnish : false,
-            projectorHeadlamps: (carVariant && carVariant.exterior && carVariant.exterior.projectorHeadlamps) ? carVariant.exterior.projectorHeadlamps : false,
-            halogenHeadlamps: (carVariant && carVariant.exterior && carVariant.exterior.halogenHeadlamps) ? carVariant.exterior.halogenHeadlamps : false,
-            roofRail: (carVariant && carVariant.exterior && carVariant.exterior.roofRail) ? carVariant.exterior.roofRail : false,
-            ledDrls: (carVariant && carVariant.exterior && carVariant.exterior.ledDrls) ? carVariant.exterior.ledDrls : false,
-            ledHeadlights: (carVariant && carVariant.exterior && carVariant.exterior.ledHeadlights) ? carVariant.exterior.ledHeadlights : false,
-            ledTaillights: (carVariant && carVariant.exterior && carVariant.exterior.ledTaillights) ? carVariant.exterior.ledTaillights : false,
-            ledFogLamps: (carVariant && carVariant.exterior && carVariant.exterior.ledFogLamps) ? carVariant.exterior.ledFogLamps : false,
-            additionalFeatures: (carVariant && carVariant.exterior && carVariant.exterior.additionalFeatures) || "",
-            fogLights: (carVariant && carVariant.exterior && carVariant.exterior.fogLights) ? carVariant.exterior.fogLights : false,
-            antenna: (carVariant && carVariant.exterior && carVariant.exterior.antenna) || "",
-            bootOpening: (carVariant && carVariant.exterior && carVariant.exterior.bootOpening) || "",
-            puddleLamps: (carVariant && carVariant.exterior && carVariant.exterior.puddleLamps) ? carVariant.exterior.puddleLamps : "",
-            tyreSize: (carVariant && carVariant.exterior && carVariant.exterior.tyreSize) || "",
-            tyreType: (carVariant && carVariant.exterior && carVariant.exterior.tyreType) || "",
-            wheelSize: (carVariant && carVariant.exterior && carVariant.exterior.wheelSize) || "",
-            allowWheelSize: (carVariant && carVariant.exterior && carVariant.exterior.allowWheelSize) ? carVariant.exterior.allowWheelSize : "",
+            bodyType: carVariant?.exterior?.bodyType || "",
+            adjustableHeadlights: carVariant?.exterior?.adjustableHeadlights || "",
+            fogLightsFront: carVariant?.exterior?.fogLightsFront || false,
+            powerAdjustableExteriorRearViewMirror: carVariant?.exterior?.powerAdjustableExteriorRearViewMirror || false,
+            manuallyAdjustableExtRearViewMirror: carVariant?.exterior?.manuallyAdjustableExtRearViewMirror || false,
+            electricFoldingRearViewMirror: carVariant?.exterior?.electricFoldingRearViewMirror || false,
+            rearWindowWiper: carVariant?.exterior?.rearWindowWiper || false,
+            rearWindowWasher: carVariant?.exterior?.rearWindowWasher || false,
+            rearWindowDefogger: carVariant?.exterior?.rearWindowDefogger || false,
+            wheelCovers: carVariant?.exterior?.wheelCovers || false,
+            alloyWheels: carVariant?.exterior?.alloyWheels || false,
+            powerAntenna: carVariant?.exterior?.powerAntenna || false,
+            rearSpoiler: carVariant?.exterior?.rearSpoiler || false,
+            outsideRearViewMirrorTurnIndicators: carVariant?.exterior?.outsideRearViewMirrorTurnIndicators || false,
+            integratedAntenna: carVariant?.exterior?.integratedAntenna || false,
+            chromeGrille: carVariant?.exterior?.chromeGrille || false,
+            chromeGarnish: carVariant?.exterior?.chromeGarnish || false,
+            projectorHeadlamps: carVariant?.exterior?.projectorHeadlamps || false,
+            halogenHeadlamps: carVariant?.exterior?.halogenHeadlamps || false,
+            roofRail: carVariant?.exterior?.roofRail || false,
+            ledDrls: carVariant?.exterior?.ledDrls || false,
+            ledHeadlights: carVariant?.exterior?.ledHeadlights || false,
+            ledTaillights: carVariant?.exterior?.ledTaillights || false,
+            ledFogLamps: carVariant?.exterior?.ledFogLamps || false,
+            additionalFeatures: carVariant?.exterior?.additionalFeatures || "",
+            fogLights: carVariant?.exterior?.fogLights || false,
+            antenna: carVariant?.exterior?.antenna || "",
+            bootOpening: carVariant?.exterior?.bootOpening || "",
+            puddleLamps: carVariant?.exterior?.puddleLamps || "",
+            tyreSize: carVariant?.exterior?.tyreSize || "",
+            tyreType: carVariant?.exterior?.tyreType || "",
+            wheelSize: carVariant?.exterior?.wheelSize || "",
+            allowWheelSize: carVariant?.exterior?.allowWheelSize || "",
         },
-        // validationSchema: Yup.object({
-        //     modelName: Yup.string().required(
-        //         "Please Enter Your Brand Name"
-        //     ),
-        //     carBrand: Yup.string().required(
-        //         "Please Enter Your CarBrand"
-        //     ),
-        //     description: Yup.string().required(
-        //         "Please Enter Your description"
-        //     ),
-        //     year: Yup.string().required(
-        //         "Please Enter Your Year"
-        //     ),
-        //     status: Yup.string().required(
-        //         "Please Enter Your Status"
-        //     )
-        // }),
         onSubmit: values => {
-            // if (isEdit) {
-            //     const updCarModel = new FormData();
-            //     updCarModel.append("modelName", values["modelName"]);
-            //     updCarModel.append("description", values["description"]);
-            //     updCarModel.append("year", values["year"]);
-            //     updCarModel.append("status", values["status"] === 'Active' ? true : false);
-            //     updCarModel.append("image", modelImage ? modelImage : "broken!");
-            //     dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
-
-            //     validation.resetForm();
-            // } else {
-            //     const newCarModel = new FormData();
-            //     newCarModel.append("modelName", values["modelName"]);
-            //     newCarModel.append("description", values["description"]);
-            //     newCarModel.append("year", values["year"]);
-            //     newCarModel.append("status", values["status"] === 'Active' ? true : false);
-            //     newCarModel.append("image", modelImage ? modelImage : "broken!");
-            //     dispatch(addNewCarModel(values['carBrand'], newCarModel));
-            //     validation.resetForm();
-            // }
             if (onFormSubmit) {
-                onFormSubmit('exterior', values, '9');
+                onFormSubmit('exterior', values, '9')
             }
-            
-        },
-        handleError: e => { },
-    });
+        }
+    })
 
-    function handleSelectGroup(selectedGroup) {
-        setselectedGroup(selectedGroup)
-    }
-
-    const { carBrands, countries, carModels } = useSelector(state => ({
+    const { carModels } = useSelector(state => ({
         carModels: state.CarModel.carModels
-    }));
+    }))
 
     useEffect(() => {
         if (carModels && !carModels.length) {
-            dispatch(getCarModels());
+            dispatch(getCarModels())
         }
-    }, [dispatch]);
-
-    // useEffect(() => {
-    //     setCarModelsList(carModels);
-    // }, [carModels]);
+    }, [dispatch])
 
     return (
         <React.Fragment>
             <div>
                 <CardTitle>Exterior</CardTitle>
-                <p className="card-title-desc">
-                    Fill all information below
-                </p>
+                <p className="card-title-desc">Fill all information below</p>
                 <Form onSubmit={validation.handleSubmit}>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -205,6 +88,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="fogLightsFront"
                                         {...validation.getFieldProps('fogLightsFront')}
+                                        checked={validation.values.fogLightsFront}
                                     />
                                     <label
                                         className="form-check-label"
@@ -212,7 +96,6 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Fog Light Front
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
@@ -224,6 +107,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="powerAdjustableExteriorRearViewMirror"
                                         {...validation.getFieldProps('powerAdjustableExteriorRearViewMirror')}
+                                        checked={validation.values.powerAdjustableExteriorRearViewMirror}
                                     />
                                     <label
                                         className="form-check-label"
@@ -231,11 +115,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Power Adjustable Exterior Rear View Mirror
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -244,6 +126,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="manuallyAdjustableExtRearViewMirror"
                                         {...validation.getFieldProps('manuallyAdjustableExtRearViewMirror')}
+                                        checked={validation.values.manuallyAdjustableExtRearViewMirror}
                                     />
                                     <label
                                         className="form-check-label"
@@ -251,11 +134,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Manually Adjustable Exterior Rear View Mirror
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -264,6 +145,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="electricFoldingRearViewMirror"
                                         {...validation.getFieldProps('electricFoldingRearViewMirror')}
+                                        checked={validation.values.electricFoldingRearViewMirror}
                                     />
                                     <label
                                         className="form-check-label"
@@ -271,12 +153,10 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Electric folding Rear View Mirror
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -286,6 +166,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="rearWindowWiper"
                                         {...validation.getFieldProps('rearWindowWiper')}
+                                        checked={validation.values.rearWindowWiper}
                                     />
                                     <label
                                         className="form-check-label"
@@ -293,11 +174,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Rear Window Wiper
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -306,6 +185,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="rearWindowWasher"
                                         {...validation.getFieldProps('rearWindowWasher')}
+                                        checked={validation.values.rearWindowWasher}
                                     />
                                     <label
                                         className="form-check-label"
@@ -313,11 +193,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Rear Window Washer
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -326,6 +204,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="rearWindowDefogger"
                                         {...validation.getFieldProps('rearWindowDefogger')}
+                                        checked={validation.values.rearWindowDefogger}
                                     />
                                     <label
                                         className="form-check-label"
@@ -333,11 +212,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Rear Window Defogger
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -346,6 +223,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="wheelCovers"
                                         {...validation.getFieldProps('wheelCovers')}
+                                        checked={validation.values.wheelCovers}
                                     />
                                     <label
                                         className="form-check-label"
@@ -353,12 +231,10 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Wheel Covers
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -368,6 +244,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="alloyWheels"
                                         {...validation.getFieldProps('alloyWheels')}
+                                        checked={validation.values.alloyWheels}
                                     />
                                     <label
                                         className="form-check-label"
@@ -375,11 +252,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Alloy Wheels
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -388,6 +263,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="powerAntenna"
                                         {...validation.getFieldProps('powerAntenna')}
+                                        checked={validation.values.powerAntenna}
                                     />
                                     <label
                                         className="form-check-label"
@@ -395,11 +271,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Power Antenna
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -408,6 +282,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="rearSpoiler"
                                         {...validation.getFieldProps('rearSpoiler')}
+                                        checked={validation.values.rearSpoiler}
                                     />
                                     <label
                                         className="form-check-label"
@@ -415,11 +290,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Rear Spoiler
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -428,6 +301,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="outsideRearViewMirrorTurnIndicators"
                                         {...validation.getFieldProps('outsideRearViewMirrorTurnIndicators')}
+                                        checked={validation.values.outsideRearViewMirrorTurnIndicators}
                                     />
                                     <label
                                         className="form-check-label"
@@ -435,12 +309,10 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Outside Rear View Mirror Turn Indicators
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -450,6 +322,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="integratedAntenna"
                                         {...validation.getFieldProps('integratedAntenna')}
+                                        checked={validation.values.integratedAntenna}
                                     />
                                     <label
                                         className="form-check-label"
@@ -457,11 +330,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Integrated Antenna
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -470,6 +341,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="chromeGrille"
                                         {...validation.getFieldProps('chromeGrille')}
+                                        checked={validation.values.chromeGrille}
                                     />
                                     <label
                                         className="form-check-label"
@@ -477,11 +349,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Chrome Grille
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -490,6 +360,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="chromeGarnish"
                                         {...validation.getFieldProps('chromeGarnish')}
+                                        checked={validation.values.chromeGarnish}
                                     />
                                     <label
                                         className="form-check-label"
@@ -497,11 +368,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Chrome Garnish
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -510,6 +379,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="projectorHeadlamps"
                                         {...validation.getFieldProps('projectorHeadlamps')}
+                                        checked={validation.values.projectorHeadlamps}
                                     />
                                     <label
                                         className="form-check-label"
@@ -517,12 +387,10 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Projector Head Lamps
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -532,6 +400,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="halogenHeadlamps"
                                         {...validation.getFieldProps('halogenHeadlamps')}
+                                        checked={validation.values.halogenHeadlamps}
                                     />
                                     <label
                                         className="form-check-label"
@@ -539,11 +408,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Halogen Head Lamps
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -552,6 +419,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="roofRail"
                                         {...validation.getFieldProps('roofRail')}
+                                        checked={validation.values.roofRail}
                                     />
                                     <label
                                         className="form-check-label"
@@ -559,11 +427,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Roof Rails
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -572,6 +438,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="ledDrls"
                                         {...validation.getFieldProps('ledDrls')}
+                                        checked={validation.values.ledDrls}
                                     />
                                     <label
                                         className="form-check-label"
@@ -579,11 +446,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Led Drls
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -592,6 +457,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="ledHeadlights"
                                         {...validation.getFieldProps('ledHeadlights')}
+                                        checked={validation.values.ledHeadlights}
                                     />
                                     <label
                                         className="form-check-label"
@@ -599,12 +465,10 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         LED Head lights
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -614,6 +478,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="ledTaillights"
                                         {...validation.getFieldProps('ledTaillights')}
+                                        checked={validation.values.ledTaillights}
                                     />
                                     <label
                                         className="form-check-label"
@@ -621,11 +486,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         LED Tail lights
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -634,6 +497,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="ledFogLamps"
                                         {...validation.getFieldProps('ledFogLamps')}
+                                        checked={validation.values.ledFogLamps}
                                     />
                                     <label
                                         className="form-check-label"
@@ -641,11 +505,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         LED Fog Lamps
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -654,6 +516,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                         type="checkbox"
                                         id="fogLights"
                                         {...validation.getFieldProps('fogLights')}
+                                        checked={validation.values.fogLights}
                                     />
                                     <label
                                         className="form-check-label"
@@ -661,12 +524,10 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         LED Fog Lights
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <FormGroup className="mb-4" row>
                         <Label htmlFor="bodyType" md="2" className="col-form-label">
                             Body Type
@@ -697,7 +558,6 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             </Input>
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="adjustableHeadlights"
@@ -719,10 +579,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
-                            htmlFor="additionFeatures"
+                            htmlFor="additionalFeatures"
                             md="2"
                             className="col-form-label"
                         >
@@ -741,7 +600,6 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             ></textarea>
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="antenna"
@@ -763,7 +621,6 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="bootOpening"
@@ -785,7 +642,6 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="puddleLamps"
@@ -807,7 +663,6 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="tyreSize"
@@ -829,7 +684,6 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="tyreType"
@@ -851,7 +705,6 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="wheelSize"
@@ -873,7 +726,6 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="allowWheelSize"
@@ -895,10 +747,9 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
-                    <Button type="submit" color="primary" className={
-                        !validation.isValid ? "next disabled" : "next"
-                    }>Next</Button>
+                    <Button type="submit" color="primary">
+                        Next
+                    </Button>
                 </Form>
             </div>
         </React.Fragment>

@@ -210,7 +210,7 @@ function CarModels() {
       setCarModelsList(carModels);
       setIsEdit(false);
     }
-  }, [carModels, isEdit]);
+  }, [carModels]);
   
   useEffect(() => {
     setCarModelsList(carModels);
@@ -857,7 +857,7 @@ function CarModels() {
       </div>
       <Modal size="xl" isOpen={modal} toggle={toggle}>
         <ModalHeader toggle={toggle} tag="h4">
-          {!!isEdit ? "Edit Car Model" : "Add New Car Model"}
+          {isEdit ? "Edit Car Model" : "Add New Car Model"}
         </ModalHeader>
         <ModalBody>
           <Row>

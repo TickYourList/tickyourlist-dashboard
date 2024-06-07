@@ -1,19 +1,18 @@
-import React, { useEffect, useState } from "react"
-
+import React, { useEffect } from "react";
 import {
     Col,
-    Input,
     Form,
     FormGroup,
     Label,
     CardTitle,
     Button,
-    Row
-} from "reactstrap"
+    Row,
+    Input
+} from "reactstrap";
 
-import { useSelector, useDispatch } from "react-redux"
-import { getCarModels } from "store/automobiles/carModels/actions"
-import { useFormik } from "formik"
+import { useSelector, useDispatch } from "react-redux";
+import { getCarModels } from "store/automobiles/carModels/actions";
+import { useFormik } from "formik";
 
 const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
 
@@ -22,117 +21,66 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
 
     const dispatch = useDispatch();
 
-    const [activeTab, setactiveTab] = useState("1")
-    const [selectedGroup, setselectedGroup] = useState(null)
-
-    const [switch1, setswitch1] = useState(true);
-    // const [carModelsList, setCarModelsList] = useState([]);
-
     const validation = useFormik({
-        // enableReinitialize : use this flag when initial values needs to be changed
         enableReinitialize: true,
-
         initialValues: {
-            powerSteering: (carVariant && carVariant?.comfortAndConvinience && carVariant.comfortAndConvinience?.powerSteering) || false,
-            powerWindowsFront: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience.powerWindowsFront) || false,
-            powerWindowsRear: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.powerWindowsRear) || false,
-            automaticClimateControl: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.automaticClimateControl) || false,
-            airQualityControl: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.airQualityControl) || false,
-            remoteEngine: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.remoteEngine) || false,
-            accessoryPowerOutlet: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.accessoryPowerOutlet) || false,
-            trunkLight: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.trunkLight) || false,
-            vanityMirror: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.vanityMirror) || false,
-            rearReadingLamp: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.rearReadingLamp) || false,
-            rearSeatHeadrest: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.rearSeatHeadrest) || false,
-            adjustibleHeadrest: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.adjustibleHeadrest) || false,
-            rearSeatCentreArmRest: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.rearSeatCentreArmRest) || false,
-            heightAdjustibleFrontSeatBelts: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.heightAdjustibleFrontSeatBelts) || false,
-            cupHolderFront: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.cupHolderFront) || false,
-            cupHolderRear: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.cupHolderRear) || false,
-            rearAcVents: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.rearAcVents) || false,
-            multifunctionSteeringWheel: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.multifunctionSteeringWheel) || false,
-            cruiseControl: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.cruiseControl) || false,
-            parkingSensors: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.parkingSensors) || "",
-            realTimeVehicleTracking: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.realTimeVehicleTracking) || false,
-            foldableRearSeat: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.foldableRearSeat) || "",
-            smartAccessCardEntry: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.smartAccessCardEntry) || false,
-            engineStartStopButton: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.engineStartStopButton) || false,
-            gloveBoxCooling: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.gloveBoxCooling) || false,
-            bottleHolder: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.bottleHolder) || "",
-            voiceCommand: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.voiceCommand) || false,
-            steeringWheelGearshiftPaddles: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.steeringWheelGearshiftPaddles) || false,
-            usbCharger: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.usbCharger) || "",
-            centralControlArmrest: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.centralControlArmrest) || "",
-            handsFreeTelegate: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.handsFreeTelegate) || false,
-            gearShiftIndicator: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.gearShiftIndicator) || false,
-            rearCurtain: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.rearCurtain) || false,
-            luggageHookAndNet: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.luggageHookAndNet) || false,
-            additionalFeatures: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.additionalFeatures) || "",
-            oneTouchOperatingPowerWindow: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.oneTouchOperatingPowerWindow) || "",
-            driveModes: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.driveModes) || "",
-            voiceAssistedProof: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.voiceAssistedProof) || false,
-            chitChatVoiceInteraction: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.chitChatVoiceInteraction) || false,
-            airConditioner: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.airConditioner) || false,
-            heater: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.heater) || false,
-            adjustableSteering: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.adjustableSteering) || false,
-            keylessEntry: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.keylessEntry) || false,
-            ventilatedSeats: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.centralControlArmrest) || false,
-            heightAdjustibleDriverSeats: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.heightAdjustibleDriverSeats) || "",
-            electricAdjustibleSeats: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.electricAdjustibleSeats) || "",
-            automaticHeadlamps: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.automaticHeadlamps) || "",
-            followMeHomeHeadlamps: (carVariant && carVariant?.comfortAndConvinience && carVariant?.comfortAndConvinience?.followMeHomeHeadlamps) || "",
+            powerSteering: carVariant?.comfortAndConvenience?.powerSteering || false,
+            powerWindowsFront: carVariant?.comfortAndConvenience?.powerWindowsFront || false,
+            powerWindowsRear: carVariant?.comfortAndConvenience?.powerWindowsRear || false,
+            automaticClimateControl: carVariant?.comfortAndConvenience?.automaticClimateControl || false,
+            airQualityControl: carVariant?.comfortAndConvenience?.airQualityControl || false,
+            remoteEngine: carVariant?.comfortAndConvenience?.remoteEngine || false,
+            accessoryPowerOutlet: carVariant?.comfortAndConvenience?.accessoryPowerOutlet || false,
+            trunkLight: carVariant?.comfortAndConvenience?.trunkLight || false,
+            vanityMirror: carVariant?.comfortAndConvenience?.vanityMirror || false,
+            rearReadingLamp: carVariant?.comfortAndConvenience?.rearReadingLamp || false,
+            rearSeatHeadrest: carVariant?.comfortAndConvenience?.rearSeatHeadrest || false,
+            adjustibleHeadrest: carVariant?.comfortAndConvenience?.adjustibleHeadrest || false,
+            rearSeatCentreArmRest: carVariant?.comfortAndConvenience?.rearSeatCentreArmRest || false,
+            heightAdjustibleFrontSeatBelts: carVariant?.comfortAndConvenience?.heightAdjustibleFrontSeatBelts || false,
+            cupHolderFront: carVariant?.comfortAndConvenience?.cupHolderFront || false,
+            cupHolderRear: carVariant?.comfortAndConvenience?.cupHolderRear || false,
+            rearAcVents: carVariant?.comfortAndConvenience?.rearAcVents || false,
+            multifunctionSteeringWheel: carVariant?.comfortAndConvenience?.multifunctionSteeringWheel || false,
+            cruiseControl: carVariant?.comfortAndConvenience?.cruiseControl || false,
+            parkingSensors: carVariant?.comfortAndConvenience?.parkingSensors || "",
+            realTimeVehicleTracking: carVariant?.comfortAndConvenience?.realTimeVehicleTracking || false,
+            foldableRearSeat: carVariant?.comfortAndConvenience?.foldableRearSeat || "",
+            smartAccessCardEntry: carVariant?.comfortAndConvenience?.smartAccessCardEntry || false,
+            engineStartStopButton: carVariant?.comfortAndConvenience?.engineStartStopButton || false,
+            gloveBoxCooling: carVariant?.comfortAndConvenience?.gloveBoxCooling || false,
+            bottleHolder: carVariant?.comfortAndConvenience?.bottleHolder || "",
+            voiceCommand: carVariant?.comfortAndConvenience?.voiceCommand || false,
+            steeringWheelGearshiftPaddles: carVariant?.comfortAndConvenience?.steeringWheelGearshiftPaddles || false,
+            usbCharger: carVariant?.comfortAndConvenience?.usbCharger || "",
+            centralControlArmrest: carVariant?.comfortAndConvenience?.centralControlArmrest || "",
+            handsFreeTelegate: carVariant?.comfortAndConvenience?.handsFreeTelegate || false,
+            gearShiftIndicator: carVariant?.comfortAndConvenience?.gearShiftIndicator || false,
+            rearCurtain: carVariant?.comfortAndConvenience?.rearCurtain || false,
+            luggageHookAndNet: carVariant?.comfortAndConvenience?.luggageHookAndNet || false,
+            additionalFeatures: carVariant?.comfortAndConvenience?.additionalFeatures || "",
+            oneTouchOperatingPowerWindow: carVariant?.comfortAndConvenience?.oneTouchOperatingPowerWindow || "",
+            driveModes: carVariant?.comfortAndConvenience?.driveModes || "",
+            voiceAssistedProof: carVariant?.comfortAndConvenience?.voiceAssistedProof || false,
+            chitChatVoiceInteraction: carVariant?.comfortAndConvenience?.chitChatVoiceInteraction || false,
+            airConditioner: carVariant?.comfortAndConvenience?.airConditioner || false,
+            heater: carVariant?.comfortAndConvenience?.heater || false,
+            adjustableSteering: carVariant?.comfortAndConvenience?.adjustableSteering || false,
+            keylessEntry: carVariant?.comfortAndConvenience?.keylessEntry || false,
+            ventilatedSeats: carVariant?.comfortAndConvenience?.ventilatedSeats || false,
+            heightAdjustibleDriverSeats: carVariant?.comfortAndConvenience?.heightAdjustibleDriverSeats || "",
+            electricAdjustibleSeats: carVariant?.comfortAndConvenience?.electricAdjustibleSeats || "",
+            automaticHeadlamps: carVariant?.comfortAndConvenience?.automaticHeadlamps || "",
+            followMeHomeHeadlamps: carVariant?.comfortAndConvenience?.followMeHomeHeadlamps || false,
         },
-        // validationSchema: Yup.object({
-        //     modelName: Yup.string().required(
-        //         "Please Enter Your Brand Name"
-        //     ),
-        //     carBrand: Yup.string().required(
-        //         "Please Enter Your CarBrand"
-        //     ),
-        //     description: Yup.string().required(
-        //         "Please Enter Your description"
-        //     ),
-        //     year: Yup.string().required(
-        //         "Please Enter Your Year"
-        //     ),
-        //     status: Yup.string().required(
-        //         "Please Enter Your Status"
-        //     )
-        // }),
         onSubmit: values => {
-            // if (isEdit) {
-            //     const updCarModel = new FormData();
-            //     updCarModel.append("modelName", values["modelName"]);
-            //     updCarModel.append("description", values["description"]);
-            //     updCarModel.append("year", values["year"]);
-            //     updCarModel.append("status", values["status"] === 'Active' ? true : false);
-            //     updCarModel.append("image", modelImage ? modelImage : "broken!");
-            //     dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
-
-            //     validation.resetForm();
-            // } else {
-            //     const newCarModel = new FormData();
-            //     newCarModel.append("modelName", values["modelName"]);
-            //     newCarModel.append("description", values["description"]);
-            //     newCarModel.append("year", values["year"]);
-            //     newCarModel.append("status", values["status"] === 'Active' ? true : false);
-            //     newCarModel.append("image", modelImage ? modelImage : "broken!");
-            //     dispatch(addNewCarModel(values['carBrand'], newCarModel));
-            //     validation.resetForm();
-            // }
-            
-            if(onFormSubmit) {
-            onFormSubmit('comfortAndConvenience', values, '7');
+            if (onFormSubmit) {
+                onFormSubmit('comfortAndConvenience', values, '7');
             }
         },
-        handleError: e => { },
     });
 
-    function handleSelectGroup(selectedGroup) {
-        setselectedGroup(selectedGroup)
-    }
-
-    const { carBrands, countries, carModels } = useSelector(state => ({
+    const { carModels } = useSelector(state => ({
         carModels: state.CarModel.carModels
     }));
 
@@ -142,27 +90,32 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
         }
     }, [dispatch]);
 
-    // useEffect(() => {
-    //     setCarModelsList(carModels);
-    // }, [carModels]);
+    const handleCheckboxChange = (field) => {
+        validation.setFieldValue(field, !validation.values[field]);
+    };
 
     return (
         <React.Fragment>
-             <div>
-                <CardTitle>Comfort And Convinience</CardTitle>
-                <p className="card-title-desc">
-                    Fill all information below
-                </p>
-                <Form onSubmit={validation.handleSubmit}>
+            <div className="p-4">
+                <Form
+                    className="needs-validation"
+                    onSubmit={e => {
+                        e.preventDefault();
+                        validation.handleSubmit();
+                        return false;
+                    }}
+                >
+                    <CardTitle className="h4">Comfort And Convenience</CardTitle>
                     <Row>
                         <Col lg="3">
-                          <FormGroup className="mb-4" row>
+                            <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
                                         id="powerSteering"
-                                        {...validation.getFieldProps('powerSteering')}
+                                        checked={validation.values.powerSteering}
+                                        onChange={() => handleCheckboxChange('powerSteering')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -170,34 +123,28 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Power Steering
                                     </label>
-
                                 </div>
                             </FormGroup>
-                     
-
                         </Col>
                         <Col lg="3">
-                          <FormGroup className="mb-4" row>
+                            <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
                                         id="powerWindowsFront"
-                                        {...validation.getFieldProps('powerWindowsFront')}
+                                        checked={validation.values.powerWindowsFront}
+                                        onChange={() => handleCheckboxChange('powerWindowsFront')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="powerWindowsFront"
                                     >
-                                        Power Window Front
+                                        Power Windows-Front
                                     </label>
-
                                 </div>
                             </FormGroup>
-                     
-
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -205,18 +152,18 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="powerWindowsRear"
-                                        {...validation.getFieldProps('powerWindowsRear')}
+                                        checked={validation.values.powerWindowsRear}
+                                        onChange={() => handleCheckboxChange('powerWindowsRear')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="powerWindowsRear"
                                     >
-                                        Power Window Rear
+                                        Power Windows-Rear
                                     </label>
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -224,7 +171,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="automaticClimateControl"
-                                        {...validation.getFieldProps('automaticClimateControl')}
+                                        checked={validation.values.automaticClimateControl}
+                                        onChange={() => handleCheckboxChange('automaticClimateControl')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -232,12 +180,10 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Automatic Climate Control
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -246,7 +192,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="airQualityControl"
-                                        {...validation.getFieldProps('airQualityControl')}
+                                        checked={validation.values.airQualityControl}
+                                        onChange={() => handleCheckboxChange('airQualityControl')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -254,11 +201,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Air Quality Control
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -266,7 +211,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="remoteEngine"
-                                        {...validation.getFieldProps('remoteEngine')}
+                                        checked={validation.values.remoteEngine}
+                                        onChange={() => handleCheckboxChange('remoteEngine')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -274,11 +220,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Remote Engine
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -286,7 +230,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="accessoryPowerOutlet"
-                                        {...validation.getFieldProps('accessoryPowerOutlet')}
+                                        checked={validation.values.accessoryPowerOutlet}
+                                        onChange={() => handleCheckboxChange('accessoryPowerOutlet')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -294,11 +239,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Accessory Power Outlet
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -306,7 +249,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="trunkLight"
-                                        {...validation.getFieldProps('trunkLight')}
+                                        checked={validation.values.trunkLight}
+                                        onChange={() => handleCheckboxChange('trunkLight')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -314,12 +258,10 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Trunk Light
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -328,19 +270,18 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="vanityMirror"
-                                        {...validation.getFieldProps('vanityMirror')}
+                                        checked={validation.values.vanityMirror}
+                                        onChange={() => handleCheckboxChange('vanityMirror')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="vanityMirror"
                                     >
-                                        Vanity
+                                        Vanity Mirror
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -348,7 +289,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="rearReadingLamp"
-                                        {...validation.getFieldProps('rearReadingLamp')}
+                                        checked={validation.values.rearReadingLamp}
+                                        onChange={() => handleCheckboxChange('rearReadingLamp')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -356,11 +298,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Rear Reading Lamp
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -368,7 +308,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="rearSeatHeadrest"
-                                        {...validation.getFieldProps('rearSeatHeadrest')}
+                                        checked={validation.values.rearSeatHeadrest}
+                                        onChange={() => handleCheckboxChange('rearSeatHeadrest')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -376,11 +317,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Rear Seat Headrest
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -388,20 +327,19 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="adjustibleHeadrest"
-                                        {...validation.getFieldProps('adjustibleHeadrest')}
+                                        checked={validation.values.adjustibleHeadrest}
+                                        onChange={() => handleCheckboxChange('adjustibleHeadrest')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="adjustibleHeadrest"
                                     >
-                                        Adjustible Headrest
+                                        Adjustable Headrest
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -410,7 +348,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="rearSeatCentreArmRest"
-                                        {...validation.getFieldProps('rearSeatCentreArmRest')}
+                                        checked={validation.values.rearSeatCentreArmRest}
+                                        onChange={() => handleCheckboxChange('rearSeatCentreArmRest')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -418,11 +357,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Rear Seat Centre Arm Rest
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -430,19 +367,18 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="heightAdjustibleFrontSeatBelts"
-                                        {...validation.getFieldProps('heightAdjustibleFrontSeatBelts')}
+                                        checked={validation.values.heightAdjustibleFrontSeatBelts}
+                                        onChange={() => handleCheckboxChange('heightAdjustibleFrontSeatBelts')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="heightAdjustibleFrontSeatBelts"
                                     >
-                                        Height Adjustible Front Belts
+                                        Height Adjustable Front Belts
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -450,7 +386,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="cupHolderFront"
-                                        {...validation.getFieldProps('cupHolderFront')}
+                                        checked={validation.values.cupHolderFront}
+                                        onChange={() => handleCheckboxChange('cupHolderFront')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -458,11 +395,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Cup Holder Front
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -470,7 +405,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="cupHolderRear"
-                                        {...validation.getFieldProps('cupHolderRear')}
+                                        checked={validation.values.cupHolderRear}
+                                        onChange={() => handleCheckboxChange('cupHolderRear')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -478,12 +414,10 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Cup Holder Rear
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -492,7 +426,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="rearAcVents"
-                                        {...validation.getFieldProps('rearAcVents')}
+                                        checked={validation.values.rearAcVents}
+                                        onChange={() => handleCheckboxChange('rearAcVents')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -500,11 +435,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Rear AC Vents
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -512,19 +445,18 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="multifunctionSteeringWheel"
-                                        {...validation.getFieldProps('multifunctionSteeringWheel')}
+                                        checked={validation.values.multifunctionSteeringWheel}
+                                        onChange={() => handleCheckboxChange('multifunctionSteeringWheel')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="multifunctionSteeringWheel"
                                     >
-                                        Multi Functional Steering Wheel
+                                        Multifunction Steering Wheel
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -532,7 +464,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="cruiseControl"
-                                        {...validation.getFieldProps('cruiseControl')}
+                                        checked={validation.values.cruiseControl}
+                                        onChange={() => handleCheckboxChange('cruiseControl')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -540,11 +473,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Cruise Control
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -552,41 +483,20 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="realTimeVehicleTracking"
-                                        {...validation.getFieldProps('realTimeVehicleTracking')}
+                                        checked={validation.values.realTimeVehicleTracking}
+                                        onChange={() => handleCheckboxChange('realTimeVehicleTracking')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="realTimeVehicleTracking"
                                     >
-                                        Real Time Vehicle Tracking
+                                        Real-Time Vehicle Tracking
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
-                        {/* <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="foldableRearSeat"
-                                        {...validation.getFieldProps('foldableRearSeat')}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="foldableRearSeat"
-                                    >
-                                        Foldable Rear Seat
-                                    </label>
-
-                                </div>
-                            </FormGroup>
-                        </Col> */}
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -594,7 +504,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="smartAccessCardEntry"
-                                        {...validation.getFieldProps('smartAccessCardEntry')}
+                                        checked={validation.values.smartAccessCardEntry}
+                                        onChange={() => handleCheckboxChange('smartAccessCardEntry')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -602,11 +513,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Smart Access Card Entry
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -614,19 +523,18 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="engineStartStopButton"
-                                        {...validation.getFieldProps('engineStartStopButton')}
+                                        checked={validation.values.engineStartStopButton}
+                                        onChange={() => handleCheckboxChange('engineStartStopButton')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="engineStartStopButton"
                                     >
-                                        Engine Start And Stop
+                                        Engine Start/Stop Button
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -634,7 +542,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="gloveBoxCooling"
-                                        {...validation.getFieldProps('gloveBoxCooling')}
+                                        checked={validation.values.gloveBoxCooling}
+                                        onChange={() => handleCheckboxChange('gloveBoxCooling')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -642,11 +551,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Glove Box Cooling
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -654,7 +561,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="voiceCommand"
-                                        {...validation.getFieldProps('voiceCommand')}
+                                        checked={validation.values.voiceCommand}
+                                        onChange={() => handleCheckboxChange('voiceCommand')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -662,12 +570,10 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Voice Command
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -676,19 +582,18 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="steeringWheelGearshiftPaddles"
-                                        {...validation.getFieldProps('steeringWheelGearshiftPaddles')}
+                                        checked={validation.values.steeringWheelGearshiftPaddles}
+                                        onChange={() => handleCheckboxChange('steeringWheelGearshiftPaddles')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="steeringWheelGearshiftPaddles"
                                     >
-                                        Steering Wheel GearShift Paddles
+                                        Steering Wheel Gearshift Paddles
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -696,19 +601,18 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="handsFreeTelegate"
-                                        {...validation.getFieldProps('handsFreeTelegate')}
+                                        checked={validation.values.handsFreeTelegate}
+                                        onChange={() => handleCheckboxChange('handsFreeTelegate')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="handsFreeTelegate"
                                     >
-                                        Hands-Free Taligate
+                                        Hands-Free Tailgate
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -716,19 +620,18 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="gearShiftIndicator"
-                                        {...validation.getFieldProps('gearShiftIndicator')}
+                                        checked={validation.values.gearShiftIndicator}
+                                        onChange={() => handleCheckboxChange('gearShiftIndicator')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="gearShiftIndicator"
                                     >
-                                        Feat Shift Indicator
+                                        Gear Shift Indicator
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -736,7 +639,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="rearCurtain"
-                                        {...validation.getFieldProps('rearCurtain')}
+                                        checked={validation.values.rearCurtain}
+                                        onChange={() => handleCheckboxChange('rearCurtain')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -744,12 +648,10 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Rear Curtain
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -758,7 +660,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="luggageHookAndNet"
-                                        {...validation.getFieldProps('luggageHookAndNet')}
+                                        checked={validation.values.luggageHookAndNet}
+                                        onChange={() => handleCheckboxChange('luggageHookAndNet')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -766,11 +669,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Luggage Hook And Net
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -778,7 +679,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="chitChatVoiceInteraction"
-                                        {...validation.getFieldProps('chitChatVoiceInteraction')}
+                                        checked={validation.values.chitChatVoiceInteraction}
+                                        onChange={() => handleCheckboxChange('chitChatVoiceInteraction')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -786,11 +688,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Chit Chat Voice Interaction
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -798,7 +698,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="airConditioner"
-                                        {...validation.getFieldProps('airConditioner')}
+                                        checked={validation.values.airConditioner}
+                                        onChange={() => handleCheckboxChange('airConditioner')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -806,11 +707,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Air Conditioner
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -818,7 +717,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="heater"
-                                        {...validation.getFieldProps('heater')}
+                                        checked={validation.values.heater}
+                                        onChange={() => handleCheckboxChange('heater')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -826,12 +726,10 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Heater
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
@@ -840,19 +738,18 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="adjustableSteering"
-                                        {...validation.getFieldProps('adjustableSteering')}
+                                        checked={validation.values.adjustableSteering}
+                                        onChange={() => handleCheckboxChange('adjustableSteering')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="adjustableSteering"
                                     >
-                                        Adjustible Steering
+                                        Adjustable Steering
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -860,7 +757,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="keylessEntry"
-                                        {...validation.getFieldProps('keylessEntry')}
+                                        checked={validation.values.keylessEntry}
+                                        onChange={() => handleCheckboxChange('keylessEntry')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -868,11 +766,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Keyless Entry
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -880,7 +776,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="ventilatedSeats"
-                                        {...validation.getFieldProps('ventilatedSeats')}
+                                        checked={validation.values.ventilatedSeats}
+                                        onChange={() => handleCheckboxChange('ventilatedSeats')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -888,11 +785,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Ventilated Seats
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -900,41 +795,39 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="heightAdjustibleDriverSeats"
-                                        {...validation.getFieldProps('heightAdjustibleDriverSeats')}
+                                        checked={validation.values.heightAdjustibleDriverSeats}
+                                        onChange={() => handleCheckboxChange('heightAdjustibleDriverSeats')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="heightAdjustibleDriverSeats"
                                     >
-                                        Height Adjustible Driber Seats
+                                        Height Adjustable Driver Seats
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <Row>
                         <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="automaticHeadlamps"
-                                {...validation.getFieldProps('automaticHeadlamps')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="automaticHeadlamps"
-                            >
-                                Automatic Headlamps
-                            </label>
-
-                        </div>
-                    </FormGroup>
+                            <FormGroup className="mb-4" row>
+                                <div className="form-check form-check-end">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        id="automaticHeadlamps"
+                                        checked={validation.values.automaticHeadlamps}
+                                        onChange={() => handleCheckboxChange('automaticHeadlamps')}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor="automaticHeadlamps"
+                                    >
+                                        Automatic Headlamps
+                                    </label>
+                                </div>
+                            </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -942,7 +835,8 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="followMeHomeHeadlamps"
-                                        {...validation.getFieldProps('followMeHomeHeadlamps')}
+                                        checked={validation.values.followMeHomeHeadlamps}
+                                        onChange={() => handleCheckboxChange('followMeHomeHeadlamps')}
                                     />
                                     <label
                                         className="form-check-label"
@@ -950,11 +844,9 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                     >
                                         Follow Me Home Headlamps
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
-
                         <Col lg="3">
                             <FormGroup className="mb-4" row>
                                 <div className="form-check form-check-end">
@@ -962,20 +854,19 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                         className="form-check-input"
                                         type="checkbox"
                                         id="electricAdjustibleSeats"
-                                        {...validation.getFieldProps('electricAdjustibleSeats')}
+                                        checked={validation.values.electricAdjustibleSeats}
+                                        onChange={() => handleCheckboxChange('electricAdjustibleSeats')}
                                     />
                                     <label
                                         className="form-check-label"
                                         htmlFor="electricAdjustibleSeats"
                                     >
-                                        Electric Adjustible Seats
+                                        Electric Adjustable Seats
                                     </label>
-
                                 </div>
                             </FormGroup>
                         </Col>
                     </Row>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="additionalFeatures"
@@ -997,7 +888,6 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                             ></textarea>
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="parkingSensors"
@@ -1019,7 +909,6 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="foldableRearSeat"
@@ -1041,7 +930,6 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="bottleHolder"
@@ -1063,7 +951,6 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="usbCharger"
@@ -1085,7 +972,6 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="centralControlArmrest"
@@ -1100,14 +986,13 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                 className="form-control"
                                 name="centralControlArmrest"
                                 id="centralControlArmrest"
-                                placeholder="Enter the USB charger"
+                                placeholder="Enter the Central Control Armrest"
                                 onChange={validation.handleChange}
                                 onBlur={validation.handleBlur}
                                 value={validation.values.centralControlArmrest}
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="oneTouchOperatingPowerWindow"
@@ -1122,14 +1007,13 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                                 className="form-control"
                                 name="oneTouchOperatingPowerWindow"
                                 id="oneTouchOperatingPowerWindow"
-                                placeholder="Enter the Touch Opearting Power Window"
+                                placeholder="Enter the One Touch Operating Power Window"
                                 onChange={validation.handleChange}
                                 onBlur={validation.handleBlur}
                                 value={validation.values.oneTouchOperatingPowerWindow}
                             />
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="driveModes"
@@ -1151,7 +1035,6 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-
                     <Button type="submit" color="primary" className={
                         !validation.isValid ? "next disabled" : "next"
                     }>Next</Button>
@@ -1161,4 +1044,4 @@ const ComfortAndConvenienceVariant = ({ carVariant, onFormSubmit }) => {
     )
 }
 
-export default ComfortAndConvenienceVariant
+export default ComfortAndConvenienceVariant;

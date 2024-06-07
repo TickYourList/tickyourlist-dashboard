@@ -353,7 +353,7 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
                                 md="2"
                                 className="col-form-label"
                             >
-                             Touch Screen Size
+                             Connectivity
                             </Label>
                             <Col md="10">
                                 <Input
