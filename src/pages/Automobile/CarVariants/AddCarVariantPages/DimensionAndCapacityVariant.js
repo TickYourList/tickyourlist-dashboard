@@ -361,7 +361,7 @@ const DimensionAndCapacityVariant = ({ carVariant, onFormSubmit }) => {
                             htmlFor="seatingCapacity"
                             className="col-form-label"
                         >
-                            Gross Weight (kg) <span style={{ color: 'red' }}>*</span>
+                            Seating Capacity <span style={{ color: 'red' }}>*</span>
                         </Label>
                         <Col md="10">
                             <Input

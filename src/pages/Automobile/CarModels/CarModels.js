@@ -1310,6 +1310,7 @@ function CarModels() {
                                       value={validation.values.seatingCapacity}
                                     >
                                       <option value="">Select seating capacity</option>
+                                      <option value="4_seater">4 Seater</option>
                                       <option value="5_seater">5 Seater</option>
                                       <option value="6_seater">6 Seater</option>
                                       <option value="7_seater">7 Seater</option>
