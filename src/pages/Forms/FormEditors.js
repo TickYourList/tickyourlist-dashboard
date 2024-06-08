@@ -1,89 +1,105 @@
 import React from "react";
-
-import {
-  Form,
-  Card,
-  CardBody,
-  Col,
-  Row,
-  CardTitle,
-  Container,
-} from "reactstrap";
-
-// Form Editor
-import { Editor } from "react-draft-wysiwyg";
+import { Form, Card, CardBody, Col, Row, CardTitle, Container, Button } from "reactstrap";
+import { Editor as DraftEditor } from "react-draft-wysiwyg";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
-
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-
-//Import Breadcrumb
+import axios from "axios";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 
-const FormEditors = () => {
+const AboutUs = () => {
+  document.title = "About Us | Scrollit";
 
-   //meta title
-   document.title = "Form Editors | Scrollit"
+  const formik = useFormik({
+    initialValues: {
+      draftContent: '',
+      aboutus: '',
+    },
+    validationSchema: Yup.object({
+      draftContent: Yup.string().required("Draft content is required"),
+      aboutus: Yup.string().required("Please Enter About Us"),
+    }),
+    onSubmit: (values) => {
+      axios.post("YOUR_API_ENDPOINT", values)
+        .then(response => {
+          console.log("Data successfully sent to API:", response.data);
+        })
+        .catch(error => {
+          console.error("There was an error sending the data!", error);
+        });
+    },
+  });
+
+  const handleDraftChange = (contentState) => {
+    formik.setFieldValue("draftContent", JSON.stringify(contentState));
+  };
+
+  const handleCkeditorChange = (event, editor) => {
+    const data = editor.getData();
+    formik.setFieldValue("aboutus", data);
+  };
 
   return (
     <React.Fragment>
       <div className="page-content">
         <Container fluid={true}>
-          <Breadcrumbs title="Forms" breadcrumbItem="Form Editors" />
+          <Breadcrumbs title="Settings" breadcrumbItem="About Us" />
 
-          <Row>
-            <Col>
-              <Card>
-                <CardBody>
-                  <CardTitle className="h4">react-draft-wysiwyg</CardTitle>
-                  <p className="card-title-desc">
-                    Bootstrap-wysihtml5 is a javascript plugin that makes it
-                    easy to create simple, beautiful wysiwyg editors with the
-                    help of wysihtml5 and Twitter Bootstrap.
-                  </p>
-
-                  <Form method="post">
-                    <Editor
+          <Form onSubmit={formik.handleSubmit}>
+            <Row>
+              <Col>
+                <Card>
+                  <CardBody>
+                    <CardTitle className="h4">react-draft-wysiwyg</CardTitle>
+                    <p className="card-title-desc">
+                      Simple WYSIWYG editor with react-draft-wysiwyg.
+                    </p>
+                    <DraftEditor
                       toolbarClassName="toolbarClassName"
                       wrapperClassName="wrapperClassName"
                       editorClassName="editorClassName"
+                      onContentStateChange={handleDraftChange}
                     />
-                  </Form>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
+                    {formik.touched.draftContent && formik.errors.draftContent ? (
+                      <div className="text-danger">{formik.errors.draftContent}</div>
+                    ) : null}
+                  </CardBody>
+                </Card>
+              </Col>
+            </Row>
 
-          <Row>
-            <Col>
-              <Card>
-                <CardBody>
-                  <CardTitle className="h4">CK Editor</CardTitle>
-                  <p className="card-title-desc">
-                    Super simple wysiwyg editor on Bootstrap
-                  </p>
-
-                  <Form method="post">
+            <Row>
+              <Col>
+                <Card>
+                  <CardBody>
+                    <CardTitle className="h4">CK Editor</CardTitle>
+                    <p className="card-title-desc">
+                      Super simple WYSIWYG editor with CKEditor.
+                    </p>
                     <CKEditor
                       editor={ClassicEditor}
                       data="<p>Hello from CKEditor 5!</p>"
                       onReady={editor => {
-                        // You can store the "editor" and use when it is needed.
                         console.log('Editor is ready to use!', editor);
                       }}
-                      onChange={(event, editor) => {
-                        const data = editor.getData();
-                      }}
+                      onChange={handleCkeditorChange}
                     />
-                  </Form>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
+                    {formik.touched.aboutus && formik.errors.aboutus ? (
+                      <div className="text-danger">{formik.errors.aboutus}</div>
+                    ) : null}
+                  </CardBody>
+                </Card>
+              </Col>
+            </Row>
+
+            <Button type="submit" color="primary">Submit</Button>
+          </Form>
         </Container>
       </div>
     </React.Fragment>
   );
 };
 
-export default FormEditors;
+export default AboutUs;

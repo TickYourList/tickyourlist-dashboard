@@ -15,6 +15,8 @@ export const DELETE_ALL_CAR_MODEL = "/v1/carmodel/delete/all";
 export const GET_CAR_VARIANTS_FROM_CAR_MODEL = "v1/carvariant/from/carmodel";
 
 export const GET_CAR_VARIANTS = "v1/carvariant/get/submitted/all";
+export const GET_CAR_VARIANT_PRICINGS = "v1/carvariantpricing/get/variant";
+export const DELETE_CAR_VARIANT_PRICINGS = "v1/carvariantpricing/deleteAll";
 export const ADD_CAR_VARIANT = "/v1/carvariant/add/carmodel";
 export const UPDATE_CAR_VARIANT = "/v1/carvariant/update";
 export const DELETE_CAR_VARIANT = "/v1/carvariant/delete";

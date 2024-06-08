@@ -52,6 +52,7 @@ import CarVariantModel from "./CarVariantModel";
 import { addNewCarVariant, addVariantData, deleteAllCarVariants, deleteCarVariant, getCarVariants, updateCarVariant } from "store/automobiles/carVariants/actions";
 import CarVariantDetail from "./CarVariantDetail";
 import CarVariantPricingModal from "./CarVariantPricingModal";
+import CarVariantPricingViewModal from "./CarVariantPricingViewModal";
 
 // Function to generate dynamic data fields array
 const generateDataFields = (numOthersFields = 2) => {
@@ -91,16 +92,19 @@ function CarVariants() {
   const [nestedModal, setNestedModal] = useState(false);
   const [modal1, setModal1] = useState(false);
   const [variantPricingModal, setVariantPricingModal] = useState(false);
+  const [variantPricingViewModal, setVariantPricingViewModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [carVariantsList, setcarVariantsList] = useState([]);
   const [carVariant, setcarVariant] = useState(null);
   const [carVariantData, setcarVariantData] = useState({});
+  // const [carVariantTableData, setcarVariantTableData] = useState([]);
   const [deleteModal, setDeleteModal] = useState(false);
   const [variantImage, setvariantImage] = useState(null);
   const dispatch = useDispatch();
   const history = useNavigate();
   const toggleViewModal = () => setModal1(!modal1);
   const toggleVariantPricingModal = () => setVariantPricingModal(!variantPricingModal);
+  const toggleVariantPricingViewModal = () => setVariantPricingViewModal(!variantPricingViewModal);
 
   const { carBrands, countries, carModels, carVariants } = useSelector(state => ({
     carBrands: state.CarBrand.carBrands,
@@ -322,17 +326,30 @@ function CarVariants() {
         disableFilters: true,
         Cell: (cellProps) => {
           return (
+            <>
             <Button
               type="button"
               color="primary"
-              className="btn-sm btn-rounded"
+              className="btn-sm btn-rounded me-2"
               onClick={e => {
                 toggleVariantPricingModal();
                 setcarVariantData(cellProps.row.original);
               }}
             >
-              Connect/View Variant Pricing
-            </Button>);
+              Connect Pricing
+            </Button>
+            <Button
+              type="button"
+              color="primary"
+              className="btn-sm btn-rounded"
+              onClick={e => {
+                toggleVariantPricingViewModal();
+                setcarVariantData(cellProps.row.original);
+              }}
+            >
+              View List
+            </Button>
+            </>);
         }
       },
       {
@@ -381,6 +398,12 @@ function CarVariants() {
         Data={carVariantData}
         handleDownloadTemplateForVariantPricing={handleDownloadTemplateForVariantPricing}
         saveVariantPricing={saveVariantPricing}
+      />
+      <CarVariantPricingViewModal
+        isOpen={variantPricingViewModal}
+        toggle={toggleVariantPricingViewModal}
+        Data={carVariantData}
+        // tableData={carVariantTableData}
       />
       <DeleteModal
         show={deleteModal}

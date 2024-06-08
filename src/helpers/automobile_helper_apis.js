@@ -55,6 +55,12 @@ const addCarModelByBrand = (id, data) => post(`${url.ADD_CAR_VARIANT_PRICING}/${
 // GET CAR CARIANTS LIST
 const getCarVariantsList = () => get(url.GET_CAR_VARIANTS);
 
+// GET CAR CARIANTS LIST
+const getCarVariantPricingList = (id) => get(`${url.GET_CAR_VARIANT_PRICINGS}/${id}`);
+
+// DELETE CAR CARIANTS LIST
+const deleteCarVariantPricingList = (id) => del(`${url.DELETE_CAR_VARIANT_PRICINGS}/${id}`);
+
 // ADD CAR VARIANT
 const addCarVariant = (id, data) => postFormData(`${url.ADD_CAR_VARIANT}/${id}`, data);
 
@@ -149,5 +155,7 @@ export {
     updateCarDealerData,
     deleteCarDealerData,
     deleteAllCarDealers,
-    addCarModelByBrand
+    addCarModelByBrand,
+    getCarVariantPricingList,
+    deleteCarVariantPricingList
 };

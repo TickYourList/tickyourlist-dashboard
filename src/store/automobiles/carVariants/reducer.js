@@ -1,9 +1,11 @@
-import { ADD_CAR_VARIANT_FAIL, ADD_CAR_VARIANT_SUCCESS, DELETE_ALL_CAR_VARIANT_SUCCESS, DELETE_CAR_VARIANT_FAIL, DELETE_CAR_VARIANT_SUCCESS, GET_CAR_VARIANTS_FAIL, GET_CAR_VARIANTS_SUCCESS, GET_COUNTRIES_LIST_SUCCESS, UPDATE_CAR_VARIANT_FAIL, UPDATE_CAR_VARIANT_SUCCESS } from "./actionTypes";
+import { ADD_CAR_VARIANT_FAIL, ADD_CAR_VARIANT_SUCCESS, DELETE_ALL_CAR_VARIANT_SUCCESS, DELETE_CAR_VARIANT_FAIL, DELETE_CAR_VARIANT_PRICING, DELETE_CAR_VARIANT_PRICING_FAIL, DELETE_CAR_VARIANT_PRICING_SUCCESS, DELETE_CAR_VARIANT_SUCCESS, GET_CAR_VARIANTS_FAIL, GET_CAR_VARIANTS_SUCCESS, GET_CAR_VARIANT_PRICING, GET_CAR_VARIANT_PRICING_FAIL, GET_CAR_VARIANT_PRICING_SUCCESS, GET_COUNTRIES_LIST_SUCCESS, UPDATE_CAR_VARIANT_FAIL, UPDATE_CAR_VARIANT_SUCCESS } from "./actionTypes";
 
 const INIT_STATE = {
     carVariants: [],
     countries: [],
     error: {},
+    carVariantPricing: [],
+    carVariantLoader: false,
 };
 
 const carVariant = (state = INIT_STATE, action) => {
@@ -66,6 +68,33 @@ const carVariant = (state = INIT_STATE, action) => {
                 ...state,
                 carVariants: []
             }
+        case GET_CAR_VARIANT_PRICING:
+            return {
+                ...state,
+                carVariantLoader: true
+            };
+        case GET_CAR_VARIANT_PRICING_SUCCESS:
+            return {
+                ...state,
+                carVariantPricing: action.payload,
+                carVariantLoader: false
+            };
+        case DELETE_CAR_VARIANT_PRICING_SUCCESS:
+            return {
+                ...state,
+                carVariantPricing: []
+            };
+        case DELETE_CAR_VARIANT_PRICING_FAIL:
+            return {
+                ...state,
+                carVariantPricing: state.carVariantPricing
+            };
+
+        case GET_CAR_VARIANT_PRICING_FAIL:
+            return {
+                ...state,
+                error: action.payload,
+            };
         case GET_COUNTRIES_LIST_SUCCESS:
             return {
                 ...state,
