@@ -551,7 +551,7 @@ export default function CarModelCollectionDetails() {
                         <img
                           style={{ maxWidth: "10vh" }}
                           src={
-                            carModel.media && carModel.media?.[0].url
+                            carModel.media && carModel.media?.[0]?.url
                               ? carModel.media?.[0]?.url
                               : "/default-image.jpg"
                           }
