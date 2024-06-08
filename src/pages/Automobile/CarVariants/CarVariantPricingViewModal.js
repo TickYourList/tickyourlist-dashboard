@@ -41,8 +41,8 @@ const CarVariantPricingViewModal = ({ isOpen, toggle, Data }) => {
   const [tableData, setTableData] = useState([]);
   const dispatch = useDispatch();
 
-  const { carVariantLoader, carVariantPricing } = useSelector(state => ({
-    carVariantLoader: state.carVariant.carVariantLoader,
+  const { carVariantPriceLoader, carVariantPricing } = useSelector(state => ({
+    carVarianPricetLoader: state.carVariant.carVariantPriceLoader,
     carVariantPricing: state.carVariant.carVariantPricing,
   }));
 
@@ -123,7 +123,6 @@ const CarVariantPricingViewModal = ({ isOpen, toggle, Data }) => {
 
   const handleDeleteModelPricing = () => {
     if(Data?._id) {
-      console.log("Data ", Data);
     dispatch(deleteCarVariantPricing(Data?._id));
     }
   };
@@ -189,13 +188,13 @@ const CarVariantPricingViewModal = ({ isOpen, toggle, Data }) => {
               </Button>
             </div>
             <div className="d-flex gap-2">
-              <Button type="button" color="primary" onClick={handleDeleteModelPricing}>
+              <Button type="button" color="danger" onClick={handleDeleteModelPricing}>
                 Delete ALL
               </Button>
             </div>
           </div>
 
-          {carVariantLoader ? (
+          {carVariantPriceLoader ? (
             <div className="page-content">
               <Spinner
                 style={{

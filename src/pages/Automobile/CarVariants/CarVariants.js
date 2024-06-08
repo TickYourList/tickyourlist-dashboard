@@ -249,8 +249,8 @@ function CarVariants() {
     XLSX.writeFile(book, `CarVariant Pricing Template.${format}`);
   };
 
-  const saveVariantPricing = (variantId, tableData) => {
-    dispatch(addVariantData(variantId, tableData))
+  const saveVariantPricing = (variantId, tableData, toggle) => {
+    dispatch(addVariantData(variantId, tableData, toggle))
   }
 
   const columns = useMemo(

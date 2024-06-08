@@ -102,9 +102,9 @@ import { ADD_ALL_VARIANT_PRICING, ADD_ALL_VARIANT_PRICING_ERROR, ADD_ALL_VARIANT
     payload: error,
   });
 
-  export const addVariantData = (id, data) => ({
+  export const addVariantData = (id, data, toggle) => ({
     type: ADD_ALL_VARIANT_PRICING,
-    payload: { id, data }
+    payload: { id, data, toggle }
   })
 
   export const addVariantDataSuccess = () => ({

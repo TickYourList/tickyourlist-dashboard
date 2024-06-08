@@ -11,10 +11,12 @@ import {
   DropdownMenu,
   DropdownItem,
   Table,
+  Spinner,
 } from "reactstrap";
 import * as XLSX from "xlsx";
 //redux
 import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 
 const CarVariantPricingModal = ({
   isOpen,
@@ -25,6 +27,10 @@ const CarVariantPricingModal = ({
 }) => {
   const [tableData, setTableData] = useState([]);
   const dispatch = useDispatch();
+
+  const { carVariantPriceSaveLoader } = useSelector(state => ({
+    carVariantPriceSaveLoader: state.carVariant.carVariantSaveLoader
+  }))
 
   useEffect(() => {
     if (Data) {
@@ -94,7 +100,7 @@ const CarVariantPricingModal = ({
         .filter(other => other.key && other.value), // Ensure there are no empty keys or values
     })); 
     // Dispatch the save action with formattedData
-    saveVariantPricing(formattedData?.[0].carVariant, formattedData);
+    saveVariantPricing(formattedData?.[0].carVariant, formattedData, toggle);
     console.log("Save model pricing data:", formattedData);
   };
 
@@ -161,8 +167,7 @@ const CarVariantPricingModal = ({
               <input type="file" accept=".xlsx, .csv" onChange={handleFileChange} className="mb-2" />
             </div>
             <div className="d-flex gap-2">
-              <Button type="button" color="primary" onClick={handleSaveModelPricing}>
-                Save
+              <Button type="button" color="primary" disabled={tableData?.length > 1} onClick={handleSaveModelPricing}> Save
               </Button>
               <Button type="button" color="primary" onClick={handleClearModelPricing}>
                 Clear

@@ -56,30 +56,31 @@ function* onDeleteAllCarVariant() {
     try {
       const response = yield call(deleteAllCarModels)
       yield put(deleteAllCarVariantsSuccess(response))
-      showToastSuccess("Variants updated successfully", "SUCCESS");
+      showToastSuccess("Variant Pricing updated successfully", "SUCCESS");
     } catch (error) {
       yield put(deleteAllCarVariantsFail(error))
-      showToastError('Sorry! Failed to delete Variants, plese try again', 'Error');
+      showToastError('Sorry! Failed to delete Variant, plese try again', 'Error');
     }
   }
 
   function* fetchModelByBrand({ payload: { id } }) {
     try {
       const response = yield call(fetchCarModelByBrand, id);
-      console.log('response ', response);
       yield put(getCountriesListSuccess(response.data.carModelsList));
     }catch(error) {
       yield put(getCountriesListError(error));
     }
   }
 
-  function* onAddAllVariantPricing({ payload: { id, data } }) {
+  function* onAddAllVariantPricing({ payload: { id, data, toggle } }) {
     try {
-      console.log('id, data ', data, id);
       const response = yield call(addCarModelByBrand, id, data);
       yield put(addVariantDataSuccess(response.data.carModelsList));
+      toggle();
+      showToastSuccess("Variant Pricing added successfully","Success");
     }catch(error) {
       yield put(addVariantDataError(error));
+      showToastError('Vsriant Pricing Failed to add, plese try again', 'Error');
     }
   }
 
@@ -95,12 +96,12 @@ function* onDeleteAllCarVariant() {
 
   function* deleteCarVariantPricing({ payload: { variantId } }) {
     try {
-      console.log("variantId ", variantId);
       const response = yield call(deleteCarVariantPricingList, variantId)
       yield put(deleteCarVariantPricingSuccess())
+      showToastSuccess("Variant pricing deleted successfully", "SUCCESS");
     } catch (error) {
       yield put(deleteCarVariantPricingFail(error))
-      showToastError('Sorry! Failed to Fetch Variant Pricing, plese try again', 'Error');
+      showToastError('Vsriant Pricing Failed to delete, plese try again', 'Error');
     }
   }
  
