@@ -30,7 +30,7 @@ function* onAddCarModel({ payload: {id , data } }) {
 function* onUpdateCarModel({ payload: { carModelId, id, data } }) {
   try {
     const response = yield call(updateCarModelData, carModelId, id, data )
-    yield put(updateCarModelSuccess(id))
+    yield put(updateCarModelSuccess(carModelId, response.data))
     showToastSuccess("Car Model Updated Successfully.","Success");
   } catch (error) {
     yield put(updateCarModelFail(error))

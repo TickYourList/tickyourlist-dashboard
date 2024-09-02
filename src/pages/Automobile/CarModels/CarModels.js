@@ -209,6 +209,7 @@ function CarModels() {
     if (!isEmpty(carModels) && isEdit) {
       setCarModelsList(carModels);
       setIsEdit(false);
+      setModal(false);
     }
   }, [carModels]);
   

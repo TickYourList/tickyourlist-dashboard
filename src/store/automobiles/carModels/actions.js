@@ -34,9 +34,9 @@ import { ADD_CAR_MODEL_FAIL, ADD_CAR_MODEL_SUCCESS, ADD_NEW_CAR_MODEL, DELETE_AL
     payload: { carModelId, id, data },
   });
   
-  export const updateCarModelSuccess = id => ({
+  export const updateCarModelSuccess = (id, data) => ({
     type: UPDATE_CAR_MODEL_SUCCESS,
-    payload: id,
+    payload: { id, data },
   });
   
   export const updateCarModelFail = error => ({

@@ -34,11 +34,12 @@ const carModel = (state = INIT_STATE, action) => {
             };
 
         case UPDATE_CAR_MODEL_SUCCESS:
+            console.log("action.apyload ", action.payload);
             return {
                 ...state,
                 carModels: state.carModels.map(carModel =>
-                    carModel.id.toString() === action.payload.id.toString()
-                        ? { carModel, ...action.payload }
+                    carModel._id.toString() === action.payload.id.toString()
+                        ? { carModel, ...action.payload.data }
                         : event
                 ),
             };
