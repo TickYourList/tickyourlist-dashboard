@@ -150,6 +150,7 @@ import Investors from "pages/Settings/investors";
 import Faqs from "pages/Settings/faqs";
 import Contactus from "pages/Settings/contactus";
 import AdvertiseWithUs from "pages/Settings/AdvertiseWithUs";
+import Banner from "pages/Automobile/Banner/Banner";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 
 const authProtectedRoutes = [
@@ -178,6 +179,8 @@ const authProtectedRoutes = [
 
   { path: "/car-brands", component: <CarBrands /> },
 
+  { path: "/banner", component: <Banner /> },
+
   { path: "/car-models", component: <CarModels /> },
 
   { path: "/car-variants", component: <CarVariants /> },
@@ -188,7 +191,7 @@ const authProtectedRoutes = [
 
   { path: "/car-blogs", component: <CarBlogs /> },
 
-  { path: "/car-customers", component: <CarCustomers /> },,
+  { path: "/car-customers", component: <CarCustomers /> },
 
   { path: "/car-dealers", component: <CarDealers /> },
 

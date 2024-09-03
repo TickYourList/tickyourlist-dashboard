@@ -1,3 +1,6 @@
+export const GET_CAR_BANNER_IMAGE = "v1/carbanner/get/banner";
+export const ADD_CAR_BANNER_IMAGE = 'v1/carbanner/post/banner';
+
 export const GET_CAR_DASHBOARD_ACTIVITY = "v1/cardashboard/get/dashboard/total-list";
 export const GET_CAR_TOP_SEARCH_ACTIVITY = "v1/carcustomer/get/customers/top-cars-list";
 

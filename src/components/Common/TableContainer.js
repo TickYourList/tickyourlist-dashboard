@@ -93,6 +93,7 @@ const TableContainer = ({
   isAddcarVariantOptions,
   handleAddcarVariantClicks,
   handlecarVariantDeleteClicks,
+  handleCarCustomerExportClicks,
   handleCarCustomerDeleteClicks,
   handleUserClick,
   handleCustomerClick,
@@ -266,6 +267,17 @@ const TableContainer = ({
         {isAddCarCustomerOptions && (
           <Col sm="7" className="d-flex justify-content-end">
             {/* <div className="text-sm-end"> */}
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="success"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleCarCustomerExportClicks}
+              >
+                <i className="mdi mdi-plus me-1" />
+                Export Customers
+              </Button>
+            </div>
             <div className="text-sm-end">
               <Button
                 type="button"

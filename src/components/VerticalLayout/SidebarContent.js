@@ -256,6 +256,11 @@ const SidebarContent = props => {
               </Link>
               <ul className="sub-menu">
               <li>
+                  <Link to="/banner">
+                    {props.t("Banner")}
+                  </Link>
+                </li>
+              <li>
                   <Link to="/automobile-collections">
                     {props.t("Collections")}
                   </Link>
@@ -304,7 +309,12 @@ const SidebarContent = props => {
                 <span>{props.t("Settings")}</span>
               </Link>
               <ul className="sub-menu">
-              <li>
+              {/* <li>
+                  <Link to="/banner">
+                    {props.t("Banner")}
+                  </Link>
+                </li> */}
+              {/* <li>
                   <Link to="/about">
                     {props.t("About")}
                   </Link>
@@ -349,7 +359,7 @@ const SidebarContent = props => {
                   <Link to="/advertisewithus">
                     {props.t("Advertise with Us")}
                   </Link>
-                </li>
+                </li> */}
               </ul>
             </li>
 

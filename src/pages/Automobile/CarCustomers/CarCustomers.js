@@ -24,6 +24,7 @@ import {
 }
   from "./CarCustomersCol";
 import * as Yup from "yup";
+import * as XLSX from "xlsx";
 
 //redux
 import { useSelector, useDispatch } from "react-redux";
@@ -225,6 +226,41 @@ function CarCustomers() {
     setDeleteModal(true);
   }
 
+  const handleCarCustomerExportClicks = () => {
+    if (carCustomersList.length === 0) {
+      setToastDetails({ title: "No Data", message: "No car customer data to export" });
+      setToast(true);
+      return;
+    }
+  
+    // Prepare data for Excel
+    const data = carCustomersList.map(customer => ({
+      "Customer ID": customer._id,
+      "Customer Name": customer.username,
+      "Phone Number": customer.phone,
+      "City": customer?.city,
+      "Buying Period": customer?.buyingPeriod,
+      "Usage": customer?.usage,
+      "Car Brand": customer.carBrand ? customer.carBrand.brandName : '',
+      "Car Model": customer.carModel ? customer.carModel.modelName : '',
+      "Car Variant": customer?.carVariant?.name ?? '',
+      "Joining Date": customer.joiningDate
+    }));
+  
+    // Convert JSON to Worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+  
+    // Create a new Workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Car Customers");
+  
+    // Export to Excel file
+    XLSX.writeFile(workbook, "car_customers.xlsx");
+  
+    setToastDetails({ title: "Export Successful", message: "Car customer data has been exported successfully" });
+    setToast(true);
+  };
+
   const columns = useMemo(
     () => [
 
@@ -351,6 +387,7 @@ function CarCustomers() {
                     isAddCarCustomerOptions={true}
                     isEventAddButtonOptions={true}
                     handleCarCustomerDeleteClicks={handleCarCustomerDeleteClicks}
+                    handleCarCustomerExportClicks={handleCarCustomerExportClicks}
                     customPageSize={10}
                   />
                 </CardBody>
