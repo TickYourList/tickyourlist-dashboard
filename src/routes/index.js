@@ -154,7 +154,7 @@ import Banner from "pages/Automobile/Banner/Banner";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 
 const authProtectedRoutes = [
-  { path: "/dashboard", component: <Dashboard /> },
+  { path: "/dashboard", component: <AutomobileDashboard /> },
   { path: "/automobile-dashboard", component: <AutomobileDashboard /> },
 
   // domain
