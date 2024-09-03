@@ -2,10 +2,9 @@ import { takeEvery, put, call } from "redux-saga/effects"
 
 // Calender Redux States
 import { ADD_NEW_CAR_BANNER, GET_CAR_BANNER } from "./actionTypes"
-import { addCarBlogFail } from "./actions"
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
-import { addCarBannerSuccess, getCarBannerFail, getCarBannerSuccess } from "./action"
 import { addCarBannerImage, getCarBannerImage } from "helpers/automobile_helper_apis"
+import { addCarBannerFail, addCarBannerSuccess } from "./action"
 
 
 function* fetchCarBanner() {
@@ -20,17 +19,17 @@ function* fetchCarBanner() {
 function* onAddCarBanner({ payload: data }) {
   try {
     const response = yield call(addCarBannerImage, data)
-    yield put(addCarBlogSuccess(response.data))
+    yield put(addCarBannerSuccess(response.data))
     showToastSuccess("Blog is created Successfully","Success");
   } catch (error) {
-    yield put(addCarBlogFail(error))
+    yield put(addCarBannerFail(error))
     showToastError("Blog Failed to create","Error");
   }
 }
 
-function* carBlogSaga() {
+function* CarBannerSaga() {
   yield takeEvery(GET_CAR_BANNER, fetchCarBanner);
   yield takeEvery(ADD_NEW_CAR_BANNER, onAddCarBanner);
 }
 
-export default carBlogSaga;
+export default CarBannerSaga;

@@ -66,6 +66,7 @@ import CarBlog from "./automobiles/carBlogs/reducer";
 import CarCustomer from "./automobiles/carCustomers/reducer";
 import CarDealer from "./automobiles/carDealers/reducer";
 import Testimonial from "./testimonials/reducer";
+import CarBanner from "./automobiles/carBanners/reducer";
 
 const rootReducer = combineReducers({
   // public
@@ -91,6 +92,7 @@ const rootReducer = combineReducers({
   DashboardBlog,
   DashboardJob,
   domain,
+  CarBanner,
   CarBrand,
   CarModel,
   carVariant,

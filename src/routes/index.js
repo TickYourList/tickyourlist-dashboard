@@ -30,11 +30,7 @@ import ConfirmMail from "../pages/AuthenticationInner/page-confirm-mail";
 import TwostepVerification from "../pages/AuthenticationInner/auth-two-step-verification";
 
 // Dashboard
-import Dashboard from "../pages/Dashboard/index";
-import DashboardSaas from "../pages/Dashboard-saas/index";
-import DashboardCrypto from "../pages/Dashboard-crypto/index";
 import Blog from "../pages/Dashboard-Blog/index";
-import DashboardJob from "../pages/DashboardJob/index";
 
 // Charts
 import ChartApex from "../pages/Charts/Apexcharts";

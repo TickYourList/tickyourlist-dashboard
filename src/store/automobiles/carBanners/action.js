@@ -14,7 +14,7 @@ import { ADD_CAR_BANNER_FAIL, ADD_CAR_BANNER_SUCCESS, ADD_NEW_CAR_BANNER, GET_CA
     payload: error,
   });
   
-  export const addNewCarBannner = data => ({
+  export const addNewCarBanner = data => ({
     type: ADD_NEW_CAR_BANNER,
     payload: data,
   });

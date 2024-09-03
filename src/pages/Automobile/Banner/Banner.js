@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Button, Form, FormGroup, Label, Input } from "reactstrap";
+import { addNewCarBanner } from "store/automobiles/carBanners/action";
 
 function Banner() {
     document.title = "Banner | Scrollit";
@@ -8,6 +9,8 @@ function Banner() {
 
     const [selectedImage, setSelectedImage] = useState(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
+    const [bannerName, setBannerName] = useState("");
+    const [description, setDescription] = useState("");
 
     // Handle image selection
     const handleImageChange = (e) => {
@@ -26,31 +29,16 @@ function Banner() {
 
     // Handle save button click (upload image)
     const handleSave = () => {
-        if (selectedImage) {
-            // You can add your image upload logic here
-            // For example, using FormData to send the image to your server
-
+        if (selectedImage && bannerName && description) {
             const formData = new FormData();
             formData.append("bannerImage", selectedImage);
+            formData.append("bannerName", bannerName);
+            formData.append("description", description);
 
-            dispatch(setBannerImage(formData));
-
-            // Example POST request using fetch
-            fetch("/api/upload-banner", {
-                method: "POST",
-                body: formData,
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    console.log("Success:", data);
-                    alert("Image uploaded successfully!");
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                    alert("Image upload failed.");
-                });
+            // Dispatch the action to add a new car banner
+            dispatch(addNewCarBanner(formData));
         } else {
-            alert("Please select an image first.");
+            alert("Please fill in all fields and select an image.");
         }
     };
 
@@ -60,6 +48,32 @@ function Banner() {
                 <h2>Upload Banner Image</h2>
                 <Form>
                     <FormGroup>
+                        <Label for="bannerName">Banner Name</Label>
+                        <Input
+                            type="text"
+                            name="bannerName"
+                            id="bannerName"
+                            value={bannerName}
+                            onChange={(e) => setBannerName(e.target.value)}
+                            placeholder="Enter banner name"
+                            required
+                        />
+                    </FormGroup>
+
+                    <FormGroup>
+                        <Label for="description">Description</Label>
+                        <Input
+                            type="textarea"
+                            name="description"
+                            id="description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Enter description"
+                            required
+                        />
+                    </FormGroup>
+
+                    <FormGroup>
                         <Label for="bannerImage">Select Image</Label>
                         <Input
                             type="file"
@@ -67,8 +81,10 @@ function Banner() {
                             id="bannerImage"
                             accept="image/*"
                             onChange={handleImageChange}
+                            required
                         />
                     </FormGroup>
+
                     <Button color="primary" onClick={handleSave} style={{ marginTop: '20px', display: 'flex', justifyContent: 'end' }}>
                         Save
                     </Button>
