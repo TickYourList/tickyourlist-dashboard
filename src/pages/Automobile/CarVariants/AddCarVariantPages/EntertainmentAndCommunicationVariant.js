@@ -27,21 +27,21 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
         enableReinitialize: true,
 
         initialValues: {
-            radio: carVariant?.entertainmentAndCommunication?.radio || false,
-            speakerFront: carVariant?.entertainmentAndCommunication?.speakerFront || false,
-            speakerRear: carVariant?.entertainmentAndCommunication?.speakerRear || false,
-            integrated2DINAudio: carVariant?.entertainmentAndCommunication?.integrated2DINAudio || false,
-            wirelessPhoneCharging: carVariant?.entertainmentAndCommunication?.wirelessPhoneCharging || false,
-            bluetoothConnectivity: carVariant?.entertainmentAndCommunication?.bluetoothConnectivity || false,
-            wifiConnectivity: carVariant?.entertainmentAndCommunication?.wifiConnectivity || false,
-            touchScreen: carVariant?.entertainmentAndCommunication?.touchScreen || false,
+            radio: carVariant?.entertainmentAndCommunication?.radio ? "Y" : "N",
+            speakerFront: carVariant?.entertainmentAndCommunication?.speakerFront ? "Y" : "N",
+            speakerRear: carVariant?.entertainmentAndCommunication?.speakerRear ? "Y" : "N",
+            integrated2DINAudio: carVariant?.entertainmentAndCommunication?.integrated2DINAudio ? "Y" : "N",
+            wirelessPhoneCharging: carVariant?.entertainmentAndCommunication?.wirelessPhoneCharging ? "Y" : "N",
+            bluetoothConnectivity: carVariant?.entertainmentAndCommunication?.bluetoothConnectivity ? "Y" : "N",
+            wifiConnectivity: carVariant?.entertainmentAndCommunication?.wifiConnectivity ? "Y" : "N",
+            touchScreen: carVariant?.entertainmentAndCommunication?.touchScreen ? "Y" : "N",
             touchScreenSize: carVariant?.entertainmentAndCommunication?.touchScreenSize || "",
             connectivity: carVariant?.entertainmentAndCommunication?.connectivity || "",
-            androidAuto: carVariant?.entertainmentAndCommunication?.androidAuto || false,
-            appleCarPlay: carVariant?.entertainmentAndCommunication?.appleCarPlay || false,
+            androidAuto: carVariant?.entertainmentAndCommunication?.androidAuto ? "Y" : "N",
+            appleCarPlay: carVariant?.entertainmentAndCommunication?.appleCarPlay ? "Y" : "N",
             noOfSpeakers: carVariant?.entertainmentAndCommunication?.noOfSpeakers || "",
             additionalFeatures: carVariant?.entertainmentAndCommunication?.additionalFeatures || "",
-            usbPorts: carVariant?.entertainmentAndCommunication?.usbPorts || false,
+            usbPorts: carVariant?.entertainmentAndCommunication?.usbPorts ? "Y" : "N",
             inbuiltApps: carVariant?.entertainmentAndCommunication?.inbuiltApps || "",
             tweeter: carVariant?.entertainmentAndCommunication?.tweeter || "",
             rearTouchScreenSize: carVariant?.entertainmentAndCommunication?.rearTouchScreenSize || "",
@@ -51,29 +51,16 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
             
         }),
         onSubmit: values => {
-            // console.log("entertainment values ", values);
-            console.log("values" , values);
-            onFormSubmit('entertainmentAndCommunication', values, '10');
-            // if (isEdit) {
-            //     const updCarModel = new FormData();
-            //     updCarModel.append("modelName", values["modelName"]);
-            //     updCarModel.append("description", values["description"]);
-            //     updCarModel.append("year", values["year"]);
-            //     updCarModel.append("status", values["status"] === 'Active' ? true : false);
-            //     updCarModel.append("image", modelImage ? modelImage : "broken!");
-            //     dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
+            const convertedValues = Object.keys(values).reduce((acc, key) => {
+                if (values[key] === "Y" || values[key] === "N") {
+                    acc[key] = values[key] === "Y";
+                } else {
+                    acc[key] = values[key];
+                }
+                return acc;
+            }, {});
 
-            //     validation.resetForm();
-            // } else {
-            //     const newCarModel = new FormData();
-            //     newCarModel.append("modelName", values["modelName"]);
-            //     newCarModel.append("description", values["description"]);
-            //     newCarModel.append("year", values["year"]);
-            //     newCarModel.append("status", values["status"] === 'Active' ? true : false);
-            //     newCarModel.append("image", modelImage ? modelImage : "broken!");
-            //     dispatch(addNewCarModel(values['carBrand'], newCarModel));
-            //     validation.resetForm();
-            // }
+            onFormSubmit('entertainmentAndCommunication', convertedValues, '10');
         },
         handleError: e => { },
     });
@@ -92,249 +79,75 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
         }
     }, [dispatch]);
 
+    const renderDropdown = (fieldName, label) => (
+        <Col lg="3">
+            <FormGroup className="mb-4" row>
+                <Label
+                    htmlFor={fieldName}
+                    className="col-form-label"
+                >
+                    {label}
+                </Label>
+                <Col>
+                    <Input
+                        type="select"
+                        className="form-control"
+                        name={fieldName}
+                        id={fieldName}
+                        onChange={validation.handleChange}
+                        onBlur={validation.handleBlur}
+                        value={validation.values[fieldName]}
+                    >
+                        <option value="Y">Y</option>
+                        <option value="N">N</option>
+                    </Input>
+                </Col>
+            </FormGroup>
+        </Col>
+    );
+
     return (
         <React.Fragment>
-             <div>
-                <CardTitle>Entertainment And Communication</CardTitle>
+            <div className="p-4">
+                <CardTitle className="h4">Entertainment And Communication</CardTitle>
                 <p className="card-title-desc">
                     Fill all information below
                 </p>
-                <Form onSubmit={validation.handleSubmit}>
-
+                <Form
+                    className="needs-validation"
+                    onSubmit={e => {
+                        e.preventDefault();
+                        validation.handleSubmit();
+                        return false;
+                    }}
+                >
                     <Row>
-                    <Col lg="3">
+                        {renderDropdown("radio", "Radio")}
+                        {renderDropdown("speakerFront", "Speaker Front")}
+                        {renderDropdown("speakerRear", "Speaker Rear")}
+                        {renderDropdown("integrated2DINAudio", "Integrated 2DIN Audio")}
+                    </Row>
+                    <Row>
+                        {renderDropdown("wirelessPhoneCharging", "Wireless Phone Charging")}
+                        {renderDropdown("bluetoothConnectivity", "Bluetooth Connectivity")}
+                        {renderDropdown("wifiConnectivity", "Wifi Connectivity")}
+                        {renderDropdown("touchScreen", "Touch Screen")}
+                    </Row>
+                    <Row>
+                        {renderDropdown("androidAuto", "Android Auto")}
+                        {renderDropdown("appleCarPlay", "Apple Car Play")}
+                        {renderDropdown("usbPorts", "Usb Ports")}
+                    </Row>
                     <FormGroup className="mb-4" row>
-                    <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="radio"
-                                {...validation.getFieldProps('radio')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="radio"
-                            >
-                                Radio
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="speakerFront"
-                                {...validation.getFieldProps('speakerFront')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="speakerFront"
-                            >
-                                Speaker Front
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="speakerRear"
-                                {...validation.getFieldProps('speakerRear')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="speakerRear"
-                            >
-                                Speaker Rear
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="integrated2DINAudio"
-                                {...validation.getFieldProps('integrated2DINAudio')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="integrated2DINAudio"
-                            >
-                                Integrated 2DIN Audio
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-                        </Row>
-                        
-                        <Row>
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="wirelessPhoneCharging"
-                                {...validation.getFieldProps('wirelessPhoneCharging')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="wirelessPhoneCharging"
-                            >
-                                Wireless Phone Charging
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="bluetoothConnectivity"
-                                {...validation.getFieldProps('bluetoothConnectivity')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="bluetoothConnectivity"
-                            >
-                                Bluetooth Connectivity
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="wifiConnectivity"
-                                {...validation.getFieldProps('wifiConnectivity')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="wifiConnectivity"
-                            >
-                                Wifi Connectivity
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="touchScreen"
-                                {...validation.getFieldProps('touchScreen')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="touchScreen"
-                            >
-                                Touch Screen
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-                        </Row>
-
-                        <Row>
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="androidAuto"
-                                {...validation.getFieldProps('androidAuto')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="androidAuto"
-                            >
-                               Android Auto
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="appleCarPlay"
-                                {...validation.getFieldProps('appleCarPlay')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="appleCarPlay"
-                            >
-                                Apple Car Play
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-
-                        <Col lg="3">
-                        <FormGroup className="mb-4" row>
-                        <div className="form-check form-check-end">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="usbPorts"
-                                {...validation.getFieldProps('usbPorts')}
-                            />
-                            <label
-                                className="form-check-label"
-                                htmlFor="usbPorts"
-                            >
-                                Usb Ports
-                            </label>
-
-                        </div>
-                        </FormGroup>
-                        </Col>
-
-                        <FormGroup className="mb-4" row>
-                            <Label
-                                htmlFor="touchScreenSize"
-                                md="2"
-                                className="col-form-label"
-                            >
-                             Touch Screen Size
-                            </Label>
-                            <Col md="10">
-                                <Input
+                        <Label
+                            htmlFor="touchScreenSize"
+                            md="2"
+                            className="col-form-label"
+                        >
+                            Touch Screen Size
+                        </Label>
+                        <Col md="10">
+                            <Input
                                 type="text"
                                 className="form-control"
                                 name="touchScreenSize"
@@ -344,19 +157,18 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
                                 onBlur={validation.handleBlur}
                                 value={validation.values.touchScreenSize}
                             />
-                            </Col>
-                        </FormGroup>
-
-                        <FormGroup className="mb-4" row>
-                            <Label
-                                htmlFor="connectivity"
-                                md="2"
-                                className="col-form-label"
-                            >
-                             Connectivity
-                            </Label>
-                            <Col md="10">
-                                <Input
+                        </Col>
+                    </FormGroup>
+                    <FormGroup className="mb-4" row>
+                        <Label
+                            htmlFor="connectivity"
+                            md="2"
+                            className="col-form-label"
+                        >
+                            Connectivity
+                        </Label>
+                        <Col md="10">
+                            <Input
                                 type="text"
                                 className="form-control"
                                 name="connectivity"
@@ -366,19 +178,18 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
                                 onBlur={validation.handleBlur}
                                 value={validation.values.connectivity}
                             />
-                            </Col>
-                        </FormGroup>
-
-                        <FormGroup className="mb-4" row>
-                            <Label
-                                htmlFor="noOfSpeakers"
-                                md="2"
-                                className="col-form-label"
-                            >
-                             No of Speakers
-                            </Label>
-                            <Col md="10">
-                                <Input
+                        </Col>
+                    </FormGroup>
+                    <FormGroup className="mb-4" row>
+                        <Label
+                            htmlFor="noOfSpeakers"
+                            md="2"
+                            className="col-form-label"
+                        >
+                            No of Speakers
+                        </Label>
+                        <Col md="10">
+                            <Input
                                 type="text"
                                 className="form-control"
                                 name="noOfSpeakers"
@@ -388,10 +199,9 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
                                 onBlur={validation.handleBlur}
                                 value={validation.values.noOfSpeakers}
                             />
-                            </Col>
-                        </FormGroup>
-
-                        <FormGroup className="mb-4" row>
+                        </Col>
+                    </FormGroup>
+                    <FormGroup className="mb-4" row>
                         <Label
                             htmlFor="additionFeatures"
                             md="2"
@@ -412,17 +222,16 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
                             ></textarea>
                         </Col>
                     </FormGroup>
-
                     <FormGroup className="mb-4" row>
-                            <Label
-                                htmlFor="inbuiltApps"
-                                md="2"
-                                className="col-form-label"
-                            >
-                             Inbuilt Apps
-                            </Label>
-                            <Col md="10">
-                                <Input
+                        <Label
+                            htmlFor="inbuiltApps"
+                            md="2"
+                            className="col-form-label"
+                        >
+                            Inbuilt Apps
+                        </Label>
+                        <Col md="10">
+                            <Input
                                 type="text"
                                 className="form-control"
                                 name="inbuiltApps"
@@ -432,19 +241,18 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
                                 onBlur={validation.handleBlur}
                                 value={validation.values.inbuiltApps}
                             />
-                            </Col>
-                        </FormGroup>  
-
-                         <FormGroup className="mb-4" row>
-                            <Label
-                                htmlFor="tweeter"
-                                md="2"
-                                className="col-form-label"
-                            >
-                             Tweeter
-                            </Label>
-                            <Col md="10">
-                                <Input
+                        </Col>
+                    </FormGroup>  
+                    <FormGroup className="mb-4" row>
+                        <Label
+                            htmlFor="tweeter"
+                            md="2"
+                            className="col-form-label"
+                        >
+                            Tweeter
+                        </Label>
+                        <Col md="10">
+                            <Input
                                 type="text"
                                 className="form-control"
                                 name="tweeter"
@@ -454,41 +262,39 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
                                 onBlur={validation.handleBlur}
                                 value={validation.values.tweeter}
                             />
-                            </Col>
-                        </FormGroup> 
-
-                         <FormGroup className="mb-4" row>
-                            <Label
-                                htmlFor="subWoofer"
-                                md="2"
-                                className="col-form-label"
-                            >
-                             SubWoofer
-                            </Label>
-                            <Col md="10">
-                                <Input
+                        </Col>
+                    </FormGroup> 
+                    <FormGroup className="mb-4" row>
+                        <Label
+                            htmlFor="subWoofer"
+                            md="2"
+                            className="col-form-label"
+                        >
+                            SubWoofer
+                        </Label>
+                        <Col md="10">
+                            <Input
                                 type="text"
                                 className="form-control"
                                 name="subWoofer"
                                 id="subWoofer"
-                                placeholder="Enter the SUb Wooler"
+                                placeholder="Enter the Sub Woofer"
                                 onChange={validation.handleChange}
                                 onBlur={validation.handleBlur}
                                 value={validation.values.subWoofer}
                             />
-                            </Col>
-                        </FormGroup>      
-
-                        <FormGroup className="mb-4" row>
-                            <Label
-                                htmlFor="rearTouchScreenSize"
-                                md="2"
-                                className="col-form-label"
-                            >
-                             Rear Touch Screen Size
-                            </Label>
-                            <Col md="10">
-                                <Input
+                        </Col>
+                    </FormGroup>      
+                    <FormGroup className="mb-4" row>
+                        <Label
+                            htmlFor="rearTouchScreenSize"
+                            md="2"
+                            className="col-form-label"
+                        >
+                            Rear Touch Screen Size
+                        </Label>
+                        <Col md="10">
+                            <Input
                                 type="text"
                                 className="form-control"
                                 name="rearTouchScreenSize"
@@ -498,18 +304,11 @@ const EntertainmentAndCommunicationVariant = ({ carVariant, onFormSubmit }) => {
                                 onBlur={validation.handleBlur}
                                 value={validation.values.rearTouchScreenSize}
                             />
-                            </Col>
-                        </FormGroup>              
-
-
-                        </Row>
-
-
-
-
+                        </Col>
+                    </FormGroup>              
                     <Button type="submit" color="primary" className={
-                            !validation.isValid ? "next disabled" : "next"
-                          }>Submit</Button>
+                        !validation.isValid ? "next disabled" : "next"
+                    }>Submit</Button>
                 </Form>
             </div>
         </React.Fragment>

@@ -137,6 +137,7 @@ const AddCarVariant = () => {
     };
 
     const handleFormSubmit = (childKey, childData, movement) => {
+        console.log("childData ", childKey, childData);
         setFormData({
             ...formData,
             [childKey]: { ...formData[childKey], ...childData }

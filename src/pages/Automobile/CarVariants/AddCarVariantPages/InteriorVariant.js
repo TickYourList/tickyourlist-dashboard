@@ -4,10 +4,12 @@ import {
     Form,
     FormGroup,
     Label,
+    CardTitle,
     Button,
-    Input,
     Row,
+    Input
 } from "reactstrap";
+
 import { useSelector, useDispatch } from "react-redux";
 import { getCarModels } from "store/automobiles/carModels/actions";
 import { useFormik } from "formik";
@@ -21,22 +23,33 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
     const validation = useFormik({
         enableReinitialize: true,
         initialValues: {
-            tachometer: carVariant?.interior?.tachometer || false,
-            electronicutiTripmeter: carVariant?.interior?.electronicutiTripmeter || false,
-            fabricUpholestry: carVariant?.interior?.fabricUpholestry || false,
-            leatherSteeringWheel: carVariant?.interior?.leatherSteeringWheel || false,
-            gloveCompartment: carVariant?.interior?.gloveCompartment || false,
-            digitalClock: carVariant?.interior?.digitalClock || false,
-            outsideTemperatureisplay: carVariant?.interior?.outsideTemperatureisplay || false,
-            digitalOdometer: carVariant?.interior?.digitalOdometer || false,
-            dualToneDashboard: carVariant?.interior?.dualToneDashboard || false,
+            tachometer: carVariant?.interior?.tachometer ? "Y" : "N",
+            electronicutiTripmeter: carVariant?.interior?.electronicutiTripmeter ? "Y" : "N",
+            fabricUpholestry: carVariant?.interior?.fabricUpholestry ? "Y" : "N",
+            leatherSteeringWheel: carVariant?.interior?.leatherSteeringWheel ? "Y" : "N",
+            gloveCompartment: carVariant?.interior?.gloveCompartment ? "Y" : "N",
+            digitalClock: carVariant?.interior?.digitalClock ? "Y" : "N",
+            outsideTemperatureisplay: carVariant?.interior?.outsideTemperatureisplay ? "Y" : "N",
+            digitalOdometer: carVariant?.interior?.digitalOdometer ? "Y" : "N",
+            dualToneDashboard: carVariant?.interior?.dualToneDashboard ? "Y" : "N",
             additionFeatures: carVariant?.interior?.additionFeatures || "",
             digitalCluster: carVariant?.interior?.digitalCluster || "",
             digitalClusterSize: carVariant?.interior?.digitalClusterSize || 0,
             upholstery: carVariant?.interior?.upholstery || "",
         },
         onSubmit: values => {
-            onFormSubmit('interior', values, '8');
+            const convertedValues = Object.keys(values).reduce((acc, key) => {
+                if (values[key] === "Y" || values[key] === "N") {
+                    acc[key] = values[key] === "Y";
+                } else {
+                    acc[key] = values[key];
+                }
+                return acc;
+            }, {});
+
+            if (onFormSubmit) {
+                onFormSubmit('interior', convertedValues, '8');
+            }
         },
     });
 
@@ -50,175 +63,66 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
         }
     }, [dispatch, carModels]);
 
-    const handleCheckboxChange = (e) => {
-        console.log('xsdsd ')
-        const { name, checked } = e.target;
-        validation.setFieldValue(name, checked);
-    };
+    const renderDropdown = (fieldName, label) => (
+        <Col lg="3">
+            <FormGroup className="mb-4" row>
+                <Label
+                    htmlFor={fieldName}
+                    className="col-form-label"
+                >
+                    {label}
+                </Label>
+                <Col>
+                    <Input
+                        type="select"
+                        className="form-control"
+                        name={fieldName}
+                        id={fieldName}
+                        onChange={validation.handleChange}
+                        onBlur={validation.handleBlur}
+                        value={validation.values[fieldName]}
+                    >
+                        <option value="Y">Y</option>
+                        <option value="N">N</option>
+                    </Input>
+                </Col>
+            </FormGroup>
+        </Col>
+    );
 
     return (
         <React.Fragment>
-            <div>
-                <h4>Interior</h4>
-                <p>Fill all information below</p>
-                <Form onSubmit={validation.handleSubmit}>
+            <div className="p-4">
+                <Form
+                    className="needs-validation"
+                    onSubmit={e => {
+                        e.preventDefault();
+                        validation.handleSubmit();
+                        return false;
+                    }}
+                >
+                    <CardTitle className="h4">Interior</CardTitle>
                     <Row>
-                        <Col lg="3">
-                            <FormGroup className="mb-4">
-                                <div className="form-check">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="tachometer"
-                                        name="tachometer"
-                                        checked={validation.values.tachometer}
-                                        onChange={(e) => handleCheckboxChange(e)}
-                                    />
-                                    <Label className="form-check-label" htmlFor="tachometer">
-                                        Tachometer
-                                    </Label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4">
-                                <div className="form-check">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="electronicutiTripmeter"
-                                        name="electronicutiTripmeter"
-                                        checked={validation.values.electronicutiTripmeter}
-                                        onChange={handleCheckboxChange}
-                                    />
-                                    <Label className="form-check-label" htmlFor="electronicutiTripmeter">
-                                        Electronic Tripmeter
-                                    </Label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4">
-                                <div className="form-check">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="fabricUpholestry"
-                                        name="fabricUpholestry"
-                                        checked={validation.values.fabricUpholestry}
-                                        onChange={handleCheckboxChange}
-                                    />
-                                    <Label className="form-check-label" htmlFor="fabricUpholestry">
-                                        Fabric Upholstery
-                                    </Label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4">
-                                <div className="form-check">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="leatherSteeringWheel"
-                                        name="leatherSteeringWheel"
-                                        checked={validation.values.leatherSteeringWheel}
-                                        onChange={handleCheckboxChange}
-                                    />
-                                    <Label className="form-check-label" htmlFor="leatherSteeringWheel">
-                                        Leather Steering Wheel
-                                    </Label>
-                                </div>
-                            </FormGroup>
-                        </Col>
+                        {renderDropdown("tachometer", "Tachometer")}
+                        {renderDropdown("electronicutiTripmeter", "Electronic Tripmeter")}
+                        {renderDropdown("fabricUpholestry", "Fabric Upholstery")}
+                        {renderDropdown("leatherSteeringWheel", "Leather Steering Wheel")}
                     </Row>
                     <Row>
-                        <Col lg="3">
-                            <FormGroup className="mb-4">
-                                <div className="form-check">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="gloveCompartment"
-                                        name="gloveCompartment"
-                                        checked={validation.values.gloveCompartment}
-                                        onChange={handleCheckboxChange}
-                                    />
-                                    <Label className="form-check-label" htmlFor="gloveCompartment">
-                                        Glove Compartment
-                                    </Label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4">
-                                <div className="form-check">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="digitalClock"
-                                        name="digitalClock"
-                                        checked={validation.values.digitalClock}
-                                        onChange={handleCheckboxChange}
-                                    />
-                                    <Label className="form-check-label" htmlFor="digitalClock">
-                                        Digital Clock
-                                    </Label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4">
-                                <div className="form-check">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="outsideTemperatureisplay"
-                                        name="outsideTemperatureisplay"
-                                        checked={validation.values.outsideTemperatureisplay}
-                                        onChange={handleCheckboxChange}
-                                    />
-                                    <Label className="form-check-label" htmlFor="outsideTemperatureisplay">
-                                        Outside Temperature Display
-                                    </Label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4">
-                                <div className="form-check">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="digitalOdometer"
-                                        name="digitalOdometer"
-                                        checked={validation.values.digitalOdometer}
-                                        onChange={handleCheckboxChange}
-                                    />
-                                    <Label className="form-check-label" htmlFor="digitalOdometer">
-                                        Digital Odometer
-                                    </Label>
-                                </div>
-                            </FormGroup>
-                        </Col>
+                        {renderDropdown("gloveCompartment", "Glove Compartment")}
+                        {renderDropdown("digitalClock", "Digital Clock")}
+                        {renderDropdown("outsideTemperatureisplay", "Outside Temperature Display")}
+                        {renderDropdown("digitalOdometer", "Digital Odometer")}
                     </Row>
-                    <FormGroup className="mb-4">
-                        <div className="form-check">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="dualToneDashboard"
-                                name="dualToneDashboard"
-                                checked={validation.values.dualToneDashboard}
-                                onChange={handleCheckboxChange}
-                            />
-                            <Label className="form-check-label" htmlFor="dualToneDashboard">
-                                Dual Tone Dashboard
-                            </Label>
-                        </div>
-                    </FormGroup>
+                    <Row>
+                        {renderDropdown("dualToneDashboard", "Dual Tone Dashboard")}
+                    </Row>
                     <FormGroup className="mb-4" row>
-                        <Label htmlFor="additionFeatures" md="2" className="col-form-label">
+                        <Label
+                            htmlFor="additionFeatures"
+                            md="2"
+                            className="col-form-label"
+                        >
                             Additional Features
                         </Label>
                         <Col md="10">
@@ -235,7 +139,11 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                         </Col>
                     </FormGroup>
                     <FormGroup className="mb-4" row>
-                        <Label htmlFor="digitalCluster" md="2" className="col-form-label">
+                        <Label
+                            htmlFor="digitalCluster"
+                            md="2"
+                            className="col-form-label"
+                        >
                             Digital Cluster
                         </Label>
                         <Col md="10">
@@ -252,7 +160,11 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                         </Col>
                     </FormGroup>
                     <FormGroup className="mb-4" row>
-                        <Label htmlFor="digitalClusterSize" md="2" className="col-form-label">
+                        <Label
+                            htmlFor="digitalClusterSize"
+                            md="2"
+                            className="col-form-label"
+                        >
                             Digital Cluster Size
                         </Label>
                         <Col md="10">
@@ -269,7 +181,11 @@ const InteriorVariant = ({ carVariant, onFormSubmit }) => {
                         </Col>
                     </FormGroup>
                     <FormGroup className="mb-4" row>
-                        <Label htmlFor="upholstery" md="2" className="col-form-label">
+                        <Label
+                            htmlFor="upholstery"
+                            md="2"
+                            className="col-form-label"
+                        >
                             Upholstery
                         </Label>
                         <Col md="10">

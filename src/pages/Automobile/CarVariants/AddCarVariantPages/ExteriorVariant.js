@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect } from "react";
 import {
     Col,
     Form,
@@ -6,48 +6,49 @@ import {
     Label,
     CardTitle,
     Button,
-    Input,
     Row,
-} from "reactstrap"
-import { useSelector, useDispatch } from "react-redux"
-import { getCarModels } from "store/automobiles/carModels/actions"
-import { useFormik } from "formik"
+    Input
+} from "reactstrap";
+
+import { useSelector, useDispatch } from "react-redux";
+import { getCarModels } from "store/automobiles/carModels/actions";
+import { useFormik } from "formik";
 
 const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
+    // Meta title
+    document.title = "Add Car Variant | Scrollit";
 
-    document.title = "Add Car Variant | Scrollit"
-
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
 
     const validation = useFormik({
         enableReinitialize: true,
         initialValues: {
             bodyType: carVariant?.exterior?.bodyType || "",
             adjustableHeadlights: carVariant?.exterior?.adjustableHeadlights || "",
-            fogLightsFront: carVariant?.exterior?.fogLightsFront || false,
-            powerAdjustableExteriorRearViewMirror: carVariant?.exterior?.powerAdjustableExteriorRearViewMirror || false,
-            manuallyAdjustableExtRearViewMirror: carVariant?.exterior?.manuallyAdjustableExtRearViewMirror || false,
-            electricFoldingRearViewMirror: carVariant?.exterior?.electricFoldingRearViewMirror || false,
-            rearWindowWiper: carVariant?.exterior?.rearWindowWiper || false,
-            rearWindowWasher: carVariant?.exterior?.rearWindowWasher || false,
-            rearWindowDefogger: carVariant?.exterior?.rearWindowDefogger || false,
-            wheelCovers: carVariant?.exterior?.wheelCovers || false,
-            alloyWheels: carVariant?.exterior?.alloyWheels || false,
-            powerAntenna: carVariant?.exterior?.powerAntenna || false,
-            rearSpoiler: carVariant?.exterior?.rearSpoiler || false,
-            outsideRearViewMirrorTurnIndicators: carVariant?.exterior?.outsideRearViewMirrorTurnIndicators || false,
-            integratedAntenna: carVariant?.exterior?.integratedAntenna || false,
-            chromeGrille: carVariant?.exterior?.chromeGrille || false,
-            chromeGarnish: carVariant?.exterior?.chromeGarnish || false,
-            projectorHeadlamps: carVariant?.exterior?.projectorHeadlamps || false,
-            halogenHeadlamps: carVariant?.exterior?.halogenHeadlamps || false,
-            roofRail: carVariant?.exterior?.roofRail || false,
-            ledDrls: carVariant?.exterior?.ledDrls || false,
-            ledHeadlights: carVariant?.exterior?.ledHeadlights || false,
-            ledTaillights: carVariant?.exterior?.ledTaillights || false,
-            ledFogLamps: carVariant?.exterior?.ledFogLamps || false,
+            fogLightsFront: carVariant?.exterior?.fogLightsFront ? "Y" : "N",
+            powerAdjustableExteriorRearViewMirror: carVariant?.exterior?.powerAdjustableExteriorRearViewMirror ? "Y" : "N",
+            manuallyAdjustableExtRearViewMirror: carVariant?.exterior?.manuallyAdjustableExtRearViewMirror ? "Y" : "N",
+            electricFoldingRearViewMirror: carVariant?.exterior?.electricFoldingRearViewMirror ? "Y" : "N",
+            rearWindowWiper: carVariant?.exterior?.rearWindowWiper ? "Y" : "N",
+            rearWindowWasher: carVariant?.exterior?.rearWindowWasher ? "Y" : "N",
+            rearWindowDefogger: carVariant?.exterior?.rearWindowDefogger ? "Y" : "N",
+            wheelCovers: carVariant?.exterior?.wheelCovers ? "Y" : "N",
+            alloyWheels: carVariant?.exterior?.alloyWheels ? "Y" : "N",
+            powerAntenna: carVariant?.exterior?.powerAntenna ? "Y" : "N",
+            rearSpoiler: carVariant?.exterior?.rearSpoiler ? "Y" : "N",
+            outsideRearViewMirrorTurnIndicators: carVariant?.exterior?.outsideRearViewMirrorTurnIndicators ? "Y" : "N",
+            integratedAntenna: carVariant?.exterior?.integratedAntenna ? "Y" : "N",
+            chromeGrille: carVariant?.exterior?.chromeGrille ? "Y" : "N",
+            chromeGarnish: carVariant?.exterior?.chromeGarnish ? "Y" : "N",
+            projectorHeadlamps: carVariant?.exterior?.projectorHeadlamps ? "Y" : "N",
+            halogenHeadlamps: carVariant?.exterior?.halogenHeadlamps ? "Y" : "N",
+            roofRail: carVariant?.exterior?.roofRail ? "Y" : "N",
+            ledDrls: carVariant?.exterior?.ledDrls ? "Y" : "N",
+            ledHeadlights: carVariant?.exterior?.ledHeadlights ? "Y" : "N",
+            ledTaillights: carVariant?.exterior?.ledTaillights ? "Y" : "N",
+            ledFogLamps: carVariant?.exterior?.ledFogLamps ? "Y" : "N",
             additionalFeatures: carVariant?.exterior?.additionalFeatures || "",
-            fogLights: carVariant?.exterior?.fogLights || false,
+            fogLights: carVariant?.exterior?.fogLights ? "Y" : "N",
             antenna: carVariant?.exterior?.antenna || "",
             bootOpening: carVariant?.exterior?.bootOpening || "",
             puddleLamps: carVariant?.exterior?.puddleLamps || "",
@@ -57,479 +58,111 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
             allowWheelSize: carVariant?.exterior?.allowWheelSize || "",
         },
         onSubmit: values => {
+            const convertedValues = Object.keys(values).reduce((acc, key) => {
+                if (values[key] === "Y" || values[key] === "N") {
+                    acc[key] = values[key] === "Y";
+                } else {
+                    acc[key] = values[key];
+                }
+                return acc;
+            }, {});
+
             if (onFormSubmit) {
-                onFormSubmit('exterior', values, '9')
+                onFormSubmit('exterior', convertedValues, '9');
             }
         }
-    })
+    });
 
     const { carModels } = useSelector(state => ({
         carModels: state.CarModel.carModels
-    }))
+    }));
 
     useEffect(() => {
         if (carModels && !carModels.length) {
-            dispatch(getCarModels())
+            dispatch(getCarModels());
         }
-    }, [dispatch])
+    }, [dispatch]);
+
+    const renderDropdown = (fieldName, label) => (
+        <Col lg="3">
+            <FormGroup className="mb-4" row>
+                <Label
+                    htmlFor={fieldName}
+                    className="col-form-label"
+                >
+                    {label}
+                </Label>
+                <Col>
+                    <Input
+                        type="select"
+                        className="form-control"
+                        name={fieldName}
+                        id={fieldName}
+                        onChange={validation.handleChange}
+                        onBlur={validation.handleBlur}
+                        value={validation.values[fieldName]}
+                    >
+                        <option value="Y">Y</option>
+                        <option value="N">N</option>
+                    </Input>
+                </Col>
+            </FormGroup>
+        </Col>
+    );
 
     return (
         <React.Fragment>
-            <div>
-                <CardTitle>Exterior</CardTitle>
-                <p className="card-title-desc">Fill all information below</p>
-                <Form onSubmit={validation.handleSubmit}>
+            <div className="p-4">
+                <Form
+                    className="needs-validation"
+                    onSubmit={e => {
+                        e.preventDefault();
+                        validation.handleSubmit();
+                        return false;
+                    }}
+                >
+                    <CardTitle className="h4">Exterior</CardTitle>
                     <Row>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="fogLightsFront"
-                                        {...validation.getFieldProps('fogLightsFront')}
-                                        checked={validation.values.fogLightsFront}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="fogLightsFront"
-                                    >
-                                        Fog Light Front
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="powerAdjustableExteriorRearViewMirror"
-                                        {...validation.getFieldProps('powerAdjustableExteriorRearViewMirror')}
-                                        checked={validation.values.powerAdjustableExteriorRearViewMirror}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="powerAdjustableExteriorRearViewMirror"
-                                    >
-                                        Power Adjustable Exterior Rear View Mirror
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="manuallyAdjustableExtRearViewMirror"
-                                        {...validation.getFieldProps('manuallyAdjustableExtRearViewMirror')}
-                                        checked={validation.values.manuallyAdjustableExtRearViewMirror}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="manuallyAdjustableExtRearViewMirror"
-                                    >
-                                        Manually Adjustable Exterior Rear View Mirror
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="electricFoldingRearViewMirror"
-                                        {...validation.getFieldProps('electricFoldingRearViewMirror')}
-                                        checked={validation.values.electricFoldingRearViewMirror}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="electricFoldingRearViewMirror"
-                                    >
-                                        Electric folding Rear View Mirror
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
+                        {renderDropdown("rearWindowWiper", "Rear Window Wiper")}
+                        {renderDropdown("rearWindowWasher", "Rear Window Washer")}
+                        {renderDropdown("rearWindowDefogger", "Rear Window Defogger")}
+                        {renderDropdown("wheelCovers", "Wheel Covers")}
                     </Row>
                     <Row>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="rearWindowWiper"
-                                        {...validation.getFieldProps('rearWindowWiper')}
-                                        checked={validation.values.rearWindowWiper}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="rearWindowWiper"
-                                    >
-                                        Rear Window Wiper
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="rearWindowWasher"
-                                        {...validation.getFieldProps('rearWindowWasher')}
-                                        checked={validation.values.rearWindowWasher}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="rearWindowWasher"
-                                    >
-                                        Rear Window Washer
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="rearWindowDefogger"
-                                        {...validation.getFieldProps('rearWindowDefogger')}
-                                        checked={validation.values.rearWindowDefogger}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="rearWindowDefogger"
-                                    >
-                                        Rear Window Defogger
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="wheelCovers"
-                                        {...validation.getFieldProps('wheelCovers')}
-                                        checked={validation.values.wheelCovers}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="wheelCovers"
-                                    >
-                                        Wheel Covers
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
+                        {renderDropdown("alloyWheels", "Alloy Wheels")}
+                        {renderDropdown("powerAntenna", "Power Antenna")}
+                        {renderDropdown("rearSpoiler", "Rear Spoiler")}
+                        {renderDropdown("outsideRearViewMirrorTurnIndicators", "Outside Rear View Mirror Turn Indicators")}
                     </Row>
                     <Row>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="alloyWheels"
-                                        {...validation.getFieldProps('alloyWheels')}
-                                        checked={validation.values.alloyWheels}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="alloyWheels"
-                                    >
-                                        Alloy Wheels
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="powerAntenna"
-                                        {...validation.getFieldProps('powerAntenna')}
-                                        checked={validation.values.powerAntenna}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="powerAntenna"
-                                    >
-                                        Power Antenna
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="rearSpoiler"
-                                        {...validation.getFieldProps('rearSpoiler')}
-                                        checked={validation.values.rearSpoiler}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="rearSpoiler"
-                                    >
-                                        Rear Spoiler
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="outsideRearViewMirrorTurnIndicators"
-                                        {...validation.getFieldProps('outsideRearViewMirrorTurnIndicators')}
-                                        checked={validation.values.outsideRearViewMirrorTurnIndicators}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="outsideRearViewMirrorTurnIndicators"
-                                    >
-                                        Outside Rear View Mirror Turn Indicators
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
+                        {renderDropdown("integratedAntenna", "Integrated Antenna")}
+                        {renderDropdown("chromeGrille", "Chrome Grille")}
+                        {renderDropdown("chromeGarnish", "Chrome Garnish")}
+                        {renderDropdown("projectorHeadlamps", "Projector Headlamps")}
                     </Row>
                     <Row>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="integratedAntenna"
-                                        {...validation.getFieldProps('integratedAntenna')}
-                                        checked={validation.values.integratedAntenna}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="integratedAntenna"
-                                    >
-                                        Integrated Antenna
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="chromeGrille"
-                                        {...validation.getFieldProps('chromeGrille')}
-                                        checked={validation.values.chromeGrille}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="chromeGrille"
-                                    >
-                                        Chrome Grille
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="chromeGarnish"
-                                        {...validation.getFieldProps('chromeGarnish')}
-                                        checked={validation.values.chromeGarnish}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="chromeGarnish"
-                                    >
-                                        Chrome Garnish
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="projectorHeadlamps"
-                                        {...validation.getFieldProps('projectorHeadlamps')}
-                                        checked={validation.values.projectorHeadlamps}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="projectorHeadlamps"
-                                    >
-                                        Projector Head Lamps
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
+                        {renderDropdown("halogenHeadlamps", "Halogen Headlamps")}
+                        {renderDropdown("roofRail", "Roof Rail")}
+                        {renderDropdown("ledDrls", "LED DRLs")}
+                        {renderDropdown("ledHeadlights", "LED Headlights")}
                     </Row>
                     <Row>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="halogenHeadlamps"
-                                        {...validation.getFieldProps('halogenHeadlamps')}
-                                        checked={validation.values.halogenHeadlamps}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="halogenHeadlamps"
-                                    >
-                                        Halogen Head Lamps
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="roofRail"
-                                        {...validation.getFieldProps('roofRail')}
-                                        checked={validation.values.roofRail}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="roofRail"
-                                    >
-                                        Roof Rails
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="ledDrls"
-                                        {...validation.getFieldProps('ledDrls')}
-                                        checked={validation.values.ledDrls}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="ledDrls"
-                                    >
-                                        Led Drls
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="ledHeadlights"
-                                        {...validation.getFieldProps('ledHeadlights')}
-                                        checked={validation.values.ledHeadlights}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="ledHeadlights"
-                                    >
-                                        LED Head lights
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
+                        {renderDropdown("ledTaillights", "LED Taillights")}
+                        {renderDropdown("ledFogLamps", "LED Fog Lamps")}
+                        {renderDropdown("fogLights", "Fog Lights")}
+                        {renderDropdown("fogLightsFront", "Fog Lights Front")}
                     </Row>
-                    <Row>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="ledTaillights"
-                                        {...validation.getFieldProps('ledTaillights')}
-                                        checked={validation.values.ledTaillights}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="ledTaillights"
-                                    >
-                                        LED Tail lights
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="ledFogLamps"
-                                        {...validation.getFieldProps('ledFogLamps')}
-                                        checked={validation.values.ledFogLamps}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="ledFogLamps"
-                                    >
-                                        LED Fog Lamps
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
-                        <Col lg="3">
-                            <FormGroup className="mb-4" row>
-                                <div className="form-check form-check-end">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        id="fogLights"
-                                        {...validation.getFieldProps('fogLights')}
-                                        checked={validation.values.fogLights}
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        htmlFor="fogLights"
-                                    >
-                                        LED Fog Lights
-                                    </label>
-                                </div>
-                            </FormGroup>
-                        </Col>
+                     <Row>
+                        {renderDropdown("powerAdjustableExteriorRearViewMirror", "Power Adjustable Exterior Rear View Mirror")}
+                        {renderDropdown("manuallyAdjustableExtRearViewMirror", "Manually Adjustable Exterior Rear View Mirror")}
+                        {renderDropdown("electricFoldingRearViewMirror", "Electric Folding Rear View Mirror")}
                     </Row>
                     <FormGroup className="mb-4" row>
-                        <Label htmlFor="bodyType" md="2" className="col-form-label">
+                        <Label
+                            htmlFor="bodyType"
+                            md="2"
+                            className="col-form-label"
+                        >
                             Body Type
                         </Label>
                         <Col md="10">
@@ -564,7 +197,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             md="2"
                             className="col-form-label"
                         >
-                            Adjustable Head Lights
+                            Adjustable Headlights
                         </Label>
                         <Col md="10">
                             <Input
@@ -572,7 +205,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                                 className="form-control"
                                 name="adjustableHeadlights"
                                 id="adjustableHeadlights"
-                                placeholder="Enter your Adjustable Head Lights"
+                                placeholder="Enter your Adjustable Headlights"
                                 onChange={validation.handleChange}
                                 onBlur={validation.handleBlur}
                                 value={validation.values.adjustableHeadlights}
@@ -732,7 +365,7 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             md="2"
                             className="col-form-label"
                         >
-                            Allow Wheel Size
+                            AllowWheel Size
                         </Label>
                         <Col md="10">
                             <Input
@@ -747,13 +380,12 @@ const ExteriorVariant = ({ carVariant, onFormSubmit }) => {
                             />
                         </Col>
                     </FormGroup>
-                    <Button type="submit" color="primary">
-                        Next
-                    </Button>
+                    <Button type="submit" color="primary" className={
+                        !validation.isValid ? "next disabled" : "next"
+                    }>Next</Button>
                 </Form>
             </div>
         </React.Fragment>
-    )
+    );
 }
-
-export default ExteriorVariant
+export default ExteriorVariant;
