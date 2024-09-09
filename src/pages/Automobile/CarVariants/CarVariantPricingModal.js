@@ -167,7 +167,7 @@ const CarVariantPricingModal = ({
               <input type="file" accept=".xlsx, .csv" onChange={handleFileChange} className="mb-2" />
             </div>
             <div className="d-flex gap-2">
-              <Button type="button" color="primary" disabled={tableData?.length > 1} onClick={handleSaveModelPricing}> Save
+              <Button type="button" color="primary" disabled={tableData?.length <= 1} onClick={handleSaveModelPricing}> Save
               </Button>
               <Button type="button" color="primary" onClick={handleClearModelPricing}>
                 Clear
