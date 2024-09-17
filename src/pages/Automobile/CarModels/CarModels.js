@@ -139,45 +139,72 @@ function CarModels() {
           formData.append(`images`, file?.file);
         }
       });
-
-      values.keyFeatures.forEach(feature => {
+      // Append keyFeatures data
+      const keyFeatureImageUrls = [];
+      values.keyFeatures.forEach((feature, index) => {
         if (feature.image instanceof File) {
-          formData.append(`keyFeatureImages`, feature.image);
+          // For new image uploads, we append them all under 'keyFeatureImages'
+          formData.append('keyFeatureImages', feature.image);
+        } else if (feature.image?.url) {
+          // For existing images, push the URL into the keyFeatureImageUrls array
+          keyFeatureImageUrls.push({ url: feature.image.url, index });
         }
       });
-      formData.append('keyFeatures', JSON.stringify(values.keyFeatures.map(feature => ({
+      
+      // Append the URLs for existing images
+      formData.append('keyFeatureImageUrls', JSON.stringify(keyFeatureImageUrls));
+      
+      // Map the features and include an identifier for which image belongs to which feature
+      formData.append('keyFeatures', JSON.stringify(values.keyFeatures.map((feature, index) => ({
         ...feature,
-        image: undefined
+        imageIndex: index  // Use 'imageIndex' instead of changing the image field
       }))));
 
-      values.exterior.forEach(feature => {
+      const exteriorImageUrls = [];
+      values.exterior.forEach((feature, index) => {
         if (feature.image instanceof File) {
-          formData.append(`exteriorImages`, feature.image);
+          // Append new images to 'exteriorImages'
+          formData.append('exteriorImages', feature.image);
+        } else if (feature.image?.url) {
+          // Track existing images with their index
+          exteriorImageUrls.push({ url: feature.image, index });
         }
       });
-      formData.append('exterior', JSON.stringify(values.exterior.map(feature => ({
+      // Append the existing exterior image URLs and features
+      formData.append('exteriorImageUrls', JSON.stringify(exteriorImageUrls));
+      formData.append('exterior', JSON.stringify(values.exterior.map((feature, index) => ({
         ...feature,
-        image: undefined
+        imageIndex: index  // Maintain the index to map with image later
       }))));
 
-      values.interior.forEach(feature => {
+      // Same for interior
+      const interiorImageUrls = [];
+      values.interior.forEach((feature, index) => {
         if (feature.image instanceof File) {
-          formData.append(`interiorImages`, feature.image);
+          formData.append('interiorImages', feature.image);
+        } else if (feature.image?.url) {
+          interiorImageUrls.push({ url: feature.image, index });
         }
       });
-      formData.append('interior', JSON.stringify(values.interior.map(feature => ({
+      formData.append('interiorImageUrls', JSON.stringify(interiorImageUrls));
+      formData.append('interior', JSON.stringify(values.interior.map((feature, index) => ({
         ...feature,
-        image: undefined
+        imageIndex: index  // Maintain the index to map with image later
       }))));
 
-      values.imagesByColor.forEach(feature => {
+      // Same for imagesByColor
+      const colorImageUrls = [];
+      values.imagesByColor.forEach((feature, index) => {
         if (feature.image instanceof File) {
-          formData.append(`colorImages`, feature.image);
+          formData.append('colorImages', feature.image);
+        } else if (feature.image?.url) {
+          colorImageUrls.push({ url: feature.image, index });
         }
       });
-      formData.append('imagesByColor', JSON.stringify(values.imagesByColor.map(feature => ({
+      formData.append('colorImageUrls', JSON.stringify(colorImageUrls));
+      formData.append('imagesByColor', JSON.stringify(values.imagesByColor.map((feature, index) => ({
         ...feature,
-        image: undefined
+        imageIndex: index  // Maintain the index to map with image later
       }))));
 
       if (isEdit) {
@@ -186,7 +213,7 @@ function CarModels() {
         dispatch(addNewCarModel(values['carBrand'], formData));
       }
 
-      validation.resetForm();
+      // validation.resetForm();
     },
   });
   
@@ -303,6 +330,7 @@ function CarModels() {
   const handleAddCarModelClicks = () => {
     setCarModelsList("");
     setIsEdit(false);
+    validation.resetForm();
     toggle();
   };
 
@@ -505,7 +533,7 @@ function CarModels() {
             </FormGroup>
           </Col>
           <Col md="2" className="mt-auto mb-auto">
-            <Button color="danger" onClick={() => handleRemoveFeature(feature.id)} style={{ marginTop: '0.7rem' }}>Remove Feature</Button>
+            <Button color="danger" onClick={() => handleRemoveFeature(feature)} style={{ marginTop: '0.7rem' }}>Remove Feature</Button>
           </Col>
         </Row>
       ))}
@@ -770,8 +798,9 @@ function CarModels() {
     validation.setFieldValue('keyFeatures', updatedFeatures);
   };
 
-  const handleRemoveFeature = id => {
-    const updatedFeatures = validation.values.keyFeatures.filter(feature => feature.id !== id);
+  const handleRemoveFeature = feature => {
+    const id = feature._id;
+    const updatedFeatures = validation.values.keyFeatures.filter(feature => feature._id !== id);
     validation.setFieldValue('keyFeatures', updatedFeatures);
   };
 
