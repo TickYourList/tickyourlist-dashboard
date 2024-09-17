@@ -34,14 +34,14 @@ const carModel = (state = INIT_STATE, action) => {
             };
 
         case UPDATE_CAR_MODEL_SUCCESS:
-            console.log("action.apyload ", action.payload);
+            console.log("action.apyload ", action.payload.data, state.carModels);
             return {
                 ...state,
                 carModels: state.carModels.map(carModel =>
                     carModel._id.toString() === action.payload.id.toString()
-                        ? { carModel, ...action.payload.data }
-                        : event
-                ),
+                      ? { ...carModel, ...action.payload.data } // Spread the original carModel object and update it with new data
+                      : carModel // Return the unchanged carModel for non-matching entries
+                  ),
             };
 
         case UPDATE_CAR_MODEL_FAIL:
