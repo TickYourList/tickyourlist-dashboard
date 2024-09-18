@@ -69,7 +69,7 @@ const deleteCarVariantPricingList = (id) => del(`${url.DELETE_CAR_VARIANT_PRICIN
 const addCarVariant = (id, data) => postFormData(`${url.ADD_CAR_VARIANT}/${id}`, data);
 
 // UPDATE CAR MODEL
-const updateCarVariantData = (carModelId, userId, data) => putFormData(`${url.UPDATE_CAR_VARIANT}/${carModelId}/carbrand/${userId}`, data);
+const updateCarVariantData = (carvarianrId, carModelId, data) => putFormData(`${url.UPDATE_CAR_VARIANT}/${carvarianrId}/carmodel/${carModelId}`, data);
 
 // DELETE CAR MODEL
 const deleteCarVariantData = id => del(`${url.DELETE_CAR_VARIANT}/${id}`);

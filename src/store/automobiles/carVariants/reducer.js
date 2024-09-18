@@ -39,7 +39,7 @@ const carVariant = (state = INIT_STATE, action) => {
             return {
                 ...state,
                 carVariants: state.carVariants.map(carVariant =>
-                    carVariant.id.toString() === action.payload.id.toString()
+                    carVariant._id.toString() === action.payload._id.toString()
                         ? { carVariant, ...action.payload }
                         : carVariant
                 ),

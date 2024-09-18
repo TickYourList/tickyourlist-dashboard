@@ -29,12 +29,13 @@ function* onAddCarVariant({ payload: {id , data, history } }) {
   }
 }
 
-function* onUpdateCarVariant({ payload: { carModelId, id, data } }) {
+function* onUpdateCarVariant({ payload: { carvariantid, carModelId, data, history } }) {
   try {
-    const response = yield call(updateCarVariantData, carModelId, id, data );
-    yield put(updateCarVariantSuccess(id))
+    console.log("datatest ", data);
+    const response = yield call(updateCarVariantData, carvariantid, carModelId, data );
+    yield put(updateCarVariantSuccess(response?.data))
     showToastSuccess("Variant updated successfully", "SUCCESS");
-    history('/car-variants');
+    history('/car-variants'); 
   } catch (error) {
     yield put(updateCarVariantFail(error))
     showToastError('Sorry! Failed to Update Variant, plese try again', 'Error');

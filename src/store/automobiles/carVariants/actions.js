@@ -30,9 +30,9 @@ import { ADD_ALL_VARIANT_PRICING, ADD_ALL_VARIANT_PRICING_ERROR, ADD_ALL_VARIANT
     payload: error,
   });
   
-  export const updateCarVariant = (carModelId, id, data) => ({
+  export const updateCarVariant = (carvariantid, carModelId, data, history) => ({
     type: UPDATE_CAR_VARIANT,
-    payload: { carModelId, id, data },
+    payload: { carvariantid, carModelId, data, history },
   });
   
   export const updateCarVariantSuccess = id => ({

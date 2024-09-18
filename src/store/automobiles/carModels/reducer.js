@@ -34,7 +34,6 @@ const carModel = (state = INIT_STATE, action) => {
             };
 
         case UPDATE_CAR_MODEL_SUCCESS:
-            console.log("action.apyload ", action.payload.data, state.carModels);
             return {
                 ...state,
                 carModels: state.carModels.map(carModel =>

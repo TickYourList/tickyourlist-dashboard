@@ -67,7 +67,6 @@ const EditCarVariant = () => {
     useEffect(() => {
         const variantData = carVariants.find(variant => variant._id === _id)
         if (variantData) {
-          console.log("variantData ", variantData);
             setCarVariant(variantData)
             setFormData({
                 ...formData,
@@ -86,13 +85,56 @@ const EditCarVariant = () => {
         toggleTabVertical(activeTabVartical + 1)
     }
 
+    // Sanitize function to clean up the formData
+    const sanitizeFormData = (data) => {
+        return JSON.parse(JSON.stringify(data, (key, value) => {
+            // Remove undefined, null, and empty objects
+            if (value === undefined || value === null) {
+                return undefined;
+            } else if (typeof value === 'object' && Object.keys(value).length === 0) {
+                return undefined;
+            } else {
+                return value;
+            }
+        }));
+    };  
+
     const handleFinalFormSubmit = (childKey, childData) => {
+        // Ensure that childKey exists in formData and is an object before merging
+        const currentChildData = formData[childKey] && typeof formData[childKey] === 'object'
+            ? formData[childKey]
+            : {};
+    
+        // Merge current child data with new data
+        const updatedChildData = {
+            ...currentChildData,
+            ...childData
+        };
+    
+        // Update the formData with the new child data
         const updatedFormData = {
             ...formData,
-            [childKey]: { ...formData[childKey], ...childData }
+            [childKey]: updatedChildData
+        };
+    
+        console.log("Merged and updated formData:", updatedFormData);
+    
+        // Sanitize the updated form data
+        const sanitizedData = sanitizeFormData(updatedFormData);
+    
+        console.log("Sanitized formData:", sanitizedData);
+    
+        // If sanitized data is not empty, proceed to dispatch
+        if (Object.keys(sanitizedData).length > 0) {
+            const addVariantForm = new FormData();
+            addVariantForm.append("data", JSON.stringify(sanitizedData));
+    
+            // Dispatch with updated and sanitized data
+            dispatch(updateCarVariant(_id, sanitizedData.carModel, addVariantForm, history));
+        } else {
+            console.error("Sanitized data is empty, not dispatching.");
         }
-        dispatch(updateCarVariant(_id, updatedFormData, history))
-    }
+    };  
 
     const toggleTabVertical = (tab) => {
         if (activeTabVartical !== tab) {
