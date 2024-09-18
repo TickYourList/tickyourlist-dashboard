@@ -47,7 +47,6 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit, fuelType }) =>
             mildHybrid: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.mildHybrid) || "",
             driverType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.driverType) || "",
             cluchType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.cluchType) || "",
-            motorType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.motorType) || "",
         },
         validationSchema: Yup.object({
             // engineType: Yup.string().required(
@@ -94,6 +93,8 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit, fuelType }) =>
             // )
         }),
         onSubmit: values => {
+
+            console.log("values ", values);
             // if (isEdit) {
             //     const updCarModel = new FormData();
             //     updCarModel.append("modelName", values["modelName"]);
@@ -151,7 +152,7 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit, fuelType }) =>
                         <Col lg="6">
                             <FormGroup className="mb-4" row>
                                 <Label
-                                    htmlFor="engineType"
+                                    htmlFor="motorType"
                                     className="col-form-label"
                                 >
                                     Motor Type <span style={{ color: 'red' }}>*</span>
@@ -173,7 +174,7 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit, fuelType }) =>
                         <Col lg="6">
                             <FormGroup className="mb-4" row>
                                 <Label
-                                    htmlFor="displacement"
+                                    htmlFor="batteryType"
                                     className="col-form-label"
                                 >
                                     Battery Type <span style={{ color: 'red' }}>*</span>
@@ -352,11 +353,11 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit, fuelType }) =>
                                     className="form-control"
                                     name="fastCharging"
                                     id="fastCharging"
-                                    placeholder="Enter the Charging Port"
                                     onChange={validation.handleChange}
                                     onBlur={validation.handleBlur}
                                     value={validation.values.fastCharging}
                                 >
+                                    <option value="">Select the Charging</option>
                                     <option value="Y">Y</option>
                                     <option value="N">N</option>
                                 </Input>

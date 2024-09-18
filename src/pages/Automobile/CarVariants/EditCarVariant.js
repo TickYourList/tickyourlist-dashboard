@@ -172,7 +172,7 @@ const EditCarVariant = () => {
                                                             <span className="number">10.</span> Entertainment & Communication
                                                         </NavLink>
                                                     </NavItem>
-                                                </ul>
+                                                </ul> 
                                             </div>
                                             <div className="content clearfix">
                                                 <TabContent activeTab={activeTabVartical} className="body">
@@ -180,10 +180,10 @@ const EditCarVariant = () => {
                                                         <BasicCarVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
                                                     </TabPane>
                                                     <TabPane tabId={2}>
-                                                        <EngineAndTransmissionVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                                                        <EngineAndTransmissionVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} fuelType={carVariant?.basicInformation?.fuelType} />
                                                     </TabPane>
                                                     <TabPane tabId={3}>
-                                                        <FuelPerformanceVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                                                        <FuelPerformanceVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} fuelType={carVariant?.basicInformation?.fuelType} />
                                                     </TabPane>
                                                     <TabPane tabId={4}>
                                                         <SuspensionSteeringBrakesVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
