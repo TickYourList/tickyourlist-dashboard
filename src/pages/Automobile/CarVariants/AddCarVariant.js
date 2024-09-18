@@ -104,10 +104,6 @@ const AddCarVariant = () => {
         };
     };
 
-    function handleSelectGroup(selectedGroup) {
-        setselectedGroup(selectedGroup)
-    }
-
     const { carBrands, countries, carModels } = useSelector(state => ({
         carModels: state.CarModel.carModels
     }));
@@ -124,6 +120,7 @@ const AddCarVariant = () => {
 
     const handleBasicCarFormSubmit = (childData, selectedFiles) => {
         const basicInformation = childData.basicInformation;
+        console.log('childData ', childData, selectedFiles);
         setFormData({
             ...formData,
             name: childData.name,
@@ -155,7 +152,6 @@ const AddCarVariant = () => {
         addVariantForm.append("data", JSON.stringify(formData));
         dispatch(addNewCarVariant(formData.carModel ,addVariantForm, history));
     }
-    
 
     function toggleTabVertical(tab) {
         if (activeTabVartical !== tab) {
@@ -398,13 +394,13 @@ const AddCarVariant = () => {
                         className="body"
                       >
                         <TabPane tabId={1}>
-                        <BasicCarVariant carVariant={carVariant} onValidChange={(isValid) => validateAllSections(isValid, false)} onFormSubmit={handleBasicCarFormSubmit} previousTabClick={previousTabClick} />
+                        <BasicCarVariant carVariant={carVariant} onValidChange={(isValid) => validateAllSections(isValid, false)} onFormSubmit={handleBasicCarFormSubmit} previousTabClick={previousTabClick}/>
                         </TabPane>
                         <TabPane tabId={2}>
-                        <EngineAndTransmissionVariant carVariant={carVariant} onValidChange={(isValid) => validateAllSections(false, isValid)} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        <EngineAndTransmissionVariant carVariant={carVariant} onValidChange={(isValid) => validateAllSections(false, isValid)} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} fuelType={formData?.basicInformation?.fuelType} />
                         </TabPane>
                         <TabPane tabId={3}>
-                        <FuelPerformanceVariant carVariant={carVariant} onValidChange={(isValid) => validateAllSections(false, isValid)} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
+                        <FuelPerformanceVariant carVariant={carVariant} onValidChange={(isValid) => validateAllSections(false, isValid)} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} fuelType={formData?.basicInformation?.fuelType} />
                         </TabPane>
                         <TabPane tabId={4}>
                         <SuspensionSteeringBrakesVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />

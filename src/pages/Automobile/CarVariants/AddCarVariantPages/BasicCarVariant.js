@@ -20,7 +20,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { getCarModels } from "store/automobiles/carModels/actions"
 import { useFormik } from "formik"
 
-const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onFormSubmit }) => {
+const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onFormSubmit, onFuelTypeChange }) => {
 
     //meta title
     const dispatch = useDispatch();
@@ -40,6 +40,7 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
             startEmiAmount: (carVariant && carVariant.basicInformation && carVariant.basicInformation.startEmiAmount) || "",
             startInsuranceAmount: (carVariant && carVariant.basicInformation && carVariant.basicInformation.startInsuranceAmount) || "",
             serviceCost: (carVariant && carVariant.basicInformation && carVariant.basicInformation.serviceCost) || "",
+            fuelType: (carVariant && carVariant?.basicInformation?.fuelType) || "",
             // selectedFiles: (carVariant && carVariant.media) || []
         },
         validationSchema: Yup.object({
@@ -78,6 +79,7 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
                 updCarModel.append("description", values["description"]);
                 updCarModel.append("year", values["year"]);
                 updCarModel.append("status", values["status"] === 'Active' ? true : false);
+                updCarModel.append("fuelType", values["fuelType"]);
                 // updCarModel.append("image", modelImage ? modelImage : "broken!");
                 dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
 
@@ -89,7 +91,8 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
                         userRating: values.userRating,
                         startEmiAmount: values.startEmiAmount,
                         startInsuranceAmount: values.startInsuranceAmount,
-                        serviceCost: values.serviceCost
+                        serviceCost: values.serviceCost,
+                        fuelType: values.fuelType
                     }
                     const basicCarData = {
                         name: values.variantName,
@@ -420,6 +423,29 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
                                 </Col>
                             </FormGroup>
                         </Col>
+                    </Row>
+                    <Row>
+                    <Col lg="6">
+                    <FormGroup className="mb-4" row>
+                        <Label htmlFor="fuelType">Fuel Type</Label>
+                            <Input
+                            type="select"
+                            className="form-control"
+                            name="fuelType"
+                            id="fuelType"
+                            onChange={validation.handleChange}
+                            onBlur={validation.handleBlur}
+                            value={validation.values.fuelType}
+                        >
+                            <option value="">Select Fuel Type</option>
+                            <option value="Petrol">Petrol</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="CNG">CNG</option>
+                            <option value="Electric">Electric</option>
+                            <option value="Hybrid">Hybrid</option>
+                        </Input>
+                    </FormGroup>
+                </Col>
                     </Row>
                     {/* <Row>
                         <Col className="col-12">

@@ -33,7 +33,7 @@ import { useFormik } from "formik"
 import Switch from "react-switch";
 
 
-const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
+const FuelPerformanceVariant = ({ carVariant, onFormSubmit, fuelType }) => {
 
     //meta title
     document.title = "Add Car Variant | Scrollit";
@@ -51,7 +51,7 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
         enableReinitialize: true,
 
         initialValues: {
-            fuelType: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.fuelType) || "",
+            // fuelType: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.fuelType) || "",
             mileageCity: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.mileageCity) || "",
             mileageArai: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.mileageArai) || "",
             fuelTankCapacity: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.fuelTankCapacity) || "",
@@ -59,6 +59,7 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
             batteryCapacity: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.batteryCapacity) || "",
             range: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.range) || "",
             chargingTime: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.chargingTime) || "",
+            power: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.power) || "",
         },
         validationSchema: Yup.object({
             // fuelType: Yup.string().required(
@@ -103,33 +104,8 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
                 <p className="card-title-desc">Fill all information below</p>
                 <Form onSubmit={validation.handleSubmit}>
                     <Row>
-                        <Col lg="6">
-                            <FormGroup className="mb-4" row>
-                                <Label htmlFor="fuelType" className="col-form-label">
-                                    Fuel Type <span style={{ color: 'red' }}>*</span>
-                                </Label>
-                                <Col md="10">
-                                    <Input
-                                        type="select"
-                                        className="form-control"
-                                        name="fuelType"
-                                        id="fuelType"
-                                        onChange={handleFuelTypeChange}
-                                        onBlur={validation.handleBlur}
-                                        value={validation.values.fuelType}
-                                    >
-                                        <option value="">Select Fuel Type</option>
-                                        <option value="Petrol">Petrol</option>
-                                        <option value="Diesel">Diesel</option>
-                                        <option value="CNG">CNG</option>
-                                        <option value="Electric">Electric</option>
-                                        <option value="Hybrid">Hybrid</option>
-                                    </Input>
-                                </Col>
-                            </FormGroup>
-                        </Col>
 
-                        {validation.values.fuelType !== 'Electric' && (
+                        {fuelType !== 'Electric' && (
                             <>
                                 {/* Fuel-specific fields */}
                                 <Col lg="6">
@@ -213,7 +189,7 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
                             </>
                         )}
 
-                        {(validation.values.fuelType === 'Electric' || validation.values.fuelType === 'Hybrid') && (
+                        {(fuelType === 'Electric' || fuelType === 'Hybrid') && (
                             <>
                                 {/* Electric/Hybrid-specific fields */}
                                 <Col lg="6">
@@ -271,6 +247,25 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit }) => {
                                                 onChange={validation.handleChange}
                                                 onBlur={validation.handleBlur}
                                                 value={validation.values.chargingTime}
+                                            />
+                                        </Col>
+                                    </FormGroup>
+                                </Col>
+                                <Col lg="6">
+                                    <FormGroup className="mb-4" row>
+                                        <Label htmlFor="power" className="col-form-label">
+                                            Power <span style={{ color: 'red' }}>*</span>
+                                        </Label>
+                                        <Col md="10">
+                                            <Input
+                                                type="text"
+                                                className="form-control"
+                                                name="power"
+                                                id="power"
+                                                placeholder="Enter Power"
+                                                onChange={validation.handleChange}
+                                                onBlur={validation.handleBlur}
+                                                value={validation.values.power}
                                             />
                                         </Col>
                                     </FormGroup>

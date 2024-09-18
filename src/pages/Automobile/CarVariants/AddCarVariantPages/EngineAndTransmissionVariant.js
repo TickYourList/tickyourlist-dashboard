@@ -15,7 +15,7 @@ import { getCarModels } from "store/automobiles/carModels/actions"
 import { useFormik } from "formik"
 import * as Yup from "yup";
 
-const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
+const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit, fuelType }) => {
 
     //meta title
     document.title = "Add Car Variant | Scrollit";
@@ -30,6 +30,10 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
 
         initialValues: {
             engineType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.engineType) || "",
+            motorType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.motorType) || "",
+            batteryType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.batteryType) || "",
+            chargingPort: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.chargingPort) || "",
+            fastCharging: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.fastCharging) || "",
             displacement: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.displacement) || "",
             noOfCylinders: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.noOfCylinders) || "",
             maxPower: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.maxPower) || "",
@@ -43,6 +47,7 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
             mildHybrid: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.mildHybrid) || "",
             driverType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.driverType) || "",
             cluchType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.cluchType) || "",
+            motorType: (carVariant && carVariant.engineAndTransmission && carVariant.engineAndTransmission.motorType) || "",
         },
         validationSchema: Yup.object({
             // engineType: Yup.string().required(
@@ -141,6 +146,54 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
                     Fill all information below
                 </p>
                 <Form onSubmit={validation.handleSubmit}>
+                {(fuelType === 'Electric' || fuelType === 'Hybrid') && (
+                    <Row>
+                        <Col lg="6">
+                            <FormGroup className="mb-4" row>
+                                <Label
+                                    htmlFor="engineType"
+                                    className="col-form-label"
+                                >
+                                    Motor Type <span style={{ color: 'red' }}>*</span>
+                                </Label>
+                                <Col md="10">
+                                    <Input
+                                        type="text"
+                                        className="form-control"
+                                        name="motorType"
+                                        id="motorType"
+                                        placeholder="Enter your Motor Type"
+                                        onChange={validation.handleChange}
+                                        onBlur={validation.handleBlur}
+                                        value={validation.values.motorType}
+                                    />
+                                </Col>
+                            </FormGroup>
+                        </Col>
+                        <Col lg="6">
+                            <FormGroup className="mb-4" row>
+                                <Label
+                                    htmlFor="displacement"
+                                    className="col-form-label"
+                                >
+                                    Battery Type <span style={{ color: 'red' }}>*</span>
+                                </Label>
+                                <Col md="10">
+                                    <Input
+                                        type="text"
+                                        className="form-control"
+                                        name="batteryType"
+                                        id="batteryType"
+                                        placeholder="Enter your Battery Type"
+                                        onChange={validation.handleChange}
+                                        onBlur={validation.handleBlur}
+                                        value={validation.values.batteryType}
+                                    />
+                                </Col>
+                            </FormGroup>
+                        </Col>
+                    </Row>)}
+                {fuelType !== "Electric" && (
                     <Row>
                         <Col lg="6">
                             <FormGroup className="mb-4" row>
@@ -186,9 +239,10 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
                                 </Col>
                             </FormGroup>
                         </Col>
-                    </Row>
+                    </Row>)}
 
                     <Row>
+                    {fuelType !== "Electric" && (
                         <Col lg="6">
                             <FormGroup className="mb-4" row>
                                 <Label
@@ -211,6 +265,31 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
                                 </Col>
                             </FormGroup>
                         </Col>
+                    )}
+                    {(fuelType === 'Electric' || fuelType === 'Hybrid') && (
+                        <Col lg="6">
+                        <FormGroup className="mb-4" row>
+                            <Label
+                                htmlFor="chargingPort"
+                                className="col-form-label"
+                            >
+                                Charging Port <span style={{ color: 'red' }}>*</span>
+                            </Label>
+                            <Col md="10">
+                                <Input
+                                    type="text"
+                                    className="form-control"
+                                    name="chargingPort"
+                                    id="chargingPort"
+                                    placeholder="Enter the Charging Port"
+                                    onChange={validation.handleChange}
+                                    onBlur={validation.handleBlur}
+                                    value={validation.values.chargingPort}
+                                />
+                            </Col>
+                        </FormGroup>
+                    </Col>
+                    )}
                         <Col lg="6">
                             <FormGroup className="mb-4" row>
                                 <Label
@@ -258,7 +337,35 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
                                 </Col>
                             </FormGroup>
                         </Col>
+                        {(fuelType === 'Electric' || fuelType === 'Hybrid') && (
+                        <Col lg="6">
+                        <FormGroup className="mb-4" row>
+                            <Label
+                                htmlFor="fastCharging"
+                                className="col-form-label"
+                            >
+                                Fast Charging <span style={{ color: 'red' }}>*</span>
+                            </Label>
+                            <Col md="10">
+                                <Input
+                                    type="select"
+                                    className="form-control"
+                                    name="fastCharging"
+                                    id="fastCharging"
+                                    placeholder="Enter the Charging Port"
+                                    onChange={validation.handleChange}
+                                    onBlur={validation.handleBlur}
+                                    value={validation.values.fastCharging}
+                                >
+                                    <option value="Y">Y</option>
+                                    <option value="N">N</option>
+                                </Input>
+                            </Col>
+                        </FormGroup>
+                    </Col>
+                    )}
 
+                        {fuelType !== "Electric" && (
                         <Col lg="6">
                             <FormGroup className="mb-4" row>
                                 <Label
@@ -281,6 +388,7 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
                                 </Col>
                             </FormGroup>
                         </Col>
+                        )}
                     </Row>
 
                     <Row>
@@ -380,6 +488,7 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
                     </Row>
 
                     <Row>
+                    {fuelType !== "Electric" && (
                         <Col lg="6">
                             <FormGroup className="mb-4" row>
                                 <Label
@@ -402,6 +511,7 @@ const EngineAndTransmissionVariant = ({ carVariant, onFormSubmit }) => {
                                 </Col>
                             </FormGroup>
                         </Col>
+                    )}
 
                         <Col lg="6">
                             <FormGroup className="mb-4" row>
