@@ -143,15 +143,25 @@ const AddCarVariant = () => {
         toggleTabVertical(activeTabVartical + 1)
     }
 
-    const handleFinalFormSubmit = (childKey, childData, movement) => {
-        const addVariantForm = new FormData();
-          setFormData({
+      const handleFinalFormSubmit = (childKey, childData, movement) => {
+        // Update the formData correctly with the new childData
+        const updatedFormData = {
             ...formData,
-            [childKey]: { ...formData[childKey], ...childData }
-        });
-        addVariantForm.append("data", JSON.stringify(formData));
-        dispatch(addNewCarVariant(formData.carModel ,addVariantForm, history));
-    }
+            [childKey]: { ...formData[childKey], ...childData },
+        };
+    
+        // Now create a new FormData object
+        const addVariantForm = new FormData();
+        
+        // Append the updated formData as a string
+        addVariantForm.append("data", JSON.stringify(updatedFormData));
+    
+        // Dispatch the action with the updated formData
+        dispatch(addNewCarVariant(updatedFormData.carModel, addVariantForm, history));
+    
+        // Optionally, update the state if needed to persist the changes
+        setFormData(updatedFormData);
+    };
 
     function toggleTabVertical(tab) {
         if (activeTabVartical !== tab) {
