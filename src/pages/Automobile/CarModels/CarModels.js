@@ -139,73 +139,62 @@ function CarModels() {
           formData.append(`images`, file?.file);
         }
       });
-      // Append keyFeatures data
-      const keyFeatureImageUrls = [];
-      values.keyFeatures.forEach((feature, index) => {
-        if (feature.image instanceof File) {
-          // For new image uploads, we append them all under 'keyFeatureImages'
-          formData.append('keyFeatureImages', feature.image);
-        } else if (feature.image?.url) {
-          // For existing images, push the URL into the keyFeatureImageUrls array
-          keyFeatureImageUrls.push({ url: feature.image.url, index });
-        }
-      });
-      
-      // Append the URLs for existing images
-      formData.append('keyFeatureImageUrls', JSON.stringify(keyFeatureImageUrls));
-      
-      // Map the features and include an identifier for which image belongs to which feature
-      formData.append('keyFeatures', JSON.stringify(values.keyFeatures.map((feature, index) => ({
-        ...feature,
-        imageIndex: index  // Use 'imageIndex' instead of changing the image field
-      }))));
 
-      const exteriorImageUrls = [];
-      values.exterior.forEach((feature, index) => {
-        if (feature.image instanceof File) {
-          // Append new images to 'exteriorImages'
-          formData.append('exteriorImages', feature.image);
-        } else if (feature.image?.url) {
-          // Track existing images with their index
-          exteriorImageUrls.push({ url: feature.image, index });
-        }
-      });
-      // Append the existing exterior image URLs and features
-      formData.append('exteriorImageUrls', JSON.stringify(exteriorImageUrls));
-      formData.append('exterior', JSON.stringify(values.exterior.map((feature, index) => ({
-        ...feature,
-        imageIndex: index  // Maintain the index to map with image later
-      }))));
+      // Handle field data separately (text-based data)
+      const keyFeaturesData = values.keyFeatures.map((feature) => ({
+        featureType: feature.featureType,
+        featureDescription: feature.featureDescription,
+        image: feature.image || null
+      }));
 
-      // Same for interior
-      const interiorImageUrls = [];
-      values.interior.forEach((feature, index) => {
-        if (feature.image instanceof File) {
-          formData.append('interiorImages', feature.image);
-        } else if (feature.image?.url) {
-          interiorImageUrls.push({ url: feature.image, index });
-        }
-      });
-      formData.append('interiorImageUrls', JSON.stringify(interiorImageUrls));
-      formData.append('interior', JSON.stringify(values.interior.map((feature, index) => ({
-        ...feature,
-        imageIndex: index  // Maintain the index to map with image later
-      }))));
+      const exteriorData = values.exterior.map((feature) => ({
+        featureType: feature.featureType,
+        featureDescription: feature.featureDescription,
+        image: feature.image || null
+      }));
 
-      // Same for imagesByColor
-      const colorImageUrls = [];
-      values.imagesByColor.forEach((feature, index) => {
+      const interiorData = values.interior.map((feature) => ({
+        featureType: feature.featureType,
+        featureDescription: feature.featureDescription,
+        image: feature.image || null
+      }));
+
+      const imagesByColorData = values.imagesByColor.map((color) => ({
+        colorCode: color.colorCode,
+        colorDescription: color.colorDescription,
+        image: color.image || null
+      }));
+
+      // Convert text data to JSON and append to formData
+      formData.append('keyFeaturesData', JSON.stringify(keyFeaturesData));
+      formData.append('exteriorData', JSON.stringify(exteriorData));
+      formData.append('interiorData', JSON.stringify(interiorData));
+      formData.append('imagesByColorData', JSON.stringify(imagesByColorData));
+
+      // Handle new image uploads
+      values.keyFeatures.forEach((feature) => {
         if (feature.image instanceof File) {
-          formData.append('colorImages', feature.image);
-        } else if (feature.image?.url) {
-          colorImageUrls.push({ url: feature.image, index });
+          formData.append('keyFeatureImages', feature.image); // New image uploads
         }
       });
-      formData.append('colorImageUrls', JSON.stringify(colorImageUrls));
-      formData.append('imagesByColor', JSON.stringify(values.imagesByColor.map((feature, index) => ({
-        ...feature,
-        imageIndex: index  // Maintain the index to map with image later
-      }))));
+
+      values.exterior.forEach((feature) => {
+        if (feature.image instanceof File) {
+          formData.append('exteriorImages', feature.image); // New image uploads
+        }
+      });
+
+      values.interior.forEach((feature) => {
+        if (feature.image instanceof File) {
+          formData.append('interiorImages', feature.image); // New image uploads
+        }
+      });
+
+      values.imagesByColor.forEach((color) => {
+        if (color.image instanceof File) {
+          formData.append('colorImages', color.image); // New image uploads
+        }
+      });
 
       if (isEdit) {
         dispatch(updateCarModel(carModel._id, values['carBrand'], formData));
