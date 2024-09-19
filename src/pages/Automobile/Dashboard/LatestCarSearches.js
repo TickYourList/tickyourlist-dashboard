@@ -62,24 +62,24 @@ const LatestCarSearches = props => {
         Cell: cellProps => {
           return <Total {...cellProps} />;
         },
-      },
-      {
-        Header: "View Details",
-        disableFilters: true,
-        accessor: "view",
-        Cell: cellProps => {
-          return (
-            <Button
-              type="button"
-              color="primary"
-              className="btn-sm btn-rounded"
-              onClick={toggleViewModal}
-            >
-              View Details
-            </Button>
-          );
-        },
-      },
+      }
+      // {
+      //   Header: "View Details",
+      //   disableFilters: true,
+      //   accessor: "view",
+      //   Cell: cellProps => {
+      //     return (
+      //       <Button
+      //         type="button"
+      //         color="primary"
+      //         className="btn-sm btn-rounded"
+      //         onClick={toggleViewModal}
+      //       >
+      //         View Details
+      //       </Button>
+      //     );
+      //   },
+      // },
     ],
     []
   );
