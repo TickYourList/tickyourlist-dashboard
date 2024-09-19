@@ -26,7 +26,7 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
             rearSeatBelts: carVariant?.safety?.rearSeatBelts ? "Y" : "N",
             seatBeltWarning: carVariant?.safety?.seatBeltWarning ? "Y" : "N",
             sideImpactBeams: carVariant?.safety?.sideImpactBeams ? "Y" : "N",
-            adjustableeats: carVariant?.safety?.adjustableeats ? "Y" : "N",
+            adjustableseats: carVariant?.safety?.adjustableseats ? "Y" : "N",
             tyrePressureMonitor: carVariant?.safety?.tyrePressureMonitor ? "Y" : "N",
             vehicletabilityControlSystem: carVariant?.safety?.vehicletabilityControlSystem ? "Y" : "N",
             engineImmobilizer: carVariant?.safety?.engineImmobilizer ? "Y" : "N",
@@ -130,7 +130,7 @@ const SafetyVariant = ({ carVariant, onFormSubmit }) => {
                     <Row>
                         {renderDropdown("seatBeltWarning", "Seat Belt Warning")}
                         {renderDropdown("sideImpactBeams", "Side Impact Beams")}
-                        {renderDropdown("adjustableeats", "Adjustable Eats")}
+                        {renderDropdown("adjustableseats", "Adjustable Seats")}
                         {renderDropdown("tyrePressureMonitor", "Tyre Pressure Monitor")}
                     </Row>
                     <Row>
