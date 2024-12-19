@@ -47,14 +47,11 @@ function CarModels() {
   document.title = "Car models | Scrollit";
 
   const [modal, setModal] = useState(false);
-  const [nestedModal, setNestedModal] = useState(false);
   const [modal1, setModal1] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [carModelsList, setCarModelsList] = useState([]);
   const [carModel, setCarModel] = useState(null);
   const [carModelData, setCarModelData] = useState({});
-  const [closeAll, setCloseAll] = useState(false);
-  const [toast, setToast] = useState(false);
   const [toastDetails, setToastDetails] = useState({ title: "", message: "" });
   const [modelImage, setModelImage] = useState(null);
   const [activeTab, setactiveTab] = useState(1);
