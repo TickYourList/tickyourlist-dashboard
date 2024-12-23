@@ -77,6 +77,19 @@ const EditCarVariant = () => {
         }
     }, [carVariants, _id]) 
 
+    const handleBasicCarFormSubmit = (childData, selectedFiles) => {
+        const basicInformation = childData.basicInformation;
+        setFormData({
+            ...formData,
+            name: childData.name,
+            carModel: childData.carModel,
+            status: childData.status,
+            basicInformation,
+            media: selectedFiles
+        });
+        toggleTabVertical(activeTabVartical + 1)
+    };
+
     const handleFormSubmit = (childKey, childData, movement) => {
         setFormData({
             ...formData,
@@ -219,8 +232,8 @@ const EditCarVariant = () => {
                                             <div className="content clearfix">
                                                 <TabContent activeTab={activeTabVartical} className="body">
                                                     <TabPane tabId={1}>
-                                                        <BasicCarVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} />
-                                                    </TabPane>
+                                                        <BasicCarVariant carVariant={carVariant} onFormSubmit={handleBasicCarFormSubmit} previousTabClick={previousTabClick} />
+                                                    </TabPane> 
                                                     <TabPane tabId={2}>
                                                         <EngineAndTransmissionVariant carVariant={carVariant} onFormSubmit={handleFormSubmit} previousTabClick={previousTabClick} fuelType={carVariant?.basicInformation?.fuelType} />
                                                     </TabPane>
