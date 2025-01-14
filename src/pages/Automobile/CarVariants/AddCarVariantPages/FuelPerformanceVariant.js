@@ -58,7 +58,8 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit, fuelType }) => {
             emissionNormCompliance: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.emissionNormCompliance) || "",
             batteryCapacity: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.batteryCapacity) || "",
             range: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.range) || "",
-            chargingTime: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.chargingTime) || "",
+            chargingTimeDC: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.chargingTimeDC) || "",
+            chargingTimeAC: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.chargingTimeAC) || "",
             power: (carVariant && carVariant.fuelAndPerformance && carVariant.fuelAndPerformance.power) || "",
         },
         validationSchema: Yup.object({
@@ -234,19 +235,38 @@ const FuelPerformanceVariant = ({ carVariant, onFormSubmit, fuelType }) => {
 
                                 <Col lg="6">
                                     <FormGroup className="mb-4" row>
-                                        <Label htmlFor="chargingTime" className="col-form-label">
-                                            Charging Time <span style={{ color: 'red' }}>*</span>
+                                        <Label htmlFor="chargingTimeDC" className="col-form-label">
+                                         DC Charging Time <span style={{ color: 'red' }}>*</span>
                                         </Label>
                                         <Col md="10">
                                             <Input
                                                 type="text"
                                                 className="form-control"
-                                                name="chargingTime"
-                                                id="chargingTime"
-                                                placeholder="Enter Charging Time"
+                                                name="chargingTimeDC"
+                                                id="chargingTimeDC"
+                                                placeholder="e.g. 40Min-70kW-(10-80%)"
                                                 onChange={validation.handleChange}
                                                 onBlur={validation.handleBlur}
-                                                value={validation.values.chargingTime}
+                                                value={validation.values.chargingTimeDC}
+                                            />
+                                        </Col>
+                                    </FormGroup>
+                                </Col>
+                                <Col lg="6">
+                                    <FormGroup className="mb-4" row>
+                                        <Label htmlFor="chargingTimeAC" className="col-form-label">
+                                         AC Charging Time <span style={{ color: 'red' }}>*</span>
+                                        </Label>
+                                        <Col md="10">
+                                            <Input
+                                                type="text"
+                                                className="form-control"
+                                                name="chargingTimeAC"
+                                                id="chargingTimeAC"
+                                                placeholder="e.g. 7.9H-7.2kW-(10-80%)"
+                                                onChange={validation.handleChange}
+                                                onBlur={validation.handleBlur}
+                                                value={validation.values.chargingTimeAC}
                                             />
                                         </Col>
                                     </FormGroup>
