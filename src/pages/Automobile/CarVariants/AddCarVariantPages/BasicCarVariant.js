@@ -80,7 +80,6 @@ const BasicCarVariant = ({ carVariant, onValidChange, onFormValuesChange, onForm
                 updCarModel.append("year", values["year"]);
                 updCarModel.append("status", values["status"] === 'Active' ? true : false);
                 updCarModel.append("fuelType", values["fuelType"]);
-                // updCarModel.append("image", modelImage ? modelImage : "broken!");
                 dispatch(updateCarModel(carModel._id, values['carBrand'], updCarModel));
 
                 validation.resetForm();

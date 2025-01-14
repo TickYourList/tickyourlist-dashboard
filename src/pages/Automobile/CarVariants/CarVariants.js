@@ -97,7 +97,6 @@ function CarVariants() {
   const [carVariantsList, setcarVariantsList] = useState([]);
   const [carVariant, setcarVariant] = useState(null);
   const [carVariantData, setcarVariantData] = useState({});
-  // const [carVariantTableData, setcarVariantTableData] = useState([]);
   const [deleteModal, setDeleteModal] = useState(false);
   const [variantImage, setvariantImage] = useState(null);
   const dispatch = useDispatch();
