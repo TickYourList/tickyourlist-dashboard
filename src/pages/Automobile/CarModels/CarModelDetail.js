@@ -85,7 +85,7 @@ const CarModelDetail = ({ isOpen, toggle, Data }) => {
                       <th scope="row">
                         <div>
                           <img
-                            src={ele?.media[0]?.url}
+                            src={ele?.media?.[0]?.url}
                             alt=""
                             className="avatar-sm"
                           />
