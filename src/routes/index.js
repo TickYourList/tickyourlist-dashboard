@@ -121,6 +121,7 @@ import BroughtDomain from "pages/Ecommerce/EcommerceGetDomain/BroughtDomain";
 import EcommerceCustomerDetail from "pages/Ecommerce/EcommerceOrders/EcommerceCustomerDetail";
 import Invoice from "pages/Invoices/Invoice";
 import CarBrands from "pages/Automobile/CarBrands/CarBrands";
+import SortCarBrands from "pages/Automobile/CarBrands/SortCarBrands";
 import CarModels from "pages/Automobile/CarModels/CarModels";
 import CarVariants from "pages/Automobile/CarVariants/CarVariants";
 import AddCarVariant from "pages/Automobile/CarVariants/AddCarVariant";
@@ -174,6 +175,7 @@ const authProtectedRoutes = [
   { path: "/profile", component: <UserProfile /> },
 
   { path: "/car-brands", component: <CarBrands /> },
+  { path: "/sort-car-brands", component: <SortCarBrands /> },
 
   { path: "/banner", component: <Banner /> },
 

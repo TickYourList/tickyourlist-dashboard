@@ -122,6 +122,7 @@ const deleteCarDealerData = id => del(`${url.DELETE_CAR_DEALER}/${id}`);
 // DELETE ALL CAR CUSTOMERS
 const deleteAllCarDealers = () => del(url.DELETE_ALL_CAR_DEALER);
 
+export const updateCarBrandsSortOrder = (brands) => put("/v1/automobile/update/carbrands/sort-order", { brands });
 
 export {
     getCarBannerImage,

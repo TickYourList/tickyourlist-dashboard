@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { isEmpty } from "lodash";
 import '../../../../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import TableContainer from '../../../components/Common/TableContainer';
@@ -66,6 +66,7 @@ function CarBrands() {
   const [toastDetails, setToastDetails] = useState({ title: "", message: "" });
   const [brandImage, setBrandImage] = useState(null)
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
     // validation
     const validation = useFormik({
@@ -128,12 +129,27 @@ function CarBrands() {
   }, [dispatch]);
 
   useEffect(() => {
-    setCarBrandsList(carBrands);
+    if (carBrands) {
+      // Sort brands by sortOrder if available, otherwise maintain original order
+      const sortedBrands = [...carBrands].sort((a, b) => {
+        if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+          return b.sortOrder - a.sortOrder; // Descending order
+        }
+        return 0;
+      });
+      setCarBrandsList(sortedBrands);
+    }
   }, [carBrands]);
   
   useEffect(() => {
     if (!isEmpty(carBrands) && !!isEdit) {
-        setCarBrandsList(carBrands);
+      const sortedBrands = [...carBrands].sort((a, b) => {
+        if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+          return b.sortOrder - a.sortOrder; // Descending order
+        }
+        return 0;
+      });
+      setCarBrandsList(sortedBrands);
       setIsEdit(false);
     }
   }, [carBrands]);
@@ -198,9 +214,30 @@ function CarBrands() {
     setDeleteModal(true);
   }
 
+  const handleSortBrandsClick = () => {
+    navigate("/sort-car-brands");
+  };
+
   const columns = useMemo(
     () => [
-
+      {
+        Header: 'Sort Order',
+        accessor: 'sortOrder',
+        width: '100px',
+        style: {
+          textAlign: "center",
+          width: "8%",
+        },
+        Cell: (cellProps) => {
+          return (
+            <div className="text-center">
+              <span className="badge bg-primary rounded-pill">
+                #{cellProps.row.original.sortOrder || '-'}
+              </span>
+            </div>
+          );
+        }
+      },
       {
         Header: 'Brand ID',
         accessor: '_id',
@@ -315,14 +352,23 @@ function CarBrands() {
             <Col xs="12">
               <Card>
                 <CardBody>
+                  <div className="d-flex justify-content-end mb-3">
+                    <Button
+                      color="info"
+                      className="btn-sm me-2"
+                      onClick={handleSortBrandsClick}
+                    >
+                      Sort Brands
+                    </Button>
+                  </div>
                   <TableContainer
                     columns={columns} 
-                    data={carBrands}
+                    data={carBrandsList}
                     isGlobalFilter={true}
                     isAddCarBrandOptions={true}
                     isEventAddButtonOptions={true}
-                    handleAddCarBrandClicks = {handleAddCarBrandClicks}
-                    handleCarBrandDeleteClicks = {handleCarBrandDeleteClicks}
+                    handleAddCarBrandClicks={handleAddCarBrandClicks}
+                    handleCarBrandDeleteClicks={handleCarBrandDeleteClicks}
                     customPageSize={10}
                   />
                 </CardBody>
