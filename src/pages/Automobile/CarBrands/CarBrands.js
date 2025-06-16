@@ -363,7 +363,7 @@ function CarBrands() {
                   </div>
                   <TableContainer
                     columns={columns} 
-                    data={carBrandsList}
+                    data={carBrandsList || []}
                     isGlobalFilter={true}
                     isAddCarBrandOptions={true}
                     isEventAddButtonOptions={true}

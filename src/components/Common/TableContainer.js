@@ -465,7 +465,7 @@ const TableContainer = ({
                   onClick={() =>
                     handleExportCustomers("xlsx")
                   }
-                  disabled={data.length === 0}
+                  disabled={data?.length === 0}
                 >
                   <i className="fas fa-file-excel text-success me-2" />
                   Save as Customers.xlsx
@@ -475,7 +475,7 @@ const TableContainer = ({
                   onClick={() =>
                     handleExportCustomers("csv")
                   }
-                  disabled={data.length === 0}
+                  disabled={data?.length === 0}
                 >
                   <i className="fas fa-file-excel text-success me-2" />
                   Save as Customers.csv
