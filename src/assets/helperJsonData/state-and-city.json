@@ -484,11 +484,23 @@
     "Delhi": [
         {
             "id": "1",
-            "city": "Delhi"
+            "city": "Central Delhi"
+        },
+        {
+            "id": "1217",
+            "city": "East Delhi"
         },
         {
             "id": "142",
-            "city": "New Delhi"
+            "city": "North Delhi"
+        },
+        {
+            "id": "1215",
+            "city": "South Delhi"
+        },
+        {
+            "id": "1216",
+            "city": "West Delhi"
         }
     ],
     "Karnataka": [
