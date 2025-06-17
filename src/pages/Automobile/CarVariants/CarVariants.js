@@ -64,8 +64,8 @@ const generateDataFields = (numOthersFields = 2) => {
     "CarVariant",
     "VariantName",
     "State",
-    "City",
-    "CityCode",
+    // "City",
+    // "CityCode",
     "Ex-Showroom Price",
     "RTO",
     "Insurance",
@@ -218,29 +218,35 @@ function CarVariants() {
   };
 
   const handleDownloadTemplateForVariantPricing = format => {
+    console.log("carVariantData", format);
     const book = XLSX.utils.book_new();
     let newArray = [];
 
+    // Generate template data for each state (state-level pricing)
     for (let state in statesCitiesList) {
-      for (let { id, city } of statesCitiesList[state]) {
-        let arrayValue = [
-          carVariantData?.carModel?.carBrand?._id ?? "",
-          carVariantData?.carModel?.carBrand?.brandName ?? "",
-          carVariantData?.carModel?._id ?? "",
-          carVariantData?.carModel?.modelName ?? "",
-          carVariantData?._id ?? "",
-          carVariantData?.name ?? "",
-          state,
-          city,
-          id,
-          "",
-          "",
-          "",
-          "",
-          ""
-        ];
-        newArray.push(arrayValue);
-      }
+      let arrayValue = [
+        carVariantData?.carModel?.carBrand?._id ?? "",
+        carVariantData?.carModel?.carBrand?.brandName ?? "",
+        carVariantData?.carModel?._id ?? "",
+        carVariantData?.carModel?.modelName ?? "",
+        carVariantData?._id ?? "",
+        carVariantData?.name ?? "",
+        state,
+        "", // Ex-Showroom Price
+        "", // RTO
+        "", // Insurance
+        "", // Others-Key-1
+        "", // Others-Value-1
+        "", // Others-Key-2
+        "", // Others-Value-2
+        "", // Others-Key-3
+        "", // Others-Value-3
+        "", // Others-Key-4
+        "", // Others-Value-4
+        "", // Others-Key-5
+        "", // Others-Value-5
+      ];
+      newArray.push(arrayValue);
     }
 
     const ws = XLSX.utils.aoa_to_sheet([dataFields, ...newArray]);
