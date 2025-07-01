@@ -827,6 +827,10 @@
     ],
     "Gujarat": [
         {
+            "id": "1220",
+            "city": "Gandhinagar"
+        },
+        {
             "id": "3",
             "city": "Ahmedabad"
         },
