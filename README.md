@@ -23,7 +23,7 @@ npm --version
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd tickyourlist-webscrollit-dashboard
+   cd tickyourlist-dashboard
    ```
 
 2. **Install dependencies**
@@ -55,7 +55,7 @@ npm --version
 ## 📁 Folder Structure
 
 ```
-tickyourlist-webscrollit-dashboard/
+tickyourlist-dashboard/
 ├── public/
 │   ├── index.html              # Main HTML template
 │   ├── favicon.ico             # App favicon
