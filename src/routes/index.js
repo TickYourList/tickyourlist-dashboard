@@ -148,6 +148,7 @@ import Faqs from "pages/Settings/faqs";
 import Contactus from "pages/Settings/contactus";
 import AdvertiseWithUs from "pages/Settings/AdvertiseWithUs";
 import Banner from "pages/Automobile/Banner/Banner";
+import EcommerceCustomers from "pages/Ecommerce/EcommerceCustomers";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 
 const authProtectedRoutes = [
@@ -160,8 +161,6 @@ const authProtectedRoutes = [
   { path: "/ecomm-Domain-paymentStatus/:id", component: <DomainPaymentStatus /> },
   { path: "/ecommerce-your-domains", component: <BroughtDomain /> },
 
-  // { path: "/ecommerce-collections", component: <EcommerceCollections /> },
-  // { path: "/ecommerce-create-collection", component: <AddCollection /> },
   { path: "/automobile-collections", component: <AutomobileCollections /> },
   { path: "/automobile-create-collection", component: <AddCarCollection /> },
   {
@@ -173,6 +172,9 @@ const authProtectedRoutes = [
 
   // //profile
   { path: "/profile", component: <UserProfile /> },
+
+  { path: "/ecommerce-customers", component: <EcommerceCustomers /> },
+  { path: "/ecommerce-customer-detail/:id", component: <EcommerceCustomerDetail /> },
 
   { path: "/car-brands", component: <CarBrands /> },
   { path: "/sort-car-brands", component: <SortCarBrands /> },
@@ -186,14 +188,6 @@ const authProtectedRoutes = [
   { path: "/add-car-variant", component: <AddCarVariant /> },
 
   { path: "/edit-car-variant/:_id", component: <EditCarVariant /> },
-
-  { path: "/car-blogs", component: <CarBlogs /> },
-
-  { path: "/car-customers", component: <CarCustomers /> },
-
-  { path: "/car-dealers", component: <CarDealers /> },
-
-  { path: "/testimonials", component: <Testimonials /> }, 
 
   // settings
   { path: "/about", component: <Aboutus /> },

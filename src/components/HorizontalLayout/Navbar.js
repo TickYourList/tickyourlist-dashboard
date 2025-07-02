@@ -108,7 +108,7 @@ const Navbar = props => {
               id="topnav-menu-content"
             >
               <ul className="navbar-nav">
-                <li className="nav-item dropdown">
+                {/* <li className="nav-item dropdown">
                   <Link
                     className="nav-link dropdown-toggle arrow-none"
                     onClick={e => {
@@ -140,7 +140,7 @@ const Navbar = props => {
                       {props.t("Jobs")}
                     </Link>
                   </div>
-                </li>
+                </li> */}
 
                 <li className="nav-item dropdown">
                   <Link
@@ -271,12 +271,9 @@ const Navbar = props => {
                     <Link to="/calendar" className="dropdown-item">
                       {props.t("Calendar")}
                     </Link>
-                    <Link to="/chat" className="dropdown-item">
-                      {props.t("Chat")}
-                    </Link>
-                    <Link to="/apps-filemanager" className="dropdown-item">
+                    {/* <Link to="/apps-filemanager" className="dropdown-item">
                       {props.t("File Manager")}
-                    </Link>
+                    </Link> */}
                     <div className="dropdown">
                       <Link
                         to="/#"
@@ -385,47 +382,6 @@ const Navbar = props => {
                           className="dropdown-item"
                         >
                           {props.t("Add Product")}
-                        </Link>
-                      </div>
-                    </div>
-
-                    <div className="dropdown">
-                      <Link
-                        to="/#"
-                        className="dropdown-item dropdown-toggle arrow-none"
-                        onClick={e => {
-                          e.preventDefault();
-                          setcrypto(!crypto);
-                        }}
-                      >
-                        {props.t("Crypto")} <div className="arrow-down"></div>
-                      </Link>
-                      <div
-                        className={classname("dropdown-menu", { show: crypto })}
-                      >
-                        <Link to="/crypto-wallet" className="dropdown-item">
-                          {props.t("Wallet")}
-                        </Link>
-                        <Link to="/crypto-buy-sell" className="dropdown-item">
-                          {props.t("Buy/Sell")}
-                        </Link>
-                        <Link to="/crypto-exchange" className="dropdown-item">
-                          {props.t("Exchange")}
-                        </Link>
-                        <Link to="/crypto-lending" className="dropdown-item">
-                          {props.t("Lending")}
-                        </Link>
-                        <Link to="/crypto-orders" className="dropdown-item">
-                          {props.t("Orders")}
-                        </Link>
-                        <Link
-                          to="/crypto-kyc-application"
-                          className="dropdown-item"
-                        >
-                          {props.t("KYC Application")}
-                        </Link>
-                        <Link to="/crypto-ico-landing" className="dropdown-item">
-                          {props.t("ICO Landing")}
                         </Link>
                       </div>
                     </div>
