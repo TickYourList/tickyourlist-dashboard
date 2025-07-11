@@ -211,6 +211,10 @@ const SidebarContent = props => {
                 </li> */}
               </ul>
             </li>
+            <li className="menu-title">{props.t("Travel")}</li>
+
+
+
 
             <li>
               <Link to="/#" className="has-arrow">
@@ -275,6 +279,11 @@ const SidebarContent = props => {
                 <li>
                   <Link to="/country">{props.t('Country')}</Link>
                 </li>
+                <li>
+                  <Link to="/travel-currency">
+                   <span>{props.t("Travel Currency")}</span>
+                  </Link>
+              </li>
               </ul>
             </li>
 

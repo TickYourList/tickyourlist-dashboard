@@ -33,6 +33,10 @@ import testimonialSaga from "./testimonials/saga";
 import CarBannerSaga from "./automobiles/carBanners/saga";
 import countriesSaga from "./countries/saga";
 
+import currencySaga from "./travelCurrency/saga";
+ //travel currency
+
+
 export default function* rootSaga() {
   yield all([
     //public
@@ -66,6 +70,7 @@ export default function* rootSaga() {
     fork(carCustomerSaga),
     fork(carDealerSaga),
     fork(testimonialSaga),
-    fork(countriesSaga)
+    fork(countriesSaga),
+    fork(currencySaga) //travel currency
   ]);
 }
