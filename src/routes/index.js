@@ -334,6 +334,16 @@ authProtectedRoutes.push({
   component: <CurrencyTable />,
   exact: true,
 });
+// Add Currency
+import AddCurrency from "../pages/TravelCurrency/AddCurrencyForm";
+
+authProtectedRoutes.push({
+  path: "/currency/add",
+  component: <AddCurrency />,
+  exact: true,
+});
+
+
 
 
 
