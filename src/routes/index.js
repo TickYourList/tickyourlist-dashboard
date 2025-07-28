@@ -149,6 +149,7 @@ import Contactus from "pages/Settings/contactus";
 import AdvertiseWithUs from "pages/Settings/AdvertiseWithUs";
 import Banner from "pages/Automobile/Banner/Banner";
 import EcommerceCustomers from "pages/Ecommerce/EcommerceCustomers";
+import Country from "../pages/LocationManagement/Country";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 
 const authProtectedRoutes = [
@@ -292,6 +293,7 @@ const authProtectedRoutes = [
   { path: "/pages-timeline", component: <PagesTimeline /> },
   { path: "/pages-faqs", component: <PagesFaqs /> },
   { path: "/pages-pricing", component: <PagesPricing /> },
+  { path: "/country", component: <Country /> },
 
   // this route should be at the end of all other routes
   // eslint-disable-next-line react/display-name

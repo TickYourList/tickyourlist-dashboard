@@ -67,6 +67,7 @@ import CarCustomer from "./automobiles/carCustomers/reducer";
 import CarDealer from "./automobiles/carDealers/reducer";
 import Testimonial from "./testimonials/reducer";
 import CarBanner from "./automobiles/carBanners/reducer";
+import countries from "./countries/reducers";
 
 const rootReducer = combineReducers({
   // public
@@ -99,7 +100,8 @@ const rootReducer = combineReducers({
   CarBlog,
   CarCustomer,
   CarDealer,
-  Testimonial
+  Testimonial,
+  countries
 });
 
 export default rootReducer;

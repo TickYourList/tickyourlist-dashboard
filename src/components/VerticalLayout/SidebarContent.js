@@ -266,6 +266,18 @@ const SidebarContent = props => {
               </ul>
             </li>
 
+            <li>
+              <Link to="/#" className="has-arrow">
+                <i className="bx bx-map"></i>
+                <span style={{ whiteSpace: 'nowrap' }}>{props.t('Location Management')}</span>
+              </Link>
+              <ul className="sub-menu">
+                <li>
+                  <Link to="/country">{props.t('Country')}</Link>
+                </li>
+              </ul>
+            </li>
+
             {/* <li>
               <Link to="/#">
                 <span className="badge rounded-pill bg-success float-end" key="t-new">New</span>

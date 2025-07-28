@@ -31,6 +31,7 @@ import carCustomerSaga from "./automobiles/carCustomers/saga";
 import carDealerSaga from "./automobiles/carDealers/saga";
 import testimonialSaga from "./testimonials/saga";
 import CarBannerSaga from "./automobiles/carBanners/saga";
+import countriesSaga from "./countries/saga";
 
 export default function* rootSaga() {
   yield all([
@@ -64,6 +65,7 @@ export default function* rootSaga() {
     fork(carBlogSaga),
     fork(carCustomerSaga),
     fork(carDealerSaga),
-    fork(testimonialSaga)
+    fork(testimonialSaga),
+    fork(countriesSaga)
   ]);
 }
