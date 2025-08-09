@@ -326,4 +326,25 @@ const publicRoutes = [
   { path: "/auth-two-step-verification", component: <TwostepVerification /> },
 ];
 
+// Travel currency
+import CurrencyTable from "../pages/TravelCurrency/CurrencyTable";
+
+authProtectedRoutes.push({
+  path: "/travel-currency",
+  component: <CurrencyTable />,
+  exact: true,
+});
+// Add Currency
+import AddCurrency from "../pages/TravelCurrency/AddCurrencyForm";
+
+authProtectedRoutes.push({
+  path: "/currency/add",
+  component: <AddCurrency />,
+  exact: true,
+});
+
+
+
+
+
 export { authProtectedRoutes, publicRoutes };

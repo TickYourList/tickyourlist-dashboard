@@ -12,6 +12,7 @@ import Profile from "./auth/profile/reducer";
 //E-commerce
 import ecommerce from "./e-commerce/reducer";
 
+
 //Collection
 import collection from './collections/reducer';
 
@@ -69,6 +70,9 @@ import Testimonial from "./testimonials/reducer";
 import CarBanner from "./automobiles/carBanners/reducer";
 import countries from "./countries/reducers";
 
+//  Travel Currency 
+import travelCurrency from "./travelCurrency/reducer";
+
 const rootReducer = combineReducers({
   // public
   Layout,
@@ -101,7 +105,14 @@ const rootReducer = combineReducers({
   CarCustomer,
   CarDealer,
   Testimonial,
-  countries
+  countries,
+  travelCurrency // travel currency
 });
+
+
+
+
+
+
 
 export default rootReducer;

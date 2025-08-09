@@ -2,6 +2,7 @@ import axios from "axios";
 import { del, get, post, postFormData, put, putFormData } from "./api_helper";
 import * as url from "./url_helper";
 
+
 // Register Method
 const postRegister = data => post(url.POST_REGISTER, data);
 
@@ -161,6 +162,10 @@ const deleteTestimonialData = id => del(`${url.DELETE_TESTIMONIAL}/${id}`);
 // DELETE ALL CAR CUSTOMERS
 const deleteAllTestimonials = () => del(url.DELETE_ALL_TESTIMONIALS);
 
+//Travel Currency
+// import { getTravelCurrencyListAPI } from "./api_helper";
+ const getTravelCurrencyListAPI = () => get(url.GET_CURRENCY_DATA);
+
 export {
   postRegister,
   postVerification,
@@ -184,5 +189,6 @@ export {
   addTestimonial,
   updateTestimonialData,
   deleteTestimonialData,
-  deleteAllTestimonials
+  deleteAllTestimonials,
+  getTravelCurrencyListAPI
 };

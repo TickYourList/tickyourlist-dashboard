@@ -67,3 +67,9 @@ export async function del(url, config = {}) {
     .delete(url, { ...config })
     .then(response => response.data);
 }
+
+// Travel currency
+
+export const getTravelCurrencyListAPI = () => {
+  return axios.get("/v1/tyltravelcurrency/get/travelcurrency/submitted/all");
+};

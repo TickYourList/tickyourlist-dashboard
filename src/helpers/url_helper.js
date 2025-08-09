@@ -66,3 +66,4 @@ export const ADD_NEW_TESTIMONIAL = "/v1/testimonial/add/testimonial";
 export const UPDATE_TESTIMONIAL = "/v1/testimonial/update/testimonial";
 export const DELETE_TESTIMONIAL = "/v1/testimonial/delete/testimonial";
 export const DELETE_ALL_TESTIMONIALS = "/v1/testimonial/delete/all";
+export const GET_CURRENCY_DATA = "/v1/tyltravelcurrency/get/travelcurrency/submitted/all";
