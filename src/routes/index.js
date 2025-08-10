@@ -166,6 +166,8 @@ import CreateInvoiceList from "../pages/Invoices/create-invoiceList";
 import AddInvoice from "../pages/Invoices/AddInvoice";
 import PMCollections from "../pages/product-management/PMCollections"
 import AddCollectionForm from "../pages/product-management/PMCollections/AddCollectionForm"
+import TourGroupVariantData from "../pages/TourGroupVariantData/index";
+import AddTourGroupVariants from "../pages/TourGroupVariantData/AddTourGroupVariants";
 
 
 const authProtectedRoutes = [
@@ -341,6 +343,16 @@ const authProtectedRoutes = [
   { path: "/collections", component: <PMCollections /> },
   { path: "/collections/add", component: <AddCollectionForm /> },
   { path: "/collections/edit-collection/:collectionId/:language", component: <AddCollectionForm /> },
+  // Tour Group Variants
+  { path: "/tour-group-variants-data", component: <TourGroupVariantData /> },
+  {
+    path: "/tour-group-variants-data/add-tour-group-variants",
+    component: <AddTourGroupVariants />,
+  },
+  {
+    path: "/tour-group-variants/edit/:variantId",
+    component: <AddTourGroupVariants />,
+  },
   {
     path: "/",
     exact: true,
