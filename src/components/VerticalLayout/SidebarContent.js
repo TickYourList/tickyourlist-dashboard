@@ -173,6 +173,12 @@ const SidebarContent = props => {
                     {props.t("Tours & Experiences")}
                   </Link>
                 </li>
+                <li>
+                  <Link to="/collections">
+                    {/* <i className="bx bx-folder"></i> */}
+                    {props.t("Collections")}
+                  </Link>
+                </li>
               </ul>
             </li>
 

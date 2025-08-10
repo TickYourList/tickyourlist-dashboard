@@ -164,6 +164,9 @@ import Coupons from "pages/Operations/Coupons";
 import CustomersList from "../pages/Customers/CustomersList";
 import CreateInvoiceList from "../pages/Invoices/create-invoiceList";
 import AddInvoice from "../pages/Invoices/AddInvoice";
+import PMCollections from "../pages/product-management/PMCollections"
+import AddCollectionForm from "../pages/product-management/PMCollections/AddCollectionForm"
+
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <AutomobileDashboard /> },
@@ -334,6 +337,10 @@ const authProtectedRoutes = [
   //Invoices
   { path: "/create-invoice-list", component: <CreateInvoiceList /> },
   { path: "/add-invoice", component: <AddInvoice /> },
+  // collections 
+  { path: "/collections", component: <PMCollections /> },
+  { path: "/collections/add", component: <AddCollectionForm /> },
+  { path: "/collections/edit-collection/:collectionId/:language", component: <AddCollectionForm /> },
   {
     path: "/",
     exact: true,
