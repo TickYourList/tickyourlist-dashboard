@@ -108,7 +108,9 @@ const TableContainer = ({
   isAddTravelPartnerOption,
   handleAddNewTravelPartner,
   isAddCollectionOptions,
-  handleAddCollectionClicks
+  handleAddCollectionClicks,
+  isAddTourGroupVariantOptions,
+  handleAddTourGroupVariantClicks
 }) => {
   const {
     getTableProps,
@@ -341,6 +343,22 @@ const TableContainer = ({
             {/* </div> */}
           </Col>
         )}
+        {isAddTourGroupVariantOptions && (
+          <Col sm="7" className="d-flex justify-content-end">
+            {/* <div className="text-sm-end"> */}
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="success"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleAddTourGroupVariantClicks}
+              >
+                <i className="mdi mdi-plus me-1" />
+                Add New Tour Group Variant
+              </Button>
+            </div>
+          </Col>
+        )}
         {isAddCarDealerOptions && (
           <Col sm="7" className="d-flex justify-content-end">
           {/* <div className="text-sm-end"> */}
@@ -413,6 +431,7 @@ const TableContainer = ({
             </div>
           </Col>
         )}
+        
         {isAddCarModelOptions && (
           <Col sm="7" className="d-flex justify-content-end">
             {/* <div className="text-sm-end"> */}

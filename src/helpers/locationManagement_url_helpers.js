@@ -55,3 +55,17 @@ export const UPDATE_PM_COLLECTION =
 export const DELETE_PM_COLLECTION = "/v1/tyltravelcollection/delete/"
 
 // --------------------------------------Project management Collections------------------------------------------------------------
+
+export const GET_TOUR_GROUP_VARIANTS = "v1/tyltraveltourgroupvariant/list";
+
+// Tour Group
+// export const GET_TOUR_GROUP_VARIANTS_API =
+//   "v1/tyltraveltourgroupvariant/list?page=1&limit=20";
+export const GET_TOUR_GROUP_VARIANTS_API = "/v1/tyltraveltourgroupvariant/list";
+
+export const GET_TRAVEL_TOUR_GROUPS_API =
+  "v1/tyltraveltourgroup/get/all/travel-tour-groups-list?page=1&limit=20";
+export const POST_ADD_TOUR_GROUP_VARIANT_API =
+  "v1/tyltraveltourgroupvariant/add/travel-tour-group-variant";
+export const PUT_UPDATE_TOUR_GROUP_VARIANT_API =
+  "v1/tyltraveltourgroupvariant/update";

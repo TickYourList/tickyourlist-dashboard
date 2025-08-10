@@ -79,6 +79,8 @@ import Coupon from "./coupon/reducer";
 import customerReducer from "./customers/reducer";
 //Project management Collections
 import pmCollectionReducer from "./product-management/collections/reducer";
+//tourgroup
+import tourGroupVariantReducer from "./TourGroupVariant/reducer"
 
 const rootReducer = combineReducers({
   // public
@@ -119,6 +121,7 @@ const rootReducer = combineReducers({
   coupons: Coupon,
   customers: customerReducer,
   pmCollection: pmCollectionReducer,
+  TourGroupVariant: tourGroupVariantReducer,
   travelCurrency // travel currency
 });
 

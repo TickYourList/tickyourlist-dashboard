@@ -99,6 +99,26 @@ const deletePMCollection = ({ collectionId }) => del(`${url.DELETE_PM_COLLECTION
 
 //----------------------------------------Product Management Collections--------------------------------------------------
 
+const getTourGroupVariants = () => get(url.GET_TOUR_GROUP_VARIANTS);
+
+// Travel Tour Group
+// export const getTourGroupVariantsAPI = () =>
+//   get(url.GET_TOUR_GROUP_VARIANTS_API);
+
+const getTourGroupVariantsAPI = ({ page = 1, limit = 10 }) =>
+  get(url.GET_TOUR_GROUP_VARIANTS_API, { params: { page, limit } });
+
+const getTravelTourGroupAPI = () => get(url.GET_TRAVEL_TOUR_GROUPS_API);
+// export const addTourGroupVariantAPI = () =>
+//   post(url.POST_ADD_TOUR_GROUP_VARIANT_API)
+
+const addTourGroupVariantAPI = data =>
+  post(url.POST_ADD_TOUR_GROUP_VARIANT_API, data);
+
+const updateTourGroupVariantAPI = (variantId, data) =>
+  put(`${url.PUT_UPDATE_TOUR_GROUP_VARIANT_API}/${variantId}`, data);
+
+
 
 export {
     getCountriesList,
@@ -133,5 +153,10 @@ export {
     addPMCollection,
     updatePMCollection,
     deletePMCollection,
-    getPMCitylist
+    getPMCitylist,
+    getTourGroupVariants,
+    getTourGroupVariantsAPI,
+    getTravelTourGroupAPI,
+    addTourGroupVariantAPI,
+    updateTourGroupVariantAPI
 };

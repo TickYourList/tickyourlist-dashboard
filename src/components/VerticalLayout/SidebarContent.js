@@ -174,6 +174,11 @@ const SidebarContent = props => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/tour-group-variants-data">
+                    {props.t("Tour Group Variant Data")}
+                  </Link>
+                </li>
+                <li>
                   <Link to="/collections">
                     {/* <i className="bx bx-folder"></i> */}
                     {props.t("Collections")}
