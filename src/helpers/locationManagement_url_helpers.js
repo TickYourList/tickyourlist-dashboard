@@ -33,3 +33,8 @@ export const GET_COUPON = "/v1/tyltravelcoupon/all";
 export const ADD_NEW_COUPON = "/v1/tyltravelcoupon/create";
 export const UPDATE_COUPON = "/v1/tyltravelcoupon/update/";
 export const DELETE_COUPON = "/v1/tyltravelcoupon/";
+
+export const GET_INVOICES_LIST = "/v1/tyltravelcustomerinvoice?page=1&limit=20";
+// Customers
+export const GET_CUSTOMERS_LIST =
+  "v1/tyltourcustomerbooking/get/all/travel-booking-list?page=1&limit=20";

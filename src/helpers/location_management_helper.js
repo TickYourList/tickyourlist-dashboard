@@ -77,6 +77,12 @@ const importCoupons = coupons => post('/v1/tyltravelcoupon/import', { coupons })
 
 const deleteCoupon = couponId => del(`${url.DELETE_COUPON}${couponId}`);
 
+// get invoices list
+const getInvoiceListAPI = () => get(url.GET_INVOICES_LIST);
+
+// GET CUSTOMERS LIST
+const getCustomerListAPI = () => get(url.GET_CUSTOMERS_LIST);
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -102,5 +108,7 @@ export {
     addCoupon,
     updateCoupon,
     importCoupons,
-    deleteCoupon
+    deleteCoupon,
+    getInvoiceListAPI,
+    getCustomerListAPI
 };

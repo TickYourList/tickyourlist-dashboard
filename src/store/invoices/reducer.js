@@ -1,6 +1,9 @@
 import {
   GET_INVOICES_FAIL,
   GET_INVOICES_SUCCESS,
+  GET_INVOICE_LIST,
+  GET_INVOICE_LIST_SUCCESS,
+  GET_INVOICE_LIST_FAIL,
   GET_INVOICE_DETAIL_SUCCESS,
   GET_INVOICE_DETAIL_FAIL,
   DELETE_INVOICE_SUCCESS,
@@ -12,7 +15,9 @@ import {
 const INIT_STATE = {
   invoices: [],
   invoiceDetail: {},
-  error: {},
+  invoiceList: [],
+  loading: false,
+  error: null,
 }
 
 const Invoices = (state = INIT_STATE, action) => {
@@ -66,6 +71,14 @@ const Invoices = (state = INIT_STATE, action) => {
         ...state,
         error: action.payload,
       };
+      case GET_INVOICE_LIST:
+        return { ...state, loading: true };
+  
+      case GET_INVOICE_LIST_SUCCESS:
+        return { ...state, loading: false, invoiceList: action.payload };
+  
+      case GET_INVOICE_LIST_FAIL:
+        return { ...state, loading: false, error: action.payload };
 
     default:
       return state
