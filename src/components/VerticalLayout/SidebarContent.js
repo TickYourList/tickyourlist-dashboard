@@ -203,8 +203,16 @@ const SidebarContent = props => {
               </Link>
               <ul className="sub-menu">
               <li>
+                  <Link to="/customer-list">{props.t("Customers")}</Link>
+                </li>
+                <li>
+                  <Link to="/create-invoice-list">
+                    {props.t("Invoices")}
+                  </Link>
+                </li>
+              <li>
               <Link to="/operations/coupons">
-                <i className="bx bx-purchase-tag"></i>
+                {/* <i className="bx bx-purchase-tag"></i> */}
                 <span>{props.t("Coupons")}</span>
               </Link>
             </li>

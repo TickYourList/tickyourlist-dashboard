@@ -161,6 +161,9 @@ import AddCurrency from "../pages/TravelCurrency/AddCurrencyForm";
 import TourGroupTable from "../pages/tickyourlist/TravelTourGroup/index"
 import TravelPartners from "../pages/Travel-Partners/TravelPartners";
 import Coupons from "pages/Operations/Coupons";
+import CustomersList from "../pages/Customers/CustomersList";
+import CreateInvoiceList from "../pages/Invoices/create-invoiceList";
+import AddInvoice from "../pages/Invoices/AddInvoice";
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <AutomobileDashboard /> },
@@ -326,6 +329,11 @@ const authProtectedRoutes = [
     component: <TravelPartners />,
    },
    {path: "/operations/coupons", component: <Coupons />},
+   //Customers
+  { path: "/customer-list", component: <CustomersList /> },
+  //Invoices
+  { path: "/create-invoice-list", component: <CreateInvoiceList /> },
+  { path: "/add-invoice", component: <AddInvoice /> },
   {
     path: "/",
     exact: true,

@@ -1,14 +1,17 @@
 import { call, put, takeEvery } from "redux-saga/effects";
 
 // Crypto Redux States
-import { DELETE_ALL_INVOICE, DELETE_INVOICE, GET_INVOICES, GET_INVOICE_DETAIL } from "./actionTypes";
+import { DELETE_ALL_INVOICE, DELETE_INVOICE, GET_INVOICES, GET_INVOICE_DETAIL, GET_INVOICE_LIST } from "./actionTypes";
 import {
+  getInvoiceListSuccess,
+  getInvoiceListFail,
   getInvoicesSuccess,
   getInvoicesFail,
   getInvoiceDetailSuccess,
   getInvoiceDetailFail,
 } from "./actions";
 import { deleteAllInvoice, deleteInvoice, getInvoiceDetail, getInvoices } from "helpers/backend_helper";
+import { getInvoiceListAPI } from "../../helpers/location_management_helper";
 import { showToastError, showToastSuccess } from "helpers/toastBuilder";
 
 function* fetchInvoices() {
@@ -17,6 +20,17 @@ function* fetchInvoices() {
     yield put(getInvoicesSuccess(response.data));
   } catch (error) {
     yield put(getInvoicesFail(error));
+  }
+}
+
+function* fetchInvoiceList() {
+  try {
+    const response = yield call(getInvoiceListAPI)
+    const invoices = response.data.invoices
+
+    yield put(getInvoiceListSuccess(invoices))
+  } catch (error) {
+    yield put(getInvoiceListFail(error.message))
   }
 }
 
@@ -54,6 +68,7 @@ function* onDeleteInvoice({ payload: { customerId, invoiceId } }) {
 
 function* invoiceSaga() {
   yield takeEvery(GET_INVOICES, fetchInvoices);
+  yield takeEvery(GET_INVOICE_LIST, fetchInvoiceList);
   yield takeEvery(GET_INVOICE_DETAIL, fetchInvoiceDetail);
   yield takeEvery(DELETE_ALL_INVOICE, onDeleteAllInvoice);
   yield takeEvery(DELETE_INVOICE, onDeleteInvoice);

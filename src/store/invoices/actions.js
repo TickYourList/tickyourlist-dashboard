@@ -5,6 +5,9 @@ import {
   DELETE_INVOICE,
   DELETE_INVOICE_FAIL,
   DELETE_INVOICE_SUCCESS,
+  GET_INVOICE_LIST,
+  GET_INVOICE_LIST_SUCCESS,
+  GET_INVOICE_LIST_FAIL,
   GET_INVOICES,
   GET_INVOICES_FAIL,
   GET_INVOICES_SUCCESS,
@@ -67,5 +70,17 @@ export const deleteInvoiceSuccess = (customerId, invoiceId) => ({
 
 export const deleteInvoiceFail = error => ({
   type: DELETE_INVOICE_FAIL,
+  payload: error,
+});
+
+export const getInvoiceList = () => ({ type: GET_INVOICE_LIST });
+
+export const getInvoiceListSuccess = invoices => ({
+  type: GET_INVOICE_LIST_SUCCESS,
+  payload: invoices,
+});
+
+export const getInvoiceListFail = error => ({
+  type: GET_INVOICE_LIST_FAIL,
   payload: error,
 });

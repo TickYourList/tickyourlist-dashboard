@@ -38,6 +38,7 @@ import travelCitySaga from "./travelCity/saga";
 import tourGroupSaga from "./tickyourlist/travelTourGroup/saga";
 import TravelPartnerSaga from "./travelPartner/saga";
 import couponSaga from "./coupon/saga";
+import customerSaga from "./customers/saga";
  //travel currency
 
 
@@ -79,6 +80,7 @@ export default function* rootSaga() {
     fork(travelCitySaga),
     fork(tourGroupSaga),
     fork(couponSaga),
+    fork(customerSaga),
     fork(currencySaga) //travel currency
   ]);
 }
