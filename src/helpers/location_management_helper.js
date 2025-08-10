@@ -153,6 +153,72 @@ const getTravelCategoriesList= (cityCode) => {
   return get(newurl);
 };
 
+// HomeBanner
+
+const getBannerList = () => get(url.GET_BANNER_LIST);
+
+const getCityList = () => get(url.GET_CITY_LIST).then(res => 
+
+  res.data.travelCityList.map(city => ({ 
+    value: city._id,          
+    label: city.name   
+  }))
+);
+
+const getTours = (city) =>
+  { const cityId = city.value;
+  let baseUrl = url.GET_TOURS; 
+
+  const separator = baseUrl.includes('?') ? '&' : '?';
+
+  const fullUrl = `${baseUrl}${separator}city=${cityId}`;
+
+  return get(fullUrl).then(res => 
+    res.data.map(tour => ({ 
+      value: tour._id,
+      label: tour.displayName
+    }))
+  );
+};
+
+const getCategories = (cityId) => get(`${url.GET_CATEGORIES}?city=${cityId}`).then(res => 
+ res.data.map(category => ({ 
+    value: category._id,          
+    label: category.displayName 
+  }))
+);
+
+const getSubcategories = (cityId) => get(`${url.GET_SUBCATEGORIES}?city=${cityId}`).then(res => 
+  res.data.map(subcategory => ({ 
+    value: subcategory._id,          
+    label: subcategory.displayName   
+  }))
+);
+
+
+const getBannerCollections = (city) => {
+
+  const cityId = city.value;
+  let baseUrl = url.GET_BANNER_COLLECTIONS; 
+
+  const separator = baseUrl.includes('?') ? '&' : '?';
+
+  const fullUrl = `${baseUrl}${separator}city=${cityId}`;
+
+  return get(fullUrl).then(res => 
+    res.data.map(collection => ({ 
+      value: collection._id,
+      label: collection.displayName
+    }))
+  );
+};
+
+const addNewBanner = (bannerData) => postFormData(url.ADD_NEW_BANNER, bannerData);
+
+const editBanner = (id, banner) => putFormData(`${url.EDIT_BANNER}/${id}`, banner);
+
+const deleteBanner = (bannerId) => del(`${url.DELETE_BANNER}/${bannerId}`);
+
 
 
 export {
@@ -199,5 +265,14 @@ export {
     addTravelSubcategoryApi,
     updateSubcategory,
     deleteSubcategoryApi,
-    getTravelCategoriesList
+    getTravelCategoriesList,
+    getBannerList,
+    getCityList,
+    getTours,
+    getCategories,
+    getSubcategories,
+    getBannerCollections,
+    addNewBanner,
+    editBanner,
+    deleteBanner
 };
