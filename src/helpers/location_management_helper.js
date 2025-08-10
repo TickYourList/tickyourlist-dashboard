@@ -83,6 +83,23 @@ const getInvoiceListAPI = () => get(url.GET_INVOICES_LIST);
 // GET CUSTOMERS LIST
 const getCustomerListAPI = () => get(url.GET_CUSTOMERS_LIST);
 
+//----------------------------------------Product Management Collections--------------------------------------------------
+const getPMCollections = () => get(url.GET_PM_COLLECTIONS)
+
+const addPMCollection = ({ cityCode, formData }) =>
+  postFormData(`${url.ADD_PM_COLLECTION}${cityCode}`, formData)
+
+const getPMCitylist = () => get(url.GET_PM_CITY_LIST)
+
+const getPMCollectionById =({collectionId, language})=> get(`${url.GET_PM_COLLECTION_BY_ID}${collectionId}/${language}`)
+
+const updatePMCollection = ({ collectionId, formData }) => putFormData(`${url.UPDATE_PM_COLLECTION}${collectionId}`, formData)
+
+const deletePMCollection = ({ collectionId }) => del(`${url.DELETE_PM_COLLECTION}${collectionId}`)  
+
+//----------------------------------------Product Management Collections--------------------------------------------------
+
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -110,5 +127,11 @@ export {
     importCoupons,
     deleteCoupon,
     getInvoiceListAPI,
-    getCustomerListAPI
+    getCustomerListAPI,
+    getPMCollectionById,
+    getPMCollections,
+    addPMCollection,
+    updatePMCollection,
+    deletePMCollection,
+    getPMCitylist
 };

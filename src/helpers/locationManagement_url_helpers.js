@@ -38,3 +38,20 @@ export const GET_INVOICES_LIST = "/v1/tyltravelcustomerinvoice?page=1&limit=20";
 // Customers
 export const GET_CUSTOMERS_LIST =
   "v1/tyltourcustomerbooking/get/all/travel-booking-list?page=1&limit=20";
+
+  // --------------------------------------Project management Collections------------------------------------------------------------
+export const GET_PM_COLLECTIONS =
+"/v1/tyltravelcollection/get/travel-collection/top/list/all?page=1&limit=10&sortOrder=asc"
+export const ADD_PM_COLLECTION =
+"/v1/tyltravelcollection/add/travel-collection/top/list?cityCode="
+
+export const GET_PM_CITY_LIST = "/v1/tyltravelcity/get/travelcity/submitted/all"
+
+export const GET_PM_COLLECTION_BY_ID ="/v1/tyltravelcollection/get/travel-collection/by-id/"
+
+export const UPDATE_PM_COLLECTION =
+"/v1/tyltravelcollection/update-travel-collection/"
+
+export const DELETE_PM_COLLECTION = "/v1/tyltravelcollection/delete/"
+
+// --------------------------------------Project management Collections------------------------------------------------------------

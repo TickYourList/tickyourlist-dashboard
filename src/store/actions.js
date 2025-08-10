@@ -56,4 +56,6 @@ export * from "./automobiles/carbrands/actions";
 // travel currency
 export * from "./travelCurrency/action";
 
+export * from "./product-management/collections/actions"
+
 
