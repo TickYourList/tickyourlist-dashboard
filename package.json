@@ -55,6 +55,7 @@
     "react-chartist": "^0.14.4",
     "react-chartjs-2": "^2.11.1",
     "react-color": "^2.19.3",
+    "react-copy-to-clipboard": "^5.1.0",
     "react-countdown": "^2.3.5",
     "react-datepicker": "^4.8.0",
     "react-dnd": "^16.0.1",

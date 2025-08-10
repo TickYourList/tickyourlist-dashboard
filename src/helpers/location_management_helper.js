@@ -64,6 +64,19 @@ const updateTravelPartner = (userId, data) => putFormData(`${url.UPDATE_TRAVEL_P
 //delete Travel Partner
 const deleteTravelPartner= id => del(`${url.DELETE_TRAVEL_PARTNER}/${id}`);
 
+// GET COUPON
+const getCouponList = (page = 1, limit = 10) => get(`${url.GET_COUPON}?page=${page}&limit=${limit}`);
+
+// ADD COUPON
+const addCoupon = coupon => post(url.ADD_NEW_COUPON, coupon);
+
+// UPDATE COUPON
+const updateCoupon = coupon => put(`${url.UPDATE_COUPON}${coupon._id}`, coupon);
+
+const importCoupons = coupons => post('/v1/tyltravelcoupon/import', { coupons });
+
+const deleteCoupon = couponId => del(`${url.DELETE_COUPON}${couponId}`);
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -84,5 +97,10 @@ export {
     getTravelPartnerList,
     addTravelPartner,
     updateTravelPartner,
-    deleteTravelPartner
+    deleteTravelPartner,
+    getCouponList,
+    addCoupon,
+    updateCoupon,
+    importCoupons,
+    deleteCoupon
 };

@@ -160,6 +160,7 @@ import CurrencyTable from "../pages/TravelCurrency/CurrencyTable";
 import AddCurrency from "../pages/TravelCurrency/AddCurrencyForm";
 import TourGroupTable from "../pages/tickyourlist/TravelTourGroup/index"
 import TravelPartners from "../pages/Travel-Partners/TravelPartners";
+import Coupons from "pages/Operations/Coupons";
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <AutomobileDashboard /> },
@@ -324,6 +325,7 @@ const authProtectedRoutes = [
     path: "/travel-partners",
     component: <TravelPartners />,
    },
+   {path: "/operations/coupons", component: <Coupons />},
   {
     path: "/",
     exact: true,

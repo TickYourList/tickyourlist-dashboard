@@ -27,3 +27,9 @@ export const ADD_NEW_TRAVEL_PARTNER = "v1/tyltravelpartner/create";
 
 export const UPDATE_TRAVEL_PARTNER = "v1/tyltravelpartner/update";
 export const DELETE_TRAVEL_PARTNER = "v1/tyltravelpartner";
+
+// operations/Coupons
+export const GET_COUPON = "/v1/tyltravelcoupon/all";
+export const ADD_NEW_COUPON = "/v1/tyltravelcoupon/create";
+export const UPDATE_COUPON = "/v1/tyltravelcoupon/update/";
+export const DELETE_COUPON = "/v1/tyltravelcoupon/";
