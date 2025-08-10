@@ -24,6 +24,24 @@ const updateCity = (cityCode, formData) => putFormData(url.UPDATE_CITY + '/' + c
 
 const removeCity = (cityCode) => del(url.REMOVE_CITY + '/' + cityCode)
 
+//GET ALL TOUR GROUPS
+const getAllTourGroupsList = (page, limit) =>
+    get(`${url.FETCH_TOUR_GROUP_LIST}?page=${page}&limit=${limit}`)
+
+//GET TOUR BY ID
+const getTourById = id => get(`${url.FETCH_TOUR_GROUP_BY_ID}${id}`)
+
+//ADDING A NEW TOUR GROUP
+const addNewTourGroup = (cityCode, data) =>
+  postFormData(`${url.ADD_TOUR_GROUP}?cityCode=${cityCode}`, data)
+
+//UPDATING AN EXISTING TOUR GROUP
+const updateTourGroupHelper = (id, data) =>
+  putFormData(`${url.UPDATE_TOUR_GROUP}/${id}`, data)
+
+//DELETING A TOUR GROUP
+const deleteTourGroupById = id => del(`${url.DELETE_TOUR_GROUP}${id}`)
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -35,5 +53,10 @@ export {
     getCityData,
     createNewCity,
     updateCity,
-    removeCity
+    removeCity,
+    getAllTourGroupsList,
+    getTourById,
+    addNewTourGroup,
+    updateTourGroupHelper,
+    deleteTourGroupById
 };

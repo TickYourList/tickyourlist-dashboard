@@ -160,113 +160,19 @@ const SidebarContent = props => {
                 <span>{props.t("Calendar")}</span>
               </Link>
             </li> */}
-            <li>
-              <Link to="/#" className="has-arrow">
-                <i className="bx bx-store"></i>
-                <span>{props.t("Ecommerce")}</span>
-              </Link>
-              <ul className="sub-menu">
-              {/* <li>
-                  <Link to="/ecommerce-collections">
-                    {props.t("Collections")}
-                  </Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/ecommerce-product-list">
-                    {props.t("Product List")}
-                  </Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/ecommerce-get-domain">
-                    {props.t("Domains")}
-                  </Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/ecommerce-orders">{props.t("Orders")}</Link>
-                </li> */}
-                <li>
-                  <Link to="/ecommerce-customers">{props.t("Customers")}</Link>
-                </li>
-                {/* <li>
-                  <Link to="/ecommerce-add-product">
-                    {props.t("Add Product")}
-                  </Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/ecommerce-products">{props.t("Products")}</Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/ecommerce-product-detail/1">
-                    {props.t("Product Detail")}
-                  </Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/ecommerce-cart">{props.t("Cart")}</Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/ecommerce-checkout">{props.t("Checkout")}</Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/ecommerce-shops">{props.t("Shops")}</Link>
-                </li> */}
-              </ul>
-            </li>
-            <li className="menu-title">{props.t("Travel")}</li>
-
-
-
+            {/* <li className="menu-title">{props.t("Travel")}</li> */}
 
             <li>
               <Link to="/#" className="has-arrow">
                 <i className="bx bx-store"></i>
-                <span>{props.t("Automobile")}</span>
+                <span>{props.t("Product Management")}</span>
               </Link>
               <ul className="sub-menu">
-              {/* <li>
-                  <Link to="/banner">
-                    {props.t("Banner")}
-                  </Link>
-                </li> */}
-              {/* <li>
-                  <Link to="/automobile-collections">
-                    {props.t("Collections")}
-                  </Link>
-                </li> */}
-              <li>
-                  <Link to="/car-brands">
-                    {props.t("Car Brands")}
-                  </Link>
-                </li>
                 <li>
-                  <Link to="/car-models">
-                    {props.t("Car Models")}
+                  <Link to="/tours-&-experience">
+                    {props.t("Tours & Experiences")}
                   </Link>
                 </li>
-                <li>
-                  <Link to="/car-variants">
-                    {props.t("Car Variants")}
-                  </Link>
-                </li>
-                {/* <li>
-                  <Link to="/car-blogs">
-                    {props.t("Car Blogs")}
-                  </Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/car-customers">
-                    {props.t("Car Customers")}
-                  </Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/car-dealers">
-                    {props.t("Car Dealers")}
-                  </Link>
-                </li> */}
-                {/* <li>
-                  <Link to="/testimonials">
-                    {props.t("Testimonial")}
-                  </Link>
-                </li> */}
               </ul>
             </li>
 

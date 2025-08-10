@@ -12,3 +12,10 @@ export const CREATE_NEW_CITY = "v1/tyltravelcity/add/travel-city";
 export const UPDATE_CITY = "v1/tyltravelcity/update/travel-city";
 
 export const REMOVE_CITY = "v1/tyltravelcity/delete/travel-city";
+
+export const FETCH_TOUR_GROUP_LIST =
+  "/v1/tyltraveltourgroup/get/all/travel-tour-groups-list"
+export const ADD_TOUR_GROUP = "/v1/tyltraveltourgroup/add/travel-tour-group"
+export const UPDATE_TOUR_GROUP = "/v1/tyltraveltourgroup/update/tour-group"
+export const FETCH_TOUR_GROUP_BY_ID = "/v1/tyltraveltourgroup/get/tour-group/"
+export const DELETE_TOUR_GROUP = "/v1/tyltraveltourgroup/tour-group/"

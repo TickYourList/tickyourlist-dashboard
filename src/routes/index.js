@@ -158,6 +158,7 @@ import CurrencyTable from "../pages/TravelCurrency/CurrencyTable";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 // Add Currency
 import AddCurrency from "../pages/TravelCurrency/AddCurrencyForm";
+import TourGroupTable from "../pages/tickyourlist/TravelTourGroup/index"
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <AutomobileDashboard /> },
@@ -316,6 +317,8 @@ const authProtectedRoutes = [
     component: <AddCurrency />,
     exact: true,
   },
+   //TickyourList Dashboard
+   { path: "/tours-&-experience", component: <TourGroupTable /> },
   {
     path: "/",
     exact: true,
