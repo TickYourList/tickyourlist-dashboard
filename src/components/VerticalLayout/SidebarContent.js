@@ -276,14 +276,17 @@ const SidebarContent = props => {
                 <span style={{ whiteSpace: 'nowrap' }}>{props.t('Location Management')}</span>
               </Link>
               <ul className="sub-menu">
+                  <li>
+                  <Link to="/travel-currency">
+                   <span>{props.t("Currency")}</span>
+                  </Link>
+              </li>
                 <li>
                   <Link to="/country">{props.t('Country')}</Link>
                 </li>
                 <li>
-                  <Link to="/travel-currency">
-                   <span>{props.t("Travel Currency")}</span>
-                  </Link>
-              </li>
+                  <Link to="/location-management-cities">{props.t("Cities")}</Link>
+                </li>
               </ul>
             </li>
 

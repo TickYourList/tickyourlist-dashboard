@@ -66,6 +66,7 @@ const TableContainer = ({
   isGlobalFilter,
   isJobListGlobalFilter,
   isAddOptions,
+  isAddCityOptions,
   isAddCarBrandOptions,
   isAddCarBlogOptions,
   isAddCarModelOptions,
@@ -80,6 +81,8 @@ const TableContainer = ({
   isAddUserList,
   handleOrderClicks,
   handleOrderDeleteClicks,
+  handleAddCityClick,
+  handleDeleteAllCitiesClick,
   handleAddCarBrandClicks,
   handleCarBrandDeleteClicks,
   handleAddCarBlogClicks,
@@ -203,6 +206,34 @@ const TableContainer = ({
               >
                 <i className="mdi mdi-plus me-1" />
                 Delete all orders
+              </Button>
+            </div>
+            {/* </div> */}
+          </Col>
+        )}
+        {isAddCityOptions && (
+          <Col sm="7" className="d-flex justify-content-end">
+            {/* <div className="text-sm-end"> */}
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="success"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleAddCityClick}
+              >
+                <i className="mdi mdi-plus me-1" />
+                Add New City
+              </Button>
+            </div>
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="danger"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleDeleteAllCitiesClick}
+              >
+                <i className="mdi mdi-minus me-1" />
+                Delete All Cities
               </Button>
             </div>
             {/* </div> */}

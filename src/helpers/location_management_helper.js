@@ -1,4 +1,4 @@
-import {get, post, put, del } from "./api_helper";
+import {get, post, put, del, postFormData, putFormData } from "./api_helper";
 import * as url from "./locationManagement_url_helpers";
 
 
@@ -16,11 +16,24 @@ const deleteCountryApi = (countryCode) => {
     return new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API
 };
 
+const getCitiesList = () => get(url.GET_CITIES_LIST)
+const getCityData = (cityCode) => get(url.GET_CITY_DATA +'/' + cityCode)
+
+const createNewCity = (formData) => postFormData(url.CREATE_NEW_CITY, formData)
+const updateCity = (cityCode, formData) => putFormData(url.UPDATE_CITY + '/' + cityCode, formData)
+
+const removeCity = (cityCode) => del(url.REMOVE_CITY + '/' + cityCode)
+
 export {
     getCountriesList,
     getCurrencyList,
     getCountryByCode,
     addCountry,
     updateCountry,
-    deleteCountryApi
+    deleteCountryApi,
+    getCitiesList,
+    getCityData,
+    createNewCity,
+    updateCity,
+    removeCity
 };

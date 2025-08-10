@@ -34,6 +34,7 @@ import CarBannerSaga from "./automobiles/carBanners/saga";
 import countriesSaga from "./countries/saga";
 
 import currencySaga from "./travelCurrency/saga";
+import travelCitySaga from "./travelCity/saga";
  //travel currency
 
 
@@ -71,6 +72,7 @@ export default function* rootSaga() {
     fork(carDealerSaga),
     fork(testimonialSaga),
     fork(countriesSaga),
+    fork(travelCitySaga),
     fork(currencySaga) //travel currency
   ]);
 }
