@@ -150,7 +150,15 @@ import AdvertiseWithUs from "pages/Settings/AdvertiseWithUs";
 import Banner from "pages/Automobile/Banner/Banner";
 import EcommerceCustomers from "pages/Ecommerce/EcommerceCustomers";
 import Country from "../pages/LocationManagement/Country";
+import Cities from "../pages/LocationManagement/Cities/Cities";
+import CityDetails from "../pages/LocationManagement/Cities/CityDetails";
+import AddNewCity from "../pages/LocationManagement/Cities/AddNewCity";
+// Travel currency
+import CurrencyTable from "../pages/TravelCurrency/CurrencyTable";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
+// Add Currency
+import AddCurrency from "../pages/TravelCurrency/AddCurrencyForm";
+import TourGroupTable from "../pages/tickyourlist/TravelTourGroup/index"
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <AutomobileDashboard /> },
@@ -294,9 +302,23 @@ const authProtectedRoutes = [
   { path: "/pages-faqs", component: <PagesFaqs /> },
   { path: "/pages-pricing", component: <PagesPricing /> },
   { path: "/country", component: <Country /> },
-
-  // this route should be at the end of all other routes
-  // eslint-disable-next-line react/display-name
+  //Cities
+  { path: "/location-management-cities", component: <Cities /> },
+  { path: "/city-details/:cityCode", component: <CityDetails /> },
+  { path: "/add-new-city", component: <AddNewCity isEditMode={false} /> },
+  { path: "/edit-city/:cityCode", component: <AddNewCity isEditMode={true} /> },
+  {
+    path: "/travel-currency",
+    component: <CurrencyTable />,
+    exact: true,
+  },
+  {
+    path: "/currency/add",
+    component: <AddCurrency />,
+    exact: true,
+  },
+   //TickyourList Dashboard
+   { path: "/tours-&-experience", component: <TourGroupTable /> },
   {
     path: "/",
     exact: true,
@@ -325,26 +347,6 @@ const publicRoutes = [
   { path: "/page-confirm-mail", component: <ConfirmMail /> },
   { path: "/auth-two-step-verification", component: <TwostepVerification /> },
 ];
-
-// Travel currency
-import CurrencyTable from "../pages/TravelCurrency/CurrencyTable";
-
-authProtectedRoutes.push({
-  path: "/travel-currency",
-  component: <CurrencyTable />,
-  exact: true,
-});
-// Add Currency
-import AddCurrency from "../pages/TravelCurrency/AddCurrencyForm";
-
-authProtectedRoutes.push({
-  path: "/currency/add",
-  component: <AddCurrency />,
-  exact: true,
-});
-
-
-
 
 
 export { authProtectedRoutes, publicRoutes };
