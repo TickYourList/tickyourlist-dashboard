@@ -69,3 +69,11 @@ export const POST_ADD_TOUR_GROUP_VARIANT_API =
   "v1/tyltraveltourgroupvariant/add/travel-tour-group-variant";
 export const PUT_UPDATE_TOUR_GROUP_VARIANT_API =
   "v1/tyltraveltourgroupvariant/update";
+
+export const GET_SUBCATEGORIES = "/v1/tyltravelsubcategory/get/travel-subcategories";
+export const GET_TRAVELCATEGORIES="/v1/tyltravelcategory/travel-categories/city/"
+export const ADD_TRAVEL_SUBCATEGORY="/v1/tyltravelsubcategory/add/travel-sub-category"
+export const GET_TRAVEL_CITIES="/v1/tyltravelcategory/get/travel-category"
+export const GET_EXISTING_SUBCATEGORY="/v1/tyltravelsubcategory/get/travel-subcategory/"
+export const UPDATE_SUBCATEGORY="/v1/tyltravelsubcategory/travel-subcategory/"
+export const DELETE_SUBCATEGORY="/v1/tyltravelsubcategory/delete/travel-subcategory/"

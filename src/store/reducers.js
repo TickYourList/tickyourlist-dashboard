@@ -81,6 +81,7 @@ import customerReducer from "./customers/reducer";
 import pmCollectionReducer from "./product-management/collections/reducer";
 //tourgroup
 import tourGroupVariantReducer from "./TourGroupVariant/reducer"
+import travelSubCategoryReducer from "./productManagement/subcategories/reducer"
 
 const rootReducer = combineReducers({
   // public
@@ -122,6 +123,7 @@ const rootReducer = combineReducers({
   customers: customerReducer,
   pmCollection: pmCollectionReducer,
   TourGroupVariant: tourGroupVariantReducer,
+  travelSubCategoryReducer,
   travelCurrency // travel currency
 });
 

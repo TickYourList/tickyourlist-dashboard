@@ -168,6 +168,10 @@ import PMCollections from "../pages/product-management/PMCollections"
 import AddCollectionForm from "../pages/product-management/PMCollections/AddCollectionForm"
 import TourGroupVariantData from "../pages/TourGroupVariantData/index";
 import AddTourGroupVariants from "../pages/TourGroupVariantData/AddTourGroupVariants";
+import SubCategory from "../pages/Product_Management/SubCategory/SubCategory";
+import SubCategoryDetails from "../pages/Product_Management/SubCategory/SubCategoriesDetail";
+import SubCategoryForm from "pages/Product_Management/SubCategory/NewSubCategoryForm";
+import EditSubCategory from "pages/Product_Management/SubCategory/EditSubCategory";
 
 
 const authProtectedRoutes = [
@@ -353,6 +357,13 @@ const authProtectedRoutes = [
     path: "/tour-group-variants/edit/:variantId",
     component: <AddTourGroupVariants />,
   },
+  {
+    path: '/tour-group-sub-category',
+    component: <SubCategory />,
+  },
+  {path:"/sub-category-details/:categoryid", component:<SubCategoryDetails />},
+  {path:"/add-new-travel-sub-category", component:<SubCategoryForm />},
+  {path:"/edit-subCategory/:subCategoryid",component:<EditSubCategory/>},
   {
     path: "/",
     exact: true,
