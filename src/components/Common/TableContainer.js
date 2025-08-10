@@ -105,7 +105,8 @@ const TableContainer = ({
   customPageSize,
   className,
   customPageSizeOptions,
-
+  isAddTravelPartnerOption,
+  handleAddNewTravelPartner,
 }) => {
   const {
     getTableProps,
@@ -265,6 +266,21 @@ const TableContainer = ({
               </Button>
             </div>
             {/* </div> */}
+          </Col>
+        )}
+        {isAddTravelPartnerOption && (
+          <Col sm="7" className="d-flex justify-content-end">
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="success"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleAddNewTravelPartner}
+              >
+                <i className="mdi mdi-plus me-1" />
+                Add New Travel Partner
+              </Button>
+            </div>
           </Col>
         )}
          {isAddCarBlogOptions && (

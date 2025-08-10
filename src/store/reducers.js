@@ -74,6 +74,7 @@ import countries from "./countries/reducers";
 import travelCurrency from "./travelCurrency/reducer";
 import travelCity from "./travelCity/reducer";
 import tourGroupReducer from "./tickyourlist/travelTourGroup/reducer";
+import travelPartner from "./travelPartner/reducers";
 
 const rootReducer = combineReducers({
   // public
@@ -108,6 +109,7 @@ const rootReducer = combineReducers({
   CarDealer,
   Testimonial,
   countries,
+  travelPartner,
   travelCity,
   tourGroupReducer,
   travelCurrency // travel currency
