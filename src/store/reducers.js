@@ -12,7 +12,6 @@ import Profile from "./auth/profile/reducer";
 //E-commerce
 import ecommerce from "./e-commerce/reducer";
 
-
 //Collection
 import collection from './collections/reducer';
 
@@ -83,6 +82,7 @@ import pmCollectionReducer from "./product-management/collections/reducer";
 import tourGroupVariantReducer from "./TourGroupVariant/reducer"
 import travelSubCategoryReducer from "./productManagement/subcategories/reducer"
 import banner from "./banners/bannerReducer";
+import travelCategory from "./travelCategories/reducer";
 
 const rootReducer = combineReducers({
   // public
@@ -126,13 +126,8 @@ const rootReducer = combineReducers({
   TourGroupVariant: tourGroupVariantReducer,
   travelSubCategoryReducer,
   banner,
+  travelCategory,
   travelCurrency // travel currency
 });
-
-
-
-
-
-
 
 export default rootReducer;

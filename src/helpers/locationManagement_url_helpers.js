@@ -88,3 +88,10 @@ export const GET_SUBCATEGORIES_DATA = "/v1/tyltravelsubcategory/get/travel-subca
 export const GET_BANNER_COLLECTIONS = "/v1/tyltravelcollection/get/travel-collection/top/list?cityCode=DUBAI";
 export const EDIT_BANNER = "/v1/tylHomeScreenBanner";
 export const DELETE_BANNER = "/v1/tylHomeScreenBanner";
+
+export const GET_CATEGORIES_LIST = "/v1/tyltravelcategory/get/travel-category";
+export const DELETE_CATEGORY = "/v1/tyltravelcategory/travel-category/{id}";
+export const GET_CATEGORY_BY_ID = "/v1/tyltravelcategory/travel-category/{id}";
+export const UPDATE_CATEGORY = "/v1/tyltravelcategory/travel-category/{id}";
+export const ADD_CATEGORY = "/v1/tyltravelcategory/add/travel-category?city={cityCode}";
+export const GET_CITIES = "/v1/tyltravelcity/get/travelcity/submitted/all";

@@ -220,6 +220,23 @@ const editBanner = (id, banner) => putFormData(`${url.EDIT_BANNER}/${id}`, banne
 const deleteBanner = (bannerId) => del(`${url.DELETE_BANNER}/${bannerId}`);
 
 
+const getCategoriesList = () => get(url.GET_CATEGORIES_LIST);
+
+const getCategoryById = (id) =>
+  get(url.GET_CATEGORY_BY_ID.replace("{id}", id));
+
+const deleteCategory = (id) =>
+  del(url.DELETE_CATEGORY.replace("{id}", id));
+
+const updateCategory = (id, data) =>
+  putFormData(url.UPDATE_CATEGORY.replace("{id}", id), data, {
+    "Content-Type": "multipart/form-data",
+  });
+
+const addCategory = (data, cityCode) =>
+  postFormData(url.ADD_CATEGORY.replace("{cityCode}", cityCode), data);
+
+
 
 export {
     getCountriesList,
@@ -274,5 +291,10 @@ export {
     getBannerCollections,
     addNewBanner,
     editBanner,
-    deleteBanner
+    deleteBanner,
+    getCategoriesList,
+    getCategoryById,
+    deleteCategory,
+    updateCategory,
+    addCategory
 };
