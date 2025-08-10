@@ -75,6 +75,7 @@ import travelCurrency from "./travelCurrency/reducer";
 import travelCity from "./travelCity/reducer";
 import tourGroupReducer from "./tickyourlist/travelTourGroup/reducer";
 import travelPartner from "./travelPartner/reducers";
+import Coupon from "./coupon/reducer";
 
 const rootReducer = combineReducers({
   // public
@@ -112,6 +113,7 @@ const rootReducer = combineReducers({
   travelPartner,
   travelCity,
   tourGroupReducer,
+  coupons: Coupon,
   travelCurrency // travel currency
 });
 
