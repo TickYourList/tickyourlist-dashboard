@@ -172,6 +172,7 @@ import SubCategory from "../pages/Product_Management/SubCategory/SubCategory";
 import SubCategoryDetails from "../pages/Product_Management/SubCategory/SubCategoriesDetail";
 import SubCategoryForm from "pages/Product_Management/SubCategory/NewSubCategoryForm";
 import EditSubCategory from "pages/Product_Management/SubCategory/EditSubCategory";
+import HomeBanner from "pages/Content-marketing/HomeBanner";
 
 
 const authProtectedRoutes = [
@@ -364,6 +365,7 @@ const authProtectedRoutes = [
   {path:"/sub-category-details/:categoryid", component:<SubCategoryDetails />},
   {path:"/add-new-travel-sub-category", component:<SubCategoryForm />},
   {path:"/edit-subCategory/:subCategoryid",component:<EditSubCategory/>},
+  { path: "/content-marketing-home-banner", component: <HomeBanner /> },
   {
     path: "/",
     exact: true,

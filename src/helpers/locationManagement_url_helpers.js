@@ -77,3 +77,14 @@ export const GET_TRAVEL_CITIES="/v1/tyltravelcategory/get/travel-category"
 export const GET_EXISTING_SUBCATEGORY="/v1/tyltravelsubcategory/get/travel-subcategory/"
 export const UPDATE_SUBCATEGORY="/v1/tyltravelsubcategory/travel-subcategory/"
 export const DELETE_SUBCATEGORY="/v1/tyltravelsubcategory/delete/travel-subcategory/"
+
+// HomeBanner
+export const GET_BANNER_LIST = "/v1/tylTravelCitySectionBanner/list/all";
+export const ADD_NEW_BANNER = "/v1/tylTravelCitySectionBanner/create/home/banner";
+export const GET_CITY_LIST = "/v1/tyltravelcity/get/travelcity/submitted/all";
+export const GET_TOURS = "/v1/tyltraveltourgroup/get/all/travel-tour-groups?currency=AED&cityCode=DUBAI";
+export const GET_CATEGORIES = "/v1/tyltravelcategory/travel-categories/city/DUBAI";
+export const GET_SUBCATEGORIES_DATA = "/v1/tyltravelsubcategory/get/travel-subcategories-data";
+export const GET_BANNER_COLLECTIONS = "/v1/tyltravelcollection/get/travel-collection/top/list?cityCode=DUBAI";
+export const EDIT_BANNER = "/v1/tylHomeScreenBanner";
+export const DELETE_BANNER = "/v1/tylHomeScreenBanner";

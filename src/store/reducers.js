@@ -82,6 +82,7 @@ import pmCollectionReducer from "./product-management/collections/reducer";
 //tourgroup
 import tourGroupVariantReducer from "./TourGroupVariant/reducer"
 import travelSubCategoryReducer from "./productManagement/subcategories/reducer"
+import banner from "./banners/bannerReducer";
 
 const rootReducer = combineReducers({
   // public
@@ -124,6 +125,7 @@ const rootReducer = combineReducers({
   pmCollection: pmCollectionReducer,
   TourGroupVariant: tourGroupVariantReducer,
   travelSubCategoryReducer,
+  banner,
   travelCurrency // travel currency
 });
 

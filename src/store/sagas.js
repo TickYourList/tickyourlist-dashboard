@@ -42,6 +42,7 @@ import customerSaga from "./customers/saga";
 import collectionsSaga from "./product-management/collections/saga";
 import tourGroupVariantSaga from "./TourGroupVariant/saga"
 import subcategoriesSaga from "./productManagement/subcategories/saga"
+import BannerSaga from "./banners/bannerSaga";
  //travel currency
 
 
@@ -87,6 +88,7 @@ export default function* rootSaga() {
     fork(collectionsSaga),
     fork(tourGroupVariantSaga),
     fork(subcategoriesSaga),
+    fork(BannerSaga),
     fork(currencySaga), //travel currency
   ]);
 }

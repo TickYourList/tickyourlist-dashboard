@@ -242,6 +242,9 @@ const SidebarContent = props => {
               </Link>
               <ul className="sub-menu">
               <li>
+                  <Link to="/content-marketing-home-banner">{props.t("Home Banner")}</Link>
+                </li>
+              <li>
                   <Link to="/travel-partners">{props.t("Travel Partners")}</Link>
                 </li>
               </ul>
