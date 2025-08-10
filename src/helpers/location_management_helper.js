@@ -118,6 +118,41 @@ const addTourGroupVariantAPI = data =>
 const updateTourGroupVariantAPI = (variantId, data) =>
   put(`${url.PUT_UPDATE_TOUR_GROUP_VARIANT_API}/${variantId}`, data);
 
+// GET SUB CATEGORIES
+const getSubcategoriesList= () => { 
+  console.log("The url for getsubcategories ",url.GET_SUBCATEGORIES)
+  return get(url.GET_SUBCATEGORIES);
+}
+
+
+//GET_EXISTING_SUBCATEGORY
+const getExistingSubcategory=(subCategoryId)=>{
+  const newurl = `${url.GET_EXISTING_SUBCATEGORY}${subCategoryId}`;
+return get(newurl);
+}
+
+const addTravelSubcategoryApi = (formData,cityCode) => {
+const finalUrl = `${url.ADD_TRAVEL_SUBCATEGORY}?city=${cityCode}`;
+return postFormData(finalUrl, formData);
+};
+
+const updateSubcategory=(formData,subCategoryid)=>{
+const finalUrl=`${url.UPDATE_SUBCATEGORY}${subCategoryid}`;
+return putFormData(finalUrl, formData);
+}
+
+const deleteSubcategoryApi=(subCategoryId)=>{
+const finalUrl=`${url.DELETE_SUBCATEGORY}${subCategoryId}`;
+return del(finalUrl);
+}
+
+// GET TRAVEL CATEGORIES
+const getTravelCategoriesList= (cityCode) => {
+  const newurl = `${url.GET_TRAVELCATEGORIES}${cityCode}`;
+  console.log("Fetching travel categories from URL:", newurl);
+  return get(newurl);
+};
+
 
 
 export {
@@ -158,5 +193,11 @@ export {
     getTourGroupVariantsAPI,
     getTravelTourGroupAPI,
     addTourGroupVariantAPI,
-    updateTourGroupVariantAPI
+    updateTourGroupVariantAPI,
+    getSubcategoriesList,
+    getExistingSubcategory,
+    addTravelSubcategoryApi,
+    updateSubcategory,
+    deleteSubcategoryApi,
+    getTravelCategoriesList
 };

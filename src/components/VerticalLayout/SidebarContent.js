@@ -175,7 +175,12 @@ const SidebarContent = props => {
                 </li>
                 <li>
                   <Link to="/tour-group-variants-data">
-                    {props.t("Tour Group Variant Data")}
+                    {props.t("Tour Variants")}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tour-group-sub-category">
+                    {props.t("Sub Category")}
                   </Link>
                 </li>
                 <li>
