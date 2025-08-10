@@ -42,6 +42,28 @@ const updateTourGroupHelper = (id, data) =>
 //DELETING A TOUR GROUP
 const deleteTourGroupById = id => del(`${url.DELETE_TOUR_GROUP}${id}`)
 
+const getTravelPartnerList = (page, limit) => {
+  let apiUrl = url.GET_TRAVEL_PARTNERS;
+  const params = [];
+  if (page !== undefined) params.push(`page=${page}`);
+  if (limit !== undefined) params.push(`limit=${limit}`);
+
+  if (params.length > 0) {
+    apiUrl += `?${params.join('&')}`;
+  }
+  return get(apiUrl);
+};
+
+
+//add new Travel Partner
+const addTravelPartner = data => postFormData(url.ADD_NEW_TRAVEL_PARTNER, data);
+
+//update Travel Partner
+const updateTravelPartner = (userId, data) => putFormData(`${url.UPDATE_TRAVEL_PARTNER}/${userId}`, data);
+
+//delete Travel Partner
+const deleteTravelPartner= id => del(`${url.DELETE_TRAVEL_PARTNER}/${id}`);
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -58,5 +80,9 @@ export {
     getTourById,
     addNewTourGroup,
     updateTourGroupHelper,
-    deleteTourGroupById
+    deleteTourGroupById,
+    getTravelPartnerList,
+    addTravelPartner,
+    updateTravelPartner,
+    deleteTravelPartner
 };

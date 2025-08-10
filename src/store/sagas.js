@@ -36,6 +36,7 @@ import countriesSaga from "./countries/saga";
 import currencySaga from "./travelCurrency/saga";
 import travelCitySaga from "./travelCity/saga";
 import tourGroupSaga from "./tickyourlist/travelTourGroup/saga";
+import TravelPartnerSaga from "./travelPartner/saga";
  //travel currency
 
 
@@ -73,6 +74,7 @@ export default function* rootSaga() {
     fork(carDealerSaga),
     fork(testimonialSaga),
     fork(countriesSaga),
+    fork(TravelPartnerSaga),
     fork(travelCitySaga),
     fork(tourGroupSaga),
     fork(currencySaga) //travel currency

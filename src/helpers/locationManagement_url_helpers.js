@@ -19,3 +19,11 @@ export const ADD_TOUR_GROUP = "/v1/tyltraveltourgroup/add/travel-tour-group"
 export const UPDATE_TOUR_GROUP = "/v1/tyltraveltourgroup/update/tour-group"
 export const FETCH_TOUR_GROUP_BY_ID = "/v1/tyltraveltourgroup/get/tour-group/"
 export const DELETE_TOUR_GROUP = "/v1/tyltraveltourgroup/tour-group/"
+
+export const GET_TRAVEL_PARTNERS = "v1/tyltravelpartner/all";
+
+//Add new partner
+export const ADD_NEW_TRAVEL_PARTNER = "v1/tyltravelpartner/create";
+
+export const UPDATE_TRAVEL_PARTNER = "v1/tyltravelpartner/update";
+export const DELETE_TRAVEL_PARTNER = "v1/tyltravelpartner";
