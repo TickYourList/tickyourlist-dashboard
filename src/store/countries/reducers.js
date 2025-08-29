@@ -14,6 +14,9 @@ import {
     GET_COUNTRY_BY_CODE,
     GET_COUNTRY_BY_CODE_SUCCESS,
     GET_COUNTRY_BY_CODE_FAILURE,
+    GET_COUNTRY_BY_ID,
+    GET_COUNTRY_BY_ID_SUCCESS,
+    GET_COUNTRY_BY_ID_FAILURE,
     DELETE_COUNTRY,
     DELETE_COUNTRY_SUCCESS,
     DELETE_COUNTRY_FAILURE
@@ -31,6 +34,9 @@ const initialState = {
     selectedCountry: null,
     selectedCountryLoading: false,
     selectedCountryError: null,
+    countryDetails: null,
+    countryDetailsLoading: false,
+    countryDetailsError: null,
 };
 
 const countriesReducer = (state = initialState, action) => {
@@ -139,6 +145,28 @@ const countriesReducer = (state = initialState, action) => {
                 selectedCountryLoading: false,
                 selectedCountryError: action.payload,
                 selectedCountry: null
+            };
+         // Get Country by ID
+         case GET_COUNTRY_BY_ID:
+            return {
+                ...state,
+                countryDetailsLoading: true,
+                countryDetailsError: null,
+                countryDetails: null
+            };
+        case GET_COUNTRY_BY_ID_SUCCESS:
+            return {
+                ...state,
+                countryDetailsLoading: false,
+                countryDetails: action.payload,
+                countryDetailsError: null
+            };
+        case GET_COUNTRY_BY_ID_FAILURE:
+            return {
+                ...state,
+                countryDetailsLoading: false,
+                countryDetailsError: action.payload,
+                countryDetails: null
             };
 
         case DELETE_COUNTRY:

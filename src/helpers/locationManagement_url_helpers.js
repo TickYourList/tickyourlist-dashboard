@@ -15,6 +15,14 @@ export const UPDATE_CITY = "v1/tyltravelcity/update/travel-city";
 export const REMOVE_CITY = "v1/tyltravelcity/delete/travel-city";
 
 
+export const GET_CITIES_BY_COUNTRY_ID = "/v1/tyltravelcountry/get/travelcountry/cities/{country_id}";
+export const GET_TOURS_BY_COUNTRY_ID = "/v1/tyltravelcountry/get/travelcountry/tours/{country_id}";
+export const GET_CATEGORIES_BY_COUNTRY_ID = "/v1/tyltravelcountry/get/travelcountry/categories/{country_id}";
+export const GET_COLLECTIONS_BY_COUNTRY_ID = "/v1/tyltravelcountry/get/travelcountry/collections/{country_id}";
+export const GET_SUBCATEGORIES_BY_COUNTRY_ID = "/v1/tyltravelcountry/get/travelcountry/subcategories/{country_id}";
+export const GET_BOOKING_BY_COUNTRY_ID = "/v1/tyltravelcountry/get/travelcountry/bookings/{country_id}";
+
+
 export const CITY_TOURS_API = "v1/tyltravelcity/get/travelcity-details/tours" 
 export const CITY_CATEGORIES_API = "v1/tyltravelcity/get/travelcity-details/categories"
 export const CITY_SUBCATEGORIES_API = "v1/tyltravelcity/get/travelcity-details/sub-categories"

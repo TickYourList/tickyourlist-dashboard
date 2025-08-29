@@ -149,7 +149,7 @@ import Contactus from "pages/Settings/contactus";
 import AdvertiseWithUs from "pages/Settings/AdvertiseWithUs";
 import Banner from "pages/Automobile/Banner/Banner";
 import EcommerceCustomers from "pages/Ecommerce/EcommerceCustomers";
-import Country from "../pages/LocationManagement/Country";
+import Country from "../pages/LocationManagement/Country/Country";
 import Cities from "../pages/LocationManagement/Cities/Cities";
 import CityDetails from "../pages/LocationManagement/Cities/CityDetails";
 import AddNewCity from "../pages/LocationManagement/Cities/AddNewCity";
