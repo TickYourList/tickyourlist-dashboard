@@ -44,6 +44,8 @@ import tourGroupVariantSaga from "./TourGroupVariant/saga"
 import subcategoriesSaga from "./productManagement/subcategories/saga"
 import BannerSaga from "./banners/bannerSaga";
 import travelCategorySaga from "./travelCategories/saga";
+import cityDetailsSaga from "./city-details/saga"
+
  //travel currency
 
 
@@ -91,6 +93,7 @@ export default function* rootSaga() {
     fork(subcategoriesSaga),
     fork(BannerSaga),
     fork(travelCategorySaga),
+    fork(cityDetailsSaga),
     fork(currencySaga), //travel currency
   ]);
 }

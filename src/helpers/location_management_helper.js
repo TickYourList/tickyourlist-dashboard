@@ -18,11 +18,18 @@ const deleteCountryApi = (countryCode) => {
 
 const getCitiesList = () => get(url.GET_CITIES_LIST)
 const getCityData = (cityCode) => get(url.GET_CITY_DATA +'/' + cityCode)
+const getCityDetails = (cityCode) => get(url.GET_CITY_DETAILS +'/' + cityCode)
 
 const createNewCity = (formData) => postFormData(url.CREATE_NEW_CITY, formData)
 const updateCity = (cityCode, formData) => putFormData(url.UPDATE_CITY + '/' + cityCode, formData)
 
 const removeCity = (cityCode) => del(url.REMOVE_CITY + '/' + cityCode)
+
+const getCityTours = ({cityCode, page, limit}) => get(`${url.CITY_TOURS_API}/${cityCode}?page=${page}&limit=${limit}`)
+const getCityCategories = (cityCode) => get(url.CITY_CATEGORIES_API +'/'+ cityCode)
+const getCitySubCategories = (cityCode) => get(url.CITY_SUBCATEGORIES_API +'/'+ cityCode)
+const getCityCollections = (cityCode) => get(url.CITY_COLLECTIONS_API +'/'+ cityCode)
+const getCityBookings = ({cityCode, page, limit}) => get(`${url.CITY_BOOKINGS_API}/${cityCode}?page=${page}&limit=${limit}`)
 
 //GET ALL TOUR GROUPS
 const getAllTourGroupsList = (page, limit) =>
@@ -247,9 +254,15 @@ export {
     deleteCountryApi,
     getCitiesList,
     getCityData,
+    getCityDetails,
     createNewCity,
     updateCity,
     removeCity,
+    getCityTours,
+    getCityCategories,
+    getCitySubCategories,
+    getCityCollections,
+    getCityBookings,
     getAllTourGroupsList,
     getTourById,
     addNewTourGroup,

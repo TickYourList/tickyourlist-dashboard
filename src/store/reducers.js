@@ -83,6 +83,8 @@ import tourGroupVariantReducer from "./TourGroupVariant/reducer"
 import travelSubCategoryReducer from "./productManagement/subcategories/reducer"
 import banner from "./banners/bannerReducer";
 import travelCategory from "./travelCategories/reducer";
+// City Details
+import CityDetails from "./city-details/reducer"
 
 const rootReducer = combineReducers({
   // public
@@ -126,6 +128,7 @@ const rootReducer = combineReducers({
   TourGroupVariant: tourGroupVariantReducer,
   travelSubCategoryReducer,
   banner,
+  CityDetails,
   travelCategory,
   travelCurrency // travel currency
 });

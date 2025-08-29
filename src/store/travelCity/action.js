@@ -21,7 +21,10 @@ import {
   
     DELETE_CITY_REQUEST,
     DELETE_CITY_SUCCESS,
-    DELETE_CITY_FAIL
+    DELETE_CITY_FAIL,
+    GET_CITY_DETAILS_REQUEST,
+    GET_CITY_DETAILS_SUCCESS,
+    GET_CITY_DETAILS_FAIL
   } from "./actionTypes"
   
   
@@ -53,7 +56,19 @@ import {
     payload: error,
   })
   
-  
+  export const getCityDetails = (cityCode, callback) => ({
+    type: GET_CITY_DETAILS_REQUEST,
+    payload: cityCode,
+    callback
+  })
+  export const getCityDetailsSuccess = city => ({
+    type: GET_CITY_DETAILS_SUCCESS,
+    payload: city,
+  })
+  export const getCityDetailsFail = error => ({
+    type: GET_CITY_DETAILS_FAIL,
+    payload: error,
+  })
   
   export const getCountries = () => ({
     type: GET_COUNTRIES_REQUEST,

@@ -7,19 +7,19 @@ const CityImage = (cell) => {
 };
 
 const CityCode = (cell) => {
-    return cell.value ? cell.value : '';
+    return cell.value ? cell.value : '-';
 };
 
 const DisplayName = (cell) => {
-    return cell.value ? cell.value : '';
+    return cell.value ? cell.value : '-';
 };
 
 const Tours = (cell) => {
-    return cell.value ? cell.value : '';
+    return cell.value ? cell.value : '-';
 };
 
 const Country = (cell) => {
-    return cell.value ? cell.value : '';
+    return cell.value ? cell.value : '-';
 };
 
 export {

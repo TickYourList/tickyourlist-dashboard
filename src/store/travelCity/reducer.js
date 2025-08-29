@@ -6,6 +6,10 @@ import {
     GET_CITY_REQUEST,
     GET_CITY_SUCCESS,
     GET_CITY_FAIL,
+
+    GET_CITY_DETAILS_REQUEST,
+    GET_CITY_DETAILS_SUCCESS,
+    GET_CITY_DETAILS_FAIL,
   
     GET_COUNTRIES_REQUEST,
     GET_COUNTRIES_SUCCESS,
@@ -32,6 +36,10 @@ import {
       city: {},
       loadingCity: false,
       errorCity: null,
+
+      cityDetails: {},
+    loadingCityDetails: false,
+    errorCityDetails: null,
   
       countries: [],
       loadingCountries: false,
@@ -65,6 +73,13 @@ import {
         return { ...state, loadingCity: false, city: action.payload }
       case GET_CITY_FAIL:
         return { ...state, loadingCity: false, errorCity: action.payload }
+
+        case GET_CITY_DETAILS_REQUEST:
+          return { ...state, loadingCityDetails: true, errorCityDetails: null }
+        case GET_CITY_DETAILS_SUCCESS:
+          return { ...state, loadingCityDetails: false, cityDetails: action.payload }
+        case GET_CITY_DETAILS_FAIL:
+          return { ...state, loadingCityDetails: false, errorCityDetails: action.payload }
   
       case GET_COUNTRIES_REQUEST:
         return { ...state, loadingCountries: true, errorCountries: null }
