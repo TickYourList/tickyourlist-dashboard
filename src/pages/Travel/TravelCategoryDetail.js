@@ -145,9 +145,10 @@ const handleCloseModal = () => {
  
 };
 const handleEditCategory = (categoryId) => {
-  // Navigate to the edit page with the categoryId
   navigate(`/edit-travel-category/${categoryId}`);
 };
+
+
   return (
         <div className="page-content">
       <div className="container-fluid">
@@ -157,14 +158,24 @@ const handleEditCategory = (categoryId) => {
           <div className="card-body">
             <div className="d-flex justify-content-end mb-0">
               <button
-                className="btn btn-success waves-effect waves-light"
+                className="btn btn-success rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2"
+                style={{
+                  backgroundColor: '#28c76f',
+                  borderColor: '#28c76f',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  boxShadow: '0 2px 6px rgba(40, 199, 111, 0.3)',
+                  border: 'none'
+                }}
                 onClick={() => navigate("/travel-category/add")}
               >
-                + Add New Travel Category
+                <i className="fas fa-plus" style={{ fontSize: '12px' }}></i>
+                Add New Travel Category
               </button>
             </div>
 
             <TableContainer
+            
   columns={columns}
   data={data}
   loading={loading}

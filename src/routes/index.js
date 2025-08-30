@@ -168,6 +168,7 @@ import PMCollections from "../pages/product-management/PMCollections"
 import AddCollectionForm from "../pages/product-management/PMCollections/AddCollectionForm"
 import TourGroupVariantData from "../pages/TourGroupVariantData/index";
 import AddTourGroupVariants from "../pages/TourGroupVariantData/AddTourGroupVariants";
+import TourGroupVariant from "../pages/TourGroupVariants/tourGroupVariant"; 
 import SubCategory from "../pages/Product_Management/SubCategory/SubCategory";
 import SubCategoryDetails from "../pages/Product_Management/SubCategory/SubCategoriesDetail";
 import SubCategoryForm from "pages/Product_Management/SubCategory/NewSubCategoryForm";
@@ -177,6 +178,8 @@ import TravelCategoryDetail from "pages/Travel/TravelCategoryDetail";
 import AddTravelCategory from "pages/Travel/AddTravelCategory";
 import EditTravelCategory from "pages/Travel/EditTravelCategory";
 import DualListbox from "pages/Tables/DualListbox";
+import { TourGroupVariants } from "../pages/TourGroups";
+import { components } from "react-select";
 
 
 const authProtectedRoutes = [
@@ -359,6 +362,7 @@ const authProtectedRoutes = [
     path: "/tour-group-variants-data/add-tour-group-variants",
     component: <AddTourGroupVariants />,
   },
+  { path: "/tour-group-variants", component: <TourGroupVariants /> },
   {
     path: "/tour-group-variants/edit/:variantId",
     component: <AddTourGroupVariants />,

@@ -111,3 +111,17 @@ export const GET_CATEGORY_BY_ID = "/v1/tyltravelcategory/travel-category/{id}";
 export const UPDATE_CATEGORY = "/v1/tyltravelcategory/travel-category/{id}";
 export const ADD_CATEGORY = "/v1/tyltravelcategory/add/travel-category?city={cityCode}";
 export const GET_CITIES = "/v1/tyltravelcity/get/travelcity/submitted/all";
+
+export const GET_CATEGORY_URL = "/v1/tyltravelcategory/travel-category/{id}";
+export const GET_CATEGORY_TOURS = "/v1/tyltravelcategory/travel-category/{id}/tours";
+export const GET_CATEGORY_SUBCATEGORIES = "/v1/tyltravelcategory/travel-category/{id}/subcategories";
+export const GET_CATEGORY_BOOKINGS = "/v1/tyltravelcategory/travel-category/{id}/bookings";
+
+// Tour Group
+// export const GET_TOUR_GROUP_VARIANTS_API =
+
+export const GET_TOUR_GROUP_VARIANT_DETAIL_API =
+  "/v1/tyltraveltourgroupvariant/variant";
+export const GET_PRICING_LIST_API = "/v1/tyltraveltourgroupvariant/variant";
+
+export const GET_BOOKING_LIST_API = "v1/tyltraveltourgroupvariant/variant";

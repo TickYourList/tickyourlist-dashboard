@@ -17,6 +17,21 @@
   UPDATE_TRAVEL_CATEGORY_REQUEST,
   UPDATE_TRAVEL_CATEGORY_SUCCESS,
   UPDATE_TRAVEL_CATEGORY_FAILURE,
+  VIEW_TRAVEL_CATEGORY_DETAILS_REQUEST,
+  VIEW_TRAVEL_CATEGORY_DETAILS_SUCCESS,
+  VIEW_TRAVEL_CATEGORY_DETAILS_FAILURE,
+
+  FETCH_CATEGORY_TOURS_REQUEST,
+  FETCH_CATEGORY_TOURS_SUCCESS,
+  FETCH_CATEGORY_TOURS_FAILURE,
+
+  FETCH_CATEGORY_SUBCATEGORIES_REQUEST,
+  FETCH_CATEGORY_SUBCATEGORIES_SUCCESS,
+  FETCH_CATEGORY_SUBCATEGORIES_FAILURE,
+
+  FETCH_CATEGORY_BOOKINGS_REQUEST,
+  FETCH_CATEGORY_BOOKINGS_SUCCESS,
+  FETCH_CATEGORY_BOOKINGS_FAILURE,
 } from "./actionTypes";
 
 export const getTravelCategoriesRequest = () => ({
@@ -91,6 +106,72 @@ export const updateTravelCategoryFailure = (error) => ({
 // ✅ RESET update state
 export const resetTravelCategory = () => ({
   type: "RESET_TRAVEL_CATEGORY",
+});
+
+//fetch view details
+export const viewTravelCategoryDetailsRequest = (id) => ({
+  type: VIEW_TRAVEL_CATEGORY_DETAILS_REQUEST,
+  payload: id,
+});
+
+export const viewTravelCategoryDetailsSuccess = (data) => ({
+  type: VIEW_TRAVEL_CATEGORY_DETAILS_SUCCESS,
+  payload: data,
+});
+
+export const viewTravelCategoryDetailsFailure = (error) => ({
+  type: VIEW_TRAVEL_CATEGORY_DETAILS_FAILURE,
+  payload: error,
+});
+
+// 🔹 Fetch Tours
+export const fetchCategoryToursRequest = (categoryId) => ({
+  type: FETCH_CATEGORY_TOURS_REQUEST,
+  payload: categoryId,
+});
+
+export const fetchCategoryToursSuccess = (tours) => ({
+  type: FETCH_CATEGORY_TOURS_SUCCESS,
+  payload: tours,
+});
+
+export const fetchCategoryToursFailure = (error) => ({
+  type: FETCH_CATEGORY_TOURS_FAILURE,
+  payload: error,
+});
+
+
+// 🔹 Fetch Subcategories
+export const fetchCategorySubcategoriesRequest = (categoryId) => ({
+  type: FETCH_CATEGORY_SUBCATEGORIES_REQUEST,
+  payload: categoryId,
+});
+
+export const fetchCategorySubcategoriesSuccess = (subcategories) => ({
+  type: FETCH_CATEGORY_SUBCATEGORIES_SUCCESS,
+  payload: subcategories,
+});
+
+export const fetchCategorySubcategoriesFailure = (error) => ({
+  type: FETCH_CATEGORY_SUBCATEGORIES_FAILURE,
+  payload: error,
+});
+
+
+// 🔹 Fetch Bookings
+export const fetchCategoryBookingsRequest = (categoryId) => ({
+  type: FETCH_CATEGORY_BOOKINGS_REQUEST,
+  payload: categoryId,
+});
+
+export const fetchCategoryBookingsSuccess = (bookings) => ({
+  type: FETCH_CATEGORY_BOOKINGS_SUCCESS,
+  payload: bookings,
+});
+
+export const fetchCategoryBookingsFailure = (error) => ({
+  type: FETCH_CATEGORY_BOOKINGS_FAILURE,
+  payload: error,
 });
 
 

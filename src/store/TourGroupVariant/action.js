@@ -11,6 +11,15 @@ import {
   UPDATE_TOUR_GROUP_VARIANT,
   UPDATE_TOUR_GROUP_VARIANT_SUCCESS,
   UPDATE_TOUR_GROUP_VARIANT_FAIL,
+  GET_TOUR_GROUP_VARIANT_DETAIL,
+  GET_TOUR_GROUP_VARIANT_DETAIL_SUCCESS,
+  GET_TOUR_GROUP_VARIANT_DETAIL_FAIL,
+  GET_PRICING_LIST,
+  GET_PRICING_LIST_SUCCESS,
+  GET_PRICING_LIST_FAIL,
+  GET_BOOKING_LIST,
+  GET_BOOKING_LIST_SUCCESS,
+  GET_BOOKING_LIST_FAIL,
 } from "./actionType";
 
 export const getTourGroupVariants = (page = 1, limit = 10) => ({
@@ -69,5 +78,50 @@ export const updateTourGroupVariantSuccess = data => ({
 
 export const updateTourGroupVariantFail = error => ({
   type: UPDATE_TOUR_GROUP_VARIANT_FAIL,
+  payload: error,
+});
+
+export const getTourGroupVariantDetail = variantId => ({
+  type: GET_TOUR_GROUP_VARIANT_DETAIL,
+  payload: variantId,
+});
+
+export const getTourGroupVariantDetailSuccess = data => ({
+  type: GET_TOUR_GROUP_VARIANT_DETAIL_SUCCESS,
+  payload: data,
+});
+
+export const getTourGroupVariantDetailFail = error => ({
+  type: GET_TOUR_GROUP_VARIANT_DETAIL_FAIL,
+  payload: error,
+});
+
+export const getPricingList = variantId => ({
+  type: GET_PRICING_LIST,
+  payload: variantId,
+});
+
+export const getPricingListSuccess = data => ({
+  type: GET_PRICING_LIST_SUCCESS,
+  payload: data,
+});
+
+export const getPricingListFail = error => ({
+  type: GET_PRICING_LIST_FAIL,
+  payload: error,
+});
+
+export const getBookingList = variantId => ({
+  type: GET_BOOKING_LIST,
+  payload: variantId,
+});
+
+export const getBookingListSuccess = data => ({
+  type: GET_BOOKING_LIST_SUCCESS,
+  payload: data,
+});
+
+export const getBookingListFail = error => ({
+  type: GET_BOOKING_LIST_FAIL,
   payload: error,
 });

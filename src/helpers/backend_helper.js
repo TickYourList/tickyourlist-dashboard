@@ -166,6 +166,12 @@ const deleteAllTestimonials = () => del(url.DELETE_ALL_TESTIMONIALS);
 // import { getTravelCurrencyListAPI } from "./api_helper";
  const getTravelCurrencyListAPI = () => get(url.GET_CURRENCY_DATA);
 
+// Travel Tour Group
+// export const getTourGroupVariantsAPI = () =>
+//   get(url.GET_TOUR_GROUP_VARIANTS_API);
+// GET CUSTOMERS LIST
+export const getCustomerListAPI = () => get(url.GET_CUSTOMERS_LIST);
+
 export {
   postRegister,
   postVerification,
