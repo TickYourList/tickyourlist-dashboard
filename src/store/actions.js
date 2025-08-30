@@ -21,6 +21,12 @@ export * from "./crypto/actions";
 //invoices
 export * from "./invoices/actions";
 
+//tourgroup
+export * from "./TourGroupVariant/action"
+
+// customers
+export * from "./customers/actions"
+
 //jobs
 export * from "./jobs/actions";
 

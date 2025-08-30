@@ -270,6 +270,25 @@ const getCategoryByUrl = (id) => {
 const getCategoryBookings = (id) => get(url.GET_CATEGORY_BOOKINGS.replace("{id}", id));
 const getCities = () => get(url.GET_CITIES);
 
+// export const addTourGroupVariantAPI = () =>
+//   post(url.POST_ADD_TOUR_GROUP_VARIANT_API)
+
+// export const addTourGroupVariantAPI = data =>
+//   post(url.POST_ADD_TOUR_GROUP_VARIANT_API, data);
+
+// export const updateTourGroupVariantAPI = (variantId, data) =>
+//   put(`${url.PUT_UPDATE_TOUR_GROUP_VARIANT_API}/${variantId}`, data);
+
+export const getTourGroupVariantDetailAPI = variantId =>
+  get(`${url.GET_TOUR_GROUP_VARIANT_DETAIL_API}/${variantId}/details`);
+
+export const getPricingListAPI = variantId =>
+  get(`${url.GET_PRICING_LIST_API}/${variantId}/pricing-table`);
+
+export const getBookingListAPI = variantId =>
+  get(`${url.GET_BOOKING_LIST_API}/${variantId}/bookings`);
+
+
 
 
 export {

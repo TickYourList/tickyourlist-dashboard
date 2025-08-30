@@ -1,0 +1,17 @@
+.viewdetail-table-wrapper select {
+  display: none !important;
+}
+
+.viewdetail-modal-body {
+  max-height: 80vh; // Adjust based on screen
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.viewdetail-tab-scroll {
+  overflow-y: auto;
+  padding-right: 10px;
+  flex-grow: 1;
+  min-height: 0; // Required to make `flex-grow` + scroll work
+}

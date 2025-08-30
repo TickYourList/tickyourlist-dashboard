@@ -1,14 +1,34 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Container } from "reactstrap";
+import {
+  Nav,
+  NavItem,
+  NavLink,
+  TabContent,
+  TabPane,
+  Button,
+  Modal,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  Container,
+} from "reactstrap";
+import classnames from "classnames";
+
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import { getTourGroupVariants } from "../../store/TourGroupVariant/action";
+import {
+  getTourGroupVariants,
+  getTourGroupVariantDetail,
+} from "../../store/TourGroupVariant/action";
 
 import Breadcrumbs from "components/Common/Breadcrumb";
-import TableContainer from "components/Common/TableContainer";
+// import TableContainer from "components/Common/TableContainer";
+import TableContainerWithServerSidePagination from "components/Common/TableContainerWithServerSidePagination";
 
 import "./index.scss";
+import ViewDetail from "./ViewDetail";
 
 const TourGroupVariantsTable = () => {
   document.title = "Tour Group Variants | Scrollit";
@@ -17,7 +37,7 @@ const TourGroupVariantsTable = () => {
   const { tourGroupVariants, totalRecords, loading } = useSelector(
     state => state.TourGroupVariant
   );
-  console.log(totalRecords);
+  // console.log(totalRecords);
   // console.log("Tour Group Variants:", tourGroupVariants);
 
   const [page, setPage] = useState(
@@ -28,6 +48,10 @@ const TourGroupVariantsTable = () => {
   );
 
   const total = totalRecords || 0;
+
+  const [activeTab, setActiveTab] = useState("1");
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [modal_center, setmodal_center] = useState(false);
 
   useEffect(() => {
     dispatch(getTourGroupVariants(page, limit));
@@ -52,14 +76,25 @@ const TourGroupVariantsTable = () => {
       }))
     : [];
 
+  function tog_center() {
+    setmodal_center(!modal_center);
+    // removeBodyCss();
+  }
+
   const navigate = useNavigate();
   const handleAddTourGroupVariantClicks = () => {
     navigate("add-tour-group-variants");
   };
 
   const handleEditButtonClick = variantId => {
-    console.log("Editing variant with ID:", variantId);
     navigate(`/tour-group-variants/edit/${variantId}`);
+  };
+
+  const handleViewButtonClick = variantId => {
+    setSelectedVariant(variantId);
+    setActiveTab("1");
+    dispatch(getTourGroupVariantDetail(variantId));
+    tog_center();
   };
 
   const columns = useMemo(
@@ -130,13 +165,26 @@ const TourGroupVariantsTable = () => {
               ></i>
             </Button>
 
-            <i className="bx bx-money cursor-pointer" title="Pricing" />
+            <Button
+              style={{ border: "none", background: "transparent", padding: 0 }}
+              onClick={() => {
+                handleViewButtonClick(row.original._id);
+              }}
+            >
+              <i
+                className="bx bx-show"
+                title="View"
+                style={{ color: "#556ee6", fontSize: "18px" }}
+              ></i>
+            </Button>
+
+            {/* <i className="bx bx-money cursor-pointer" title="Pricing" />
             <i className="bx bx-book-content cursor-pointer" title="Bookings" />
             <i className="bx bx-copy cursor-pointer" title="Duplicate" />
             <i
               className="bx bx-trash text-danger cursor-pointer"
               title="Delete"
-            />
+            /> */}
           </div>
         ),
         id: "actions",
@@ -150,7 +198,7 @@ const TourGroupVariantsTable = () => {
       <Container fluid>
         <Breadcrumbs title="Tour Groups" breadcrumbItem="Group Variants" />
         <div className="variant-list-page">
-          <TableContainer
+          {/* <TableContainer
             columns={columns}
             data={processedVariants}
             isGlobalFilter={true}
@@ -170,8 +218,33 @@ const TourGroupVariantsTable = () => {
             }}
             isLoading={loading}
             className="custom-header-css"
+          /> */}
+          <TableContainerWithServerSidePagination
+            columns={columns}
+            data={processedVariants}
+            totalCount={total}
+            currentPage={page}
+            pageSize={limit}
+            onPageChange={newPage => setPage(newPage)}
+            setPageSize={newLimit => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+            isGlobalFilter={true}
+            isAddTourGroupVariantOptions={true}
+            handleAddTourGroupVariantClicks={handleAddTourGroupVariantClicks}
+            customPageSize={10}
+            className="custom-header-css"
           />
         </div>
+
+        <ViewDetail
+          isOpen={modal_center}
+          toggle={tog_center}
+          selectedVariant={selectedVariant}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
       </Container>
     </div>
   );

@@ -10,19 +10,38 @@ import {
   UPDATE_TOUR_GROUP_VARIANT,
   UPDATE_TOUR_GROUP_VARIANT_SUCCESS,
   UPDATE_TOUR_GROUP_VARIANT_FAIL,
+  GET_TOUR_GROUP_VARIANT_DETAIL,
+  GET_TOUR_GROUP_VARIANT_DETAIL_SUCCESS,
+  GET_TOUR_GROUP_VARIANT_DETAIL_FAIL,
+  GET_PRICING_LIST,
+  GET_PRICING_LIST_SUCCESS,
+  GET_PRICING_LIST_FAIL,
+  GET_BOOKING_LIST,
+  GET_BOOKING_LIST_SUCCESS,
+  GET_BOOKING_LIST_FAIL,
 } from "./actionType";
 
 const INIT_STATE = {
   tourGroupVariants: [],
   travelTourGroups: [],
+  tourGroupVariantDetail: null,
+  pricingList: [],
+  bookingList: [],
   loading: false,
   error: {},
   updating: false,
   updateError: null,
   updatedVariant: null,
+  bookingTourGroup: null,
+  pricingLoading: false,
+  pricingError: null,
+  bookingLoading: false,
+  bookingError: null,
   totalRecords: 0,
   currentPage: 1,
   pageSize: 10,
+  detailLoading: false,
+  detailError: null,
 };
 
 const tourGroupVariantReducer = (state = INIT_STATE, action) => {
@@ -110,6 +129,73 @@ const tourGroupVariantReducer = (state = INIT_STATE, action) => {
         ...state,
         updating: false,
         updateError: action.payload,
+      };
+
+    case GET_TOUR_GROUP_VARIANT_DETAIL:
+      return {
+        ...state,
+        detailLoading: true,
+        tourGroupVariantDetail: null,
+        detailError: null,
+      };
+
+    case GET_TOUR_GROUP_VARIANT_DETAIL_SUCCESS:
+      return {
+        ...state,
+        detailLoading: false,
+        tourGroupVariantDetail: action.payload,
+      };
+
+    case GET_TOUR_GROUP_VARIANT_DETAIL_FAIL:
+      return {
+        ...state,
+        detailLoading: false,
+        detailError: action.payload,
+      };
+
+    case GET_PRICING_LIST:
+      return {
+        ...state,
+        pricingLoading: true,
+        pricingList: [],
+        pricingError: null,
+      };
+
+    case GET_PRICING_LIST_SUCCESS:
+      return {
+        ...state,
+        pricingLoading: false,
+        pricingList: action.payload,
+      };
+
+    case GET_PRICING_LIST_FAIL:
+      return {
+        ...state,
+        pricingLoading: false,
+        pricingError: action.payload,
+      };
+
+    case GET_BOOKING_LIST:
+      return {
+        ...state,
+        bookingLoading: true,
+        bookingList: [],
+        bookingTourGroup: null,
+        bookingError: null,
+      };
+
+    case GET_BOOKING_LIST_SUCCESS:
+      return {
+        ...state,
+        bookingLoading: false,
+        bookingList: action.payload || [],
+      };
+
+    case GET_BOOKING_LIST_FAIL:
+      return {
+        ...state,
+        bookingLoading: false,
+        bookingError: action.payload,
       };
 
     default:
