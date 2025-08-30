@@ -8,6 +8,7 @@ import {
   DELETE_CITY_REQUEST,
   CREATE_NEW_CITY_REQUEST,
   EDIT_CITY_REQUEST,
+  GET_CITY_DETAILS_REQUEST,
 } from "./actionTypes"
 
 import {
@@ -17,6 +18,9 @@ import {
 
   getCitySuccess,
   getCityFail,
+
+  getCityDetailsSuccess,
+  getCityDetailsFail,
 
   getCountriesSuccess,
   getCountriesFail,
@@ -34,6 +38,7 @@ import {
 import {
   getCitiesList,
   getCityData,
+  getCityDetails,
   createNewCity,
   removeCity,
   updateCity,
@@ -159,13 +164,36 @@ function* deleteCity({ payload }) {
   }
 }
 
+function* fetchCityDetails({ payload, callback }) {
+  try {
+    const response = yield call(getCityDetails, payload)
+    if (response.statusCode === "10000") {
+      yield put(getCityDetailsSuccess({city : response.data.city, statistics: response.data.statistics}))
+    } 
+    else {
+      yield put(getCityDetailsFail(response.message || "Failed to load city data"))
+      console.error(response.message || "Failed to load city data")
+      toastr.error(response.message || "Failed to load city data");
+      if(callback) callback();
+    }
+  } 
+  catch (error) {
+    yield put(getCityDetailsFail(error.message || "Something went wrong"))
+    console.error(error)
+    toastr.error(error.message || "Failed to load city data");
+    if(callback) callback();
+  }
+}
+
 function* travelCitySaga() {
   yield takeEvery(GET_CITIES_REQUEST, fetchCities);
   yield takeEvery(GET_CITY_REQUEST, fetchCity);
   yield takeEvery(GET_COUNTRIES_REQUEST, fetchCountries);
   yield takeEvery(DELETE_CITY_REQUEST, deleteCity);
   yield takeLatest(CREATE_NEW_CITY_REQUEST, createCity)
-  yield takeLatest(EDIT_CITY_REQUEST, editCity)
+  yield takeLatest(EDIT_CITY_REQUEST, editCity);
+  yield takeEvery(GET_CITY_DETAILS_REQUEST, fetchCityDetails)
+  yield takeEvery(GET_COUNTRIES_REQUEST, fetchCountries)
 }
 
 export default travelCitySaga;

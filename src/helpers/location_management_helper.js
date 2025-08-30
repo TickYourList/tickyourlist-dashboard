@@ -6,6 +6,22 @@ const getCountriesList = () => get(url.GET_COUNTRIES_LIST);
 const getCurrencyList = () => get(url.GET_CURRENCY_LIST);
 const getCountryByCode = (code) => get(url.GET_COUNTRY_BY_CODE.replace('{code}', code));
 const addCountry = (data) => post(url.ADD_COUNTRY, data);
+const getCountryById = (id) => get(url.GET_COUNTRY_BY_CODE.replace('{code}', id));
+
+const getToursByCountryId = (countryId) => get(url.GET_TOURS_BY_COUNTRY_ID.replace('{country_id}', countryId));
+const getCategoriesByCountryId = (countryId) => get(url.GET_CATEGORIES_BY_COUNTRY_ID.replace('{country_id}', countryId));
+const getCitiesByCountryId = (countryId) => get(url.GET_CITIES_BY_COUNTRY_ID.replace('{country_id}', countryId));
+// New code with the debugging line
+const getCollectionsByCountryId = (countryId) => {
+    const finalUrl = url.GET_COLLECTIONS_BY_COUNTRY_ID.replace('{country_id}', countryId);
+    return get(finalUrl);
+};
+const getBookingByCountryId = (countryId, { page, limit } = {}) => {
+    const finalUrl = url.GET_BOOKING_BY_COUNTRY_ID.replace('{country_id}', countryId);
+    const config = (page || limit) ? { params: { page, limit } } : {};
+    return get(finalUrl, config);
+};
+const getSubcategoriesByCountryId = (countryId) => get(url.GET_SUBCATEGORIES_BY_COUNTRY_ID.replace('{country_id}', countryId));
 
 
 const updateCountry = (countryCode, data) => put(url.UPDATE_COUNTRY.replace('{code}', countryCode), data);
@@ -18,11 +34,18 @@ const deleteCountryApi = (countryCode) => {
 
 const getCitiesList = () => get(url.GET_CITIES_LIST)
 const getCityData = (cityCode) => get(url.GET_CITY_DATA +'/' + cityCode)
+const getCityDetails = (cityCode) => get(url.GET_CITY_DETAILS +'/' + cityCode)
 
 const createNewCity = (formData) => postFormData(url.CREATE_NEW_CITY, formData)
 const updateCity = (cityCode, formData) => putFormData(url.UPDATE_CITY + '/' + cityCode, formData)
 
 const removeCity = (cityCode) => del(url.REMOVE_CITY + '/' + cityCode)
+
+const getCityTours = ({cityCode, page, limit}) => get(`${url.CITY_TOURS_API}/${cityCode}?page=${page}&limit=${limit}`)
+const getCityCategories = (cityCode) => get(url.CITY_CATEGORIES_API +'/'+ cityCode)
+const getCitySubCategories = (cityCode) => get(url.CITY_SUBCATEGORIES_API +'/'+ cityCode)
+const getCityCollections = (cityCode) => get(url.CITY_COLLECTIONS_API +'/'+ cityCode)
+const getCityBookings = ({cityCode, page, limit}) => get(`${url.CITY_BOOKINGS_API}/${cityCode}?page=${page}&limit=${limit}`)
 
 //GET ALL TOUR GROUPS
 const getAllTourGroupsList = (page, limit) =>
@@ -242,14 +265,21 @@ export {
     getCountriesList,
     getCurrencyList,
     getCountryByCode,
+    getCountryById,
     addCountry,
     updateCountry,
     deleteCountryApi,
     getCitiesList,
     getCityData,
+    getCityDetails,
     createNewCity,
     updateCity,
     removeCity,
+    getCityTours,
+    getCityCategories,
+    getCitySubCategories,
+    getCityCollections,
+    getCityBookings,
     getAllTourGroupsList,
     getTourById,
     addNewTourGroup,
@@ -296,5 +326,11 @@ export {
     getCategoryById,
     deleteCategory,
     updateCategory,
-    addCategory
+    addCategory,
+    getToursByCountryId,
+    getCitiesByCountryId,
+    getCategoriesByCountryId,
+    getCollectionsByCountryId,
+    getSubcategoriesByCountryId,
+    getBookingByCountryId
 };

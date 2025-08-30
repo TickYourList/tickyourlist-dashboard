@@ -18,11 +18,16 @@ import {
     GET_COUNTRY_BY_CODE_FAILURE,
     getCountryByCodeSuccess,
     getCountryByCodeFailure,
+    GET_COUNTRY_BY_ID,
+    GET_COUNTRY_BY_ID_SUCCESS,
+    GET_COUNTRY_BY_ID_FAILURE,
+    getCountryByIdSuccess,
+    getCountryByIdFailure,
     DELETE_COUNTRY,
     deleteCountrySuccess,
     deleteCountryFailure
 } from "./actions";
-import { getCountriesList, getCurrencyList as getCurrencyListApi, getCountryByCode as getCountryByCodeApi, addCountry as addCountryApi } from "../../helpers/location_management_helper";
+import { getCountriesList, getCurrencyList as getCurrencyListApi, getCountryByCode as getCountryByCodeApi, getCountryById as getCountryByIdApi, addCountry as addCountryApi } from "../../helpers/location_management_helper";
 import { post } from "../../helpers/api_helper";
 import { updateCountry as updateCountryApi } from "../../helpers/location_management_helper";
 import { deleteCountryApi } from "../../helpers/location_management_helper";
@@ -57,6 +62,17 @@ function* getCurrencyListSaga() {
         yield put(getCurrencyListSuccess(list));
     } catch (error) {
         yield put(getCurrencyListFail(error.message || 'Failed to fetch currency list'));
+    }
+}
+
+// Get Country by ID Saga
+function* getCountryByIdSaga(action) {
+    try {
+        const id = action.payload;
+        const response = yield call(getCountryByIdApi, id);
+        yield put(getCountryByIdSuccess(response.data));
+    } catch (error) {
+        yield put(getCountryByIdFailure(error.message));
     }
 }
 
@@ -99,6 +115,7 @@ function* countriesSaga() {
     yield takeEvery(GET_COUNTRIES, getCountriesSaga);
     yield takeEvery(ADD_COUNTRY, addCountrySaga);
     yield takeEvery(GET_CURRENCY_LIST, getCurrencyListSaga);
+    yield takeEvery(GET_COUNTRY_BY_ID, getCountryByIdSaga);
     yield takeEvery(UPDATE_COUNTRY, updateCountrySaga);
     yield takeEvery(GET_COUNTRY_BY_CODE, getCountryByCodeSaga);
     yield takeEvery(DELETE_COUNTRY, deleteCountrySaga);

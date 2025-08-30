@@ -86,7 +86,7 @@ const App = () => {
             path={route.path}
             element={
               <Authmiddleware>
-                <Layout>{route.component}</Layout>
+                <Layout>{route.component}</Layout> 
               </Authmiddleware>}
             key={idx}
             exact={true}

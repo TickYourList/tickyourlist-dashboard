@@ -6,8 +6,8 @@ import TableContainer from '../../../components/Common/TableContainer';
 
 //import components
 import Breadcrumbs from '../../../components/Common/Breadcrumb';
-import DeleteModal from '../../../components/Common/DeleteModal';
-import { getCities, deleteCity } from "../../../store/travelCity/action"
+import DeleteModal from './CityDeleteModal';
+import { getCities, deleteCity } from "store/travelCity/action"
 import { Country, DisplayName, CityCode, CityImage, Tours } from "./CityCol"
 
 //redux

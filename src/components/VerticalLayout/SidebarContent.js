@@ -212,7 +212,7 @@ const SidebarContent = props => {
                   <Link to="/country">{props.t('Country')}</Link>
                 </li>
                 <li>
-                  <Link to="/location-management-cities">{props.t("Cities")}</Link>
+                  <Link to="/cities">{props.t("Cities")}</Link>
                 </li>
               </ul>
             </li>
@@ -458,7 +458,7 @@ const SidebarContent = props => {
                   <Link to="/dual-listbox">{props.t("Transfer List")}</Link>
                 </li>
               </ul>
-            </li>
+            </li> 
 
             <li>
               <Link to="/#" className="has-arrow ">

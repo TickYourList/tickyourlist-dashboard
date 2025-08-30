@@ -19,6 +19,10 @@ export const GET_COUNTRY_BY_CODE = "GET_COUNTRY_BY_CODE";
 export const GET_COUNTRY_BY_CODE_SUCCESS = "GET_COUNTRY_BY_CODE_SUCCESS";
 export const GET_COUNTRY_BY_CODE_FAILURE = "GET_COUNTRY_BY_CODE_FAILURE";
 
+export const GET_COUNTRY_BY_ID = "GET_COUNTRY_BY_ID";
+export const GET_COUNTRY_BY_ID_SUCCESS = "GET_COUNTRY_BY_ID_SUCCESS";
+export const GET_COUNTRY_BY_ID_FAILURE = "GET_COUNTRY_BY_ID_FAILURE";
+
 export const DELETE_COUNTRY = "DELETE_COUNTRY";
 export const DELETE_COUNTRY_SUCCESS = "DELETE_COUNTRY_SUCCESS";
 export const DELETE_COUNTRY_FAILURE = "DELETE_COUNTRY_FAILURE";
@@ -96,6 +100,22 @@ export const getCountryByCodeSuccess = (country) => ({
 
 export const getCountryByCodeFailure = (error) => ({
     type: GET_COUNTRY_BY_CODE_FAILURE,
+    payload: error
+});
+
+// Get Country by ID
+export const getCountryById = (id) => ({
+    type: GET_COUNTRY_BY_ID,
+    payload: id
+});
+
+export const getCountryByIdSuccess = (country) => ({
+    type: GET_COUNTRY_BY_ID_SUCCESS,
+    payload: country
+});
+
+export const getCountryByIdFailure = (error) => ({
+    type: GET_COUNTRY_BY_ID_FAILURE,
     payload: error
 });
 

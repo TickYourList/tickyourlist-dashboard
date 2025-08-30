@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useState, useRef } from "react"
 import PropTypes from "prop-types"
 import { isEmpty } from "lodash"
 import "bootstrap/dist/css/bootstrap.min.css"
-import TableContainer from "../../components/Common/TableContainer"
-import Breadcrumbs from "../../components/Common/Breadcrumb"
+import TableContainer from "../../../components/Common/TableContainer"
+import Breadcrumbs from "../../../components/Common/Breadcrumb"
+import CountryDetailModal from "./CountryDetailModal"
 import { useSelector, useDispatch } from "react-redux"
 import {
   Button,
@@ -32,21 +33,20 @@ import {
   getCurrencyList,
   updateCountry,
   getCountryByCode,
+  getCountryById,
   deleteCountry,
-} from "../../store/countries/actions"
+} from "../../../store/countries/actions"
 import { useFormik } from "formik"
 import * as Yup from "yup"
 import classnames from "classnames"
 import CreatableSelect from "react-select/creatable"
-import { Field, Form as FormikForm } from "formik"
 import Select from "react-select"
 
-const CountryCode = props => <span> {props.value} </span>
-const CountryName = props => <span> {props.value} </span>
+const CountryCode = props => <span>{props.value}</span>
+const CountryName = props => <span>{props.value}</span>
 const Status = props => (
   <Badge color={props.value ? "success" : "secondary"}>
-    {" "}
-    {props.value ? "Active" : "Inactive"}{" "}
+    {props.value ? "Active" : "Inactive"}
   </Badge>
 )
 
@@ -86,15 +86,18 @@ function LocationManagement() {
     selectedCountry,
     selectedCountryLoading,
     selectedCountryError,
+        countryDetails,
+        countryDetailsLoading,
+        countryDetailsError,
     deleteLoading,
     error: deleteErrorRedux,
   } = useSelector(state => state.countries)
 
   // Debug log to see Redux state
-  useEffect(() => {
-    console.log('Redux state:', { selectedCountry, selectedCountryLoading, selectedCountryError })
-  }, [selectedCountry, selectedCountryLoading, selectedCountryError])
-  const prevCountriesLength = React.useRef(countries.length)
+  // useEffect(() => {
+  //   console.log('Redux state:', { selectedCountry, selectedCountryLoading, selectedCountryError })
+  // }, [selectedCountry, selectedCountryLoading, selectedCountryError])
+  // const prevCountriesLength = React.useRef(countries.length)
 
   // Add status options
   const statusOptions = [
@@ -166,40 +169,40 @@ function LocationManagement() {
 
   // Effect to populate form when API data arrives
   useEffect(() => {
-    console.log('useEffect triggered with:', { selectedCountry, selectedCountryLoading, formPopulatedRef: formPopulatedRef.current, currencyListLength: currencyList.length })
-
+    // console.log('useEffect triggered with:', { selectedCountry, selectedCountryLoading, formPopulatedRef: formPopulatedRef.current, currencyListLength: currencyList.length })
+    
     if (selectedCountry && !selectedCountryLoading && !formPopulatedRef.current && currencyList.length > 0) {
-      console.log('Populating form with:', selectedCountry) // Debug log
+      // console.log('Populating form with:', selectedCountry) // Debug log
 
       // Handle nested data structure from API
       const countryData = selectedCountry.country || selectedCountry
-      console.log('Extracted countryData:', countryData)
-      console.log('Country currency object:', countryData.currency)
+      // console.log('Extracted countryData:', countryData)
+      // console.log('Country currency object:', countryData.currency)
 
       const formValues = {
         code: countryData.code || "",
         displayName: countryData.displayName || "",
-        currency: countryData.currency?._id || "",
+        currency: (countryData.currency && countryData.currency._id) || "",
         status: countryData.status,
       }
-      console.log('Setting form values:', formValues)
-      console.log('Current form values before setValues:', validation.values)
-      console.log('Status value from API:', countryData.status, 'Type:', typeof countryData.status)
-
+      // console.log('Setting form values:', formValues)
+      // console.log('Current form values before setValues:', validation.values)
+      // console.log('Status value from API:', countryData.status, 'Type:', typeof countryData.status)
+      
       validation.setValues(formValues)
       formPopulatedRef.current = true
       console.log('Form values set successfully')
 
       // Debug: Check if values are actually set
-      setTimeout(() => {
-        console.log('Form values after setValues:', validation.values)
-        console.log('Form field values:', {
-          code: validation.values.code,
-          displayName: validation.values.displayName,
-          currency: validation.values.currency,
-          status: validation.values.status
-        })
-      }, 100)
+      // setTimeout(() => {
+      //   console.log('Form values after setValues:', validation.values)
+      //   console.log('Form field values:', {
+      //     code: validation.values.code,
+      //     displayName: validation.values.displayName,
+      //     currency: validation.values.currency,
+      //     status: validation.values.status
+      //   })
+      // }, 100)
     }
   }, [selectedCountry, selectedCountryLoading, currencyList])
 
@@ -231,8 +234,8 @@ function LocationManagement() {
 
   // Debug currency options
   useEffect(() => {
-    console.log('Currency options:', currencyOptions)
-    console.log('Currency list length:', currencyList.length)
+    // console.log('Currency options:', currencyOptions)
+    // console.log('Currency list length:', currencyList.length)
   }, [currencyOptions, currencyList])
 
   useEffect(() => {
@@ -274,7 +277,7 @@ function LocationManagement() {
 
   // 2. Add edit handler
   const handleCountryEditClick = country => {
-    console.log('Edit clicked for country:', country) // Debug log
+    // console.log('Edit clicked for country:', country) // Debug log
     setSelectedCountryCode(country.code)
     setIsEdit(true)
     setModal(true)
@@ -302,15 +305,16 @@ function LocationManagement() {
 
   function toggleTabVertical(tab) {
     if (activeTabVartical !== tab) {
-      const modifiedSteps = [...passedStepsVertical, tab]
-      if (tab >= 1 && tab <= 2) {
-        // Only allow steps 1 and 2
-        setoggleTabVertical(tab)
-        setPassedStepsVertical(modifiedSteps)
-      }
+        let modifiedSteps = [...passedStepsVertical];
+        if (!modifiedSteps.includes(tab)) {
+            modifiedSteps.push(tab);
+        }
+        if (tab >= 1 && tab <= 2) {
+            setoggleTabVertical(tab);
+            setPassedStepsVertical(modifiedSteps);
+        }
     }
-  }
-
+}
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [countryToDelete, setCountryToDelete] = useState(null);
   // const [deleteLoading, setDeleteLoading] = useState(false); // This state is now managed by Redux
@@ -380,13 +384,13 @@ function LocationManagement() {
         Header: "Cities",
         accessor: "cityCount",
         filterable: true,
-        Cell: cellProps => <span> {cellProps.value || 0} </span>,
+        Cell: cellProps => <span>{cellProps.value || 0}</span>,
       },
       {
         Header: "Tours",
         accessor: "tourCount",
         filterable: true,
-        Cell: cellProps => <span> {cellProps.value || 0} </span>,
+        Cell: cellProps => <span>{cellProps.value || 0}</span>,
       },
       {
         Header: "Status",
@@ -404,8 +408,9 @@ function LocationManagement() {
             color="primary"
             className="btn-sm btn-rounded"
             onClick={() => {
-              setCountryDetailModalOpen(true);
               setCountryDetailData(cellProps.row.original);
+              setCountryDetailModalOpen(true);
+              dispatch(getCountryById(cellProps.row.original._id));
             }}
           >
             Country Detail
@@ -484,7 +489,12 @@ function LocationManagement() {
                     isGlobalFilter={true}
                     isAddOptions={true}
                     handleAddClicks={toggle}
+                    handleOrderDeleteClicks={() => {
+                      // TODO: Implement delete all countries functionality
+                      console.log('Delete all countries clicked');
+                    }}
                     addButtonLabel="Add New Country"
+                    deleteButtonLabel="Delete all countries"
                     customPageSize={10}
                   />{" "}
                 </CardBody>{" "}
@@ -496,7 +506,7 @@ function LocationManagement() {
       {/* Add Country Modal - Flow: Currency → Country → City → Tour Groups */}{" "}
       <Modal size="xl" isOpen={modal} toggle={toggle}>
         <ModalHeader toggle={toggle} tag="h4">
-          Add New Country{" "}
+          {isEdit ? "Edit Country" : "Add New Country"}{" "}
         </ModalHeader>{" "}
         <ModalBody>
           <Row>
@@ -550,7 +560,7 @@ function LocationManagement() {
                         <TabPane tabId={1}>
                           {" "}
                           {activeTabVartical === 1 && (
-                            <form onSubmit={validation.handleSubmit}>
+                            <div>
                               {" "}
                               {/* Currency fields */}{" "}
                               <Row>
@@ -611,13 +621,13 @@ function LocationManagement() {
                                   </FormGroup>{" "}
                                 </Col>{" "}
                               </Row>{" "}
-                            </form>
+                            </div>
                           )}{" "}
                         </TabPane>{" "}
                         <TabPane tabId={2}>
                           {" "}
                           {activeTabVartical === 2 && (
-                            <form onSubmit={validation.handleSubmit}>
+                            <div>
                               {" "}
                               {/* Country fields */}{" "}
                               <Row>
@@ -725,7 +735,7 @@ function LocationManagement() {
                                   </FormGroup>{" "}
                                 </Col>{" "}
                               </Row>{" "}
-                            </form>
+                            </div>
                           )}{" "}
                         </TabPane>{" "}
                       </TabContent>{" "}
@@ -776,7 +786,7 @@ function LocationManagement() {
             {/* Show Add/Update button only on step 2 */}
             {activeTabVartical === 2 && (
               <Button
-                type="submit"
+                type="button"
                 color="success"
                 onClick={validation.handleSubmit}
                 disabled={
@@ -808,25 +818,13 @@ function LocationManagement() {
       </Modal>{" "}
 
       {/* Country Detail Modal */}
-      <Modal isOpen={countryDetailModalOpen} toggle={() => setCountryDetailModalOpen(false)}>
-        <ModalHeader toggle={() => setCountryDetailModalOpen(false)}>
-          Country Details
-        </ModalHeader>
-        <ModalBody>
-          {/* TODO: Render country details here */}
-          {countryDetailData ? (
-            <div>
-              <p><b>Country Code:</b> {countryDetailData.code}</p>
-              <p><b>Country Name:</b> {countryDetailData.displayName}</p>
-              <p><b>Currency:</b> {countryDetailData.currency ? `${countryDetailData.currency.code} (${countryDetailData.currency.symbol})` : 'N/A'}</p>
-              <p><b>Status:</b> {countryDetailData.status ? 'Active' : 'Inactive'}</p>
-              {/* Add more fields as needed */}
-            </div>
-          ) : (
-            <p>No data available.</p>
-          )}
-        </ModalBody>
-      </Modal>
+      <CountryDetailModal
+        isOpen={countryDetailModalOpen}
+        toggle={() => setCountryDetailModalOpen(false)}
+        countryData={countryDetails?.country || countryDetailData}
+        loading={countryDetailsLoading}
+        error={countryDetailsError}
+      />
 
       {/* Delete Modal for Country */}
       <Modal isOpen={deleteModalOpen} toggle={() => setDeleteModalOpen(false)} centered>
@@ -838,9 +836,9 @@ function LocationManagement() {
             <i className="mdi mdi-alert-circle-outline text-danger" style={{ fontSize: 48 }}></i>
           </div>
           <p className="mb-3">
-            Are you sure you want to permanently delete this <b>{countryToDelete?.displayName}</b> Country? Once deleted, cannot be recovered.
+            Are you sure you want to permanently delete this <b>{countryToDelete && countryToDelete.displayName}</b> Country? Once deleted, cannot be recovered.
           </p>
-          {deleteErrorRedux && <div className="text-danger mb-2">{countryToDelete?.displayName} country failed to delete.</div>}
+          {deleteErrorRedux && <div className="text-danger mb-2">{countryToDelete && countryToDelete.displayName} country failed to delete.</div>}
           <div className="d-flex justify-content-center gap-2">
             <Button color="danger" onClick={handleDeleteCountry} disabled={deleteLoading}>
               {deleteLoading ? "Deleting..." : "Delete"}

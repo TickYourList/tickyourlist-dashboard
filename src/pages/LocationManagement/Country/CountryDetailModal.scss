@@ -1,0 +1,114 @@
+/* Your existing styles */
+
+
+/* Force modal width via Bootstrap variable and explicit sizing */
+
+.country-detail-modal-lg {
+    --bs-modal-width: 80vw !important;
+}
+
+.country-detail-modal-lg .modal-dialog {
+    max-width: none !important;
+    width: 80vw !important;
+}
+
+
+/* Ensure width also applies during the show/transition state */
+
+.country-detail-modal-lg.show .modal-dialog,
+.country-detail-modal-lg .modal.show .modal-dialog {
+    max-width: none !important;
+    width: 95vw !important;
+}
+
+.country-detail-modal-lg .modal-content {
+    min-height: 85vh;
+}
+
+
+/* * ADD THE FOLLOWING STYLES FOR THE STICKY HEADER TABLE
+*/
+
+.scrollable-table-container {
+    /* Define a max-height. The table will scroll if its content exceeds this.
+      Using vh (viewport height) units works well with your existing styles.
+      Adjust this value as needed to fit your layout.
+    */
+    max-height: 55vh;
+    overflow-y: auto;
+    /* Show vertical scrollbar only when needed */
+    position: relative;
+    /* Establishes a positioning context for the sticky header */
+}
+
+.scrollable-table-container table {
+    /* Ensures the table layout behaves correctly within the container */
+    margin-bottom: 0;
+}
+
+.scrollable-table-container thead {
+    position: sticky;
+    /* Makes the header stick */
+    top: 0;
+    /* Sticks it to the top of the scrollable container */
+    z-index: 2;
+    /* Ensures the header stays on top of the scrolling rows */
+    /* VERY IMPORTANT: Use a solid background. 
+      'var(--bs-modal-bg, white)' will use the modal's background color by default.
+      This prevents scrolling data from being visible through a transparent header.
+    */
+    background-color: var(--bs-modal-bg, white);
+}
+
+
+/* Make the table footer (pagination) sticky at the bottom */
+
+.table-pagination-fixed {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background-color: var(--bs-modal-bg, white);
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.04);
+}
+
+
+/* Darker, bolder tab names */
+
+.nav-tabs-custom .nav-link {
+    color: #344767 !important;
+    font-weight: 600 !important;
+}
+
+.nav-tabs-custom .nav-link.active {
+    color: #111827 !important;
+    font-weight: 700 !important;
+}
+
+
+/* Greyish background and rounded edges for stats cards */
+
+.country-stats-card {
+    background-color: #eff2f6 !important;
+    border-color: #e3e7ed !important;
+    border-radius: 12px;
+}
+
+.country-stats-card .card-body {
+    background-color: #eff2f6 !important;
+    border-radius: 12px;
+}
+
+
+/* Ensure only table body scrolls, header/footer fixed */
+
+.scrollable-table-container .table-responsive {
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.scrollable-table-container .table-responsive thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background-color: #fff;
+}

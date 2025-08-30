@@ -149,7 +149,7 @@ import Contactus from "pages/Settings/contactus";
 import AdvertiseWithUs from "pages/Settings/AdvertiseWithUs";
 import Banner from "pages/Automobile/Banner/Banner";
 import EcommerceCustomers from "pages/Ecommerce/EcommerceCustomers";
-import Country from "../pages/LocationManagement/Country";
+import Country from "../pages/LocationManagement/Country/Country";
 import Cities from "../pages/LocationManagement/Cities/Cities";
 import CityDetails from "../pages/LocationManagement/Cities/CityDetails";
 import AddNewCity from "../pages/LocationManagement/Cities/AddNewCity";
@@ -176,6 +176,7 @@ import HomeBanner from "pages/Content-marketing/HomeBanner";
 import TravelCategoryDetail from "pages/Travel/TravelCategoryDetail";
 import AddTravelCategory from "pages/Travel/AddTravelCategory";
 import EditTravelCategory from "pages/Travel/EditTravelCategory";
+import DualListbox from "pages/Tables/DualListbox";
 
 
 const authProtectedRoutes = [
@@ -321,10 +322,11 @@ const authProtectedRoutes = [
   { path: "/pages-pricing", component: <PagesPricing /> },
   { path: "/country", component: <Country /> },
   //Cities
-  { path: "/location-management-cities", component: <Cities /> },
+  { path: "/cities", component: <Cities /> },
   { path: "/city-details/:cityCode", component: <CityDetails /> },
   { path: "/add-new-city", component: <AddNewCity isEditMode={false} /> },
   { path: "/edit-city/:cityCode", component: <AddNewCity isEditMode={true} /> },
+  { path: "/dual-listbox", component: <DualListbox /> },
   {
     path: "/travel-currency",
     component: <CurrencyTable />,

@@ -117,7 +117,7 @@ const AddNewCity = ({isEditMode}) => {
   })
 
   const callback = () => {
-      navigate('/location-management-cities');
+      navigate('/city');
     };
 
   const onSubmit = (values) =>  {
@@ -210,7 +210,11 @@ const AddNewCity = ({isEditMode}) => {
           <Col lg="12">
             <Card>
               <CardBody>
-                <h4 className="card-title mb-4">Enter City Details Below</h4>
+                <h4 className="card-title mb-4 d-flex justify-content-between align-items-center">
+                  Enter City Details Below
+                  <Button close onClick={() => navigate("/city")} />
+                </h4>
+                
                 <Formik
                   initialValues={isEditMode && cityCode !== "undefined" ? cityValues : initialValues}
                   validationSchema={validationSchema}
@@ -706,7 +710,7 @@ const AddNewCity = ({isEditMode}) => {
                                     <Field
                                       name={`languages.${index}.value`}
                                       placeholder={`/url-slug-${values.languages[`${index}`].code}/`}
-                                      className="form-control mt-1"
+                                      className="form-control"
                                     />
                                     {errors.languages &&
                                       errors.languages[index] &&
@@ -753,7 +757,7 @@ const AddNewCity = ({isEditMode}) => {
                                             <Field
                                               name={`extraLanguages.${index}.value`}
                                               placeholder={"/Enter-Slug/"}
-                                              className="form-control my-1"
+                                              className="form-control"
                                             />
                                             {errors.extraLanguages &&
                                               errors.extraLanguages[index] &&
@@ -799,23 +803,19 @@ const AddNewCity = ({isEditMode}) => {
                           </TabContent>
                         </div>
 
-                        <div className="actions clearfix">
-                          <ul>
-                            <li
-                              className={
-                                activeTab === 1
-                                  ? "previous disabled"
-                                  : "previous"
-                              }
-                            >
-                              <Link
-                                to="#"
-                                onClick={() => {
-                                  if (activeTab > 1) {
-                                    setactiveTab(activeTab - 1)
-                                  }
-                                }}
-                              >
+                        <div className="actions clearfix d-flex justify-content-between w-100">
+                          <Button
+                            type="button"
+                            color="secondary"
+                            className="me-2"
+                            onClick={() => navigate("/city")}
+                          >
+                            Cancel
+                          </Button>
+                          
+                          <ul className="d-flex ms-auto mb-0 align-items-center" style={{ listStyle: "none" }}>
+                            <li className={activeTab === 1 ? "previous disabled" : "previous"}>
+                              <Link to="#" onClick={() => activeTab > 1 && setactiveTab(activeTab - 1)}>
                                 Previous
                               </Link>
                             </li>
@@ -824,21 +824,23 @@ const AddNewCity = ({isEditMode}) => {
                                 <Link
                                   to="#"
                                   onClick={() =>
-                                    toggleTab(
-                                      activeTab + 1,
-                                      validateForm,
-                                      setFieldTouched
-                                    )
+                                    toggleTab(activeTab + 1, validateForm, setFieldTouched)
                                   }
                                 >
                                   Next
                                 </Link>
                               ) : (
-                                <Button type="submit" color="success" disabled={loadingNewCity || loadingEditCity} >
-                                  {loadingNewCity || loadingEditCity ? "Loading..." : !isEditMode ? "Add City" : "Update City"}
-
+                                <Button
+                                  type="submit"
+                                  color="success"
+                                  disabled={loadingNewCity || loadingEditCity}
+                                >
+                                  {loadingNewCity || loadingEditCity
+                                    ? "Loading..."
+                                    : !isEditMode
+                                    ? "Add City"
+                                    : "Update City"}
                                 </Button>
-
                               )}
                             </li>
                           </ul>

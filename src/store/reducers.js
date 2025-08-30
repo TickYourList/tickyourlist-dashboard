@@ -83,6 +83,14 @@ import tourGroupVariantReducer from "./TourGroupVariant/reducer"
 import travelSubCategoryReducer from "./productManagement/subcategories/reducer"
 import banner from "./banners/bannerReducer";
 import travelCategory from "./travelCategories/reducer";
+// City Details
+import CityDetails from "./city-details/reducer"
+import cities from "./countries/cities/reducers";
+import tours from "./countries/tour/reducers";
+import categories from "./countries/categories/reducers";
+import collections from "./countries/collections/reducers";
+import subcategories from "./countries/Subcategories/reducers";
+import bookings from "./countries/bookings/reducers";
 
 const rootReducer = combineReducers({
   // public
@@ -126,6 +134,13 @@ const rootReducer = combineReducers({
   TourGroupVariant: tourGroupVariantReducer,
   travelSubCategoryReducer,
   banner,
+  CityDetails,
+  cities,
+    tours,
+    categories,
+    collections,
+    subcategories,
+    bookings,
   travelCategory,
   travelCurrency // travel currency
 });

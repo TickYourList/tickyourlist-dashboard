@@ -32,6 +32,11 @@ import carDealerSaga from "./automobiles/carDealers/saga";
 import testimonialSaga from "./testimonials/saga";
 import CarBannerSaga from "./automobiles/carBanners/saga";
 import countriesSaga from "./countries/saga";
+import countryCollectionsSaga from "./countries/collections/saga";
+import citiesSaga from "./countries/cities/saga";
+import toursSaga from "./countries/tour/saga";
+import categoriesSaga from "./countries/categories/saga";
+import bookingsSaga from "./countries/bookings/saga";
 
 import currencySaga from "./travelCurrency/saga";
 import travelCitySaga from "./travelCity/saga";
@@ -44,6 +49,8 @@ import tourGroupVariantSaga from "./TourGroupVariant/saga"
 import subcategoriesSaga from "./productManagement/subcategories/saga"
 import BannerSaga from "./banners/bannerSaga";
 import travelCategorySaga from "./travelCategories/saga";
+import cityDetailsSaga from "./city-details/saga"
+
  //travel currency
 
 
@@ -91,6 +98,12 @@ export default function* rootSaga() {
     fork(subcategoriesSaga),
     fork(BannerSaga),
     fork(travelCategorySaga),
+    fork(cityDetailsSaga),
+    fork(countryCollectionsSaga),
+    fork(citiesSaga),
+    fork(toursSaga),
+    fork(categoriesSaga),
+    fork(bookingsSaga),
     fork(currencySaga), //travel currency
   ]);
 }
