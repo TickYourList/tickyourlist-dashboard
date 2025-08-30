@@ -16,6 +16,25 @@ import {
   UPDATE_TRAVEL_CATEGORY_SUCCESS,
   UPDATE_TRAVEL_CATEGORY_FAILURE,
   RESET_TRAVEL_CATEGORY,
+   // Inserted view action types
+   VIEW_TRAVEL_CATEGORY_DETAILS_REQUEST,
+   VIEW_TRAVEL_CATEGORY_DETAILS_SUCCESS,
+   VIEW_TRAVEL_CATEGORY_DETAILS_FAILURE,
+ 
+   //tours
+   FETCH_CATEGORY_TOURS_REQUEST,
+   FETCH_CATEGORY_TOURS_SUCCESS,
+   FETCH_CATEGORY_TOURS_FAILURE,
+ 
+   //subcategories
+   FETCH_CATEGORY_SUBCATEGORIES_REQUEST,
+   FETCH_CATEGORY_SUBCATEGORIES_SUCCESS,
+   FETCH_CATEGORY_SUBCATEGORIES_FAILURE,
+ 
+   //bookings
+   FETCH_CATEGORY_BOOKINGS_REQUEST,
+   FETCH_CATEGORY_BOOKINGS_SUCCESS,
+   FETCH_CATEGORY_BOOKINGS_FAILURE,
 } from "./actionTypes";
 
 const initialState = { 
@@ -24,7 +43,22 @@ const initialState = {
   loading: false,
   error: null,
   successMessage: null,
-  updateSuccess: false
+  updateSuccess: false,
+  viewCategory: null,
+  viewLoading: false,
+  viewError: null,
+
+  tours: [],
+  toursLoading: false,
+  toursError: null,
+
+  subCategories: [],
+  subCategoriesLoading: false,
+  subCategoriesError: null,
+
+  bookings: [],
+  bookingsLoading: false,
+  bookingsError: null,
 };
 
 const travelCategory = (state = initialState, action) => {
@@ -99,12 +133,91 @@ const travelCategory = (state = initialState, action) => {
     case RESET_TRAVEL_CATEGORY:
       return {
         ...state,
-        data: null, // ✅ reset data, not "category"
+        data: [], // ✅ reset data, not "category"
         loading: false,
         error: null,
         updateSuccess: false,
       };
+      case VIEW_TRAVEL_CATEGORY_DETAILS_REQUEST:
+      return {
+        ...state,
+        viewLoading: true,
+        viewError: null,
+        viewCategory: null,
+      };
+    case VIEW_TRAVEL_CATEGORY_DETAILS_SUCCESS:
+      return {
+        ...state,
+        viewLoading: false,
+        viewCategory: action.payload,
+      };
+    case VIEW_TRAVEL_CATEGORY_DETAILS_FAILURE:
+      return {
+        ...state,
+        viewLoading: false,
+        viewError: action.payload,
+        viewCategory: null,
+      };
 
+        // 🔹 Tours
+    case FETCH_CATEGORY_TOURS_REQUEST:
+      return {
+        ...state,
+        toursLoading: true,
+        toursError: null,
+      };
+    case FETCH_CATEGORY_TOURS_SUCCESS:
+      return {
+        ...state,
+        toursLoading: false,
+        tours: action.payload,
+      };
+    case FETCH_CATEGORY_TOURS_FAILURE:
+      return {
+        ...state,
+        toursLoading: false,
+        toursError: action.payload,
+      };
+
+    // 🔹 Subcategories
+    case FETCH_CATEGORY_SUBCATEGORIES_REQUEST:
+      return {
+        ...state,
+        subCategoriesLoading: true,
+        subCategoriesError: null,
+      };
+    case FETCH_CATEGORY_SUBCATEGORIES_SUCCESS:
+      return {
+        ...state,
+        subCategoriesLoading: false,
+        subCategories: action.payload,
+      };
+    case FETCH_CATEGORY_SUBCATEGORIES_FAILURE:
+      return {
+        ...state,
+        subCategoriesLoading: false,
+        subCategoriesError: action.payload,
+      };
+
+    // 🔹 Bookings
+    case FETCH_CATEGORY_BOOKINGS_REQUEST:
+      return {
+        ...state,
+        bookingsLoading: true,
+        bookingsError: null,
+      };
+    case FETCH_CATEGORY_BOOKINGS_SUCCESS:
+      return {
+        ...state,
+        bookingsLoading: false,
+        bookings: action.payload,
+      };
+    case FETCH_CATEGORY_BOOKINGS_FAILURE:
+      return {
+        ...state,
+        bookingsLoading: false,
+        bookingsError: action.payload,
+      };
 
     default:
       return state;

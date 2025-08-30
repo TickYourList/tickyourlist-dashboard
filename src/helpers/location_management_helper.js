@@ -259,6 +259,17 @@ const updateCategory = (id, data) =>
 const addCategory = (data, cityCode) =>
   postFormData(url.ADD_CATEGORY.replace("{cityCode}", cityCode), data);
 
+const getCategoryByUrl = (id) => {
+
+  return get(url.GET_CATEGORY_URL.replace("{id}", id));
+};
+
+ const getCategoryTours = (id) => get(url.GET_CATEGORY_TOURS.replace("{id}", id));
+  const getCategorySubcategories = (id) => get(url.GET_CATEGORY_SUBCATEGORIES.replace("{id}", id));
+
+const getCategoryBookings = (id) => get(url.GET_CATEGORY_BOOKINGS.replace("{id}", id));
+const getCities = () => get(url.GET_CITIES);
+
 
 
 export {
@@ -332,5 +343,10 @@ export {
     getCategoriesByCountryId,
     getCollectionsByCountryId,
     getSubcategoriesByCountryId,
-    getBookingByCountryId
+    getBookingByCountryId,
+    getCategoryByUrl,
+    getCategoryTours,
+    getCategorySubcategories,
+    getCategoryBookings,
+    getCities
 };

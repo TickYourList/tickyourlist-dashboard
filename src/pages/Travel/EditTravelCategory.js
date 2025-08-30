@@ -33,20 +33,20 @@ const EditTravelCategory = () => {
   );
 
   toastr.options = {
-  closeButton: true,
-  progressBar: true,
-  positionClass: "toast-top-right",
-  timeOut: "3000",
-};
+    closeButton: true,
+    progressBar: true,
+    positionClass: "toast-top-right",
+    timeOut: "3000",
+  };
   useEffect(() => {
-  if (updateSuccess) {
-    toastr.success("Travel Category Updated Successfully ✅");
-    dispatch(resetTravelCategory());
-    navigate("/travel-categories");
-  } else if (!updateSuccess && !loading && error) {
-    toastr.error("❌ Failed to update Travel Category.");
-  }
-}, [updateSuccess, error, dispatch, navigate, loading]);
+    if (updateSuccess) {
+      toastr.success("Travel Category Updated Successfully ✅");
+      dispatch(resetTravelCategory());
+      navigate("/travel-categories");
+    } else if (!updateSuccess && !loading && error) {
+      toastr.error("❌ Failed to update Travel Category.");
+    }
+  }, [updateSuccess, error, dispatch, navigate, loading]);
 
 
 
@@ -137,7 +137,7 @@ const EditTravelCategory = () => {
         });
 
         if (Object.keys(slugsEntered).length === 0) {
-         toastr.error("Please enter atleast one URL Slug");
+          toastr.error("Please enter atleast one URL Slug");
           return;
         }
 
@@ -202,7 +202,7 @@ const EditTravelCategory = () => {
         newImages.forEach((file) => {
           formData.append("images", file);
         });
-         dispatch(updateTravelCategoryRequest({ categoryId: values.id, formData }));
+        dispatch(updateTravelCategoryRequest({ categoryId: values.id, formData }));
       } catch (error) {
         console.error("❌ Submit error:", error);
         toastr.error("Something went wrong while submitting.");
@@ -231,8 +231,8 @@ const EditTravelCategory = () => {
         // ratingCount: data.ratingsInfo?.ratingsCount || 0,
         // averageRating: data.ratingsInfo?.averageRating || 0,
         // displayRating: data.ratingsInfo?.showRatings ? "Yes" : "No",
-        images: data.medias || [], 
-        medias: data.medias || [], 
+        images: data.medias || [],
+        medias: data.medias || [],
         cityCode: data.cityCode || "",
         city: data.city?._id || "",
       });
@@ -468,7 +468,7 @@ const EditTravelCategory = () => {
                     )}
                   </Col>
 
-                   {/* <Col md={4} className="mb-3">
+                  {/* <Col md={4} className="mb-3">
                     <Label>Rating Count *</Label>
                     <Input
                       name="ratingCount"
@@ -531,7 +531,21 @@ const EditTravelCategory = () => {
                     Update
                   </Button>
 
-                  <Button color="secondary" type="button" onClick={() => navigate(-1)}>Cancel</Button>
+                  <Button
+                    color="secondary"
+                    type="button"
+                    onClick={() => {
+
+                      dispatch(resetTravelCategory());
+
+
+                      dispatch({ type: 'GET_TRAVEL_CATEGORIES_REQUEST' });
+
+                      navigate("/travel-categories");
+                    }}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </Form>
             </CardBody>
