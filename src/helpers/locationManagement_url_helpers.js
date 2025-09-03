@@ -125,3 +125,17 @@ export const GET_TOUR_GROUP_VARIANT_DETAIL_API =
 export const GET_PRICING_LIST_API = "/v1/tyltraveltourgroupvariant/variant";
 
 export const GET_BOOKING_LIST_API = "v1/tyltraveltourgroupvariant/variant";
+
+// HomeBanner Permissions
+export const GET_PERMISSIONS_LIST = "/v1/admin/subusers/my-permissions";
+
+// SectionBanner
+export const GET_SECTION_LIST = "/v1/tyltravelcity/get/travelcity/submitted/all";
+export const GET_SECTION_ID = "/v1/tylTravelCity/get/travelcity/";
+export const GET_CATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/categories";
+export const GET_TOURS_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/tours";
+export const GET_COLLECTIONS_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/collections";
+export const GET_SUBCATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/sub-categories"; 
+
+//Pricing Calendar
+export const ON_ADD_DEFAUL_PRICING = "/v1/variant-calendar-pricing/pricing-rule/685e6b39a5cea386da8cb312"

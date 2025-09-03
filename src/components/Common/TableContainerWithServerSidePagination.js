@@ -60,6 +60,7 @@ const TableContainerWithServerSidePagination = ({
   setPageSize,
   isGlobalFilter,
   isAddNewTourGroup,
+  isAddNewTravelPartner,
   toggleViewModal,
   customPageSizeOptions = [10, 20, 30, 50],
   className,
@@ -145,6 +146,21 @@ const TableContainerWithServerSidePagination = ({
                 >
                   <i className="mdi mdi-plus me-1" />
                   Add New Tour Group
+                </Button>
+              </div>
+            </Col>
+          )}
+          {isAddNewTravelPartner && (
+            <Col>
+              <div className="text-sm-end">
+                <Button
+                  type="button"
+                  color="success"
+                  className="btn-rounded "
+                  onClick={toggleViewModal}
+                >
+                  <i className="mdi mdi-plus me-1" />
+                  Add New Travel Partner
                 </Button>
               </div>
             </Col>

@@ -242,6 +242,8 @@ const editBanner = (id, banner) => putFormData(`${url.EDIT_BANNER}/${id}`, banne
 
 const deleteBanner = (bannerId) => del(`${url.DELETE_BANNER}/${bannerId}`);
 
+// HomeBanner Permissions
+const getPermissionsList = id => get(`${url.GET_PERMISSIONS_LIST}`)
 
 const getCategoriesList = () => get(url.GET_CATEGORIES_LIST);
 
@@ -289,7 +291,20 @@ export const getBookingListAPI = variantId =>
   get(`${url.GET_BOOKING_LIST_API}/${variantId}/bookings`);
 
 
+const getSectionDetailsById = (sectionId) =>  get(`${url.GET_SECTION_LIST}/${sectionId}`);
 
+const getCategoriesForCity = (cityCode) => get(`${url.GET_CATEGORIES_FOR_CITY}/${cityCode}`);
+
+const getSubcategoriesForCity = (cityCode) => get(`${url.GET_SUBCATEGORIES_FOR_CITY}/${cityCode}`);
+
+const getToursForCity = (cityCode) => get(`${url.GET_TOURS_FOR_CITY}/${cityCode}`);
+
+const getCollectionsForCity = (cityCode) => get(`${url.GET_COLLECTIONS_FOR_CITY}/${cityCode}`);
+
+//Pricing Calendar
+const onAddDefaultCalendarPricing = (data)=>{
+  return postFormData(`${url.ON_ADD_DEFAUL_PRICING}`,data)
+}
 
 export {
     getCountriesList,
@@ -367,5 +382,12 @@ export {
     getCategoryTours,
     getCategorySubcategories,
     getCategoryBookings,
-    getCities
+    getCities,
+    getSectionDetailsById,
+    getCategoriesForCity,
+    getSubcategoriesForCity,
+    getToursForCity,
+    getCollectionsForCity,
+    getPermissionsList,
+    onAddDefaultCalendarPricing
 };
