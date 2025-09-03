@@ -91,6 +91,10 @@ import categories from "./countries/categories/reducers";
 import collections from "./countries/collections/reducers";
 import subcategories from "./countries/Subcategories/reducers";
 import bookings from "./countries/bookings/reducers";
+// Section
+import citiesSection from "./section-banners/sectionReducer";
+// User Permissions
+import UserPermissionsReducer from "./user-permissions/reducer";
 
 const rootReducer = combineReducers({
   // public
@@ -142,7 +146,9 @@ const rootReducer = combineReducers({
     subcategories,
     bookings,
   travelCategory,
-  travelCurrency // travel currency
+  travelCurrency, // travel currency
+  citiesSection,
+  UserPermissionsReducer,
 });
 
 export default rootReducer;

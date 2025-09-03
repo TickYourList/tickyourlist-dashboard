@@ -38,6 +38,9 @@ import toursSaga from "./countries/tour/saga";
 import categoriesSaga from "./countries/categories/saga";
 import bookingsSaga from "./countries/bookings/saga";
 
+import CitySaga from "./section-banners/sectionSaga";
+import UserPermissionsSaga from "./user-permissions/saga";
+
 import currencySaga from "./travelCurrency/saga";
 import travelCitySaga from "./travelCity/saga";
 import tourGroupSaga from "./tickyourlist/travelTourGroup/saga";
@@ -105,5 +108,7 @@ export default function* rootSaga() {
     fork(categoriesSaga),
     fork(bookingsSaga),
     fork(currencySaga), //travel currency
+    fork(CitySaga),
+    fork(UserPermissionsSaga),
   ]);
 }

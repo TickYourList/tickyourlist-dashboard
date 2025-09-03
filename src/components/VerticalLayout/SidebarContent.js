@@ -10,12 +10,14 @@ import SimpleBar from "simplebar-react";
 import MetisMenu from "metismenujs";
 import withRouter from "components/Common/withRouter";
 import { Link } from "react-router-dom";
+import { usePermissions, MODULES, ACTIONS } from "../../helpers/permissions";
 
 //i18n
 import { withTranslation } from "react-i18next";
 
 const SidebarContent = props => {
   const ref = useRef();
+  const { can } = usePermissions();
   const activateParentDropdown = useCallback((item) => {
     item.classList.add("active");
     const parent = item.parentElement;
@@ -246,9 +248,11 @@ const SidebarContent = props => {
                 <span>{props.t("Content & Marketing")}</span>
               </Link>
               <ul className="sub-menu">
+              {can(ACTIONS.CAN_VIEW, MODULES.ADMIN_BANNER_PERMS) && (
               <li>
                   <Link to="/content-marketing-home-banner">{props.t("Home Banner")}</Link>
                 </li>
+                 )}
               <li>
                   <Link to="/travel-partners">{props.t("Travel Partners")}</Link>
                 </li>

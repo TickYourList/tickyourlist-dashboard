@@ -3,6 +3,7 @@ import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 // Login Redux States
 import { LOGIN_USER, LOGOUT_USER, SOCIAL_LOGIN } from "./actionTypes";
 import { apiError, loginSuccess, logoutUserSuccess } from "./actions";
+import { getUserPermissions } from "../../user-permissions/actions";
 
 //Include Both Helper File with needed methods
 import { getFirebaseBackend } from "../../../helpers/firebase_helper";
@@ -12,7 +13,7 @@ import {
   postSocialLogin,
 } from "../../../helpers/fakebackend_helper";
 import { showToastError, showToastSuccess } from "helpers/toastBuilder";
-import { postLogin } from "helpers/backend_helper";
+import { postLogin, getPermissionsList } from "helpers/backend_helper";
 
 const fireBaseBackend = getFirebaseBackend();
 
@@ -27,6 +28,7 @@ function* loginUser({ payload: { user, history } }) {
         showToastSuccess("Login is Successfull","Success")
       }
       yield put(loginSuccess(response));
+      yield put(getUserPermissions(response.userId));
     history('/automobile-dashboard');
   } catch (error) {
     showToastError("Email and Password does not match","Error")
