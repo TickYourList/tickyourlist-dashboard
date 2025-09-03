@@ -5,55 +5,68 @@ import {
   Modal,
   ModalHeader,
   ModalBody,
-  Table,
   ModalFooter,
   Button,
 } from "reactstrap"
+
 const TravelPartnerDetails = ({ isOpen, toggle, Data }) => {
   return (
-    <Modal
-      isOpen={isOpen}
-      role="dialog"
-      autoFocus={true}
-      centered={true}
-      className="exampleModal"
-      tabIndex="-1"
-      toggle={toggle}
-    >
-      <ModalHeader toggle={toggle}>Partner Details</ModalHeader>
+    <Modal isOpen={isOpen} toggle={toggle} centered>
+      <ModalHeader toggle={toggle} tag="h4">
+        Partner Details
+      </ModalHeader>
       <ModalBody>
         {Data ? (
           <div>
-            <p>
-              <strong>Name:</strong> {Data.name}
-            </p>
-            <p>
-              <strong>Display Order:</strong> {Data.displayOrder}
-            </p>
-            <p>
-              <strong>Featured:</strong> {Data.featured ? "Yes" : "No"}
-            </p>
-            <p>
-              <strong>Status:</strong>{" "}
-              <span
-                className={`badge bg-${Data.status ? "success" : "danger"}`}
-              >
-                {Data.status ? "Active" : "Inactive"}
-              </span>
-            </p>
-            <img
-              src={Data.imgUrl?.url}
-              alt={Data.imgUrl?.altText || Data.name}
-              style={{ width: "100%", objectFit: "contain", marginTop: 10 }}
-            />
+            <div className="text-center mb-4">
+              <img
+                src={Data.imgUrl?.url}
+                alt={Data.imgUrl?.altText || Data.name}
+                className="img-fluid rounded border" 
+                style={{
+                  maxHeight: "300px", 
+                  objectFit: "contain",
+                }}
+              />
+            </div>
+
+
+            <div>
+              <p>
+                <strong>Id:</strong> {Data._id}
+              </p>
+              <p>
+                <strong>Display Order:</strong> {Data.displayOrder}
+              </p>
+              <p>
+                <strong>Name:</strong> {Data.name}
+              </p>
+              <p>
+                <strong>Featured:</strong> {Data.featured ? "Yes" : "No"}
+              </p>
+              <p>
+                <strong>Status:</strong>{" "}
+                <span
+                  className={`badge bg-${Data.status ? "success" : "danger"}`}
+                >
+                  {Data.status ? "Active" : "Inactive"}
+                </span>
+              </p>
+            </div>
           </div>
         ) : (
-          <p>No partner selected.</p>
+          <p className="text-center text-muted">No partner selected.</p>
         )}
       </ModalBody>
+      <ModalFooter>
+        <Button color="secondary" onClick={toggle}>
+          Close
+        </Button>
+      </ModalFooter>
     </Modal>
   )
 }
+
 TravelPartnerDetails.propTypes = {
   Data: PropTypes.object,
   toggle: PropTypes.func,

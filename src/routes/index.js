@@ -180,6 +180,7 @@ import EditTravelCategory from "pages/Travel/EditTravelCategory";
 import DualListbox from "pages/Tables/DualListbox";
 import { TourGroupVariants } from "../pages/TourGroups";
 import { components } from "react-select";
+import CalendarPricingAndAvailability from "pages/CalendarPricingAndAvailability";
 
 
 const authProtectedRoutes = [
@@ -379,6 +380,10 @@ const authProtectedRoutes = [
   { path: "/travel-categories", component: <TravelCategoryDetail /> },
   { path: "/travel-category/add", component: <AddTravelCategory /> },
   { path: "/edit-travel-category/:categoryId", component: <EditTravelCategory /> },
+  {
+    path: "/calendar-pricing-&-availability",
+    component: <CalendarPricingAndAvailability />,
+   },
   {
     path: "/",
     exact: true,

@@ -136,3 +136,6 @@ export const GET_CATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details
 export const GET_TOURS_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/tours";
 export const GET_COLLECTIONS_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/collections";
 export const GET_SUBCATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/sub-categories"; 
+
+//Pricing Calendar
+export const ON_ADD_DEFAUL_PRICING = "/v1/variant-calendar-pricing/pricing-rule/685e6b39a5cea386da8cb312"

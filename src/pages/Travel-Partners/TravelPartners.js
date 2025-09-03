@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { SelectColumnFilter } from "../../components/Common/filters"; 
 import {
   Row,
   Col,
@@ -14,9 +15,10 @@ import {
   Label,
   Input,
   Form,
+  ModalFooter,
 } from "reactstrap"
 import Breadcrumbs from "../../components/Common/Breadcrumb"
-import TableContainer from "../../components/Common/TableContainer"
+import TableContainerWithServerSidePagination from "../../components/Common/TableContainerWithServerSidePagination"
 import {
   addNewTravelPartner,
   getTravelPartner,
@@ -28,6 +30,26 @@ import { useFormik } from "formik"
 import * as Yup from "yup"
 import { Link } from "react-router-dom"
 
+
+
+
+const buildQueryFromFilters = (filters) => {
+  const query = {};
+  filters.forEach(filter => {
+    const { id, value } = filter;
+    if (id === 'status') {
+      if (value === 'Active') query[id] = true;
+      else if (value === 'Inactive') query[id] = false;
+    } else if (id === 'featured') {
+      if (value === 'Yes') query[id] = true;
+      else if (value === 'No') query[id] = false;
+    } else {
+      query[id] = value;
+    }
+  });
+  return query;
+};
+
 function TravelPartners() {
   document.title = "Travel partners | Scrollit"
 
@@ -35,9 +57,7 @@ function TravelPartners() {
   const [travelPartner, setTravelPartner] = useState(null)
   const [isEdit, setIsEdit] = useState(false)
   const [modal, setModal] = useState(false)
-  const [toast, setToast] = useState(false)
   const [travelPartnerImage, setTravelPartnerImage] = useState(null)
-  const [toastDetails, setToastDetails] = useState({ title: "", message: "" })
   const [isDelete, setIsDelete] = useState(false)
 
   const dispatch = useDispatch()
@@ -46,16 +66,22 @@ function TravelPartners() {
     state =>
       state.travelPartner || {
         travelPartners: [],
-        pagination: {},
+        pagination: { total: 0, page: 1 },
+        loading: false,
       }
   )
 
-  const [currentPage, setCurrentPage] = useState(pagination.page || 1)
-  const [currentLimit, setCurrentLimit] = useState(pagination.limit || 10)
+  const [limit, setLimit] = useState(10)
 
   useEffect(() => {
-    dispatch(getTravelPartner(currentPage, currentLimit))
-  }, [dispatch, currentPage, currentLimit])
+    if (pagination.page > 0) {
+        dispatch(getTravelPartner(pagination.page, limit))
+    }
+  }, [dispatch, pagination.page, limit])
+
+  const handlePageChange = newPage => {
+    dispatch(getTravelPartner(newPage, limit))
+  }
 
   const handleViewDetail = data => {
     setModal1(true)
@@ -103,7 +129,7 @@ function TravelPartners() {
   const confirmDelete = async () => {
     if (travelPartner && travelPartner._id) {
       await dispatch(deleteTravelPartner(travelPartner))
-      dispatch(getTravelPartner(currentPage, currentLimit))
+      dispatch(getTravelPartner(pagination.page, limit)) 
       toggleDelete()
     } else {
       toggleDelete()
@@ -117,6 +143,7 @@ function TravelPartners() {
       travelPartnerFeatured:
         isEdit && travelPartner ? (travelPartner.featured ? "Yes" : "No") : "",
       currentTravelPartnerImageUrl: travelPartner?.imgUrl?.url || null,
+    travelPartnerImage: undefined,
     },
     validationSchema: Yup.object({
       travelPartnerName: Yup.string().required(
@@ -124,49 +151,40 @@ function TravelPartners() {
       ),
       travelPartnerFeatured: Yup.string().required("Please Select Feature"),
       travelPartnerImage: Yup.mixed().test(
-        "required-image",
-        "Please upload an image",
-        function (value) {
-          const isAddingNew = !isEdit
-          const hasExistingImageUrl = !!this.parent.currentTravelPartnerImageUrl
-          const hasNewImageFile = !!travelPartnerImage
+      "required-image",
+      "Please upload an image",
+      function (value) { 
+        const isAddingNew = !isEdit;
+        const hasExistingImageUrl = !!this.parent.currentTravelPartnerImageUrl;
 
-          if (isAddingNew) {
-            return hasNewImageFile
-          } else {
-            return hasNewImageFile || hasExistingImageUrl
-          }
+        if (isAddingNew) {
+        
+          return !!value;
+        } else {
+          return !!value || hasExistingImageUrl;
         }
-      ),
-    }),
+      }
+    ),
+  }),
     onSubmit: async values => {
       const formData = new FormData()
       formData.append("name", values.travelPartnerName)
       formData.append("featured", values.travelPartnerFeatured === "Yes")
 
-      if (travelPartnerImage) {
-        formData.append("media", travelPartnerImage)
+      if (values.travelPartnerImage) {
+        formData.append("media", values.travelPartnerImage)
       }
 
       if (isEdit) {
-        dispatch(updateTravelPartner(travelPartner._id, formData))
+        await dispatch(updateTravelPartner(travelPartner._id, formData))
       } else {
-        dispatch(addNewTravelPartner(formData))
+        await dispatch(addNewTravelPartner(formData))
       }
-
+      dispatch(getTravelPartner(pagination.page, limit)) 
       validation.resetForm()
       toggle()
     },
   })
-
-  const handlePageSizeChange = newSize => {
-    setCurrentLimit(newSize)
-    setCurrentPage(1)
-  }
-
-  const handlePageChange = newPage => {
-    setCurrentPage(newPage)
-  }
 
   const travelPartnerColumns = useMemo(
     () => [
@@ -177,7 +195,7 @@ function TravelPartners() {
         Cell: ({ row }) => (
           <div className="text-center">
             <span className="badge bg-secondary rounded-pill">
-              #{row.original.displayOrder || "-"}
+              {row.original.displayOrder || "-"}
             </span>
           </div>
         ),
@@ -185,9 +203,10 @@ function TravelPartners() {
       {
         Header: "Image",
         accessor: "imgUrl.url",
+        disableFilters: true,
         style: { textAlign: "center", width: "10%" },
         Cell: ({ row }) => {
-          const { imgUrl } = row.original
+          const { imgUrl } = row.original;
           return (
             <div className="text-center">
               <img
@@ -196,34 +215,38 @@ function TravelPartners() {
                 style={{ width: "50px", height: "50px", objectFit: "contain" }}
               />
             </div>
-          )
+          );
         },
       },
       {
         Header: "Name",
         accessor: "name",
       },
-      {
+     {
         Header: "Featured",
-        accessor: "featured",
-        Cell: ({ row }) => (
+        accessor: row => (row.featured ? "Yes" : "No"),
+        id: 'featured', 
+        Filter: SelectColumnFilter, 
+        Cell: ({ value }) => (
           <div className="text-center">
-            {row.original.featured ? "Yes" : "No"}
+            {value}
           </div>
         ),
       },
       {
         Header: "Status",
-        accessor: "status",
+        accessor: row => (row.status ? "Active" : "Inactive"),
+        id: 'status', 
+        Filter: SelectColumnFilter, 
         Cell: ({ row }) => {
-          const status = row.original.status
+          const status = row.original.status;
           return (
             <div className="text-center">
               <span className={`badge bg-${status ? "success" : "danger"}`}>
                 {status ? "Active" : "Inactive"}
               </span>
             </div>
-          )
+          );
         },
       },
       {
@@ -248,15 +271,15 @@ function TravelPartners() {
         accessor: "action",
         disableFilters: true,
         Cell: ({ row }) => {
-          const data = row.original
+          const data = row.original;
           return (
             <div className="d-flex gap-3">
               <Link
                 to="#"
                 className="text-success"
                 onClick={e => {
-                  e.preventDefault()
-                  handleTravelPartnerEditClick(data)
+                  e.preventDefault();
+                  handleTravelPartnerEditClick(data);
                 }}
               >
                 <i className="mdi mdi-pencil font-size-18" id="edittooltip" />
@@ -268,8 +291,8 @@ function TravelPartners() {
                 to="#"
                 className="text-danger"
                 onClick={e => {
-                  e.preventDefault()
-                  handleDeleteClick(data)
+                  e.preventDefault();
+                  handleDeleteClick(data);
                 }}
               >
                 <i className="mdi mdi-delete font-size-18" id="deletetooltip" />
@@ -278,12 +301,13 @@ function TravelPartners() {
                 </UncontrolledTooltip>
               </Link>
             </div>
-          )
+          );
         },
       },
     ],
     []
-  )
+  );
+  
 
   return (
     <React.Fragment>
@@ -299,23 +323,18 @@ function TravelPartners() {
             <Col xs="12">
               <Card>
                 <CardBody>
-                  <TableContainer
+                  <TableContainerWithServerSidePagination
                     columns={travelPartnerColumns}
                     data={travelPartners}
-                    isGlobalFilter
-                    customPageSize={currentLimit}
-                    isAddTravelPartnerOption={true}
-                    handleAddNewTravelPartner={handleAddNewTravelPartner}
-                    className="custom-header-css"
-                    onPageSizeChange={handlePageSizeChange}
+                    totalCount={pagination.total || 0}
+                    currentPage={pagination.page || 1}
+                    pageSize={limit}
                     onPageChange={handlePageChange}
-                    currentPageIndex={currentPage - 1}
-                    totalPageCount={
-                      pagination.total
-                        ? Math.ceil(pagination.total / currentLimit)
-                        : 1
-                    }
-                    totalDataCount={pagination.total}
+                    setPageSize={setLimit}
+                    isGlobalFilter={true}
+                    toggleViewModal={handleAddNewTravelPartner}
+                    isAddNewTravelPartner={true}
+                    className="custom-header-css"
                   />
                 </CardBody>
               </Card>
@@ -323,188 +342,136 @@ function TravelPartners() {
           </Row>
         </div>
         {/* for adding or editing */}
-        <Modal isOpen={modal} toggle={toggle}>
-          <ModalHeader toggle={toggle} tag="h4">
-            {!!isEdit ? "Edit Travel Partner" : "Add New Travel Partner"}
-          </ModalHeader>
-          <ModalBody>
-            <Form
-              onSubmit={e => {
-                e.preventDefault()
-                validation.validateForm().then(errors => {
-                  if (Object.keys(errors).length === 0) {
-                    validation.handleSubmit()
-                  } else {
-                    Object.keys(errors).forEach(key => {
-                      validation.setFieldTouched(key, true)
-                    })
-                  }
-                })
-                return false
+<Modal isOpen={modal} toggle={toggle}>
+  <ModalHeader toggle={toggle} tag="h4">
+    {!!isEdit ? "Edit Travel Partner" : "Add New Travel Partner"}
+  </ModalHeader>
+
+  <Form onSubmit={validation.handleSubmit}>
+    <ModalBody>
+      <Row>
+        <Col className="col-12">
+          <div className="mb-3">
+            <Label className="form-label">
+              Travel Partner Name <span style={{ color: "red" }}>*</span>
+            </Label>
+            <Input
+              name="travelPartnerName"
+              type="text"
+              onChange={validation.handleChange}
+              onBlur={validation.handleBlur}
+              value={validation.values.travelPartnerName || ""}
+              invalid={
+                !!(
+                  validation.touched.travelPartnerName &&
+                  validation.errors.travelPartnerName
+                )
+              }
+            />
+            <FormFeedback>
+              {validation.errors.travelPartnerName}
+            </FormFeedback>
+          </div>
+          <div className="mb-3">
+            <Label className="form-label">
+              Featured <span style={{ color: "red" }}>*</span>
+            </Label>
+            <Input
+              name="travelPartnerFeatured"
+              type="select"
+              className="form-select"
+              onChange={validation.handleChange}
+              onBlur={validation.handleBlur}
+              value={validation.values.travelPartnerFeatured || ""}
+              invalid={
+                !!(
+                  validation.touched.travelPartnerFeatured &&
+                  validation.errors.travelPartnerFeatured
+                )
+              }
+            >
+              <option value="">Select</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </Input>
+            <FormFeedback>
+              {validation.errors.travelPartnerFeatured}
+            </FormFeedback>
+          </div>
+          <div className="mt-3 mb-3">
+            <Label htmlFor="cimg">
+              Travel Partner Image{" "}
+              <span style={{ color: "red" }}>
+                {!isEdit ||
+                (!validation.values.currentTravelPartnerImageUrl &&
+                  !travelPartnerImage)
+                  ? "*"
+                  : ""}
+              </span>
+            </Label>
+            <div className="mh-50">
+              <Input
+                id="cimg"
+                type="file"
+                accept="image/jpeg, image/png, image/jpg"
+                name="travelPartnerImage"
+                onChange={e => {
+                  const file = e.target.files[0]
+                  validation.setFieldValue("travelPartnerImage", file)
+                  setTravelPartnerImage(file)
+                }}
+                invalid={
+                  !!(
+                    validation.touched.travelPartnerImage &&
+                    validation.errors.travelPartnerImage
+                  )
+                }
+              />
+            </div>
+            <FormFeedback
+              style={{
+                display:
+                  validation.touched.travelPartnerImage &&
+                  validation.errors.travelPartnerImage
+                    ? "block"
+                    : "none",
               }}
             >
-              <Row>
-                <Col className="col-12">
-                  <div className="mb-3">
-                    <Label className="form-label">
-                      Travel Partner Name{" "}
-                      <span style={{ color: "red" }}>*</span>
-                    </Label>
-                    <Input
-                      name="travelPartnerName"
-                      type="text"
-                      onChange={validation.handleChange}
-                      onBlur={validation.handleBlur}
-                      value={validation.values.travelPartnerName || ""}
-                      invalid={
-                        !!(
-                          validation.touched.travelPartnerName &&
-                          validation.errors.travelPartnerName
-                        )
-                      }
-                    />
-                    <FormFeedback>
-                      {validation.errors.travelPartnerName}
-                    </FormFeedback>
-                  </div>
-                  <div className="mb-3">
-                    <Label className="form-label">
-                      Featured <span style={{ color: "red" }}>*</span>
-                    </Label>
-                    <Input
-                      name="travelPartnerFeatured"
-                      type="select"
-                      className="form-select"
-                      onChange={validation.handleChange}
-                      onBlur={validation.handleBlur}
-                      value={validation.values.travelPartnerFeatured || ""}
-                      invalid={
-                        !!(
-                          validation.touched.travelPartnerFeatured &&
-                          validation.errors.travelPartnerFeatured
-                        )
-                      }
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </Input>
-                    <FormFeedback>
-                      {validation.errors.travelPartnerFeatured}
-                    </FormFeedback>
-                  </div>
-                  <div className="mt-3 mb-3">
-                    <Label for="cimg">
-                      Travel Partner Image{" "}
-                      <span style={{ color: "red" }}>
-                        {!isEdit ||
-                        (!validation.values.currentTravelPartnerImageUrl &&
-                          !travelPartnerImage)
-                          ? "*"
-                          : ""}
-                      </span>
-                    </Label>
-                    <div className="mh-50">
-                      <Input
-                        id="cimg"
-                        type="file"
-                        accept="image/jpeg, image/png, image/jpg"
-                        name="travelPartnerImage"
-                        onChange={e => {
-                          const file = e.target.files[0]
-                          setTravelPartnerImage(file)
-                          validation.setFieldTouched(
-                            "travelPartnerImage",
-                            true,
-                            false
-                          )
+              {validation.errors.travelPartnerImage}
+            </FormFeedback>
 
-                          if (file) {
-                            const ext = file.name.split(".").pop().toLowerCase()
-                            if (["jpeg", "jpg", "png"].includes(ext)) {
-                              setToastDetails({
-                                title: "Image Uploaded",
-                                message: `${file.name} has been uploaded.`,
-                              })
-                              setToast(true)
-                              validation.setFieldError(
-                                "travelPartnerImage",
-                                undefined
-                              )
-                            } else {
-                              setToastDetails({
-                                title: "Invalid image",
-                                message:
-                                  "Please upload images with jpg, jpeg or png extension",
-                              })
-                              setToast(true)
-                              setTravelPartnerImage(null)
-                              validation.setFieldError(
-                                "travelPartnerImage",
-                                "Please upload images with jpg, jpeg or png extension"
-                              )
-                            }
-                          } else {
-                            setTravelPartnerImage(null)
-                          }
-                        }}
-                        invalid={
-                          !!(
-                            validation.touched.travelPartnerImage &&
-                            validation.errors.travelPartnerImage
-                          )
-                        }
-                      />
-                    </div>
-                    <FormFeedback
-                      style={{
-                        display:
-                          validation.touched.travelPartnerImage &&
-                          validation.errors.travelPartnerImage
-                            ? "block"
-                            : "none",
-                      }}
-                    >
-                      {validation.errors.travelPartnerImage}
-                    </FormFeedback>
+            {(travelPartnerImage ||
+              validation.values.currentTravelPartnerImageUrl) && (
+              <div className="text-center mt-3">
+                <img
+                  src={
+                    travelPartnerImage
+                      ? URL.createObjectURL(travelPartnerImage)
+                      : validation.values.currentTravelPartnerImageUrl
+                  }
+                  width={100}
+                  height={65}
+                  alt="Preview"
+                />
+              </div>
+            )}
+          </div>
+          
+          
+        </Col>
+      </Row>
+    </ModalBody>
 
-                    {(travelPartnerImage ||
-                      validation.values.currentTravelPartnerImageUrl) && (
-                      <div className="d-flex text-center margin-auto">
-                        <img
-                          src={
-                            travelPartnerImage
-                              ? URL.createObjectURL(travelPartnerImage)
-                              : validation.values.currentTravelPartnerImageUrl
-                          }
-                          width={100}
-                          height={65}
-                          className="mt-3"
-                          alt="Preview"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    type="submit"
-                    className="btn btn-success save-user"
-                    onClick={() => {
-                      validation.setFieldTouched("travelPartnerName", true)
-                      validation.setFieldTouched("travelPartnerFeatured", true)
-                      validation.validateForm().then(errors => {
-                        if (Object.keys(errors).length === 0) {
-                        }
-                      })
-                    }}
-                  >
-                    Save
-                  </button>
-                </Col>
-              </Row>
-            </Form>
-          </ModalBody>
-        </Modal>
-
+    <ModalFooter>
+      <Button type="button" color="secondary" onClick={toggle}>
+        Cancel
+      </Button>
+      <Button type="submit" color="primary">
+        {!!isEdit ? "Update Partner" : "Save Partner"}
+      </Button>
+    </ModalFooter>
+  </Form>
+</Modal>
         {/* onclick delete */}
 
         <Modal isOpen={isDelete} toggle={toggleDelete} centered={true}>
@@ -512,7 +479,7 @@ function TravelPartners() {
           <ModalBody>
             <p>
               Are you sure you want to permanently delete this{" "}
-              {travelPartner?.name} Travel Partner? Once deleted, cannot be
+               <strong>{travelPartner?.name}</strong> Travel Partner? Once deleted, cannot be
               recovered.
             </p>
             <div className="d-flex justify-content-end">

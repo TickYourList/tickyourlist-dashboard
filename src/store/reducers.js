@@ -95,6 +95,7 @@ import bookings from "./countries/bookings/reducers";
 import citiesSection from "./section-banners/sectionReducer";
 // User Permissions
 import UserPermissionsReducer from "./user-permissions/reducer";
+import CalendarPricing from "./CalendarPricingAndAvailability/reducers";
 
 const rootReducer = combineReducers({
   // public
@@ -149,6 +150,7 @@ const rootReducer = combineReducers({
   travelCurrency, // travel currency
   citiesSection,
   UserPermissionsReducer,
+  CalendarPricing
 });
 
 export default rootReducer;

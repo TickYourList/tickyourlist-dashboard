@@ -301,6 +301,11 @@ const getToursForCity = (cityCode) => get(`${url.GET_TOURS_FOR_CITY}/${cityCode}
 
 const getCollectionsForCity = (cityCode) => get(`${url.GET_COLLECTIONS_FOR_CITY}/${cityCode}`);
 
+//Pricing Calendar
+const onAddDefaultCalendarPricing = (data)=>{
+  return postFormData(`${url.ON_ADD_DEFAUL_PRICING}`,data)
+}
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -383,5 +388,6 @@ export {
     getSubcategoriesForCity,
     getToursForCity,
     getCollectionsForCity,
-    getPermissionsList
+    getPermissionsList,
+    onAddDefaultCalendarPricing
 };
