@@ -1,24 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Modal, ModalHeader, ModalBody, Button } from "reactstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import {
   viewTravelCategoryDetailsRequest,
   fetchCategoryToursRequest,
   fetchCategorySubcategoriesRequest,
   fetchCategoryBookingsRequest
 } from "../../store/travelCategories/actions";
-import { usePermissions, MODULES, ACTIONS } from '../../helpers/permissions';
+import { usePermissions, MODULES, ACTIONS } from "helpers/permissions";
 
 
 const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
   if (!category) return null;
   const dispatch = useDispatch();
-  const navigate = useNavigate()
-  const { can } = usePermissions();
-  const handleSubCategorySortClick = () => {
-    navigate(`/sub-categories/${category._id}/sort`);
-  }
 
   const [activeTab, setActiveTab] = useState("overview");
   const [tourPage, setTourPage] = useState(1);
@@ -33,10 +27,19 @@ const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
     return data.slice(start, start + pageSize);
   };
 
-
   const { viewCategory, tours, toursLoading,
     subCategories, subCategoriesLoading,
     bookings, bookingsLoading } = useSelector((state) => state.travelCategory);
+
+  // Use standardized permissions hook
+  const { can } = usePermissions();
+
+  // Permission checks using standardized system
+  const permissions = useMemo(() => ({
+    canViewTours: can(ACTIONS.CAN_VIEW, MODULES.TOUR_GROUP_PERMS),
+    canViewSubCategories: can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS),
+    canViewBookings: can(ACTIONS.CAN_VIEW, MODULES.BOOKING_PERMS)
+  }), [can]);
 
   useEffect(() => {
     if (isOpen && category?._id) {
@@ -118,13 +121,19 @@ const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
     if (!viewCategory?._id) return;
     switch (tab) {
       case "tours":
-        dispatch(fetchCategoryToursRequest(viewCategory._id));
+        if (permissions.canViewTours) {
+          dispatch(fetchCategoryToursRequest(viewCategory._id));
+        }
         break;
       case "subCategories":
-        dispatch(fetchCategorySubcategoriesRequest(viewCategory._id));
+        if (permissions.canViewSubCategories) {
+          dispatch(fetchCategorySubcategoriesRequest(viewCategory._id));
+        }
         break;
       case "bookings":
-        dispatch(fetchCategoryBookingsRequest(viewCategory._id));
+        if (permissions.canViewBookings) {
+          dispatch(fetchCategoryBookingsRequest(viewCategory._id));
+        }
         break;
       default:
         break;
@@ -195,15 +204,56 @@ const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
         {/* Sticky Tabs */}
         <div className="mt-4 bg-white border-bottom" style={{ position: "sticky", top: 0, zIndex: 10, padding: "0 1rem", marginBottom: 0 }}>
           <ul className="nav nav-tabs" style={{ borderBottom: "2px solid #dee2e6" }}>
-            {["overview", "tours", "subCategories", "bookings", "analytics"].map((tab) => (
-              <li key={tab} className="nav-item">
-                <a href="#" className={`nav-link ${activeTab === tab ? "text-primary fw-bold text-decoration-underline" : "text-black"}`}
+            {/* Overview tab - always visible */}
+            <li className="nav-item">
+              <a href="#" className={`nav-link ${activeTab === "overview" ? "text-primary fw-bold text-decoration-underline" : "text-black"}`}
+                style={{ padding: "12px 20px", fontSize: "1rem" }}
+                onClick={(e) => { e.preventDefault(); handleTabClick("overview"); }}>
+                Overview
+              </a>
+            </li>
+            
+            {/* Tours tab - show only if canViewTours is true */}
+            {permissions.canViewTours && (
+              <li className="nav-item">
+                <a href="#" className={`nav-link ${activeTab === "tours" ? "text-primary fw-bold text-decoration-underline" : "text-black"}`}
                   style={{ padding: "12px 20px", fontSize: "1rem" }}
-                  onClick={(e) => { e.preventDefault(); handleTabClick(tab); }}>
-                  {tab.charAt(0).toUpperCase() + tab.slice(1).replace(/([A-Z])/g, ' $1')}
+                  onClick={(e) => { e.preventDefault(); handleTabClick("tours"); }}>
+                  Tours
                 </a>
               </li>
-            ))}
+            )}
+            
+            {/* SubCategories tab - show only if canViewSubCategories is true */}
+            {permissions.canViewSubCategories && (
+              <li className="nav-item">
+                <a href="#" className={`nav-link ${activeTab === "subCategories" ? "text-primary fw-bold text-decoration-underline" : "text-black"}`}
+                  style={{ padding: "12px 20px", fontSize: "1rem" }}
+                  onClick={(e) => { e.preventDefault(); handleTabClick("subCategories"); }}>
+                  Sub Categories
+                </a>
+              </li>
+            )}
+            
+            {/* Bookings tab - show only if canViewBookings is true */}
+            {permissions.canViewBookings && (
+              <li className="nav-item">
+                <a href="#" className={`nav-link ${activeTab === "bookings" ? "text-primary fw-bold text-decoration-underline" : "text-black"}`}
+                  style={{ padding: "12px 20px", fontSize: "1rem" }}
+                  onClick={(e) => { e.preventDefault(); handleTabClick("bookings"); }}>
+                  Bookings
+                </a>
+              </li>
+            )}
+            
+            {/* Analytics tab - always visible */}
+            <li className="nav-item">
+              <a href="#" className={`nav-link ${activeTab === "analytics" ? "text-primary fw-bold text-decoration-underline" : "text-black"}`}
+                style={{ padding: "12px 20px", fontSize: "1rem" }}
+                onClick={(e) => { e.preventDefault(); handleTabClick("analytics"); }}>
+                Analytics
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -255,23 +305,11 @@ const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
             </div>
           )}
 
-          {/* Tours Tab */}
-          {activeTab === "tours" && (
+          {/* Tours Tab - show only if canViewTours is true */}
+          {activeTab === "tours" && permissions.canViewTours && (
             <>
               <div className="table-responsive" style={{ maxHeight: "400px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "8px", marginTop: 0, scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 <style>{`.table-responsive::-webkit-scrollbar { display: none; }`}</style>
-                {
-                  can(ACTIONS.CAN_EDIT, MODULES.SUBCATEGORY_PERMS) && subCategoriesCount > 0 &&
-                  <div className="d-flex justify-content-end my-3">
-                  <Button
-                    color="info"
-                    className="btn-sm me-2"
-                    onClick={handleSubCategorySortClick}
-                  >
-                    Sort Sub Categories
-                  </Button>
-                  </div>
-                }
                 <table className="table table-bordered table-hover mb-0" style={{ position: "relative" }}>
                   <thead className="table-light" style={{ position: "sticky", top: 0, zIndex: 9, backgroundColor: "#f8f9fa", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
                     <tr>
@@ -334,8 +372,8 @@ const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
             </>
           )}
 
-          {/* SubCategories Tab */}
-          {activeTab === "subCategories" && (
+          {/* SubCategories Tab - show only if canViewSubCategories is true */}
+          {activeTab === "subCategories" && permissions.canViewSubCategories && (
             <>
               <div className="table-responsive" style={{ maxHeight: "400px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "8px", marginTop: 0, scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 <style>{`.table-responsive::-webkit-scrollbar { display: none; }`}</style>
@@ -399,8 +437,8 @@ const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
             </>
           )}
 
-          {/* Bookings Tab */}
-          {activeTab === "bookings" && (
+          {/* Bookings Tab - show only if canViewBookings is true */}
+          {activeTab === "bookings" && permissions.canViewBookings && (
             <>
               <div className="table-responsive" style={{ maxHeight: "400px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "8px", marginTop: 0, scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 <style>{`.table-responsive::-webkit-scrollbar { display: none; }`}</style>

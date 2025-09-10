@@ -35,6 +35,15 @@ import {
    FETCH_CATEGORY_BOOKINGS_REQUEST,
    FETCH_CATEGORY_BOOKINGS_SUCCESS,
    FETCH_CATEGORY_BOOKINGS_FAILURE,
+
+   //settings
+  GET_SETTING_REQUEST,
+  GET_SETTING_SUCCESS,
+  GET_SETTING_FAILURE,
+
+  UPDATE_SYSTEM_SETTINGS_REQUEST,
+  UPDATE_SYSTEM_SETTINGS_SUCCESS,
+  UPDATE_SYSTEM_SETTINGS_FAILURE,
 } from "./actionTypes";
 
 const initialState = { 
@@ -59,6 +68,16 @@ const initialState = {
   bookings: [],
   bookingsLoading: false,
   bookingsError: null,
+  permissions: [],
+  error: null,
+
+  settings: [],
+  loading: false,
+  error: null,
+
+  updateLoading: false,
+  updateError: null,
+  updateSuccess: false,
 };
 
 const travelCategory = (state = initialState, action) => {
@@ -218,6 +237,57 @@ const travelCategory = (state = initialState, action) => {
         bookingsLoading: false,
         bookingsError: action.payload,
       };
+    
+      case GET_SETTING_REQUEST:
+        return {
+          ...state,
+          loading: true,
+          error: null,
+        };
+      case GET_SETTING_SUCCESS:
+        return {
+      ...state,
+      settings: action.payload, // This should be the entire API response
+      loading: false,
+      error: null,
+    };
+      case GET_SETTING_FAILURE:
+        return {
+          ...state,
+          loading: false,
+          error: action.payload,
+        };
+     case UPDATE_SYSTEM_SETTINGS_REQUEST:
+        return {
+          ...state,
+          updateLoading: true,
+          updateError: null,
+          updateSuccess: false,
+        };
+  
+      case UPDATE_SYSTEM_SETTINGS_SUCCESS:
+        return {
+          ...state,
+          updateLoading: false,
+          updateError: null,
+          updateSuccess: true,
+          settings: {
+        ...state.settings,
+        data: {
+          ...state.settings.data,
+          settings: action.payload.settings,   // ✅ direct settings lo
+          updated: action.payload.updated,     // ✅ updated bhi store kar lo
+        },
+      },
+        };
+  
+      case UPDATE_SYSTEM_SETTINGS_FAILURE:
+        return {
+          ...state,
+          updateLoading: false,
+          updateError: action.payload,
+          updateSuccess: false,
+        };
 
     default:
       return state;

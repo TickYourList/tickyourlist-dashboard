@@ -360,6 +360,12 @@ const sortCitySubCategories = (data) => {
   return put(url.SORT_SUB_CATEGORY_API + '/' + categoryId, { subcategoryOrders });
 };
 
+const getSettings = () => get(url.GET_SETTINGS);
+const updateSystemSettings = (data) =>
+  putFormData(url.UPDATE_SYSTEM_SETTINGS, data, {
+    "Content-Type": "multipart/form-data",
+  });
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -452,5 +458,7 @@ export {
     sortSubCategory,
     sortCityCategories,
     sortCitySubCategories,
-    getTourBookingDetails
+    getTourBookingDetails,
+    getSettings,
+    updateSystemSettings,
 };

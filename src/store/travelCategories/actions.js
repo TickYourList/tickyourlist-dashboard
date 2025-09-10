@@ -32,6 +32,14 @@
   FETCH_CATEGORY_BOOKINGS_REQUEST,
   FETCH_CATEGORY_BOOKINGS_SUCCESS,
   FETCH_CATEGORY_BOOKINGS_FAILURE,
+
+   GET_SETTING_REQUEST,
+  GET_SETTING_SUCCESS,
+  GET_SETTING_FAILURE,
+
+  UPDATE_SYSTEM_SETTINGS_REQUEST,
+  UPDATE_SYSTEM_SETTINGS_SUCCESS,
+  UPDATE_SYSTEM_SETTINGS_FAILURE,
 } from "./actionTypes";
 
 export const getTravelCategoriesRequest = () => ({
@@ -172,6 +180,42 @@ export const fetchCategoryBookingsSuccess = (bookings) => ({
 export const fetchCategoryBookingsFailure = (error) => ({
   type: FETCH_CATEGORY_BOOKINGS_FAILURE,
   payload: error,
+});
+
+//SETTINGS
+export const fetchMySettings = () => ({
+  type: GET_SETTING_REQUEST,
+});
+
+export const fetchMySettingsSucc = (data) => ({
+  type: GET_SETTING_SUCCESS,
+  payload: data,
+});
+
+export const fetchMySettingsFail = (error) => ({
+type: GET_SETTING_FAILURE,
+payload: error,
+});
+
+export const updateSystemSettingsRequest = (data) => ({
+type: UPDATE_SYSTEM_SETTINGS_REQUEST,
+payload: { data },
+});
+
+export const updateSystemSettingsSuccess = (data) => ({
+type: UPDATE_SYSTEM_SETTINGS_SUCCESS,
+payload: data,
+});
+
+export const updateSystemSettingsFailure = (error) => ({
+type: UPDATE_SYSTEM_SETTINGS_FAILURE,
+payload: error,
+});
+
+// Main action creator
+export const updateSystemSettings = (data) => ({
+type: UPDATE_SYSTEM_SETTINGS_REQUEST,
+payload: { data },
 });
 
 

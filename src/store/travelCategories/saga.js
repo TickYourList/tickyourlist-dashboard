@@ -21,6 +21,12 @@ import {
   FETCH_CATEGORY_SUBCATEGORIES_FAILURE,
   FETCH_CATEGORY_BOOKINGS_SUCCESS,
   FETCH_CATEGORY_BOOKINGS_FAILURE,
+  //settings
+  GET_SETTING_REQUEST,
+  GET_SETTING_SUCCESS,
+  GET_SETTING_FAILURE,
+
+  UPDATE_SYSTEM_SETTINGS_REQUEST,
 } from "./actionTypes";
 
 import {
@@ -33,8 +39,14 @@ import {
   getCategoryTours,
   getCategorySubcategories,
   getCategoryBookings,
+  getCities,
+  getCategoryPermissions,
+  getSettings,
+  updateSystemSettings,
 } from "../../helpers/location_management_helper";
-import { addTravelCategoryFailure, addTravelCategorySuccess, fetchTravelCategoryFailure, fetchTravelCategorySuccess, updateTravelCategoryFailure, updateTravelCategorySuccess } from "./actions";
+import { addTravelCategoryFailure, addTravelCategorySuccess, fetchTravelCategoryFailure, fetchTravelCategorySuccess, updateTravelCategoryFailure, updateTravelCategorySuccess, fetchMySettingsSucc, fetchMySettingsFail,
+  updateSystemSettingsSuccess,
+  updateSystemSettingsFailure } from "./actions";
 
 // 🚀 Get all categories
 function* getTravelCategories() {
@@ -205,6 +217,34 @@ function* fetchCategoryBookings(action) {
   }
 }
 
+function* fetchSettingsSaga() {
+  try {
+    const response = yield call(getSettings);
+    yield put(fetchMySettingsSucc(response));
+  } catch (error) {
+    yield put(fetchMySettingsFail(error.message));
+  }
+}
+
+function* updateSystemSettingsSaga(action) {
+  try {
+    const response = yield call(updateSystemSettings, action.payload.data);
+
+   // 👇 Debug karo pehle
+    console.log("API full response:", response.data);
+
+    if (response?.data?.updated) {  
+  yield put(updateSystemSettingsSuccess(response.data));
+} else {
+  yield put(updateSystemSettingsFailure(response.data?.message || "Failed to update settings"));
+}
+
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message || "An error occurred while updating settings";
+    yield put(updateSystemSettingsFailure(errorMessage));
+  }
+}
+
 
 export default function* travelCategorySaga() {
   yield all([
@@ -217,5 +257,7 @@ export default function* travelCategorySaga() {
     takeLatest(FETCH_CATEGORY_TOURS_REQUEST, fetchCategoryTours),
     takeLatest(FETCH_CATEGORY_SUBCATEGORIES_REQUEST, fetchCategorySubcategories),
     takeLatest(FETCH_CATEGORY_BOOKINGS_REQUEST, fetchCategoryBookings),
+    takeLatest(GET_SETTING_REQUEST, fetchSettingsSaga),
+    takeLatest(UPDATE_SYSTEM_SETTINGS_REQUEST, updateSystemSettingsSaga),
   ]);
 }

@@ -1,9 +1,4 @@
-//helper.js
-//ImageUploader.js
-//URLSlugsSection.js  
-//SlugList.js
-//TravelCategoryForm.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Row, Col, Card, CardBody, Form, Label, Input, Button } from "reactstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useFormik } from "formik";
@@ -18,6 +13,8 @@ import ImageUploader from "./ImageUploader";
 import SlugList from "./SlugList";
 import { getFieldClass } from "./helper";
 import { getCities } from "store/actions";
+import NoPermission from "./NoPermissions";
+import { usePermissions, MODULES, ACTIONS } from "helpers/permissions";
 
 const TravelCategoryForm = () => {
   const dispatch = useDispatch();
@@ -28,6 +25,12 @@ const TravelCategoryForm = () => {
     successMessage: state.travelCategory.successMessage,
     error: state.travelCategory.error
   }));
+
+  // Use standardized permissions hook
+  const { can } = usePermissions();
+
+  // Permission check using standardized system
+  const canAdd = can(ACTIONS.CAN_ADD, MODULES.CATEGORY_PERMS);
 
   const [slugsEntered, setSlugsEntered] = useState({}); 
 
@@ -43,17 +46,15 @@ const TravelCategoryForm = () => {
   };
 
   useEffect(() => {
-
-  
-  if (successMessage) {
-    toastr.success(successMessage);
-    dispatch({ type: "RESET_ADD_TRAVEL_CATEGORY" });
-    navigate("/travel-categories");
-  } else if (error) {
-    toastr.error(error);
-    dispatch({ type: "RESET_ADD_TRAVEL_CATEGORY" });
-  }
-}, [successMessage, error, dispatch, navigate]);
+    if (successMessage) {
+      toastr.success(successMessage);
+      dispatch({ type: "RESET_ADD_TRAVEL_CATEGORY" });
+      navigate("/travel-categories");
+    } else if (error) {
+      toastr.error(error);
+      dispatch({ type: "RESET_ADD_TRAVEL_CATEGORY" });
+    }
+  }, [successMessage, error, dispatch, navigate]);
 
   const formik = useFormik({
     initialValues: {
@@ -100,53 +101,51 @@ const TravelCategoryForm = () => {
         }
       )
     }),
-onSubmit: (values, { setTouched, setSubmitting }) => {
- 
-  setTouched(
-    Object.keys(values).reduce((acc, key) => {
-      acc[key] = true;
-      return acc;
-    }, {})
-  );
+    onSubmit: (values, { setTouched, setSubmitting }) => {
+      setTouched(
+        Object.keys(values).reduce((acc, key) => {
+          acc[key] = true;
+          return acc;
+        }, {})
+      );
 
-  if (Object.keys(slugsEntered).length === 0) {
-    toastr.error("Please add at least one URL slug.");
-    setSubmitting(false);
-    return;
-  }
+      if (Object.keys(slugsEntered).length === 0) {
+        toastr.error("Please add at least one URL slug.");
+        setSubmitting(false);
+        return;
+      }
 
-  const { images, ...rest } = values;
+      const { images, ...rest } = values;
 
-  const payload = {
-    data: {
-      name: rest.name,
-      cityCode: rest.cityCode,
-      displayName: rest.displayName,
-      heading: rest.heading,
-      metaTitle: rest.metaTitle,
-      metaDescription: rest.metaDescription,
-      noIndex: rest.indexing === "Not Allowed",
-      canonicalUrl: rest.canonicalUrl,
-      urlSlugs: slugsEntered,
-      microBrandInfo: {
-        descriptors: rest.descriptors,
-        highlights: rest.highlights,
-        supportedLanguages: rest.supportedLanguages.split(",").map(s => s.trim()),
-        metaTitle: rest.microMetaTitle,
-        metaDescription: rest.microMetaDescription
-      },
-      ratingCount: Number(rest.ratingCount),
-      averageRating: Number(rest.averageRating),
-      displayRating: rest.displayRating === "Yes",
-      sortOrder: Number(rest.sortOrder)
+      const payload = {
+        data: {
+          name: rest.name,
+          cityCode: rest.cityCode,
+          displayName: rest.displayName,
+          heading: rest.heading,
+          metaTitle: rest.metaTitle,
+          metaDescription: rest.metaDescription,
+          noIndex: rest.indexing === "Not Allowed",
+          canonicalUrl: rest.canonicalUrl,
+          urlSlugs: slugsEntered,
+          microBrandInfo: {
+            descriptors: rest.descriptors,
+            highlights: rest.highlights,
+            supportedLanguages: rest.supportedLanguages.split(",").map(s => s.trim()),
+            metaTitle: rest.microMetaTitle,
+            metaDescription: rest.microMetaDescription
+          },
+          ratingCount: Number(rest.ratingCount),
+          averageRating: Number(rest.averageRating),
+          displayRating: rest.displayRating === "Yes",
+          sortOrder: Number(rest.sortOrder)
+        },
+        images
+      };
+      
+      dispatch(addTravelCategoryRequest(payload));
+      setSubmitting(false);
     },
-    images
-   
-  };
-  
-   dispatch(addTravelCategoryRequest(payload));
-  setSubmitting(false); // ✅ ensure form can be submitted again
-},
     validateOnChange: false,
     validateOnBlur: true,
     enableReinitialize: true,
@@ -177,8 +176,12 @@ onSubmit: (values, { setTouched, setSubmitting }) => {
       values.images && values.images.length > 0;
   };
 
+  // Permission check - if no canAdd permission, show NoPermission component
+  if (!canAdd) {
+    return <NoPermission />;
+  }
 
-
+  // Regular component flow - render form only if user has canAdd permission
   return (
     <Card>
       <CardBody>
@@ -198,50 +201,43 @@ onSubmit: (values, { setTouched, setSubmitting }) => {
               )}
             </Col>
 
-
-
             <Col md={6} className="mb-3">
-  <Label>City *</Label>
-  <CreatableSelect
-    isClearable
-    isSearchable
-    placeholder="Select or type city code"
-    options={
-      Array.isArray(cities)
-        ? cities.map(city => ({
-            value: city.cityCode,
-            label: `${city.cityCode} (${city.country?.code || "N/A"})`,
-          }))
-        : []
-    }
-    value={
-      values.cityCode
-        ? { value: values.cityCode, label: values.cityCode }
-        : null
-    }
-    onChange={(selectedOption) => {
-      const selectedValue = selectedOption ? selectedOption.value : "";
-      setFieldValue("cityCode", selectedValue);
-     
-    }}
-    onCreateOption={(inputValue) => {
-      setFieldValue("cityCode", inputValue);
-      
-    }}
-    onBlur={() => {
-      setFieldTouched("cityCode", true);
-    }}
-    formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
-    noOptionsMessage={() => "No city found. You can type to add."}
-    className={getFieldClass("cityCode", touched, errors)} // ✅ use helper
-  />
-  {touched.cityCode && errors.cityCode && (
-    <div className="text-danger">{errors.cityCode}</div>
-  )}
-</Col>
-
-
-
+              <Label>City *</Label>
+              <CreatableSelect
+                isClearable
+                isSearchable
+                placeholder="Select or type city code"
+                options={
+                  Array.isArray(cities)
+                    ? cities.map(city => ({
+                        value: city.cityCode,
+                        label: `${city.cityCode} (${city.country?.code || "N/A"})`,
+                      }))
+                    : []
+                }
+                value={
+                  values.cityCode
+                    ? { value: values.cityCode, label: values.cityCode }
+                    : null
+                }
+                onChange={(selectedOption) => {
+                  const selectedValue = selectedOption ? selectedOption.value : "";
+                  setFieldValue("cityCode", selectedValue);
+                }}
+                onCreateOption={(inputValue) => {
+                  setFieldValue("cityCode", inputValue);
+                }}
+                onBlur={() => {
+                  setFieldTouched("cityCode", true);
+                }}
+                formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
+                noOptionsMessage={() => "No city found. You can type to add."}
+                className={getFieldClass("cityCode", touched, errors)}
+              />
+              {touched.cityCode && errors.cityCode && (
+                <div className="text-danger">{errors.cityCode}</div>
+              )}
+            </Col>
 
             <Col md={6} className="mb-3">
               <Label>Display Name *</Label>
@@ -326,21 +322,23 @@ onSubmit: (values, { setTouched, setSubmitting }) => {
                 <div className="text-danger">{errors.canonicalUrl}</div>
               )}
             </Col>
+
             <Col md={6} className="mb-3">
-            <Label>Sort Order *</Label>
-            <Input
-              name="sortOrder"
-              type="number"
-              value={values.sortOrder}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={getFieldClass("sortOrder", touched, errors)}
-            />
-            {touched.sortOrder && errors.sortOrder && (
-              <div className="text-danger">{errors.sortOrder}</div>
-            )}
-          </Col>
+              <Label>Sort Order *</Label>
+              <Input
+                name="sortOrder"
+                type="number"
+                value={values.sortOrder}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={getFieldClass("sortOrder", touched, errors)}
+              />
+              {touched.sortOrder && errors.sortOrder && (
+                <div className="text-danger">{errors.sortOrder}</div>
+              )}
+            </Col>
           </Row>
+
           {/* URL Slugs */}
           <URLSlugsSection
             slugsEntered={slugsEntered}
@@ -355,7 +353,6 @@ onSubmit: (values, { setTouched, setSubmitting }) => {
               setSlugsEntered(updated);
             }}
           />
-
 
           {/* Remaining Fields */}
           <h5 className="mt-5">Micro Brands Info</h5>
@@ -459,6 +456,7 @@ onSubmit: (values, { setTouched, setSubmitting }) => {
                 <div className="text-danger">{errors.averageRating}</div>
               )}
             </Col>
+
             <Col md={6} className="mb-3">
               <Label>Display Rating *</Label>
               <Input
@@ -477,20 +475,17 @@ onSubmit: (values, { setTouched, setSubmitting }) => {
                 <div className="text-danger">{errors.displayRating}</div>
               )}
             </Col>
-
           </Row>
 
           {/* Image Uploader */}
           <ImageUploader formik={formik} />
 
-
-            <div className="d-flex gap-2">
+          <div className="d-flex gap-2">
             <Button
               type="submit"
               color="primary"
               disabled={
-                
-               !areAllFieldsFilled(values) ||
+                !areAllFieldsFilled(values) ||
                 isSubmitting
               }
             >

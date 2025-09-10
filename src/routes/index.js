@@ -183,6 +183,7 @@ import TravelSubCategoryDetailsModal from "pages/Product_Management/SubCategory/
 import AddNewSubCategory from "pages/Product_Management/SubCategory/AddNewSubCategory";
 import CategorySorting from "../pages/LocationManagement/Cities/CategorySorting";
 import SubCategorySorting from "../pages/LocationManagement/Cities/SubCategorySorting";
+import Settings from "pages/Travel/Settings";
 
 
 const authProtectedRoutes = [
@@ -389,6 +390,7 @@ const authProtectedRoutes = [
    },
    { path: "/categories/:cityCode/sort", component: <CategorySorting /> },
   { path: "/sub-categories/:categoryId/sort", component: <SubCategorySorting /> },
+  { path: "/settings", component: <Settings /> },
   {
     path: "/",
     exact: true,

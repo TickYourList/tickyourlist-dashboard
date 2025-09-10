@@ -1,6 +1,6 @@
 import { Container } from "reactstrap";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Row, Col, Card, CardBody, Form, Label, Input, Button } from "reactstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useFormik } from "formik";
@@ -17,8 +17,7 @@ import {
   updateTravelCategoryRequest,
   resetTravelCategory,
 } from "../../store/travelCategories/actions";
-
-
+import NoPermission from "./NoPermissions"; // Import NoPermission component
 
 const EditTravelCategory = () => {
   const { categoryId } = useParams();
@@ -27,10 +26,47 @@ const EditTravelCategory = () => {
 
   const [slugsEntered, setSlugsEntered] = useState({});
 
-
   const { data, loading, error, updateSuccess } = useSelector(
     (state) => state.travelCategory
   );
+
+  // Permission selectors - get permissions data from API
+  const permissionsData = useSelector((state) => {
+    
+    return state.travelCategory.permissions || {};
+  });
+
+  // Extract permissions from API response based on module
+  const permissions = useMemo(() => {
+   
+    
+    // Get permissions array from API
+    const allPermissions = permissionsData.permissions || [];
+    
+    // Find tylTravelCategory module permissions
+    const travelCategoryPermission = allPermissions.find(
+      permission => permission.module === 'tylTravelCategory'
+    );
+    
+    
+    // Return permissions from API for tylTravelCategory module
+    if (travelCategoryPermission) {
+      return {
+        canAdd: travelCategoryPermission.canAdd || false,
+        canDelete: travelCategoryPermission.canDelete || false,
+        canEdit: travelCategoryPermission.canEdit || false,
+        canView: travelCategoryPermission.canView || false
+      };
+    }
+
+    // Default permissions if module not found
+    return {
+      canAdd: false,
+      canDelete: false,
+      canEdit: false,
+      canView: false
+    };
+  }, [permissionsData]);
 
   toastr.options = {
     closeButton: true,
@@ -38,6 +74,7 @@ const EditTravelCategory = () => {
     positionClass: "toast-top-right",
     timeOut: "3000",
   };
+
   useEffect(() => {
     if (updateSuccess) {
       toastr.success("Travel Category Updated Successfully ✅");
@@ -47,9 +84,6 @@ const EditTravelCategory = () => {
       toastr.error("❌ Failed to update Travel Category.");
     }
   }, [updateSuccess, error, dispatch, navigate, loading]);
-
-
-
 
   useEffect(() => {
     if (categoryId) {
@@ -71,12 +105,6 @@ const EditTravelCategory = () => {
     microMetaTitle: Yup.string().required("Please enter the Micro Meta Title"),
     microMetaDescription: Yup.string().required("Please enter the Micro Meta Description"),
     indexing: Yup.string().required("Please select Indexing"),
-    // ratingCount: Yup.number()
-    //   .typeError("Rating Count must be a number")
-    //   .required("Please enter the Rating Count"),
-    // averageRating: Yup.number()
-    //   .typeError("Average Rating must be a number")
-    //   .required("Please enter the Average Rating"),
     sortOrder: Yup.number()
       .typeError("Sort Order must be a number")
       .required("Please enter the Sort Order"),
@@ -84,7 +112,6 @@ const EditTravelCategory = () => {
       .min(1, "Please upload at least one image")
       .required("Please upload at least one image"),
   });
-
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -102,20 +129,15 @@ const EditTravelCategory = () => {
       supportedLanguages: "",
       microMetaTitle: "",
       microMetaDescription: "",
-      // ratingCount: "",
-      // averageRating: "",
-      // displayRating: "Yes",
       images: [],
       medias: [],
       cityCode: "",
       city: "",
       sortOrder: "",
-
     },
     validationSchema,
     onSubmit: async (values) => {
       try {
-
         formik.setTouched({
           name: true,
           displayName: true,
@@ -129,8 +151,6 @@ const EditTravelCategory = () => {
           supportedLanguages: true,
           microMetaTitle: true,
           microMetaDescription: true,
-          // ratingCount: true,
-          // averageRating: true,
           rank: true,
           images: true,
           cityCode: true,
@@ -146,12 +166,8 @@ const EditTravelCategory = () => {
           return val.trim();
         };
 
-
-
         const newImages = values.images?.filter((img) => img instanceof File) || [];
         const existingImages = values.images?.filter((img) => !(img instanceof File)) || [];
-
-
 
         const mediaArray = existingImages.map((img) => ({
           _id: img._id || undefined,
@@ -161,7 +177,6 @@ const EditTravelCategory = () => {
           metadata: img.metadata || {},
           info: img.info || {},
         }));
-
 
         const updatedData = {
           id: data?.id,
@@ -184,17 +199,11 @@ const EditTravelCategory = () => {
             metaTitle: cleanString(values.microMetaTitle),
             metaDescription: cleanString(values.microMetaDescription) || "",
           },
-          // ratingsInfo: {
-          //   ratingsCount: Number(values.ratingCount) || 0,
-          //   averageRating: Number(values.averageRating) || 0,
-          //   showRatings: values.displayRating === "Yes",
-          // },
           cityCode: cleanString(values.cityCode),
           city: data?.city || null,
           sortOrder: values.sortOrder || 1,
           medias: mediaArray,
         };
-
 
         const formData = new FormData();
         formData.append("data", JSON.stringify(updatedData));
@@ -208,7 +217,6 @@ const EditTravelCategory = () => {
         toastr.error("Something went wrong while submitting.");
       }
     },
-
   });
 
   useEffect(() => {
@@ -228,9 +236,6 @@ const EditTravelCategory = () => {
         supportedLanguages: (data.microBrandInfo?.supportedLanguages || []).join(", "),
         microMetaTitle: data.microBrandInfo?.metaTitle || "",
         microMetaDescription: data.microBrandInfo?.metaDescription || "",
-        // ratingCount: data.ratingsInfo?.ratingsCount || 0,
-        // averageRating: data.ratingsInfo?.averageRating || 0,
-        // displayRating: data.ratingsInfo?.showRatings ? "Yes" : "No",
         images: data.medias || [],
         medias: data.medias || [],
         cityCode: data.cityCode || "",
@@ -241,10 +246,32 @@ const EditTravelCategory = () => {
     }
   }, [data]);
 
-  if (loading || !data) return <p>Loading...</p>;
-  if (error) return <p className="text-danger">Error: {error}</p>;
+  // Permission check - if no canEdit permission, show NoPermission component
+  if (!canEdit) {
+    return <NoPermission />;
+  }
 
+  if (loading || !data) return (
+    <div className="page-content">
+      <Container fluid>
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+          <div className="spinner-border text-primary" role="status">
+            <span className="sr-only">Loading category data...</span>
+          </div>
+        </div>
+      </Container>
+    </div>
+  );
 
+  if (error) return (
+    <div className="page-content">
+      <Container fluid>
+        <p className="text-danger">Error: {error}</p>
+      </Container>
+    </div>
+  );
+
+  // Regular component flow - render edit form only if user has canEdit permission
   try {
     return (
       <div className="page-content">
@@ -254,7 +281,6 @@ const EditTravelCategory = () => {
             <CardBody>
               <Form onSubmit={formik.handleSubmit}>
                 <Row>
-
                   <Col md={6} className="mb-3">
                     <Label>Sort Order *</Label>
                     <Input
@@ -353,6 +379,7 @@ const EditTravelCategory = () => {
                       <div className="text-danger">{formik.errors.metaDescription}</div>
                     )}
                   </Col>
+
                   <Col md={6} className="mb-3">
                     <Label>Indexing *</Label>
                     <Input
@@ -372,7 +399,6 @@ const EditTravelCategory = () => {
                     )}
                   </Col>
 
-
                   <Col md={6} className="mb-3">
                     <Label>Canonical URL *</Label>
                     <Input
@@ -386,7 +412,6 @@ const EditTravelCategory = () => {
                       <div className="text-danger">{formik.errors.canonicalUrl}</div>
                     )}
                   </Col>
-
                 </Row>
 
                 <URLSlugsSection slugsEntered={slugsEntered} setSlugsEntered={setSlugsEntered} />
@@ -467,50 +492,6 @@ const EditTravelCategory = () => {
                       <div className="text-danger">{formik.errors.microMetaDescription}</div>
                     )}
                   </Col>
-
-                  {/* <Col md={4} className="mb-3">
-                    <Label>Rating Count *</Label>
-                    <Input
-                      name="ratingCount"
-                      type="number"
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      value={formik.values.ratingCount}
-                      invalid={formik.touched.ratingCount && !!formik.errors.ratingCount}
-                    />
-                    {formik.touched.ratingCount && formik.errors.ratingCount && (
-                      <div className="text-danger">{formik.errors.ratingCount}</div>
-                    )}
-                  </Col>
-
-                  <Col md={4} className="mb-3">
-                    <Label>Average Rating *</Label>
-                    <Input
-                      name="averageRating"
-                      type="number"
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      value={formik.values.averageRating}
-                      invalid={formik.touched.averageRating && !!formik.errors.averageRating}
-                    />
-                    {formik.touched.averageRating && formik.errors.averageRating && (
-                      <div className="text-danger">{formik.errors.averageRating}</div>
-                    )}
-                  </Col>
-
-                  <Col md={4} className="mb-3">
-                    <Label>Display Rating *</Label>
-                    <Input
-                      type="select"
-                      name="displayRating"
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      value={formik.values.displayRating}
-                    >
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </Input>
-                  </Col> */}
                 </Row>
 
                 <EditImageUploader
@@ -520,7 +501,6 @@ const EditTravelCategory = () => {
                   setFieldValue={formik.setFieldValue}
                   medias={formik.values.medias}
                 />
-
 
                 <div className="d-flex gap-2">
                   <Button
@@ -535,12 +515,8 @@ const EditTravelCategory = () => {
                     color="secondary"
                     type="button"
                     onClick={() => {
-
                       dispatch(resetTravelCategory());
-
-
                       dispatch({ type: 'GET_TRAVEL_CATEGORIES_REQUEST' });
-
                       navigate("/travel-categories");
                     }}
                   >
