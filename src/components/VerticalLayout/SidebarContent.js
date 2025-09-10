@@ -18,6 +18,10 @@ import { withTranslation } from "react-i18next";
 const SidebarContent = props => {
   const ref = useRef();
   const { can } = usePermissions();
+  
+  // Use centralized permission system for subcategory permissions
+  const canViewSubcategory = can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS);
+  
   const activateParentDropdown = useCallback((item) => {
     item.classList.add("active");
     const parent = item.parentElement;
@@ -190,11 +194,14 @@ const SidebarContent = props => {
                   {props.t("Travel Categories")}
                 </Link>
               </li>
-                <li>
-                  <Link to="/tour-group-sub-category">
-                    {props.t("Sub Category")}
-                  </Link>
-                </li>
+                {/* --- NEW LOGIC: Conditionally render the 'Sub Category' link --- */}
+                {canViewSubcategory && (
+                  <li>
+                    <Link to="/tour-group-sub-category">
+                      {props.t("Sub Category")}
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <Link to="/collections">
                     {/* <i className="bx bx-folder"></i> */}

@@ -10,6 +10,7 @@ import {
   ADD_TRAVEL_SUBCATEGORY_FAIL,  
   RESET_ADD_SUBCATEGORY_STATUS, 
   GET_EXISTING_SUBCATEGORY,
+  GET_EXISTING_SUBCATEGORY_FOR_EDIT,
   GET_EXISTING_SUBCATEGORY_SUCCESS, 
   GET_EXISTING_SUBCATEGORY_FAIL,
   UPDATE_SUBCATEGORY, 
@@ -19,7 +20,23 @@ import {
   DELETE_SUBCATEGORY_SUCCESS,
   DELETE_SUBCATEGORY_FAIL,
   RESET_UPDATE_SUBCATEGORY_STATUS,
-  RESET_SUBCATEGORY_STATUS
+  RESET_SUBCATEGORY_STATUS,
+  GET_SUBCATEGORY_DETAILS_FOR_VIEW,
+  GET_SUBCATEGORY_DETAILS_FOR_VIEW_SUCCESS, 
+  GET_SUBCATEGORY_DETAILS_FOR_VIEW_FAIL,
+  GET_SUBCATEGORY_VIEW_TOURS_TABLE,
+  GET_SUBCATEGORY_VIEW_TOURS_TABLE_SUCCESS, 
+  GET_SUBCATEGORY_VIEW_TOURS_TABLE_FAIL,
+  GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE,
+  GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE_SUCCESS,
+  GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE_FAIL,
+  GET_USERS_PERMISSIONS_FOR_SUBCATEGORY,
+  GET_USERS_PERMISSIONS_FOR_SUBCATEGORY_SUCCESS,
+  GET_USERS_PERMISSIONS_FOR_SUBCATEGORY_FAIL,
+  CLEAR_SUBCATEGORY_VIEW_DATA,
+  GET_TRAVEL_CITIES,
+  GET_TRAVEL_CITIES_SUCCESS,  
+  GET_TRAVEL_CITIES_FAIL,
   // New
 } from "./actionTypes";
 
@@ -112,6 +129,10 @@ export const getExistingSubcategory = (subCategoryId) => ({
   type: GET_EXISTING_SUBCATEGORY,
   payload: subCategoryId,
 });
+export const getExistingSubcategoryForEdit = (subCategoryId) => ({
+  type: GET_EXISTING_SUBCATEGORY_FOR_EDIT,
+  payload: subCategoryId,
+});
 export const getExistingSubcategorySuccess = (data) => ({
   type: GET_EXISTING_SUBCATEGORY_SUCCESS,
   payload: data,
@@ -122,7 +143,6 @@ export const getExistingSubcategoryFail = error => ({
 });
 
 export const deleteSubcategory = (subCategoryId) => (
-  console.log("deleteSubcategory called with subCategoryId from actions:", subCategoryId),
   {
   type: DELETE_SUBCATEGORY,
   payload: subCategoryId,
@@ -145,3 +165,60 @@ export const resetUpdateSubcategoryStatus=()=>({
 export const resetCategoryStatus = () => ({ 
   type:RESET_SUBCATEGORY_STATUS
 })
+
+export const getSubCategoryDetailsForViewSuccess = (data) => ({
+  type: GET_SUBCATEGORY_DETAILS_FOR_VIEW_SUCCESS,
+  payload: data,
+});
+
+export const getSubCategoryDetailsForViewFail = (error) => ({
+  type: GET_SUBCATEGORY_DETAILS_FOR_VIEW_FAIL,
+  payload: error,
+});
+
+export const getSubCategoryDetailsForView = (subCategoryId) => ({
+type: GET_SUBCATEGORY_DETAILS_FOR_VIEW,
+payload: subCategoryId,
+});
+
+export const getSubCategoryViewToursTable = (subcategoryId) => ({
+  type: GET_SUBCATEGORY_VIEW_TOURS_TABLE,
+  payload: subcategoryId,
+});
+export const getSubCategoryViewToursTableSuccess = (data) => ({
+  type: GET_SUBCATEGORY_VIEW_TOURS_TABLE_SUCCESS,
+  payload: data,
+});
+export const getSubCategoryViewToursTableFail = (error) => ({
+  type: GET_SUBCATEGORY_VIEW_TOURS_TABLE_FAIL,
+  payload: error,
+});
+
+export const getSubCategoryViewBookingsTable = (subcategoryId) => ({
+  type: GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE,  
+  payload: subcategoryId,
+});
+export const getSubCategoryViewBookingsTableSuccess = (data) => ({
+  type: GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE_SUCCESS,
+  payload: data,
+});
+export const getSubCategoryViewBookingsTableFail = (error) => ({
+  type: GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE_FAIL,
+  payload: error,
+});
+
+export const getUsersPermissionsForSubcategory = (userId) => ({
+  type: GET_USERS_PERMISSIONS_FOR_SUBCATEGORY,
+  payload: userId,
+});
+export const getUsersPermissionsForSubcategorySuccess = (data) => ({
+  type: GET_USERS_PERMISSIONS_FOR_SUBCATEGORY_SUCCESS,
+  payload: data,
+});
+export const getUsersPermissionsForSubcategoryFail = (error) => ({
+  type: GET_USERS_PERMISSIONS_FOR_SUBCATEGORY_FAIL,
+  payload: error,
+});
+export const clearSubCategoryViewData = () => ({
+  type: CLEAR_SUBCATEGORY_VIEW_DATA,
+});

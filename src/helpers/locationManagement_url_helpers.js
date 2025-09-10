@@ -92,7 +92,12 @@ export const ADD_TRAVEL_SUBCATEGORY="/v1/tyltravelsubcategory/add/travel-sub-cat
 export const GET_TRAVEL_CITIES="/v1/tyltravelcategory/get/travel-category"
 export const GET_EXISTING_SUBCATEGORY="/v1/tyltravelsubcategory/get/travel-subcategory/"
 export const UPDATE_SUBCATEGORY="/v1/tyltravelsubcategory/travel-subcategory/"
+export const GET_EXISTING_SUBCATEGORY_FOR_EDIT="/v1/tyltravelsubcategory/get/travel-subcategory/"
 export const DELETE_SUBCATEGORY="/v1/tyltravelsubcategory/delete/travel-subcategory/"
+export const GET_SUBCATEGORY_DETAILS_FOR_VIEW="/v1/tyltravelsubcategory/get/travel-subcategory/"
+export const GET_SUBCATEGORY_VIEW_TOURS_TABLE="/v1/tyltravelsubcategory/travel-subcategory/"
+export const GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE="/v1/tyltravelsubcategory/travel-subcategory/"
+export const GET_USERS_PERMISSIONS_FOR_SUBCATEGORY = "/v1/admin/subusers/my-permissions";
 
 // HomeBanner
 export const GET_BANNER_LIST = "/v1/tylTravelCitySectionBanner/list/all";

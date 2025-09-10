@@ -170,8 +170,6 @@ import TourGroupVariantData from "../pages/TourGroupVariantData/index";
 import AddTourGroupVariants from "../pages/TourGroupVariantData/AddTourGroupVariants";
 import TourGroupVariant from "../pages/TourGroupVariants/tourGroupVariant"; 
 import SubCategory from "../pages/Product_Management/SubCategory/SubCategory";
-import SubCategoryDetails from "../pages/Product_Management/SubCategory/SubCategoriesDetail";
-import SubCategoryForm from "pages/Product_Management/SubCategory/NewSubCategoryForm";
 import EditSubCategory from "pages/Product_Management/SubCategory/EditSubCategory";
 import HomeBanner from "pages/Content-marketing/HomeBanner";
 import TravelCategoryDetail from "pages/Travel/TravelCategoryDetail";
@@ -181,6 +179,8 @@ import DualListbox from "pages/Tables/DualListbox";
 import { TourGroupVariants } from "../pages/TourGroups";
 import { components } from "react-select";
 import CalendarPricingAndAvailability from "pages/CalendarPricingAndAvailability";
+import TravelSubCategoryDetailsModal from "pages/Product_Management/SubCategory/TravelSubCategoryDetailsModal";
+import AddNewSubCategory from "pages/Product_Management/SubCategory/AddNewSubCategory";
 
 
 const authProtectedRoutes = [
@@ -372,8 +372,9 @@ const authProtectedRoutes = [
     path: '/tour-group-sub-category',
     component: <SubCategory />,
   },
-  {path:"/sub-category-details/:categoryid", component:<SubCategoryDetails />},
-  {path:"/add-new-travel-sub-category", component:<SubCategoryForm />},
+  {path:"/sub-category-details/:categoryid", component:<TravelSubCategoryDetailsModal />},
+
+  {path:"/add-new-travel-sub-category", component:<AddNewSubCategory />},
   {path:"/edit-subCategory/:subCategoryid",component:<EditSubCategory/>},
   { path: "/content-marketing-home-banner", component: <HomeBanner /> },
      // Travel Categories

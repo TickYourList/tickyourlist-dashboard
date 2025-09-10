@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 
 export const MODULES = {
   ADMIN_BANNER_PERMS: 'tylTravelCitySectionBanner',   // This module controls the Home Banners for Admins
+  SUBCATEGORY_PERMS: 'tylTravelSubCategory',          // This module controls the Travel Subcategory permissions
 };
 
 // Action keys

@@ -176,6 +176,19 @@ const getTravelCategoriesList= (cityCode) => {
   return get(newurl);
 };
 
+//GET_TRAVEL_CITIES
+const getTravelCitiesList= () => {
+  return get(url.GET_TRAVEL_CITIES);
+};
+
+//GET_EXISTING_SUBCATEGORY
+const getExistingSubcategoryForEdit=(subCategoryId)=>{
+  const newurl = `${url.GET_EXISTING_SUBCATEGORY_FOR_EDIT}${subCategoryId}`;
+return get(newurl);
+}
+
+
+
 // HomeBanner
 
 const getBannerList = () => get(url.GET_BANNER_LIST);
@@ -306,6 +319,32 @@ const onAddDefaultCalendarPricing = (data)=>{
   return postFormData(`${url.ON_ADD_DEFAUL_PRICING}`,data)
 }
 
+// GET SUBCATEGORY DETAILS FOR VIEW
+const getSubcategoryDetailsForView = (subcategoryId) => {
+  const newurl = `${url.GET_SUBCATEGORY_DETAILS_FOR_VIEW}${subcategoryId}`;
+  console.log("Fetching subcategory details for view from URL:", newurl);
+  return get(newurl);
+};
+
+const getSubcategoryDetailsForViewToursTable = (subcategoryId) => {
+  const newurl = `${url.GET_SUBCATEGORY_VIEW_TOURS_TABLE}${subcategoryId}/tours`;
+  return get(newurl);
+};
+
+
+
+const getSubcategoryDetailsForViewBookingsTable = (subcategoryId) => {
+  const newurl = `${url.GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE}${subcategoryId}/bookings`;
+  console.log("Fetching subcategory view bookings table from URL:", newurl);
+  return get(newurl);
+};
+
+const getUsersPermissionsForSubcategory = () => {  
+const newurl = `${url.GET_USERS_PERMISSIONS_FOR_SUBCATEGORY}`;
+console.log("Fetching user permissions for subcategory from URL:", newurl);
+return get(newurl);
+}
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -389,5 +428,9 @@ export {
     getToursForCity,
     getCollectionsForCity,
     getPermissionsList,
-    onAddDefaultCalendarPricing
+    onAddDefaultCalendarPricing,
+    getSubcategoryDetailsForView,
+    getSubcategoryDetailsForViewToursTable,
+    getSubcategoryDetailsForViewBookingsTable,
+    getUsersPermissionsForSubcategory
 };
