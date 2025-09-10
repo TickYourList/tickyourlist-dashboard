@@ -345,6 +345,18 @@ console.log("Fetching user permissions for subcategory from URL:", newurl);
 return get(newurl);
 }
 
+const sortCategory = (categoryOrder) => put(url.SORT_CATEGORY_API, categoryOrder);
+const sortSubCategory = ({categoryId, subcategoryOrders}) => put(url.SORT_SUB_CATEGORY_API + '/' + categoryId, { subcategoryOrders });
+
+// Sort City Categories - using the same API as sortCategory
+const sortCityCategories = (data) => put(url.SORT_CATEGORY_API, data);
+
+// Sort City Sub Categories - using the same API as sortSubCategory
+const sortCitySubCategories = (data) => {
+  const { categoryId, subcategoryOrders } = data;
+  return put(url.SORT_SUB_CATEGORY_API + '/' + categoryId, { subcategoryOrders });
+};
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -432,5 +444,9 @@ export {
     getSubcategoryDetailsForView,
     getSubcategoryDetailsForViewToursTable,
     getSubcategoryDetailsForViewBookingsTable,
-    getUsersPermissionsForSubcategory
+    getUsersPermissionsForSubcategory,
+    sortCategory,
+    sortSubCategory,
+    sortCityCategories,
+    sortCitySubCategories,
 };

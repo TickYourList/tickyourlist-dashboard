@@ -11,6 +11,7 @@ import {
 
 import {
   GET_CITIES,
+  GET_SECTION_CITIES
 } from "./actionTypes"; 
 
 import { showToastSuccess, showToastError } from "helpers/toastBuilder"; 
@@ -30,6 +31,6 @@ function* getCities() {
 export default function* CitySaga() {
   
   yield all([
-    takeEvery(GET_CITIES, getCities),
+    takeEvery(GET_SECTION_CITIES, getCities),
   ]);
 }

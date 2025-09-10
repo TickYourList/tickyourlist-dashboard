@@ -144,3 +144,6 @@ export const GET_SUBCATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-deta
 
 //Pricing Calendar
 export const ON_ADD_DEFAUL_PRICING = "/v1/variant-calendar-pricing/pricing-rule/685e6b39a5cea386da8cb312"
+
+export const SORT_CATEGORY_API = "v1/tyltravelcategory/travel-categories/sort"
+export const SORT_SUB_CATEGORY_API = "v1/tyltravelsubcategory/sort/travel-subcategories/by/category"

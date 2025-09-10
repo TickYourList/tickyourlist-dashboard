@@ -7,6 +7,8 @@ import {
   GET_SUBCATEGORIES_REQUEST,
   GET_COLLECTIONS_REQUEST,
   GET_BOOKINGS_REQUEST,
+  SORT_CATEGORY_REQUEST,
+  SORT_SUB_CATEGORY_REQUEST,
 } from "./actionTypes";
 
 import {
@@ -20,6 +22,10 @@ import {
   getCollectionsFail,
   getBookingsSuccess,
   getBookingsFail,
+  sortCategoriesSuccess,
+  sortCategoriesFail,
+  sortSubCategoriesSuccess,
+  sortSubCategoriesFail,
 } from "./actions";
 
 import {
@@ -28,6 +34,8 @@ import {
   getCitySubCategories,
   getCityCollections,
   getCityBookings,
+  sortCityCategories,
+  sortCitySubCategories,
 } from "helpers/location_management_helper"; 
 
 // --- Tours ---
@@ -110,6 +118,39 @@ function* fetchBookings({ payload }) {
   }
 }
 
+// --- Sort Categories ---
+function* sortCategories({ payload }) {
+  try {
+    const response = yield call(sortCityCategories, payload);
+    if (response.statusCode === "10000") {
+      yield put(sortCategoriesSuccess(response.data));
+      toastr.success("Categories sorted successfully!");
+    } else {
+      yield put(sortCategoriesFail(response.message || "Failed to sort categories"));
+      toastr.error(response.message || "Failed to sort categories");
+    }
+  } catch (error) {
+    yield put(sortCategoriesFail(error.message || "Something went wrong"));
+    toastr.error(error.message || "Failed to sort categories");
+  }
+}
+
+// --- Sort Sub Categories ---
+function* sortSubCategories({ payload }) {
+  try {
+    const response = yield call(sortCitySubCategories, payload);
+    if (response.statusCode === "10000") {
+      yield put(sortSubCategoriesSuccess(response.data));
+      toastr.success("Sub Categories sorted successfully!");
+    } else {
+      yield put(sortSubCategoriesFail(response.message || "Failed to sort sub categories"));
+      toastr.error(response.message || "Failed to sort sub categories");
+    }
+  } catch (error) {
+    yield put(sortSubCategoriesFail(error.message || "Something went wrong"));
+    toastr.error(error.message || "Failed to sort sub categories");
+  }
+}
 
 function* cityDetailsSaga() {
   yield takeEvery(GET_TOURS_REQUEST, fetchTours);
@@ -117,6 +158,8 @@ function* cityDetailsSaga() {
   yield takeEvery(GET_SUBCATEGORIES_REQUEST, fetchSubCategories);
   yield takeEvery(GET_COLLECTIONS_REQUEST, fetchCollections);
   yield takeEvery(GET_BOOKINGS_REQUEST, fetchBookings);
+  yield takeEvery(SORT_CATEGORY_REQUEST, sortCategories);
+  yield takeEvery(SORT_SUB_CATEGORY_REQUEST, sortSubCategories);
 }
 
 export default cityDetailsSaga

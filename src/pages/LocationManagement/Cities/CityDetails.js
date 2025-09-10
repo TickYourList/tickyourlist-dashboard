@@ -19,7 +19,10 @@ import { subCategoriesColumns } from "./CityDetails_Columns/SubCategoriesColumns
 import { collectionsColumns } from "./CityDetails_Columns/CollectionsColumns"
 import { toursColumns } from "./CityDetails_Columns/ToursColumns"
 import toastr from "toastr"
-import { Card, CardBody } from "reactstrap"
+import { Card, CardBody, Spinner, Button } from "reactstrap"
+import PermissionDenied from "./PermissionDenied";
+import { usePermissions, MODULES, ACTIONS } from '../../../helpers/permissions';
+
 
 const CityDetails = () => {
   const navigate = useNavigate()
@@ -32,15 +35,166 @@ const CityDetails = () => {
   const [pageSize, setPageSize] = useState(10)
   const [currentPageBooking, setCurrentPageBooking] = useState(1)
   const [currentPageTour, setCurrentPageTour] = useState(1)
+  const { 
+    can, 
+    loading: cityPermissionLoading, 
+    getCityPermissions, 
+    getTourPermissions, 
+    getCategoryPermissions, 
+    getSubCategoryPermissions, 
+    getCollectionPermissions, 
+    getBookingPermissions 
+  } = usePermissions();
+ 
+  const handleCategorySortClick = () => {
+    navigate(`/categories/${cityCode}/sort`);
+  }
 
-  const tabLabels = [
-    "Tours",
-    "Categories",
-    "Sub Categories",
-    "Collections",
-    "Bookings",
-    "Analytics",
-  ]
+  const tabConfig = [
+  {
+    label: "Tours",
+    access: can(ACTIONS.CAN_VIEW, MODULES.TOUR_PERMS),
+    fetch: () => dispatch(getTours(cityCode, pageCount, pageSize)),
+    render: () => (
+      <Card>
+        <CardBody>
+          {
+            statistics.totalTours > 0 ?
+            <TableContainerWithServerSidePagination
+              columns={toursColumns()}
+              data={tours.data}
+              totalCount={statistics.totalTours}
+              currentPage={currentPageTour}
+              pageSize={pageSize}
+              onPageChange={handlePageChangeTour}
+              setPageSize={setPageSize}
+              isGlobalFilter={true}
+              customPageSize={10}
+              className="custom-header-css"
+            />:
+            <div className="text-muted">No tours found.</div>
+          }
+        </CardBody>
+      </Card>
+    ),
+  },
+  {
+    label: "Categories",
+    access: can(ACTIONS.CAN_VIEW, MODULES.CATEGORY_PERMS),
+    fetch: () => dispatch(getCategories(cityCode)),
+    render: () => (
+      <Card>
+        <CardBody>
+          {
+            statistics.totalCategories > 0 ?
+            <div>
+              {
+                can(ACTIONS.CAN_EDIT, MODULES.CATEGORY_PERMS) && 
+                <div className="d-flex justify-content-end mb-3">
+                <Button
+                  color="info"
+                  className="btn-sm me-2"
+                  onClick={handleCategorySortClick}
+                >
+                  Sort Categories
+                </Button>
+                </div>
+              }
+              <TableContainer
+                columns={categoriesColumns(city.name)}
+                data={categories.data}
+                isGlobalFilter={true}
+                customPageSize={10}
+              />
+            </div>: 
+            <div className="text-muted">No categories found.</div>
+          }
+        </CardBody>
+      </Card>
+    ),
+  },
+  {
+    label: "Sub Categories",
+    access: can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS),
+    fetch: () => dispatch(getSubCategories(cityCode)),
+    render: () => (
+      <Card>
+        <CardBody>
+          {
+            statistics.totalSubcategories > 0 ?
+            <TableContainer
+              columns={subCategoriesColumns(city.name)}
+              data={subCategories.data}
+              isGlobalFilter={true}
+              customPageSize={10}
+            />:
+            <div className="text-muted">No sub categories found.</div>
+          }
+        </CardBody>
+      </Card>
+    ),
+  },
+  {
+    label: "Collections",
+    access: can(ACTIONS.CAN_VIEW, MODULES.COLLECTION_PERMS),
+    fetch: () => dispatch(getCollections(cityCode)),
+    render: () => (
+      <Card>
+        <CardBody>
+          {
+            statistics.totalCollections > 0 ?
+            <TableContainer
+              columns={collectionsColumns(city.name)}
+              data={collections.data}
+              isGlobalFilter={true}
+              customPageSize={10}
+            />:
+            <div className="text-muted">No collections found.</div>
+          }
+        </CardBody>
+      </Card>
+    ),
+  },
+  {
+    label: "Bookings",
+    access: can(ACTIONS.CAN_VIEW, MODULES.BOOKING_PERMS),
+    fetch: () => dispatch(getBookings(cityCode, currentPageBooking, pageSize)),
+    render: () => (
+      <Card>
+        <CardBody>
+          {
+            statistics.totalBookings > 0 ?
+            <TableContainerWithServerSidePagination
+              columns={bookingsColumns()}
+              data={bookings.data}
+              totalCount={statistics.totalBookings}
+              currentPage={currentPageBooking}
+              pageSize={pageSize}
+              onPageChange={handlePageChangeBooking}
+              setPageSize={setPageSize}
+              isGlobalFilter={true}
+              customPageSize={10}
+              className="custom-header-css"
+            />:
+            <div className="text-muted">No bookings found.</div>
+          }
+        </CardBody>
+      </Card>
+    ),
+  },
+  {
+    label: "Analytics",
+    access: true, 
+    fetch: null,
+    render: () => (
+      <div></div>
+    ),
+  },
+]
+
+
+  const availableTabs = tabConfig.filter(t => t.access)
+
   const [loadedTabs, setLoadedTabs] = useState({})
 
   const handlePageChangeTour = newPage => {
@@ -54,38 +208,20 @@ const CityDetails = () => {
   }
 
   useEffect(() => {
-  if (statistics?.totalTours && loadedTabs[0]) {
-    dispatch(getTours(cityCode, pageCount, pageSize));
+    const currentTab = availableTabs?.[tab]
+    if (currentTab && currentTab.fetch && !loadedTabs[tab]) {
+    currentTab.fetch();
+    setLoadedTabs(prev => {
+      if (prev[tab]) return prev;
+      return { ...prev, [tab]: true };
+    });
   }
-}, [statistics?.totalTours]);
-
-
-  useEffect(() => {
-    if (!loadedTabs[tab]) {
-      switch (tab) {
-        case 0:
-          dispatch(getTours(cityCode, currentPageTour, pageSize))  
-          break
-        case 1:
-          dispatch(getCategories(cityCode))
-          break
-        case 2:
-          dispatch(getSubCategories(cityCode))
-          break
-        case 3:
-          dispatch(getCollections(cityCode))
-          break
-        case 4:
-          dispatch(getBookings(cityCode, currentPageBooking, pageSize))
-          break
-        default:
-          break
-      }
-
-      setLoadedTabs(prev => ({ ...prev, [tab]: true }))
-    }
-  }, [tab, dispatch, cityCode, loadedTabs])
-
+  }, [tab,
+  cityCode,
+  currentPageTour,
+  currentPageBooking,
+  pageSize]);
+  
   const callback = () => {
     navigate("/city")
   }
@@ -100,20 +236,33 @@ const CityDetails = () => {
       navigate("/city")
     }
 
-    if (cityCode) {
+    if (cityCode && can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) {
       dispatch(getCityDetails(cityCode, callback))
     }
-  }, [dispatch, cityCode])
+  }, [dispatch, cityCode, can])
+
+  if(cityPermissionLoading) {
+    return <div className="page-content">
+        <Spinner className="ms-2" color="dark" />
+        <p>Loading page data</p>
+      </div>
+  }
+
+  if (!can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) return <PermissionDenied />;
 
   if (
     city == null ||
-    (cityCode !== "undefined" && city.cityCode !== cityCode)
+    (cityCode && city.cityCode !== cityCode)
   ) {
-    return <div className="page-content">Loading city data...</div>
+    return <div className="page-content">
+        <Spinner className="ms-2" color="dark" />
+        <p>Loading page data</p>
+      </div>
   }
 
   return (
     <div className="page-content">
+      <Card> 
       <div className="container py-4 fs-5">
         {/* Page Title */}
         <h3 className="fw-bold mb-3 fs-1">
@@ -182,13 +331,16 @@ const CityDetails = () => {
                 )}
 
                 <div className="mt-2">
-                  <button
-                    onClick={handleEditClick}
-                    className="btn btn-sm border border-info fs-6 fw-bold text-info rounded-pill px-4"
-                    style={{ backgroundColor: "rgba(13, 202, 240, 0.1)" }}
-                  >
-                    Edit
-                  </button>
+                  {
+                    can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) && 
+                    <button
+                        onClick={handleEditClick}
+                        className="btn btn-sm border border-info fs-6 fw-bold text-info rounded-pill px-4"
+                        style={{ backgroundColor: "rgba(13, 202, 240, 0.1)" }}
+                      >
+                      Edit
+                    </button>
+                  }
                 </div>
               </div>
             </div>
@@ -223,7 +375,7 @@ const CityDetails = () => {
                 },
               ].map(({ label, value, color }) => (
                 <div
-                  className="card text-center flex-fill"
+                  className="card text-center flex-fill bg-light"
                   style={{ minWidth: "120px", maxWidth: "150px" }}
                   key={label}
                 >
@@ -247,8 +399,8 @@ const CityDetails = () => {
         {/* Tabs */}
 
         <ul className="nav nav-tabs border-bottom border-1">
-          {tabLabels.map((label, index) => (
-            <li className="nav-item" key={label}>
+          {availableTabs.map((t, index) => (
+            <li className="nav-item" key={t.label}>
               <button
                 className={`nav-link border-0 ${
                   tab === index
@@ -257,102 +409,22 @@ const CityDetails = () => {
                 }`}
                 onClick={() => setTab(index)}
               >
-                {label}
+                {t.label}
               </button>
             </li>
           ))}
         </ul>
 
         {/* Separator Line */}
-        <div className="border-bottom border-1 border-secondary mb-4"></div>
+        {availableTabs.length != 0 && <div className="border-bottom border-1 border-secondary mb-4"></div>} 
+        
 
-        {/* Tours */}
-        {tab === 0 && (
-          <Card>
-            <CardBody>
-              <TableContainerWithServerSidePagination
-                    columns={toursColumns()}
-                    data={tours.data}
-                    totalCount={statistics.totalTours}
-                    currentPage={currentPageTour}
-                    pageSize={pageSize}
-                    onPageChange={handlePageChangeTour}
-                    setPageSize={setPageSize}
-                    isGlobalFilter={true}
-                    customPageSize={10}
-                    className="custom-header-css"
-                  />
-            </CardBody>
-          </Card>
-        )}
+        {/* <div className="mt-3"> */}
+          {availableTabs[tab]?.render()}
+        {/* </div> */}
 
-        {/* Categories */}
-        {tab === 1 && (
-          <Card>
-            <CardBody>
-              <TableContainer
-                columns={categoriesColumns(city.name)}
-                data={categories.data}
-                isGlobalFilter={true}
-                customPageSize={10}
-              />
-            </CardBody>
-          </Card>
-        )}
-
-        {/* Sub Categories */}
-        {tab === 2 && (
-          <Card>
-            <CardBody>
-              <TableContainer
-                columns={subCategoriesColumns(city.name)}
-                data={subCategories.data}
-                isGlobalFilter={true}
-                customPageSize={10}
-              />
-            </CardBody>
-          </Card>
-        )}
-
-        {/* Collections */}
-        {tab === 3 && (
-          <Card>
-            <CardBody>
-              <TableContainer
-                columns={collectionsColumns(city.name)}
-                data={collections.data}
-                isGlobalFilter={true}
-                customPageSize={10}
-              />
-            </CardBody>
-          </Card>
-        )}
-
-        {/* Bookings */}
-        {tab === 4 && (
-          <Card>
-            <CardBody>
-              <TableContainerWithServerSidePagination
-                columns={bookingsColumns()}
-                data={bookings.data}
-                totalCount={statistics.totalBookings}
-                currentPage={currentPageBooking}
-                pageSize={pageSize}
-                onPageChange={handlePageChangeBooking}
-                setPageSize={setPageSize}
-                isGlobalFilter={true}
-                customPageSize={10}
-                className="custom-header-css"
-              />
-
-            </CardBody>
-          </Card>
-        )}
-
-        {/* Analytics */}
-        {tab === 5 && <Card></Card>}
-  
       </div>
+      </Card>
     </div>
   )
 }

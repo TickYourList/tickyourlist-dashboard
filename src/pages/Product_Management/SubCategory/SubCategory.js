@@ -28,8 +28,8 @@ import {
     addTravelSubcategory,
     deleteSubcategory,
     resetCategoryStatus,
-    getUsersPermissionsForSubcategory,
 } from "store/actions";
+import { usePermissions, MODULES, ACTIONS } from '../../../helpers/permissions';
 
 // Component imports
 import TravelSubCategoryDetailsModal from "./TravelSubCategoryDetailsModal";
@@ -44,8 +44,9 @@ const SubCategory = () => {
         loading,
         error,
         deleteSuccess,
-        SubcategoryUserPermissions,
     } = useSelector((state) => state.travelSubCategoryReducer);
+    
+    const { can, loading: permissionLoading } = usePermissions();
 
     const [modal, setModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
@@ -61,38 +62,19 @@ const SubCategory = () => {
         isVisible: false,
     });
     const [showReloadButton, setShowReloadButton] = useState(false);
-    const [permissionsLoaded, setPermissionsLoaded] = useState(false);
     const [showNotFound, setShowNotFound] = useState(false); // New state for 'not found' message
 
-    const subCategoryPermissions = useMemo(() => {
-        if (Array.isArray(SubcategoryUserPermissions)) {
-            return SubcategoryUserPermissions.find(
-                (perm) => perm.module === "tylTravelSubCategory"
-            );
-        }
-        return null;
-    }, [SubcategoryUserPermissions]);
+    const canView = can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS);
+    const canAdd = can(ACTIONS.CAN_ADD, MODULES.SUBCATEGORY_PERMS);
+    const canEdit = can(ACTIONS.CAN_EDIT, MODULES.SUBCATEGORY_PERMS);
+    const canDelete = can(ACTIONS.CAN_DELETE, MODULES.SUBCATEGORY_PERMS);
 
-    const canView = subCategoryPermissions?.canView;
-    const canAdd = subCategoryPermissions?.canAdd;
-    const canEdit = subCategoryPermissions?.canEdit;
-    const canDelete = subCategoryPermissions?.canDelete;
-
-    // Fetch user permissions first.
+    // Fetch subcategories if user has view permission
     useEffect(() => {
-        if (!SubcategoryUserPermissions) {
-            dispatch(getUsersPermissionsForSubcategory());
-        } else {
-            setPermissionsLoaded(true);
-        }
-    }, [dispatch, SubcategoryUserPermissions]);
-
-    // This is the gatekeeper for all data fetching.
-    useEffect(() => {
-        if (permissionsLoaded && canView) {
+        if (canView) {
             dispatch(getSubcategories());
         }
-    }, [dispatch, permissionsLoaded, canView]);
+    }, [dispatch, canView]);
     
     // Manage "No Subcategories Found" message delay
     useEffect(() => {
@@ -353,7 +335,7 @@ const SubCategory = () => {
     }, [canEdit, canDelete]);
 
     const renderContent = () => {
-        if (!permissionsLoaded) {
+        if (permissionLoading) {
             return (
                 <div className="text-center p-5">
                     <i className="mdi mdi-spin mdi-loading display-4 text-primary"></i>

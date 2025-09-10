@@ -225,9 +225,11 @@ const SidebarContent = props => {
                 <li>
                   <Link to="/country">{props.t('Country')}</Link>
                 </li>
+                {can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS) && (
                 <li>
                   <Link to="/cities">{props.t("Cities")}</Link>
                 </li>
+                )}
               </ul>
             </li>
 

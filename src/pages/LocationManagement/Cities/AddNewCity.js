@@ -16,6 +16,7 @@ import {
   TabPane,
   Button,
   Input,
+  Spinner
 } from "reactstrap"
 import { Formik, Field, FieldArray } from "formik"
 import Dropzone from "react-dropzone"
@@ -24,6 +25,7 @@ import { Link } from "react-router-dom"
 import classnames from "classnames"
 import Breadcrumbs from "../../../components/Common/Breadcrumb"
 import { useNavigate } from 'react-router-dom';
+import PermissionDenied from "./PermissionDenied";
 
 const AddNewCity = ({isEditMode}) => {
   document.title = `${!isEditMode ? "Add New City" : "Edit City"} | Scrollit`
@@ -34,7 +36,7 @@ const AddNewCity = ({isEditMode}) => {
   const navigate = useNavigate();
   const { cityCode } = useParams();
   const { city, loadingEditCity, loadingNewCity } = useSelector(state => state.travelCity)
-
+  const { can, loading: cityPermissionLoading } = usePermissions();
   const initialLanguages = [
     { code: "EN", value: "" },
     { code: "ES", value: "" },
@@ -183,8 +185,10 @@ const AddNewCity = ({isEditMode}) => {
 
 
   useEffect(() => {
-    dispatch(getCountries())
-  }, [dispatch]);
+    if (can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) || can(ACTIONS.CAN_ADD, MODULES.CITY_PERMS)) {
+      dispatch(getCountries())
+    }
+  }, [dispatch, can]);
   const {countries : countryOptions} = useSelector(state => state.travelCity)
 
   useEffect(() => {
@@ -192,14 +196,32 @@ const AddNewCity = ({isEditMode}) => {
       toastr.error("Please enter a valid City Code in the URL.");
       navigate("/city");
     }
-    if(isEditMode && cityCode) {
+    if(isEditMode && cityCode && can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) && can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) {
       dispatch(getCity(cityCode, callback))
     }
-  }, [dispatch, isEditMode, cityCode]);
+  }, [dispatch, isEditMode, cityCode, can]);
+
+  
+  if(cityPermissionLoading) {
+    return <div className="page-content">
+      <Spinner className="ms-2" color="dark" />
+      <p>{`Loading ${isEditMode? "city": "page"} data...`}</p>
+    </div>
+  }
+  
+  if (!can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS) || 
+    (isEditMode && (!can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) || !can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS))) ||  
+    (!isEditMode && !can(ACTIONS.CAN_ADD, MODULES.CITY_PERMS))
+  ) {
+    return <PermissionDenied />;
+  }
 
 
-  if (isEditMode && cityCode !== "undefined" && city.cityCode !== cityCode) {
-    return <div className="page-content">Loading city data...</div>
+  if (isEditMode && cityCode && city.cityCode !== cityCode) {
+    return <div className="page-content">
+      <Spinner className="ms-2" color="dark" />
+      <p>{`Loading ${isEditMode? "city": "page"} data...`}</p>
+    </div>
   }
 
   return (

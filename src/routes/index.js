@@ -181,6 +181,8 @@ import { components } from "react-select";
 import CalendarPricingAndAvailability from "pages/CalendarPricingAndAvailability";
 import TravelSubCategoryDetailsModal from "pages/Product_Management/SubCategory/TravelSubCategoryDetailsModal";
 import AddNewSubCategory from "pages/Product_Management/SubCategory/AddNewSubCategory";
+import CategorySorting from "../pages/LocationManagement/Cities/CategorySorting";
+import SubCategorySorting from "../pages/LocationManagement/Cities/SubCategorySorting";
 
 
 const authProtectedRoutes = [
@@ -385,6 +387,8 @@ const authProtectedRoutes = [
     path: "/calendar-pricing-&-availability",
     component: <CalendarPricingAndAvailability />,
    },
+   { path: "/categories/:cityCode/sort", component: <CategorySorting /> },
+  { path: "/sub-categories/:categoryId/sort", component: <SubCategorySorting /> },
   {
     path: "/",
     exact: true,
