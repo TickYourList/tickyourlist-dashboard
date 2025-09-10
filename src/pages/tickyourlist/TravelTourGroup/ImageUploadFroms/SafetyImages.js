@@ -10,8 +10,8 @@ import {
 } from "reactstrap"
 import React from "react"
 
-export const SafetyImages = () => {
-  const { values, setFieldValue, touched, errors } = useFormikContext()
+export default function SafetyImages() {
+  const { values, setFieldValue } = useFormikContext()
 
   return (
     <FieldArray name="safetyImages">

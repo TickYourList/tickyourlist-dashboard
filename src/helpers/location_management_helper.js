@@ -51,6 +51,9 @@ const getCityBookings = ({cityCode, page, limit}) => get(`${url.CITY_BOOKINGS_AP
 const getAllTourGroupsList = (page, limit) =>
     get(`${url.FETCH_TOUR_GROUP_LIST}?page=${page}&limit=${limit}`)
 
+const getTourBookingDetails = id =>
+  get(`${url.FETCH_TOUR_GROUP_BY_ID}${id}/bookings`)
+
 //GET TOUR BY ID
 const getTourById = id => get(`${url.FETCH_TOUR_GROUP_BY_ID}${id}`)
 
@@ -449,4 +452,5 @@ export {
     sortSubCategory,
     sortCityCategories,
     sortCitySubCategories,
+    getTourBookingDetails
 };

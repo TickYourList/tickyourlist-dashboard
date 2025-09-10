@@ -67,3 +67,5 @@ export * from "./product-management/collections/actions"
 export * from "./travelCity/action";
 
 export * from "./productManagement/subcategories/actions";
+
+export * from "./tickyourlist/travelTourGroup/action"

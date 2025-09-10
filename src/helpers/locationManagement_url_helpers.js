@@ -31,6 +31,8 @@ export const CITY_BOOKINGS_API = "v1/tyltravelcity/get/travelcity-details/bookin
 
 export const FETCH_TOUR_GROUP_LIST =
   "/v1/tyltraveltourgroup/get/all/travel-tour-groups-list"
+  export const FETCH_CITY_CODE_LIST =
+  "/v1/tyltravelcity/get/travelcity/submitted/all"
 export const ADD_TOUR_GROUP = "/v1/tyltraveltourgroup/add/travel-tour-group"
 export const UPDATE_TOUR_GROUP = "/v1/tyltraveltourgroup/update/tour-group"
 export const FETCH_TOUR_GROUP_BY_ID = "/v1/tyltraveltourgroup/get/tour-group/"

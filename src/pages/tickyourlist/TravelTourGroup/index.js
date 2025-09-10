@@ -43,7 +43,7 @@ function TourGroup() {
 
   /* destructuring the tour group state */
   const { tourGroup, currPage, totalCount, error } = useSelector(
-    state => state.tourGroupReducer
+    state => state.tourGroup
   )
   const toggle = () => {
     setModal(!modal)

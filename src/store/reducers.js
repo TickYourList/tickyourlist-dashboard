@@ -132,7 +132,7 @@ const rootReducer = combineReducers({
   countries,
   travelPartner,
   travelCity,
-  tourGroupReducer,
+  tourGroup: tourGroupReducer,
   coupons: Coupon,
   customers: customerReducer,
   pmCollection: pmCollectionReducer,

@@ -10,7 +10,7 @@ import {
 } from "reactstrap"
 import React from "react"
 
-export const ProductImage = () => {
+export default function ProductImage() {
   const { values, setFieldValue, touched, errors } = useFormikContext()
 
   return (
