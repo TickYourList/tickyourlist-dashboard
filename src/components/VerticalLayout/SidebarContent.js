@@ -19,8 +19,9 @@ const SidebarContent = props => {
   const ref = useRef();
   const { can } = usePermissions();
   
-  // Use centralized permission system for subcategory permissions
+  // Use centralized permission system for permissions
   const canViewSubcategory = can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS);
+  const canViewCategory = can(ACTIONS.CAN_VIEW, MODULES.CATEGORY_PERMS);
   
   const activateParentDropdown = useCallback((item) => {
     item.classList.add("active");
@@ -189,11 +190,15 @@ const SidebarContent = props => {
                     {props.t("calendar pricing & availability")}
                   </Link>
                 </li>
+
+                {canViewCategory && (
                 <li>
                 <Link to="/travel-categories">
                   {props.t("Travel Categories")}
                 </Link>
               </li>
+                )}
+                
                 {/* --- NEW LOGIC: Conditionally render the 'Sub Category' link --- */}
                 {canViewSubcategory && (
                   <li>
@@ -210,6 +215,20 @@ const SidebarContent = props => {
                 </li>
               </ul>
             </li>
+
+            <li>
+              <Link to="/#" className="has-arrow">
+                <i className="bx bx-cog"></i>
+                <span>{props.t("System")}</span>
+              </Link>
+              <ul className="sub-menu">
+                <li>
+                  <Link to="/settings">
+                    {props.t("Settings")}
+                  </Link>
+                </li>
+               </ul>
+               </li>
 
             <li>
               <Link to="/#" className="has-arrow">

@@ -123,6 +123,9 @@ export const GET_CATEGORY_URL = "/v1/tyltravelcategory/travel-category/{id}";
 export const GET_CATEGORY_TOURS = "/v1/tyltravelcategory/travel-category/{id}/tours";
 export const GET_CATEGORY_SUBCATEGORIES = "/v1/tyltravelcategory/travel-category/{id}/subcategories";
 export const GET_CATEGORY_BOOKINGS = "/v1/tyltravelcategory/travel-category/{id}/bookings";
+export const GET_SETTINGS = "/v1/tyl-settings/category/system";
+
+export const UPDATE_SYSTEM_SETTINGS = "/v1/tyl-settings/system";
 
 // Tour Group
 // export const GET_TOUR_GROUP_VARIANTS_API =
