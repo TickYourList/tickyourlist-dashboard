@@ -11,7 +11,17 @@ import {
     DELETE_SUBCATEGORY_FAIL,
     UPDATE_SUBCATEGORY_FAIL,
     UPDATE_SUBCATEGORY_SUCCESS,
-    RESET_SUBCATEGORY_STATUS
+    RESET_SUBCATEGORY_STATUS,
+    GET_SUBCATEGORY_DETAILS_FOR_VIEW_SUCCESS,
+    GET_SUBCATEGORY_DETAILS_FOR_VIEW_FAIL,
+    GET_SUBCATEGORY_VIEW_TOURS_TABLE_SUCCESS,
+    GET_SUBCATEGORY_VIEW_TOURS_TABLE_FAIL,
+    GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE_SUCCESS,
+    GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE_FAIL,
+    GET_USERS_PERMISSIONS_FOR_SUBCATEGORY_SUCCESS,
+    GET_USERS_PERMISSIONS_FOR_SUBCATEGORY_FAIL,
+    // Make sure this is imported from your actionTypes file
+     CLEAR_SUBCATEGORY_VIEW_DATA,
 } from "./actionTypes";
 
 const TRAVEL_DATA_INIT_STATE = {
@@ -24,6 +34,10 @@ const TRAVEL_DATA_INIT_STATE = {
     error: null,
     success: false, // For add subcategory success
     deleteSuccess: false, // For delete subcategory success
+    travelSubcategoryDetailsForView: null,
+    SubcategoryViewToursTable: null,
+    SubcategoryViewBookingsTable: null,
+    SubcategoryUserPermissions: null,
 };
 
 const travelSubCategoryReducer = (state = TRAVEL_DATA_INIT_STATE, action) => {
@@ -81,7 +95,6 @@ const travelSubCategoryReducer = (state = TRAVEL_DATA_INIT_STATE, action) => {
                 error: null, // Clear any previous errors on success
             };
         case GET_EXISTING_SUBCATEGORY_FAIL:
-            console.log("This is GET_EXITING_SUBCATEGORY_FAIL!",action.payload);
             return {
                 ...state,
                 error: action.payload,
@@ -128,6 +141,23 @@ const travelSubCategoryReducer = (state = TRAVEL_DATA_INIT_STATE, action) => {
                 deleteSuccess: false, // Reset delete success status
             };
 
+            // This case seems to be duplicated with the one below.
+    // It is best to use a single case for a specific action type.
+    case GET_SUBCATEGORY_DETAILS_FOR_VIEW_SUCCESS:
+      return {
+        ...state,
+        travelSubcategoryDetails: action.payload,
+        travelSubcategoryDetailsForView: action.payload, // Correcting the state property
+        loading: false,
+        error: null,
+      };
+    case GET_SUBCATEGORY_DETAILS_FOR_VIEW_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
+
 
         // --- Temporary testing case (consider removing in production) ---
         case 'FORCE_ERROR_FOR_TESTING':
@@ -137,6 +167,61 @@ const travelSubCategoryReducer = (state = TRAVEL_DATA_INIT_STATE, action) => {
                 loading: false,
                 subcategories: [], // You might want to clear related data on a forced error
             };
+
+            case GET_SUBCATEGORY_VIEW_TOURS_TABLE_SUCCESS:
+                return {
+                  ...state,
+                  SubcategoryViewToursTable: action.payload,
+                  loading: false,
+                  error: null,
+                };
+              case GET_SUBCATEGORY_VIEW_TOURS_TABLE_FAIL:
+                return {
+                  ...state,
+                  loading: false,
+                  error: action.payload,
+                };
+
+                case GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE_SUCCESS:
+                    return {
+                      ...state,
+                      SubcategoryViewBookingsTable: action.payload,
+                      loading: false,
+                      error: null,
+                    };
+                  case GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE_FAIL:
+                    return {
+                      ...state,
+                      loading: false,
+                      error: action.payload,
+                    };
+              
+                  case GET_USERS_PERMISSIONS_FOR_SUBCATEGORY_SUCCESS:
+                    console.log("Reducer: User permissions for subcategory fetched successfully: from reducer", action.payload.permissions);
+                    return {
+                      ...state,
+                      SubcategoryUserPermissions: action.payload.permissions,
+                      loading: false,
+                      error: null,
+                    };
+                  case GET_USERS_PERMISSIONS_FOR_SUBCATEGORY_FAIL:
+                    return {
+                      ...state,
+                      loading: false,
+                      error: action.payload,
+                    };
+              
+                  // --- ADD THE NEW CASE HERE ---
+                  case CLEAR_SUBCATEGORY_VIEW_DATA:
+                    return {
+                      ...state,
+                      travelSubcategoryDetails: null, // Resetting data for edit form
+                      travelSubcategoryDetailsForView: null, // Resetting data for view modal
+                      SubcategoryViewToursTable: null,
+                      SubcategoryViewBookingsTable: null,
+                      loading: false,
+                      error: null,
+                    };
 
         default:
             return state;

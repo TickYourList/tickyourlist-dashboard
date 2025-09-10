@@ -51,6 +51,9 @@ const getCityBookings = ({cityCode, page, limit}) => get(`${url.CITY_BOOKINGS_AP
 const getAllTourGroupsList = (page, limit) =>
     get(`${url.FETCH_TOUR_GROUP_LIST}?page=${page}&limit=${limit}`)
 
+const getTourBookingDetails = id =>
+  get(`${url.FETCH_TOUR_GROUP_BY_ID}${id}/bookings`)
+
 //GET TOUR BY ID
 const getTourById = id => get(`${url.FETCH_TOUR_GROUP_BY_ID}${id}`)
 
@@ -175,6 +178,19 @@ const getTravelCategoriesList= (cityCode) => {
   console.log("Fetching travel categories from URL:", newurl);
   return get(newurl);
 };
+
+//GET_TRAVEL_CITIES
+const getTravelCitiesList= () => {
+  return get(url.GET_TRAVEL_CITIES);
+};
+
+//GET_EXISTING_SUBCATEGORY
+const getExistingSubcategoryForEdit=(subCategoryId)=>{
+  const newurl = `${url.GET_EXISTING_SUBCATEGORY_FOR_EDIT}${subCategoryId}`;
+return get(newurl);
+}
+
+
 
 // HomeBanner
 
@@ -306,6 +322,44 @@ const onAddDefaultCalendarPricing = (data)=>{
   return postFormData(`${url.ON_ADD_DEFAUL_PRICING}`,data)
 }
 
+// GET SUBCATEGORY DETAILS FOR VIEW
+const getSubcategoryDetailsForView = (subcategoryId) => {
+  const newurl = `${url.GET_SUBCATEGORY_DETAILS_FOR_VIEW}${subcategoryId}`;
+  console.log("Fetching subcategory details for view from URL:", newurl);
+  return get(newurl);
+};
+
+const getSubcategoryDetailsForViewToursTable = (subcategoryId) => {
+  const newurl = `${url.GET_SUBCATEGORY_VIEW_TOURS_TABLE}${subcategoryId}/tours`;
+  return get(newurl);
+};
+
+
+
+const getSubcategoryDetailsForViewBookingsTable = (subcategoryId) => {
+  const newurl = `${url.GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE}${subcategoryId}/bookings`;
+  console.log("Fetching subcategory view bookings table from URL:", newurl);
+  return get(newurl);
+};
+
+const getUsersPermissionsForSubcategory = () => {  
+const newurl = `${url.GET_USERS_PERMISSIONS_FOR_SUBCATEGORY}`;
+console.log("Fetching user permissions for subcategory from URL:", newurl);
+return get(newurl);
+}
+
+const sortCategory = (categoryOrder) => put(url.SORT_CATEGORY_API, categoryOrder);
+const sortSubCategory = ({categoryId, subcategoryOrders}) => put(url.SORT_SUB_CATEGORY_API + '/' + categoryId, { subcategoryOrders });
+
+// Sort City Categories - using the same API as sortCategory
+const sortCityCategories = (data) => put(url.SORT_CATEGORY_API, data);
+
+// Sort City Sub Categories - using the same API as sortSubCategory
+const sortCitySubCategories = (data) => {
+  const { categoryId, subcategoryOrders } = data;
+  return put(url.SORT_SUB_CATEGORY_API + '/' + categoryId, { subcategoryOrders });
+};
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -389,5 +443,14 @@ export {
     getToursForCity,
     getCollectionsForCity,
     getPermissionsList,
-    onAddDefaultCalendarPricing
+    onAddDefaultCalendarPricing,
+    getSubcategoryDetailsForView,
+    getSubcategoryDetailsForViewToursTable,
+    getSubcategoryDetailsForViewBookingsTable,
+    getUsersPermissionsForSubcategory,
+    sortCategory,
+    sortSubCategory,
+    sortCityCategories,
+    sortCitySubCategories,
+    getTourBookingDetails
 };

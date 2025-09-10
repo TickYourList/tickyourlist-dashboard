@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react"
-import {
-  Formik,
-  Form,
-  Field,
-  ErrorMessage,
-  FieldArray,
-  useFormikContext,
-} from "formik"
+import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
 import {
   Button,
@@ -27,21 +20,24 @@ import { useSelector, useDispatch } from "react-redux"
 
 import FormikSubmitButton from "./FormikSubmitButton"
 
-import { TourImages } from "./ImageUploadFroms/TourImage"
-import { ProductImage } from "./ImageUploadFroms/ProductImage"
-import { SafetyImages } from "./ImageUploadFroms/SafetyImages"
-import { SafetyVideo } from "./ImageUploadFroms/SafetyVideos"
+import TourImages from "./ImageUploadFroms/TourImage"
+import ProductImage from "./ImageUploadFroms/ProductImage"
+import SafetyImage from "./ImageUploadFroms/SafetyImages"
+import SafetyVideo from "./ImageUploadFroms/SafetyVideos"
 import {
   addTourGroupRequest,
   updateTourGroupRequest,
-} from "../../../store/tickyourlist/travelTourGroup/action"
+} from "store/tickyourlist/travelTourGroup/action"
 
 import { getCities } from "../../../store/travelCity/action"
+import EditorReact from "./Editor"
+import CreatableSelect from "react-select/creatable"
 
-const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
+export default function NewTourModel({ setModal, isEdit, editId }) {
   const [activeTab, setactiveTab] = useState(1)
   const [passedSteps, setPassedSteps] = useState([1])
-  const tourGroupById = useSelector(state => state.tourGroupReducer.tourGroupById)
+
+  const tourGroupById = useSelector(state => state.tourGroup.tourGroupById)
 
   useEffect(() => {
     dispatch(getCities())
@@ -63,12 +59,16 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
     "RU",
     "TR",
   ]
-  const existingLangs = Object.keys(tourGroupById?.urlSlugs || {})
+  const existingLangs = Object.keys(tourGroupById.urlSlugs || {})
   const defaultLangs = Array.from(
     new Set([...PREDEFINED_LANGS, ...existingLangs])
   )
   const [slugLangs, setSlugLangs] = useState(defaultLangs)
   const [newSlugLang, setNewSlugLang] = useState("")
+
+  const allInitialTags = tourGroupById?.allTags
+    ? tourGroupById.allTags.map(tag => ({ value: tag, label: tag }))
+    : []
   const initialValues = {
     name: tourGroupById?.name || "",
     flowType: tourGroupById?.flowType || "",
@@ -76,7 +76,7 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
     url: tourGroupById?.url || "",
     cityCode: tourGroupById?.cityCode || "",
     displayTags: tourGroupById?.displayTags || [],
-    allTags: tourGroupById?.allTags || [],
+    allTags: allInitialTags,
     promotionLabel: tourGroupById?.promotionLabel || "",
     metaTitle: tourGroupById?.metaTitle || "",
 
@@ -255,6 +255,8 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
     tourType: Yup.string(),
     descriptors: Yup.array(),
 
+    allTags: Yup.array(),
+
     urlSlugs: Yup.object().shape(
       Object.fromEntries(slugLangs.map(lang => [lang, Yup.string().nullable()]))
     ),
@@ -357,7 +359,7 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
     "urlSlugs",
     "displaySeatsLeftDisabled",
     "displayTags",
-    "allTags",
+
     "promotionLabel",
     "metaTitle",
     "metaDescription",
@@ -401,8 +403,11 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
   const dispatch = useDispatch()
 
   const handleSubmit = values => {
+    /*  console.log("FAQ value before submit:", values.faq) */
+    /* const allTags = values.allTags.split(",") */
     const data = {
       ...Object.fromEntries(keyFields.map(key => [key, values?.[key]])),
+      allTags: values.allTags.map(tag => tag.value),
     }
     const nullValidatedData = emptyStringToNull(data)
     const formData = new FormData()
@@ -454,12 +459,12 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
     } */
   }
 
-  const cityCode = useSelector(state => state.travelCity.cities) 
+  const cityCode = useSelector(state => state.travelCity.cities)
 
   function toggleTab(tab) {
     if (activeTab !== tab) {
       const modifiedSteps = [...passedSteps, tab]
-      if (tab >= 1 && tab <= 8) {
+      if (tab >= 1 && tab <= 10) {
         setactiveTab(tab)
         setPassedSteps(modifiedSteps)
       }
@@ -1274,10 +1279,10 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
                                       <span style={{ color: "red" }}>*</span>
                                     </Label>
                                     <Field
-                                      as={Input}
+                                      as="textarea"
                                       name="metaTitle"
-                                      type="text"
-                                    ></Field>
+                                      className="form-control"
+                                    />
                                     <ErrorMessage
                                       component={"span"}
                                       className="text-danger"
@@ -1305,67 +1310,53 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
                                     />
                                   </Col>
                                 </Row>
-                                {/* summary and short summary */}
                                 <Row>
-                                  <Col className="mb-3">
+                                  <Col>
                                     <Label
                                       className="form-label"
-                                      htmlFor="summary"
+                                      htmlFor="allTags"
                                     >
-                                      Summary{" "}
+                                      Tags{" "}
                                       <span style={{ color: "red" }}>*</span>
                                     </Label>
                                     <Field
-                                      as="textarea"
-                                      name="summary"
+                                      as={CreatableSelect}
+                                      isMulti
+                                      name="allTags"
                                       className="form-control"
-                                    ></Field>
-                                    <ErrorMessage
-                                      component={"span"}
-                                      className="text-danger"
-                                      name="summary"
-                                    />
-                                  </Col>{" "}
-                                  <Col className="mb-3">
-                                    <Label
-                                      className="form-label"
-                                      htmlFor="shortSummary"
-                                    >
-                                      Short Summary{" "}
-                                      <span style={{ color: "red" }}>*</span>
-                                    </Label>
-                                    <Field
-                                      as="textarea"
-                                      name="shortSummary"
-                                      className="form-control"
-                                    ></Field>
-                                    <ErrorMessage
-                                      component={"span"}
-                                      className="text-danger"
-                                      name="shortSummary"
+                                      onChange={selectedOptions => {
+                                        setFieldValue(
+                                          "allTags",
+                                          selectedOptions || []
+                                        )
+                                      }}
                                     />
                                   </Col>
                                 </Row>
-
                                 {/* faq and highlights */}
                                 <Row>
-                                  <Col className="mb-3">
+                                  <Col className="mb-3 ">
                                     <Label className="form-label" htmlFor="faq">
                                       FAQ{" "}
                                       <span style={{ color: "red" }}>*</span>
                                     </Label>
-                                    <Field
-                                      as="textarea"
-                                      name="faq"
-                                      className="form-control"
-                                    ></Field>
+
+                                    <EditorReact
+                                      value={values.faq}
+                                      onChange={val =>
+                                        setFieldValue("faq", val)
+                                      }
+                                    />
+
                                     <ErrorMessage
                                       component={"span"}
                                       className="text-danger"
                                       name="faq"
                                     />
                                   </Col>{" "}
-                                  <Col className="mb-3">
+                                </Row>
+                                <Row>
+                                  <Col className="mb-3 ">
                                     <Label
                                       className="form-label"
                                       htmlFor="highlights"
@@ -1373,11 +1364,12 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
                                       Highlights{" "}
                                       <span style={{ color: "red" }}>*</span>
                                     </Label>
-                                    <Field
-                                      as="textarea"
-                                      name="highlights"
-                                      className="form-control"
-                                    ></Field>
+                                    <EditorReact
+                                      value={values.highlights}
+                                      onChange={val =>
+                                        setFieldValue("highlights", val)
+                                      }
+                                    />
                                     <ErrorMessage
                                       component={"span"}
                                       className="text-danger"
@@ -1388,27 +1380,79 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
                               </Col>
                             </Row>
                           </TabPane>
+
+                          {/* summary and short summary */}
                           <TabPane tabId={6}>
+                            <Row>
+                              <Col>
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="summary"
+                                    >
+                                      Summary{" "}
+                                      <span style={{ color: "red" }}>*</span>
+                                    </Label>
+                                    <EditorReact
+                                      value={values.summary}
+                                      onChange={val =>
+                                        setFieldValue("summary", val)
+                                      }
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="summary"
+                                    />
+                                  </Col>{" "}
+                                </Row>
+                                <Row>
+                                  <Col className="mb-3 ">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="shortSummary"
+                                    >
+                                      Short Summary{" "}
+                                      <span style={{ color: "red" }}>*</span>
+                                    </Label>
+                                    <EditorReact
+                                      value={values.shortSummary}
+                                      onChange={val =>
+                                        setFieldValue("shortSummary", val)
+                                      }
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="shortSummary"
+                                    />
+                                  </Col>
+                                </Row>
+                              </Col>
+                            </Row>
+                          </TabPane>
+                          <TabPane tabId={7}>
                             {/* Media -productImages, safetyImages and safetyVideos */}
                             <h5>Tour Images</h5>
                             <TourImages />
                           </TabPane>
 
                           {/* Product Images */}
-                          <TabPane tabId={7}>
+                          <TabPane tabId={8}>
                             <h5>Product Images</h5>
                             <ProductImage />{" "}
                           </TabPane>
 
                           {/* Safety Images */}
-                          <TabPane tabId={8}>
+                          <TabPane tabId={9}>
                             {" "}
                             <h5>Safety Images</h5>
-                            <SafetyImages />
+                            <SafetyImage />
                           </TabPane>
 
                           {/* Safety Videos */}
-                          <TabPane tabId={9}>
+                          <TabPane tabId={10}>
                             {" "}
                             <h5>Safety Videos</h5>
                             <SafetyVideo />
@@ -1442,7 +1486,9 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
                             </Link>
                           </li>
                           <li
-                            className={activeTab === 9 ? "next d-none" : "next"}
+                            className={
+                              activeTab === 10 ? "next d-none" : "next"
+                            }
                           >
                             <Link
                               to="#"
@@ -1453,7 +1499,7 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
                               Next
                             </Link>
                           </li>
-                          {activeTab === 9 && !isViewing && (
+                          {activeTab === 10 && (
                             <li className="next">
                               <FormikSubmitButton
                                 isEdit={isEdit}
@@ -1474,5 +1520,3 @@ const NewTourModel = ({ setModal, isEdit, isViewing, editId }) => {
     </React.Fragment>
   )
 }
-
-export default NewTourModel

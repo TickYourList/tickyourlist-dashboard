@@ -6,6 +6,7 @@ import {
   FETCH_TOUR_GROUP_WITH_ID_REQUEST,
   UPDATE_TOUR_GROUP_REQUEST,
   DELETE_TOUR_GROUP_REQUEST,
+  GET_TOUR_GROUP_BOOKING_REQUEST,
 } from "./actionTypes"
 import {
   fetchTourGroupsSuccess,
@@ -18,17 +19,19 @@ import {
   updateTourGroupFailure,
   deleteTourGroupFailure,
   deleteTourGroupSuccess,
+  getTourGroupBookingDetailFailure,
+  getTourGroupBookingDetailSuccess,
 } from "./action"
 
-import { apiUrl, authToken, xApiKey } from "constants/layout"
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
 import {
   addNewTourGroup,
   deleteTourGroupById,
   getAllTourGroupsList,
+  getTourBookingDetails,
   getTourById,
   updateTourGroupHelper,
-} from "../../../helpers/location_management_helper"
+} from "helpers/location_management_helper"
 
 // 1. Fetch All Tour Groups
 function* fetchTourGroup(action) {
@@ -38,7 +41,7 @@ function* fetchTourGroup(action) {
     const res = yield call(getAllTourGroupsList, page, limit)
 
     const data = res.data
-    /* console.log("datadata ", data) */
+    /*    console.log("datadata ", res) */
     yield put(
       fetchTourGroupsSuccess({
         tourGroups: data.tourGroups || [],
@@ -101,12 +104,27 @@ function* deleteTourGroup({ payload }) {
     /* console.log(payload) */
     yield call(deleteTourGroupById, id)
     yield put(deleteTourGroupSuccess(id))
-    showToastSuccess("Successfully deleted tour group with city name " + name)
+    showToastSuccess("Successfully deleted tour group  " + name)
   } catch (error) {
     yield put(deleteTourGroupFailure(error))
     showToastError("failed to delete")
   }
 }
+
+function* getTourGroupBookingDetails(action) {
+  try {
+    const id = action.payload
+    const response = yield call(getTourBookingDetails, id)
+    const data = response.data
+    const bookings = data.bookings
+    /* console.log("data", bookings) */
+    yield put(getTourGroupBookingDetailSuccess(bookings))
+  } catch (error) {
+    yield put(getTourGroupBookingDetailFailure(error))
+    showToastError("Failed to Fetch Booking")
+  }
+}
+
 // Watcher
 export default function* tourGroupSaga() {
   yield takeEvery(FETCH_TOUR_GROUP_REQUEST, fetchTourGroup)
@@ -114,4 +132,5 @@ export default function* tourGroupSaga() {
   yield takeEvery(FETCH_TOUR_GROUP_WITH_ID_REQUEST, fetchTourGroupById)
   yield takeEvery(UPDATE_TOUR_GROUP_REQUEST, updateTourGroup)
   yield takeEvery(DELETE_TOUR_GROUP_REQUEST, deleteTourGroup)
+  yield takeEvery(GET_TOUR_GROUP_BOOKING_REQUEST, getTourGroupBookingDetails)
 }

@@ -18,6 +18,13 @@ import {
   GET_BOOKINGS_REQUEST,
   GET_BOOKINGS_SUCCESS,
   GET_BOOKINGS_FAIL,
+  SORT_CATEGORY_REQUEST,
+  SORT_CATEGORY_SUCCESS,
+  SORT_CATEGORY_FAIL,
+
+  SORT_SUB_CATEGORY_REQUEST,
+  SORT_SUB_CATEGORY_SUCCESS,
+  SORT_SUB_CATEGORY_FAIL
 } from "./actionTypes";
 
 // ----- Tours -----
@@ -89,3 +96,31 @@ export const getBookingsFail = (error) => ({
   type: GET_BOOKINGS_FAIL,
   payload: error,
 });
+
+// ----- Sort Categories -----
+export const sortCategories = (categoryOrder) => ({
+  type: SORT_CATEGORY_REQUEST,
+  payload: categoryOrder,
+})
+export const sortCategoriesSuccess = updatedCategories => ({
+  type: SORT_CATEGORY_SUCCESS,
+  payload: updatedCategories,
+})
+export const sortCategoriesFail = error => ({
+  type: SORT_CATEGORY_FAIL,
+  payload: error,
+})
+
+// ----- Sort Sub Categories -----
+export const sortSubCategories = (categoryId ,subcategoryOrders) => ({
+  type: SORT_SUB_CATEGORY_REQUEST,
+  payload: {categoryId, subcategoryOrders},
+})
+export const sortSubCategoriesSuccess = updatedSubCategories => ({
+  type: SORT_SUB_CATEGORY_SUCCESS,
+  payload: updatedSubCategories,
+})
+export const sortSubCategoriesFail = error => ({
+  type: SORT_SUB_CATEGORY_FAIL,
+  payload: error,
+})

@@ -1,0 +1,56 @@
+/* 
+
+/* --- Existing Styles (if any) --- */
+/* .stats-card {
+    border: none;
+    transition: transform 0.2s;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-card-body {
+    padding: 1.5rem;
+}
+
+.stats-card-title {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.stats-card-value {
+    margin-top: 0.5rem;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.text-blue-600 {
+    color: #2563eb;
+}
+
+.text-green-600 {
+    color: #10b981;
+}
+
+.nav-tabs-custom .nav-item .nav-link {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.nav-tabs-custom .nav-item .nav-link.active {
+    border-bottom: 3px solid #556ee6;
+}
+
+.table-responsive-scroll {
+    overflow-x: auto;
+}
+
+.sticky-col {
+    position: sticky;
+    background-color: white;
+    z-index: 10;
+}  */

@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { Modal, ModalHeader, ModalBody, Button } from "reactstrap";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   viewTravelCategoryDetailsRequest,
   fetchCategoryToursRequest,
   fetchCategorySubcategoriesRequest,
   fetchCategoryBookingsRequest
 } from "../../store/travelCategories/actions";
+import { usePermissions, MODULES, ACTIONS } from '../../helpers/permissions';
 
 
 const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
   if (!category) return null;
   const dispatch = useDispatch();
+  const navigate = useNavigate()
+  const { can } = usePermissions();
+  const handleSubCategorySortClick = () => {
+    navigate(`/sub-categories/${category._id}/sort`);
+  }
 
   const [activeTab, setActiveTab] = useState("overview");
   const [tourPage, setTourPage] = useState(1);
@@ -253,6 +260,18 @@ const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
             <>
               <div className="table-responsive" style={{ maxHeight: "400px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "8px", marginTop: 0, scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 <style>{`.table-responsive::-webkit-scrollbar { display: none; }`}</style>
+                {
+                  can(ACTIONS.CAN_EDIT, MODULES.SUBCATEGORY_PERMS) && subCategoriesCount > 0 &&
+                  <div className="d-flex justify-content-end my-3">
+                  <Button
+                    color="info"
+                    className="btn-sm me-2"
+                    onClick={handleSubCategorySortClick}
+                  >
+                    Sort Sub Categories
+                  </Button>
+                  </div>
+                }
                 <table className="table table-bordered table-hover mb-0" style={{ position: "relative" }}>
                   <thead className="table-light" style={{ position: "sticky", top: 0, zIndex: 9, backgroundColor: "#f8f9fa", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
                     <tr>

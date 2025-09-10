@@ -67,6 +67,7 @@ const TableContainer = ({
   isJobListGlobalFilter,
   isAddOptions,
   isAddCityOptions,
+  isDeleteAllCityOption,
   isAddCarBrandOptions,
   isAddCarBlogOptions,
   isAddCarModelOptions,
@@ -110,7 +111,10 @@ const TableContainer = ({
   isAddCollectionOptions,
   handleAddCollectionClicks,
   isAddTourGroupVariantOptions,
-  handleAddTourGroupVariantClicks
+  handleAddTourGroupVariantClicks,
+  isAddCountryOptions,
+  handleAddCountryClicks,
+  handleDeleteAllCountriesClicks
 }) => {
   const {
     getTableProps,
@@ -244,6 +248,20 @@ const TableContainer = ({
             {/* </div> */}
           </Col>
         )}
+        {
+              isDeleteAllCityOption && 
+              <div className="text-sm-end">
+                <Button
+                  type="button"
+                  color="danger"
+                  className="btn-rounded  mb-2 me-2"
+                  onClick={handleDeleteAllCitiesClick}
+                >
+                  <i className="mdi mdi-minus me-1" />
+                  Delete All Cities
+                </Button>
+              </div>
+            }
         {isAddCarBrandOptions && (
           <Col sm="7" className="d-flex justify-content-end">
             {/* <div className="text-sm-end"> */}
@@ -427,6 +445,32 @@ const TableContainer = ({
               >
                 <i className="mdi mdi-plus me-1" />
                 Add New Collection
+              </Button>
+            </div>
+          </Col>
+        )}
+        {isAddCountryOptions && (
+          <Col sm="7" className="d-flex justify-content-end">
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="success"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleAddCountryClicks}
+              >
+                <i className="mdi mdi-plus me-1" />
+                Add New Country
+              </Button>
+            </div>
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="danger"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleDeleteAllCountriesClicks}
+              >
+                <i className="mdi mdi-minus me-1" />
+                Delete All Countries
               </Button>
             </div>
           </Col>

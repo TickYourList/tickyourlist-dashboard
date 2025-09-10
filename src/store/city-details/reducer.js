@@ -18,6 +18,14 @@ import {
   GET_BOOKINGS_REQUEST,
   GET_BOOKINGS_SUCCESS,
   GET_BOOKINGS_FAIL,
+
+  SORT_CATEGORY_REQUEST,
+  SORT_CATEGORY_SUCCESS,
+  SORT_CATEGORY_FAIL,
+
+  SORT_SUB_CATEGORY_REQUEST,
+  SORT_SUB_CATEGORY_SUCCESS,
+  SORT_SUB_CATEGORY_FAIL,
 } from "./actionTypes";
 
 const INIT_STATE = {
@@ -30,11 +38,13 @@ const INIT_STATE = {
     loading: false,
     data: [],
     error: null,
+    loadingSortCategories: false,
   },
   subCategories: {
     loading: false,
     data: [],
     error: null,
+    loadingSortSubCategories: false,
   },
   collections: {
     loading: false,
@@ -133,6 +143,62 @@ const CityDetails = (state = INIT_STATE, action) => {
       return {
         ...state,
         bookings: { loading: false, data: [], error: action.payload },
+      };
+
+    // Sort Categories
+    case SORT_CATEGORY_REQUEST:
+      return {
+        ...state,
+        categories: {
+          ...state.categories,
+          loadingSortCategories: true,
+        },
+      };
+    case SORT_CATEGORY_SUCCESS:
+      return {
+        ...state,
+        categories: {
+          ...state.categories,
+          loadingSortCategories: false,
+          data: action.payload || state.categories.data,
+        },
+      };
+    case SORT_CATEGORY_FAIL:
+      return {
+        ...state,
+        categories: {
+          ...state.categories,
+          loadingSortCategories: false,
+          error: action.payload,
+        },
+      };
+
+    // Sort Sub Categories
+    case SORT_SUB_CATEGORY_REQUEST:
+      return {
+        ...state,
+        subCategories: {
+          ...state.subCategories,
+          loadingSortSubCategories: true,
+        },
+      };
+    case SORT_SUB_CATEGORY_SUCCESS:
+      return {
+        ...state,
+        subCategories: {
+          ...state.subCategories,
+          loadingSortSubCategories: false,
+          data: action.payload || state.subCategories.data,
+        },
+      };
+    case SORT_SUB_CATEGORY_FAIL:
+      return {
+        ...state,
+        subCategories: {
+          ...state.subCategories,
+          loadingSortSubCategories: false,
+          error: action.payload,
+        },
       };
 
     default:

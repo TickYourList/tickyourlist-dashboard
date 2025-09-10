@@ -31,6 +31,8 @@ export const CITY_BOOKINGS_API = "v1/tyltravelcity/get/travelcity-details/bookin
 
 export const FETCH_TOUR_GROUP_LIST =
   "/v1/tyltraveltourgroup/get/all/travel-tour-groups-list"
+  export const FETCH_CITY_CODE_LIST =
+  "/v1/tyltravelcity/get/travelcity/submitted/all"
 export const ADD_TOUR_GROUP = "/v1/tyltraveltourgroup/add/travel-tour-group"
 export const UPDATE_TOUR_GROUP = "/v1/tyltraveltourgroup/update/tour-group"
 export const FETCH_TOUR_GROUP_BY_ID = "/v1/tyltraveltourgroup/get/tour-group/"
@@ -92,7 +94,12 @@ export const ADD_TRAVEL_SUBCATEGORY="/v1/tyltravelsubcategory/add/travel-sub-cat
 export const GET_TRAVEL_CITIES="/v1/tyltravelcategory/get/travel-category"
 export const GET_EXISTING_SUBCATEGORY="/v1/tyltravelsubcategory/get/travel-subcategory/"
 export const UPDATE_SUBCATEGORY="/v1/tyltravelsubcategory/travel-subcategory/"
+export const GET_EXISTING_SUBCATEGORY_FOR_EDIT="/v1/tyltravelsubcategory/get/travel-subcategory/"
 export const DELETE_SUBCATEGORY="/v1/tyltravelsubcategory/delete/travel-subcategory/"
+export const GET_SUBCATEGORY_DETAILS_FOR_VIEW="/v1/tyltravelsubcategory/get/travel-subcategory/"
+export const GET_SUBCATEGORY_VIEW_TOURS_TABLE="/v1/tyltravelsubcategory/travel-subcategory/"
+export const GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE="/v1/tyltravelsubcategory/travel-subcategory/"
+export const GET_USERS_PERMISSIONS_FOR_SUBCATEGORY = "/v1/admin/subusers/my-permissions";
 
 // HomeBanner
 export const GET_BANNER_LIST = "/v1/tylTravelCitySectionBanner/list/all";
@@ -139,3 +146,6 @@ export const GET_SUBCATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-deta
 
 //Pricing Calendar
 export const ON_ADD_DEFAUL_PRICING = "/v1/variant-calendar-pricing/pricing-rule/685e6b39a5cea386da8cb312"
+
+export const SORT_CATEGORY_API = "v1/tyltravelcategory/travel-categories/sort"
+export const SORT_SUB_CATEGORY_API = "v1/tyltravelsubcategory/sort/travel-subcategories/by/category"

@@ -1,5 +1,8 @@
 import { takeEvery, put, call } from "redux-saga/effects"
-import { GET_SUBCATEGORIES, GET_TRAVEL_CATEGORIES,  ADD_TRAVEL_SUBCATEGORY,GET_EXISTING_SUBCATEGORY,UPDATE_SUBCATEGORY,DELETE_SUBCATEGORY } from "./actionTypes";
+import { GET_SUBCATEGORIES, GET_TRAVEL_CATEGORIES,  ADD_TRAVEL_SUBCATEGORY,GET_EXISTING_SUBCATEGORY,UPDATE_SUBCATEGORY,DELETE_SUBCATEGORY,
+  GET_SUBCATEGORY_DETAILS_FOR_VIEW, GET_SUBCATEGORY_VIEW_TOURS_TABLE, GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE, GET_USERS_PERMISSIONS_FOR_SUBCATEGORY,
+  GET_EXISTING_SUBCATEGORY_FOR_EDIT
+ } from "./actionTypes";
 import { getSubcategoriesFail, 
 getSubcategoriesSuccess, 
 addTravelSubcategorySuccess,
@@ -11,7 +14,15 @@ updateSubcategorySuccess,
 deleteSubcategorySuccess,
 deleteSubcategoryFail,
 getTravelCategoriesSuccess,
-getTravelCategoriesFail
+getTravelCategoriesFail,
+getSubCategoryDetailsForViewSuccess,
+  getSubCategoryDetailsForViewFail,
+  getSubCategoryViewToursTableSuccess,
+  getSubCategoryViewToursTableFail,
+  getSubCategoryViewBookingsTableSuccess,
+  getSubCategoryViewBookingsTableFail,
+  getUsersPermissionsForSubcategorySuccess,
+  getUsersPermissionsForSubcategoryFail
 } from "./actions"
 
 import { 
@@ -20,19 +31,22 @@ getTravelCategoriesList,
 addTravelSubcategoryApi,
 getExistingSubcategory ,
 updateSubcategory,
-deleteSubcategoryApi
+deleteSubcategoryApi,
+getSubcategoryDetailsForView,
+getSubcategoryDetailsForViewToursTable,
+getSubcategoryDetailsForViewBookingsTable,
+getUsersPermissionsForSubcategory
 } from "../../../helpers/location_management_helper"
 
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
+import { get, take } from "lodash";
+// import { GET_EXISTING_SUBCATEGORY_FOR_EDIT } from "helpers/locationManagement_url_helpers";
 
 function* fetchSubcategories() {
   try {
-    console.log("fetchSubcategories from saga")
     const response = yield call(getSubcategoriesList)
-    console.log("Thisi si response data ",response.data)
     yield put(getSubcategoriesSuccess(response.data))
   } catch (error) {
-    console.log("Thisi si response error ",error)
     yield put(getSubcategoriesFail(error))
   }
 }
@@ -40,7 +54,7 @@ function* fetchSubcategories() {
 
 function* onUpdateSubcategory(action) {
   try {
- 
+
         const formDataToSend = action.payload.formData;
 const subCategoryid = action.payload.subCategoryid;
     const response = yield call(updateSubcategory, formDataToSend,subCategoryid);
@@ -48,9 +62,7 @@ const subCategoryid = action.payload.subCategoryid;
     yield put(updateSubcategorySuccess( response.data))
     showToastSuccess("Success to Update", "Congrats")
   } catch (error) {
-    console.error("Saga: Error updating travel subcategory:", error);
     const errorMessage = error.response?.data?.message || error.message || "Failed to update sub category.";
-    console.error("Error message:", errorMessage);
     yield put(updateSubcategoryFail(error))
     showToastError("UpdateSubcategory Failed to Update. Please try again.", "Error")
   }
@@ -58,7 +70,6 @@ const subCategoryid = action.payload.subCategoryid;
 
 function* fetchTravelCategories(action) {
   try {
-    console.log("fetchTravelCategories called from saga ", action.payload);
     const cityCode = action.payload;
     const response = yield call(getTravelCategoriesList, cityCode)
     yield put(getTravelCategoriesSuccess(response.data))
@@ -71,12 +82,10 @@ function* onAddTravelSubcategory(action) {
   try {
     const formDataToSend = action.payload.formData;
 const cityCode = action.payload.cityCode;
-console.log("onAddTravelSubcategory called from saga with formData:", formDataToSend, "and cityCode:", cityCode);
     const response = yield call(addTravelSubcategoryApi, formDataToSend,cityCode);
     yield put(addTravelSubcategorySuccess(response.data));
       showToastSuccess("Success to Add", "Congrats")
   } catch (error) {
-    console.error("Saga: Error adding travel subcategory:", error);
         showToastError("Failed to Add. Please try again.", "Error")
     yield put(addTravelSubcategoryFail(error));
   }
@@ -86,7 +95,7 @@ function *fetchExistingSubcategory(action)
 {
   const subCategoryId=action.payload;
   try {
-    const response = yield call(getExistingSubcategory,subCategoryId)
+    const response = yield call(getExistingSubcategoryForEdit,subCategoryId)
     yield put(getExistingSubcategorySuccess(response.data))
   } catch (error) {
       console.log("GetExitingSubcategory error ",error);
@@ -112,6 +121,58 @@ function* onDeleteSubcategory(action) {
   }
 }
 
+function* fetchSubCategoryDetailsForView(action) {
+  const subCategoryId = action.payload;
+  try {
+    const response = yield call(getSubcategoryDetailsForView, subCategoryId);
+    // console.log("Fetched subcategory details for view from saga:", response.data);
+    yield put(getSubCategoryDetailsForViewSuccess(response.data));
+  } catch (error) {
+    console.error("Saga: Error fetching subcategory details for view:", error);
+    yield put(getSubCategoryDetailsForViewFail(error));
+  }
+}
+
+function* fetchSubCategoryDetailsForViewToursTable(action) {
+  const subCategoryId = action.payload;
+
+  try {
+    const response = yield call(getSubcategoryDetailsForViewToursTable, subCategoryId);
+    console.log("Fetched subcategory view tours table data from saga:", response.data);
+    // Dispatch success action with the fetched data
+    yield put(getSubCategoryViewToursTableSuccess(response.data));
+  } catch (error) {
+    console.error("Saga: Error fetching subcategory view tours table data:",
+      error);
+    yield put(getSubCategoryViewToursTableFail(error));
+  }
+}
+
+const fetchSubCategoryDetailsForViewBookingsTable = function* (action) {
+  const subCategoryId = action.payload;
+  try {
+    const response = yield call(getSubcategoryDetailsForViewBookingsTable, subCategoryId); // Assuming similar logic for bookings table
+    // Dispatch success action with the fetched data
+    console.log("subcategoryId in saga: booking table", subCategoryId);
+    console.log("Fetched subcategory view bookings table data from saga:", response.data);
+    yield put(getSubCategoryViewBookingsTableSuccess(response.data));
+  } catch (error) {
+    yield put(getSubCategoryViewBookingsTableFail(error));
+  }
+}
+const fetchUsersPermissionsForSubcategory = function* (action) {
+  const userId = action.payload;
+  try {
+    const response = yield call(getUsersPermissionsForSubcategory, userId);
+    // Dispatch success action with the fetched data
+    console.log("Fetched user permissions for subcategory from saga:", response.data);
+    yield put(getUsersPermissionsForSubcategorySuccess(response.data));
+  } catch (error) {
+    console.error("Saga: Error fetching users permissions for subcategory:", error);
+    yield put(getUsersPermissionsForSubcategoryFail(error));
+  }
+};
+
 
 
 function* subcategoriesSaga() {
@@ -119,8 +180,15 @@ function* subcategoriesSaga() {
   yield takeEvery(ADD_TRAVEL_SUBCATEGORY, onAddTravelSubcategory);
   yield takeEvery(GET_TRAVEL_CATEGORIES, fetchTravelCategories);
   yield takeEvery(GET_EXISTING_SUBCATEGORY,fetchExistingSubcategory);
+  yield takeEvery(GET_EXISTING_SUBCATEGORY_FOR_EDIT, fetchExistingSubcategory);
   yield takeEvery(UPDATE_SUBCATEGORY, onUpdateSubcategory);
   yield takeEvery(DELETE_SUBCATEGORY, onDeleteSubcategory);
+  yield takeEvery(GET_SUBCATEGORY_DETAILS_FOR_VIEW, fetchSubCategoryDetailsForView);
+  yield takeEvery(GET_SUBCATEGORY_VIEW_TOURS_TABLE, fetchSubCategoryDetailsForViewToursTable);
+  yield takeEvery(GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE, fetchSubCategoryDetailsForViewToursTable); // Assuming 
+  // ysimilar logic for bookings table
+  yield takeEvery(GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE, fetchSubCategoryDetailsForViewBookingsTable);
+  yield takeEvery(GET_USERS_PERMISSIONS_FOR_SUBCATEGORY, fetchUsersPermissionsForSubcategory);
   
 }
 export default subcategoriesSaga;

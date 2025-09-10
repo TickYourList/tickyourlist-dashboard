@@ -487,14 +487,12 @@ function LocationManagement() {
                     columns={columns}
                     data={countries || []}
                     isGlobalFilter={true}
-                    isAddOptions={true}
-                    handleAddClicks={toggle}
-                    handleOrderDeleteClicks={() => {
+                    isAddCountryOptions={true}
+                    handleAddCountryClicks={toggle}
+                    handleDeleteAllCountriesClicks={() => {
                       // TODO: Implement delete all countries functionality
                       console.log('Delete all countries clicked');
                     }}
-                    addButtonLabel="Add New Country"
-                    deleteButtonLabel="Delete all countries"
                     customPageSize={10}
                   />{" "}
                 </CardBody>{" "}

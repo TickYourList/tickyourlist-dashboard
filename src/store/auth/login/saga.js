@@ -38,6 +38,22 @@ function* loginUser({ payload: { user, history } }) {
 
 function* logoutUser({ payload: { history } }) {
   try {
+    // Get user data before removing authUser to clear their specific permissions cache
+    const authUser = localStorage.getItem("authUser");
+    if (authUser) {
+      try {
+        const userData = JSON.parse(authUser);
+        const userId = userData.userId || userData.id || userData.user_id;
+        if (userId) {
+          // Clear user-specific permissions cache
+          localStorage.removeItem(`permissions_${userId}`);
+          console.log("Cleared permissions cache for user:", userId);
+        }
+      } catch (error) {
+        console.error("Error clearing permissions cache:", error);
+      }
+    }
+
     localStorage.removeItem("authUser");
 
     if (process.env.REACT_APP_DEFAULTAUTH === "firebase") {

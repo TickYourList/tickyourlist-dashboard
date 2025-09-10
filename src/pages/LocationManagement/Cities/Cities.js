@@ -9,6 +9,7 @@ import Breadcrumbs from '../../../components/Common/Breadcrumb';
 import DeleteModal from './CityDeleteModal';
 import { getCities, deleteCity } from "store/travelCity/action"
 import { Country, DisplayName, CityCode, CityImage, Tours } from "./CityCol"
+import { usePermissions, MODULES, ACTIONS } from '../../../helpers/permissions';
 
 //redux
 import { useSelector, useDispatch } from "react-redux";
@@ -20,7 +21,9 @@ import {
   UncontrolledTooltip,
   Card,
   CardBody,
+  Spinner
 } from "reactstrap";
+import PermissionDenied from "./PermissionDenied";
 
 function Cities() {
 
@@ -33,11 +36,18 @@ function Cities() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const { cities }  = useSelector(state => state.travelCity)
+  const { can, loading: cityPermissionLoading, getCityPermissions } = usePermissions();
+
+
   // Effect hooks
   useEffect(() => {
-    dispatch(getCities())
-  }, [dispatch])
-  const { cities }  = useSelector(state => state.travelCity)
+    if (can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) {
+      dispatch(getCities());
+    }
+  }, [dispatch, can])
+  
+
 
 
   const onClickDelete = (cityData) => {
@@ -47,7 +57,7 @@ function Cities() {
 
   const handleDeleteCity = () => {
     if (city && city._id) {
-      dispatch(deleteCity(city));
+      if(can(ACTIONS.CAN_DELETE, MODULES.CITY_PERMS)) dispatch(deleteCity(city));
       setDeleteModal(false);
     }
   };
@@ -61,8 +71,8 @@ function Cities() {
     console.log('You click on Delete all cities')
   }
 
-  const columns = useMemo(
-    () => [
+  const columns = useMemo(() => {
+    let value = [
           {
             Header: "City Image",
             accessor: "imageURL.url",
@@ -99,58 +109,84 @@ function Cities() {
             filterable: true,
             Cell: cellProps => <Tours {...cellProps} />,
           },
-      {
-        Header: 'View Details',
-        disableFilters: true,
-        Cell: ({row}) => {
-          return (
-            <Button
-              type="button"
-              color="primary"
-              className="btn-sm btn-rounded"
-              onClick={e => {
-                navigate(`/city-details/${row.original.cityCode}`);
-              }}
-            >
-              View City Details
-            </Button>);
-        }
-      },
-      {
-        Header: 'Action',
-        disableFilters: true,
-        Cell: ({row}) => {
-          return (
-            <div className="d-flex gap-3">
-              <Link
-                to={`/edit-city/${row.original.cityCode}`}
-                className="text-success"
-              >
-                <i className="mdi mdi-pencil font-size-18" id="edittooltip" />
-                <UncontrolledTooltip placement="top" target="edittooltip">
-                  Edit
-                </UncontrolledTooltip>
-              </Link>
-              <Link
-                to="#"
-                className="text-danger"
-                onClick={() => {
-                  const cityData = row.original;
-                  onClickDelete(cityData);     
-                }}
-              >
-                <i className="mdi mdi-delete font-size-18" id="deletetooltip" />
-                <UncontrolledTooltip placement="top" target="deletetooltip">
-                  Delete
-                </UncontrolledTooltip>
-              </Link>
-            </div>
-          );
-        }
-      },
-    ],
-    []
-  );
+          {
+            Header: 'View Details',
+            disableFilters: true,
+            Cell: ({row}) => {
+              return (
+                <div> 
+                  {
+                    can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS) ?
+                    <Button
+                        type="button"
+                        color="primary"
+                        className="btn-sm btn-rounded"
+                        onClick={e => {
+                          navigate(`/city-details/${row.original.cityCode}`);
+                        }}
+                      >
+                      View City Details
+                    </Button>
+                    : "-"
+                  }
+                </div>
+                  
+                
+              )
+            }
+          },
+    ]
+
+    if(can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) || can(ACTIONS.CAN_DELETE, MODULES.CITY_PERMS)) {
+      value.push({
+            Header: 'Action',
+            disableFilters: true,
+            Cell: ({row}) => {
+              return (
+                <div className="d-flex justify-content-center gap-3">
+                  {
+                    can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) && <Link
+                    to={`/edit-city/${row.original.cityCode}`}
+                    className="text-success"
+                  >
+                    <i className="mdi mdi-pencil font-size-18" id={`edittooltip-${row.original.cityCode}`} />
+                    <UncontrolledTooltip placement="top" target={`edittooltip-${row.original.cityCode}`}>
+                      Edit
+                    </UncontrolledTooltip>
+                  </Link>
+                  }
+
+                  {
+                    can(ACTIONS.CAN_DELETE, MODULES.CITY_PERMS) &&  <Link
+                    to="#"
+                    className="text-danger"
+                    onClick={() => {
+                      const cityData = row.original;
+                      onClickDelete(cityData);     
+                    }}
+                  >
+                    <i className="mdi mdi-delete font-size-18" id={`deletetooltip-${row.original.cityCode}`} />
+                    <UncontrolledTooltip placement="top" target={`deletetooltip-${row.original.cityCode}`} >
+                      Delete
+                    </UncontrolledTooltip>
+                  </Link>
+                  }
+                </div>
+              );
+            }
+        })
+    }
+
+    return value;
+  }, [can])
+
+  if ( cityPermissionLoading ) {
+      return <div className="page-content">
+        <Spinner className="ms-2" color="dark" />
+        <p>Loading page data</p>
+      </div>
+    }
+  if (!can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) return <PermissionDenied />;
 
   return (
     <React.Fragment>
@@ -172,8 +208,9 @@ function Cities() {
                     columns={columns}
                     data={cities}
                     isGlobalFilter={true}
-                    isAddCityOptions={true}
+                    isAddCityOptions={can(ACTIONS.CAN_ADD, MODULES.CITY_PERMS)}
                     handleAddCityClick={handleAddCityClick}
+                    isDeleteAllCityOption={can(ACTIONS.CAN_DELETE, MODULES.CITY_PERMS)}
                     handleDeleteAllCitiesClick={handleDeleteAllCitiesClick}
                     customPageSize={10}
                   />

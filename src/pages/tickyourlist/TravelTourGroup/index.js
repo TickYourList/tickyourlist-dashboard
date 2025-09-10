@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 
 import Breadcrumbs from "components/Common/Breadcrumb"
 
@@ -17,22 +17,24 @@ import {
 } from "reactstrap"
 import TableContainerWithServerSidePagination from "components/Common/TableContainerWithServerSidePagination"
 import NewTourModel from "./NewTourModel"
-import { showToastSuccess } from "helpers/toastBuilder"
 
 import {
   deleteTourGroupRequest,
   fetchTourGroupByIdRequest,
   fetchTourGroupsRequest,
   removeTourGroupWithId,
-} from "../../../store/tickyourlist/travelTourGroup/action"
+} from "store/tickyourlist/travelTourGroup/action"
 import DeleteModal from "components/Common/DeleteModal"
-import TableContainer from "components/Common/TableContainer"
 
-function TourGroup() {
+import ViewTourGroup from "./ViewTourGroup"
+import { showToastSuccess } from "helpers/toastBuilder"
+import { usePermissions, MODULES, ACTIONS } from "helpers/permissions"
+function TourGroupTable() {
   const [pageSize, setPageSize] = useState(10)
   const [modal, setModal] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [isViewing, setIsViewing] = useState(false)
+  const [tourGroupByIdName, setTourGroupByIdName] = useState("")
   const [editId, setEditId] = useState(null)
   const [deleteModal, setDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -40,11 +42,13 @@ function TourGroup() {
     useState(null)
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const { can, getTourGroupPermissions } = usePermissions()
 
   /* destructuring the tour group state */
   const { tourGroup, currPage, totalCount, error } = useSelector(
-    state => state.tourGroupReducer
+    state => state.tourGroup
   )
+
   const toggle = () => {
     setModal(!modal)
     setIsEdit(false)
@@ -52,10 +56,12 @@ function TourGroup() {
 
     dispatch(removeTourGroupWithId())
   }
-
+  const role = JSON.parse(localStorage.getItem("authUser"))?.data?.user
+    ?.roles[0]?.code
   //calling the api
   useEffect(() => {
     /* console.log("called dispatch fetch tour group") */
+
     dispatch(
       fetchTourGroupsRequest({
         page: currPage,
@@ -72,14 +78,12 @@ function TourGroup() {
       })
     )
   }
-
   const handleEdit = id => {
     dispatch(fetchTourGroupByIdRequest(id))
     setEditId(id)
     setIsEdit(true)
     setIsViewing(false)
     setModal(true)
-    /* console.log(id) */
   }
 
   const handleDelete = tourGroup => {
@@ -94,7 +98,7 @@ function TourGroup() {
       dispatch(
         deleteTourGroupRequest(
           selectedTourGroupToBeDeleted._id,
-          selectedTourGroupToBeDeleted.city.name
+          selectedTourGroupToBeDeleted.name
         )
       )
       setDeleteModal(false)
@@ -109,18 +113,21 @@ function TourGroup() {
   }
   const handleViewDetails = id => {
     dispatch(fetchTourGroupByIdRequest(id))
+    setEditId(id)
     setIsViewing(true)
     setIsEdit(false)
     setModal(true)
   }
-  const handleViewVariant = id => {
-    console.log("visiting variant of id ", id)
-  }
 
   const handleViewCalender = id => {
-    console.log("viewing calender of id ", id)
+    showToastSuccess("Calender Triggered")
   }
 
+  // Permission checks using standardized usePermissions hook
+  const canAddTourGroup = can(ACTIONS.CAN_ADD, MODULES.TOUR_GROUP_PERMS)
+  const canViewTourGroup = can(ACTIONS.CAN_VIEW, MODULES.TOUR_GROUP_PERMS)
+  const canEditTourGroup = can(ACTIONS.CAN_EDIT, MODULES.TOUR_GROUP_PERMS)
+  const canDeleteTourGroup = can(ACTIONS.CAN_DELETE, MODULES.TOUR_GROUP_PERMS)
   const columns = useMemo(
     () => [
       {
@@ -140,8 +147,8 @@ function TourGroup() {
       },
       {
         Header: "City",
-        accessor: "city.name",
-        Cell: ({ value }) => <span>{value || "—"}</span>,
+        accessor: "cityName",
+        Cell: ({ row }) => <span>{row.original.cityName || "—"}</span>,
         filterable: true,
       },
       {
@@ -158,7 +165,7 @@ function TourGroup() {
       },
       {
         Header: "Status",
-        accessor: "city.country.status",
+        accessor: "status",
         Cell: ({ value }) => (
           <span
             className={`badge rounded-pill ${
@@ -192,29 +199,39 @@ function TourGroup() {
         Header: "Actions",
         Cell: ({ row }) => (
           <div className="d-flex align-items-center justify-content-center gap-4">
-            <button
-              className="btn p-0 border-0 bg-transparent"
-              title="Edit"
-              onClick={() => {
-                handleEdit(row.original._id)
-              }}
-            >
-              <i className="fas fa-edit font-size-18 text-success"></i>
-            </button>
-            <button
-              className="btn p-0 border-0 bg-transparent"
-              title="view"
-              onClick={() => handleViewDetails(row.original._id)}
-            >
-              <i className="fas fa-eye font-size-18 text-primary"></i>
-            </button>
-            <button
-              className="btn p-0 border-0 bg-transparent"
-              title="variant"
-              onClick={() => handleViewVariant(row.original._id)}
-            >
-              <i className="fas fa-layer-group font-size-18 text-info"></i>
-            </button>
+            {canEditTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
+                title="Edit"
+                onClick={() => {
+                  handleEdit(row.original._id)
+                }}
+              >
+                <i className="fas fa-edit font-size-18 text-success"></i>
+              </button>
+            )}
+            {canViewTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
+                title="view"
+                onClick={() => {
+                  handleViewDetails(row.original._id)
+                }}
+              >
+                <i className="fas fa-eye font-size-18 text-primary"></i>
+              </button>
+            )}
+            {role === "ADMIN" && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
+                title="variant"
+              >
+                <Link to={`variants/${row.original._id}`} target="_blank">
+                  {" "}
+                  <i className="fas fa-layer-group font-size-18 text-info"></i>
+                </Link>
+              </button>
+            )}
             <button
               className="btn p-0 border-0 bg-transparent"
               title="calender"
@@ -222,21 +239,63 @@ function TourGroup() {
             >
               <i className="fas fa-calendar-alt font-size-18 text-warning"></i>
             </button>
-            <button
-              className="btn p-0 border-0 bg-transparent"
-              title="Delete"
-              onClick={() => handleDelete(row.original)}
-            >
-              <i className="fas fa-trash font-size-18 text-danger"></i>
-            </button>
+            {canDeleteTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
+                title="Delete"
+                onClick={() => handleDelete(row.original)}
+              >
+                <i className="fas fa-trash font-size-18 text-danger"></i>
+              </button>
+            )}
           </div>
         ),
       },
-    ],
-    [navigate]
+     ],
+     [
+       navigate,
+       canEditTourGroup,
+       canDeleteTourGroup,
+       canViewTourGroup,
+       role,
+     ]
   )
 
   document.title = "Tour Groups | TickYourList"
+  if (!canViewTourGroup) {
+    return (
+      <div
+        className="page-content  d-flex justify-content-center align-items-center "
+        style={{ minHeight: "100vh" }}
+      >
+        <div
+          style={{ minWidth: "80%" }}
+          className="m-2 d-flex flex-column justify-content-center align-items-center bg-danger bg-soft text-white p-3"
+        >
+          <p className="fw-bold fs-4 mb-3 text-danger text-gradient">
+            Permission Required
+          </p>
+          <p
+            className="text-center mb-3 text-danger text-gradient "
+            style={{ maxWidth: "60%" }}
+          >
+            You do not have the permission to access this page. If you think
+            this is a mistake, contact the administrator.
+          </p>
+          <p className="text-center text-danger text-gradient">
+            Click{" "}
+            <Link
+              to="/"
+              className="text-primary text-soft text-decoration-underline fw-bold "
+            >
+              here
+            </Link>{" "}
+            to return to the home page.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <React.Fragment>
@@ -247,7 +306,7 @@ function TourGroup() {
           onDeleteClick={onConfirmDelete}
           onCloseClick={handleOnCloseClick}
         >
-          {selectedTourGroupToBeDeleted.city.name}
+          {selectedTourGroupToBeDeleted.name}
         </DeleteModal>
       )}
       <div className="page-content">
@@ -268,7 +327,7 @@ function TourGroup() {
                     onPageChange={handlePageChange}
                     setPageSize={setPageSize}
                     toggleViewModal={toggle}
-                    isAddNewTourGroup={true}
+                    isAddNewTourGroup={canAddTourGroup}
                     isGlobalFilter={true}
                     customPageSize={10}
                     className="custom-header-css"
@@ -276,18 +335,27 @@ function TourGroup() {
                   <Modal isOpen={modal} toggle={toggle} size="xl">
                     <ModalHeader toggle={toggle} tag="h4">
                       {isViewing
-                        ? ""
+                        ? `${tourGroupByIdName}`
                         : `${
                             isEdit ? "Update Tour Group" : "Add New Tour Group"
                           }`}
                     </ModalHeader>
                     <ModalBody>
-                      <NewTourModel
-                        setModal={setModal}
-                        isViewing={isViewing}
-                        isEdit={isEdit}
-                        editId={editId}
-                      />
+                      {isViewing ? (
+                        <ViewTourGroup
+                          setIsEdit={setIsEdit}
+                          setIsViewing={setIsViewing}
+                          isViewing={isViewing}
+                          editId={editId}
+                          setTourGroupByIdName={setTourGroupByIdName}
+                        />
+                      ) : (
+                        <NewTourModel
+                          setModal={setModal}
+                          editId={editId}
+                          isEdit={isEdit}
+                        />
+                      )}
                     </ModalBody>
                   </Modal>
                 </CardBody>
@@ -300,4 +368,4 @@ function TourGroup() {
   )
 }
 
-export default TourGroup
+export default TourGroupTable

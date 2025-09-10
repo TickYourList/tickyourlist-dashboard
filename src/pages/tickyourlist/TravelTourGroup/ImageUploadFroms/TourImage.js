@@ -10,7 +10,7 @@ import {
 } from "reactstrap"
 import React, { useEffect } from "react"
 
-export const TourImages = () => {
+export default function TourImages() {
   const { values, setFieldValue, touched, errors } = useFormikContext()
 
   return (

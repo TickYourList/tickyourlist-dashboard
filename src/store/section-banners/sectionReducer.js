@@ -1,4 +1,4 @@
-import { GET_CITIES, GET_CITIES_SUCCESS, GET_CITIES_FAILURE } from './actionTypes';
+import { GET_CITIES, GET_CITIES_SUCCESS, GET_CITIES_FAILURE, GET_SECTION_CITIES, GET_SECTION_CITIES_SUCCESS, GET_SECTION_CITIES_FAILURE } from './actionTypes';
 
 const initialState = {
   loading: false,
@@ -8,21 +8,21 @@ const initialState = {
 
 const citiesSection = (state = initialState, action) => {
   switch (action.type) {
-    case GET_CITIES:
+    case GET_SECTION_CITIES:
       return {
         ...state,
         loading: true,
         error: null,
       };
 
-    case GET_CITIES_SUCCESS:
+    case GET_SECTION_CITIES_SUCCESS:
       return {
         ...state,
         loading: false,
         cities: action.payload.data.travelCityList,
       };
 
-    case GET_CITIES_FAILURE:
+    case GET_SECTION_CITIES_FAILURE:
       return {
         ...state,
         loading: false,
