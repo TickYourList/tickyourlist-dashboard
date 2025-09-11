@@ -184,6 +184,8 @@ import AddNewSubCategory from "pages/Product_Management/SubCategory/AddNewSubCat
 import CategorySorting from "../pages/LocationManagement/Cities/CategorySorting";
 import SubCategorySorting from "../pages/LocationManagement/Cities/SubCategorySorting";
 import Settings from "pages/Travel/Settings";
+import FaqsList from "pages/Content-marketing/Faqs";
+import FaqsForm from "pages/Content-marketing/FaqsForm";
 
 
 const authProtectedRoutes = [
@@ -391,6 +393,8 @@ const authProtectedRoutes = [
    { path: "/categories/:cityCode/sort", component: <CategorySorting /> },
   { path: "/sub-categories/:categoryId/sort", component: <SubCategorySorting /> },
   { path: "/settings", component: <Settings /> },
+  { path: "/faqs-list", component: <FaqsList /> },
+  { path: "/add-new-faqs", component: <FaqsForm /> },
   {
     path: "/",
     exact: true,

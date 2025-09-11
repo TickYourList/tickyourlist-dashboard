@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {FormFeedback, FormGroup, Label, Col, Row, Input } from 'reactstrap';
 import Select from 'react-select';
 import { getCityList, getTours, getCategories, getSubcategories, getBannerCollections } from '../../helpers/location_management_helper';
-import{ getSubcategoriesList} from '../../helpers/location_management_helper';
 
 const BannerFormRow = ({ index, values, setFieldValue, setFieldTouched, touched, errors }) => {
   const [cities, setCities] = useState([]);
@@ -33,7 +32,7 @@ const BannerFormRow = ({ index, values, setFieldValue, setFieldTouched, touched,
   useEffect(() => { getCityList().then(setCities); }, []);
   useEffect(() => { if (currentBanner.cityId) getTours(currentBanner.cityId).then(setTours); else setTours([]); }, [currentBanner.cityId]);
   useEffect(() => { if (currentBanner.cityId) getCategories(currentBanner.cityId).then(setCategories); else setCategories([]); }, [currentBanner.cityId]);
-  useEffect(() => { if (currentBanner.cityId) getSubcategoriesList(currentBanner.cityId).then(setSubcategories); else setSubcategories([]); }, [currentBanner.cityId]);
+  useEffect(() => { if (currentBanner.cityId) getSubcategories(currentBanner.cityId).then(setSubcategories); else setSubcategories([]); }, [currentBanner.cityId]);
   useEffect(() => { if (currentBanner.cityId) getBannerCollections(currentBanner.cityId).then(setBannerCollections); else setBannerCollections([]); }, [currentBanner.cityId]);
 
   // --- Centralized Handler for Clearing Competing Fields ---

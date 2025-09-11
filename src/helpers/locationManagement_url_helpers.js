@@ -152,3 +152,7 @@ export const ON_ADD_DEFAUL_PRICING = "/v1/variant-calendar-pricing/pricing-rule/
 
 export const SORT_CATEGORY_API = "v1/tyltravelcategory/travel-categories/sort"
 export const SORT_SUB_CATEGORY_API = "v1/tyltravelsubcategory/sort/travel-subcategories/by/category"
+
+// Faq List
+export const GET_FAQS_LIST = "/v1/tyltravelfaqs/city/DUBAI";
+export const ADD_NEW_FAQS = "/v1/tyltravelfaqs/create";
