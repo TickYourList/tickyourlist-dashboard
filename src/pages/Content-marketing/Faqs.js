@@ -2,7 +2,7 @@ import React, { useEffect } from "react"
 import { Button, Container } from "reactstrap"
 import { useDispatch, useSelector } from "react-redux"
 import { getFaqsList } from "../../store/faqs/actions"
-import { getDashboardPermission } from "../../store/dashboard-sub-admin/actions"
+import { usePermissions, MODULES, ACTIONS } from "helpers/permissions"
 import Breadcrumbs from "components/Common/Breadcrumb"
 import TableContainer from "../../components/Common/TableContainer"
 import "./faqs.scss"
@@ -16,42 +16,18 @@ const FaqsList = () => {
   // access reducer directly
   const { faqs, loading, error } = useSelector(state => state.faqsReducer)
 
-  const authUser = JSON.parse(localStorage.getItem("authUser"))?.data
-  const userID = authUser?.user?._id
-  const role = authUser?.user?.roles[0].code
-  // console.log(userID, role)
+  // Use global permission system
+  const { can } = usePermissions()
 
-  const { permissions } = useSelector(state => state.DashboardPermissions || {})
-  // console.log(permissions)
-
-  useEffect(() => {
-    // Avoid refetching if permissions already exist in Redux
-    if (!permissions || permissions.length === 0) {
-      dispatch(getDashboardPermission(userID))
-    }
-  }, [dispatch, permissions, userID])
+  // Permission checks using standardized usePermissions hook
+  const canAddFaqs = can(ACTIONS.CAN_ADD, MODULES.FAQS_PERMS)
+  const canEditFaqs = can(ACTIONS.CAN_EDIT, MODULES.FAQS_PERMS)
+  const canViewFaqs = can(ACTIONS.CAN_VIEW, MODULES.FAQS_PERMS)
+  const canDeleteFaqs = can(ACTIONS.CAN_DELETE, MODULES.FAQS_PERMS)
 
   useEffect(() => {
     dispatch(getFaqsList())
   }, [dispatch])
-
-  const travelFaqsPermission =
-    role === "ADMIN"
-      ? {
-          module: "tylTravelFaqs",
-          canAdd: true,
-          canEdit: true,
-          canView: true,
-          canDelete: true,
-        }
-      : (Array.isArray(permissions)
-          ? permissions.find(module => module.module === "tylTravelFaqs")
-          : {}) || {}
-
-  const canAddFaqs = travelFaqsPermission?.canAdd
-  const canEditFaqs = travelFaqsPermission?.canEdit
-  const canViewFaqs = travelFaqsPermission?.canView
-  const canDeleteFaqs = travelFaqsPermission?.canDelete
 
   const handleAddNewFaqsClick = () => {
     navigate("/add-new-faqs")
