@@ -8,6 +8,7 @@ export const MODULES = {
   CITY_PERMS: 'tylTravelCity',                        // This module controls the Travel City permissions
   TOUR_PERMS: 'tylTravelTour',                        // This module controls the Travel Tour permissions
   TOUR_GROUP_PERMS: 'tylTravelTourGroup',             // This module controls the Travel Tour Group permissions
+  TOUR_GROUP_VARIANT_PERMS: 'tylTravelTourGroupVariant', // This module controls the Travel Tour Group Variant permissions
   CATEGORY_PERMS: 'tylTravelCategory',                // This module controls the Travel Category permissions
   COLLECTION_PERMS: 'tylTravelCollection',            // This module controls the Travel Collection permissions
   BOOKING_PERMS: 'tylTravelBooking',                  // This module controls the Travel Booking permissions
@@ -60,6 +61,7 @@ export const usePermissions = () => {
   const getCategoryPermissions = useMemo(() => getModulePermissions(MODULES.CATEGORY_PERMS), [getModulePermissions]);
   const getTourPermissions = useMemo(() => getModulePermissions(MODULES.TOUR_PERMS), [getModulePermissions]);
   const getTourGroupPermissions = useMemo(() => getModulePermissions(MODULES.TOUR_GROUP_PERMS), [getModulePermissions]);
+  const getTourGroupVariantPermissions = useMemo(() => getModulePermissions(MODULES.TOUR_GROUP_VARIANT_PERMS), [getModulePermissions]);
   const getCollectionPermissions = useMemo(() => getModulePermissions(MODULES.COLLECTION_PERMS), [getModulePermissions]);
   const getBookingPermissions = useMemo(() => getModulePermissions(MODULES.BOOKING_PERMS), [getModulePermissions]);
   const getBannerPermissions = useMemo(() => getModulePermissions(MODULES.ADMIN_BANNER_PERMS), [getModulePermissions]);
@@ -92,6 +94,7 @@ export const usePermissions = () => {
     getCategoryPermissions,
     getTourPermissions,
     getTourGroupPermissions,
+    getTourGroupVariantPermissions,
     getCollectionPermissions,
     getBookingPermissions,
     getBannerPermissions,

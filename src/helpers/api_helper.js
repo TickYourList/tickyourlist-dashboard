@@ -43,6 +43,7 @@ export async function post(url, data, config = {}) {
 export async function postFormData(url, data, config = {}) {
   authUserItem();
   return axiosApi
+  
     .post(url, data , { ...config })
     .then(response => response.data);
 }

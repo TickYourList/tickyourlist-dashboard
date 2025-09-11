@@ -9,7 +9,7 @@ import {
   Nav,
   NavItem,
   NavLink,
-  Tabel,
+  Table,
   TabContent,
   TabPane,
 } from "reactstrap";
@@ -27,6 +27,9 @@ import {
 import "./ViewDetail.scss";
 
 const ViewDetail = ({ isOpen, toggle, activeTab, setActiveTab }) => {
+  console.log("🎭 ViewDetail component received props:", { isOpen, activeTab });
+  console.log("🎭 ViewDetail isOpen type:", typeof isOpen, "value:", isOpen);
+  
   const [showTabs, setShowTabs] = useState(false);
 
   const { bookingList, pricingList, tourGroupVariantDetail } = useSelector(
@@ -148,6 +151,8 @@ const ViewDetail = ({ isOpen, toggle, activeTab, setActiveTab }) => {
     []
   );
 
+  console.log("🎭 ViewDetail rendering Modal with isOpen:", isOpen);
+  
   return (
     <Modal isOpen={isOpen} toggle={toggle} centered size="lg">
       <div className="modal-header">

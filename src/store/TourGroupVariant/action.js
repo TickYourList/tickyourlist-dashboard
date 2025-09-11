@@ -20,6 +20,9 @@ import {
   GET_BOOKING_LIST,
   GET_BOOKING_LIST_SUCCESS,
   GET_BOOKING_LIST_FAIL,
+  GET_TOUR_GROUP_VARIANT_BY_ID,
+  GET_TOUR_GROUP_VARIANT_BY_ID_SUCCESS,
+  GET_TOUR_GROUP_VARIANT_BY_ID_FAIL,
 } from "./actionType";
 
 export const getTourGroupVariants = (page = 1, limit = 10) => ({
@@ -123,5 +126,20 @@ export const getBookingListSuccess = data => ({
 
 export const getBookingListFail = error => ({
   type: GET_BOOKING_LIST_FAIL,
+  payload: error,
+});
+
+export const getTourGroupVariantById = variantId => ({
+  type: GET_TOUR_GROUP_VARIANT_BY_ID,
+  payload: variantId,
+});
+
+export const getTourGroupVariantByIdSuccess = data => ({
+  type: GET_TOUR_GROUP_VARIANT_BY_ID_SUCCESS,
+  payload: data,
+});
+
+export const getTourGroupVariantByIdFail = error => ({
+  type: GET_TOUR_GROUP_VARIANT_BY_ID_FAIL,
   payload: error,
 });

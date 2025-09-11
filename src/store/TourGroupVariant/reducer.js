@@ -1,6 +1,9 @@
 import {
   GET_TOUR_GROUP_VARIANTS_SUCCESS,
   GET_TOUR_GROUP_VARIANTS_ERROR,
+  GET_TOUR_GROUP_VARIANT_BY_ID,
+  GET_TOUR_GROUP_VARIANT_BY_ID_SUCCESS,
+  GET_TOUR_GROUP_VARIANT_BY_ID_FAIL,
   GET_TRAVEL_TOUR_GROUPS,
   GET_TRAVEL_TOUR_GROUPS_SUCCESS,
   GET_TRAVEL_TOUR_GROUPS_FAIL,
@@ -24,6 +27,7 @@ import {
 const INIT_STATE = {
   tourGroupVariants: [],
   travelTourGroups: [],
+  selectedVariant: null,
   tourGroupVariantDetail: null,
   pricingList: [],
   bookingList: [],
@@ -67,6 +71,29 @@ const tourGroupVariantReducer = (state = INIT_STATE, action) => {
         ...state,
         error: action.payload,
       };
+
+      case GET_TOUR_GROUP_VARIANT_BY_ID:
+        return {
+          ...state,
+          loading: true,
+          selectedVariant: null,
+          error: null,
+        };
+  
+      case GET_TOUR_GROUP_VARIANT_BY_ID_SUCCESS:
+        return {
+          ...state,
+          selectedVariant: action.payload,
+          loading: false,
+        };
+  
+      case GET_TOUR_GROUP_VARIANT_BY_ID_FAIL:
+        return {
+          ...state,
+          selectedVariant: null,
+          loading: false,
+          error: action.payload,
+        };
 
     case GET_TRAVEL_TOUR_GROUPS:
       return {

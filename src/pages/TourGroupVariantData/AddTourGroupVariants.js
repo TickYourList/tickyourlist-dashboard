@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import CreatableSelect from "react-select/creatable";
 import Select from "react-select";
 import {
   Card,
@@ -15,11 +14,13 @@ import {
 } from "reactstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
+import EditorReact from "./Editor";
 
 import {
   getTravelTourGroups,
   addTourGroupVariant,
   getTourGroupVariants,
+  getTourGroupVariantById,
   updateTourGroupVariant,
 } from "../../store/TourGroupVariant/action";
 
@@ -53,17 +54,11 @@ const AddTourGroupVariants = () => {
   const { variantId } = useParams();
   const isEdit = Boolean(variantId);
 
-  const { travelTourGroups, tourGroupVariants, loading } = useSelector(
-    state => state.TourGroupVariant || {}
-  );
+  const { selectedVariant, travelTourGroups, tourGroupVariants, loading } =
+    useSelector(state => state.TourGroupVariant || {});
 
   const [selectedMulti2, setselectedMulti2] = useState(null);
   const [selectedOpenDated, setSelectedOpenDated] = useState(null);
-  const [boosterTags, setBoosterTags] = useState([]);
-  const [boosterTagOptions, setBoosterTagOptions] = useState([
-    { label: "BoosterTag1", value: "BoosterTag1" },
-    { label: "BoosterTag2", value: "BoosterTag2" },
-  ]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -73,10 +68,17 @@ const AddTourGroupVariants = () => {
   });
 
   // Fetch initial data
+  // useEffect(() => {
+  //   dispatch(getTravelTourGroups())
+  //   dispatch(getTourGroupVariants())
+  // }, [dispatch])
+
   useEffect(() => {
-    dispatch(getTravelTourGroups());
-    dispatch(getTourGroupVariants());
-  }, [dispatch]);
+    if (isEdit) {
+      dispatch(getTourGroupVariantById(variantId));
+      dispatch(getTravelTourGroups());
+    }
+  }, [dispatch, isEdit, variantId]);
 
   useEffect(() => {
     if (
@@ -91,6 +93,9 @@ const AddTourGroupVariants = () => {
           ticketDeliveryInfo: variant.ticketDeliveryInfo || "",
           confirmedTicketInfo: variant.confirmedTicketInfo || "",
           variantInfo: variant.variantInfo || "",
+          boosterTags: Array.isArray(variant.boosterTags)
+            ? variant.boosterTags.join(", ")
+            : variant.boosterTags || "",
         });
 
         const matchedProduct = travelTourGroups.find(
@@ -108,16 +113,10 @@ const AddTourGroupVariants = () => {
             ? { label: "Available", value: "True" }
             : { label: "Not Available", value: "False" }
         );
-
-        const tags = (variant.boosterTags || []).map(tag => ({
-          label: tag,
-          value: tag,
-        }));
-        setBoosterTags(tags);
-        setBoosterTagOptions(prev => [...prev, ...tags]);
       }
     }
-  }, [isEdit, variantId, tourGroupVariants, travelTourGroups]);
+    // }, [isEdit, variantId, tourGroupVariants, travelTourGroups])
+  }, [isEdit, selectedVariant, travelTourGroups]);
 
   const productOptions = useMemo(() => {
     if (!Array.isArray(travelTourGroups)) return [];
@@ -130,24 +129,23 @@ const AddTourGroupVariants = () => {
       }));
   }, [travelTourGroups]);
 
-  const handleBoosterTagsChange = selected => setBoosterTags(selected || []);
-  const handleCreateBoosterTag = inputValue => {
-    const newOption = { label: inputValue, value: inputValue };
-    setBoosterTagOptions(prev => [...prev, newOption]);
-    setBoosterTags(prev => [...(prev || []), newOption]);
-  };
-
   const handleInputChange = e =>
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   const createPayload = () => ({
     productId: selectedMulti2?.value,
-    boosterTags: boosterTags.map(tag => tag.value),
+    boosterTags: formData.boosterTags,
     openDated: selectedOpenDated?.value === "True",
     name: formData.name,
     ticketDeliveryInfo: formData.ticketDeliveryInfo,
     confirmedTicketInfo: formData.confirmedTicketInfo,
     variantInfo: formData.variantInfo,
+    boosterTags: formData.boosterTags
+      ? formData.boosterTags
+          .split(",")
+          .map(tag => tag.trim())
+          .filter(Boolean)
+      : [],
   });
 
   const handleSubmitClick = e => {
@@ -160,6 +158,7 @@ const AddTourGroupVariants = () => {
     e.preventDefault();
     const payload = createPayload();
     dispatch(updateTourGroupVariant(variantId, payload));
+    navigate("/tour-group-variants-data");
   };
 
   const handleCancelClick = () => {
@@ -206,22 +205,26 @@ const AddTourGroupVariants = () => {
                   <Row className="mt-3">
                     <Col lg="6">
                       <Label>TicketDeliveryInfo</Label>
-                      <Input
-                        type="text"
-                        name="ticketDeliveryInfo"
+                      <EditorReact
                         value={formData.ticketDeliveryInfo}
-                        onChange={handleInputChange}
-                        placeholder="Enter TicketDeliveryInfo"
+                        onChange={val =>
+                          setFormData(prev => ({
+                            ...prev,
+                            ticketDeliveryInfo: val,
+                          }))
+                        }
                       />
                     </Col>
                     <Col lg="6">
-                      <Label>ConfirmedTicketInfo</Label>
-                      <Input
-                        type="text"
-                        name="confirmedTicketInfo"
+                      <Label>ConfirmedTicketInfo</Label>{" "}
+                      <EditorReact
                         value={formData.confirmedTicketInfo}
-                        onChange={handleInputChange}
-                        placeholder="Enter ConfirmedTicketInfo"
+                        onChange={val =>
+                          setFormData(prev => ({
+                            ...prev,
+                            confirmedTicketInfo: val,
+                          }))
+                        }
                       />
                     </Col>
                   </Row>
@@ -229,23 +232,20 @@ const AddTourGroupVariants = () => {
                   <Row className="mt-3">
                     <Col lg="6">
                       <Label>VariantInfo</Label>
-                      <Input
-                        type="text"
-                        name="variantInfo"
+                      <EditorReact
                         value={formData.variantInfo}
-                        onChange={handleInputChange}
-                        placeholder="Enter VariantInfo"
+                        onChange={val =>
+                          setFormData(prev => ({ ...prev, variantInfo: val }))
+                        }
                       />
                     </Col>
                     <Col lg="6">
                       <Label>BoosterTags</Label>
-                      <CreatableSelect
-                        isMulti={true}
-                        value={boosterTags}
-                        onChange={handleBoosterTagsChange}
-                        onCreateOption={handleCreateBoosterTag}
-                        options={boosterTagOptions}
-                        placeholder="Select or Create Booster Tag"
+                      <EditorReact
+                        value={formData.boosterTags}
+                        onChange={val =>
+                          setFormData(prev => ({ ...prev, boosterTags: val }))
+                        }
                       />
                     </Col>
                   </Row>
