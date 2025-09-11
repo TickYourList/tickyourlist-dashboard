@@ -61,6 +61,8 @@ const TableContainerWithServerSidePagination = ({
   isGlobalFilter,
   isAddNewTourGroup,
   isAddNewTravelPartner,
+  isAddTourGroupVariantOptions,
+  handleAddTourGroupVariantClicks,
   toggleViewModal,
   customPageSizeOptions = [10, 20, 30, 50],
   className,
@@ -161,6 +163,21 @@ const TableContainerWithServerSidePagination = ({
                 >
                   <i className="mdi mdi-plus me-1" />
                   Add New Travel Partner
+                </Button>
+              </div>
+            </Col>
+          )}
+          {isAddTourGroupVariantOptions && (
+            <Col>
+              <div className="text-sm-end">
+                <Button
+                  type="button"
+                  color="success"
+                  className="btn-rounded "
+                  onClick={handleAddTourGroupVariantClicks}
+                >
+                  <i className="mdi mdi-plus me-1" />
+                  Add New Tour Group Variant
                 </Button>
               </div>
             </Col>

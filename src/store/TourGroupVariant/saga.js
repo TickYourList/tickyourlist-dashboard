@@ -1,6 +1,7 @@
 import { takeEvery, takeLatest, call, put } from "redux-saga/effects";
 import {
   GET_TOUR_GROUP_VARIANTS,
+  GET_TOUR_GROUP_VARIANT_BY_ID,
   GET_TRAVEL_TOUR_GROUPS,
   ADD_TOUR_GROUP_VARIANT,
   UPDATE_TOUR_GROUP_VARIANT,
@@ -12,6 +13,8 @@ import {
 import {
   getTourGroupVariantsSuccess,
   getTourGroupVariantsError,
+  getTourGroupVariantByIdSuccess,
+  getTourGroupVariantByIdFail,
   getTravelTourGroupsSuccess,
   getTravelTourGroupsFail,
   addTourGroupVariantSuccess,
@@ -57,6 +60,23 @@ function* onGetTourGroupVariants({ payload }) {
     showToastError(
       error.message || "Failed to fetch tour group variants.",
       "Error"
+    );
+  }
+}
+
+function* onGetTourGroupVariantById({ payload }) {
+  try {
+    const response = yield call(getTourGroupVariantByIdAPI, payload);
+    const variant = response?.data?.variant;
+
+    if (variant && variant._id) {
+      yield put(getTourGroupVariantByIdSuccess(variant));
+    } else {
+      throw new Error("Variant not found");
+    }
+  } catch (error) {
+    yield put(
+      getTourGroupVariantByIdFail(error.message || "Failed to fetch variant")
     );
   }
 }
@@ -171,6 +191,7 @@ function* onGetBookingList({ payload: variantId }) {
 
 function* tourGroupVariantSaga() {
   yield takeEvery(GET_TOUR_GROUP_VARIANTS, onGetTourGroupVariants);
+  yield takeEvery(GET_TOUR_GROUP_VARIANT_BY_ID, onGetTourGroupVariantById);
   yield takeEvery(GET_TRAVEL_TOUR_GROUPS, onGetTravelTourGroups);
   yield takeLatest(ADD_TOUR_GROUP_VARIANT, onAddTourGroupVariant);
   yield takeLatest(UPDATE_TOUR_GROUP_VARIANT, onUpdateTourGroupVariant);
