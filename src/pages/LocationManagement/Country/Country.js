@@ -41,6 +41,7 @@ import * as Yup from "yup"
 import classnames from "classnames"
 import CreatableSelect from "react-select/creatable"
 import Select from "react-select"
+import { usePermissions, MODULES, ACTIONS } from "helpers/permissions"
 
 const CountryCode = props => <span>{props.value}</span>
 const CountryName = props => <span>{props.value}</span>
@@ -52,6 +53,15 @@ const Status = props => (
 
 function LocationManagement() {
   document.title = "Countries | Scrollit"
+
+  // Use global permission system
+  const { can } = usePermissions()
+
+  // Permission checks using standardized usePermissions hook
+  const canAddCountry = can(ACTIONS.CAN_ADD, MODULES.COUNTRY_PERMS)
+  const canEditCountry = can(ACTIONS.CAN_EDIT, MODULES.COUNTRY_PERMS)
+  const canViewCountry = can(ACTIONS.CAN_VIEW, MODULES.COUNTRY_PERMS)
+  const canDeleteCountry = can(ACTIONS.CAN_DELETE, MODULES.COUNTRY_PERMS)
 
   const [modal, setModal] = useState(false)
   const [activeTabVartical, setoggleTabVertical] = useState(1)
@@ -403,18 +413,20 @@ function LocationManagement() {
         accessor: "countryDetail",
         disableFilters: true,
         Cell: cellProps => (
-          <Button
-            type="button"
-            color="primary"
-            className="btn-sm btn-rounded"
-            onClick={() => {
-              setCountryDetailData(cellProps.row.original);
-              setCountryDetailModalOpen(true);
-              dispatch(getCountryById(cellProps.row.original._id));
-            }}
-          >
-            Country Detail
-          </Button>
+          canViewCountry && (
+            <Button
+              type="button"
+              color="primary"
+              className="btn-sm btn-rounded"
+              onClick={() => {
+                setCountryDetailData(cellProps.row.original);
+                setCountryDetailModalOpen(true);
+                dispatch(getCountryById(cellProps.row.original._id));
+              }}
+            >
+              Country Detail
+            </Button>
+          )
         ),
       },
       {
@@ -423,32 +435,70 @@ function LocationManagement() {
         disableFilters: true,
         Cell: cellProps => (
           <div className="d-flex gap-3">
-            <Button
-              color="success"
-              size="sm"
-              className="btn-rounded"
-              onClick={() => handleCountryEditClick(cellProps.row.original)}
-            >
-              <i className="mdi mdi-pencil font-size-14" />
-            </Button>{" "}
-            <Button
-              color="danger"
-              size="sm"
-              className="btn-rounded"
-              onClick={() => {
-                setCountryToDelete(cellProps.row.original);
-                setDeleteModalOpen(true);
-                // setDeleteError(""); // This state is now managed by Redux
-              }}
-            >
-              <i className="mdi mdi-delete font-size-14" />
-            </Button>{" "}
+            {canEditCountry && (
+              <Button
+                color="success"
+                size="sm"
+                className="btn-rounded"
+                onClick={() => handleCountryEditClick(cellProps.row.original)}
+              >
+                <i className="mdi mdi-pencil font-size-14" />
+              </Button>
+            )}
+            {canDeleteCountry && (
+              <Button
+                color="danger"
+                size="sm"
+                className="btn-rounded"
+                onClick={() => {
+                  setCountryToDelete(cellProps.row.original);
+                  setDeleteModalOpen(true);
+                }}
+              >
+                <i className="mdi mdi-delete font-size-14" />
+              </Button>
+            )}
           </div>
         ),
       },
     ],
-    []
+    [canViewCountry, canEditCountry, canDeleteCountry]
   )
+
+  if (!canViewCountry) {
+    return (
+      <div className="page-content">
+        <div className="container-fluid">
+          <div
+            className="d-flex justify-content-center align-items-center"
+            style={{ height: "70vh" }}
+          >
+            <div
+              className="alert alert-danger text-center w-100"
+              style={{ maxWidth: "600px" }}
+            >
+              <h5 className="mb-3">Permission Required!</h5>
+              <p className="mb-2">
+                You do not have permission to access this page. If you believe
+                this is a mistake, please contact your administrator.
+              </p>
+              <p className="mb-0">
+                Click{" "}
+                <a
+                  href="/dashboard"
+                  className="text-primary text-decoration-underline"
+                >
+                  here
+                </a>{" "}
+                to return to the homepage or navigate to a page you have access
+                to.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <React.Fragment>
@@ -487,7 +537,7 @@ function LocationManagement() {
                     columns={columns}
                     data={countries || []}
                     isGlobalFilter={true}
-                    isAddCountryOptions={true}
+                    isAddCountryOptions={canAddCountry}
                     handleAddCountryClicks={toggle}
                     handleDeleteAllCountriesClicks={() => {
                       // TODO: Implement delete all countries functionality
