@@ -22,6 +22,7 @@ const SidebarContent = props => {
   // Use centralized permission system for permissions
   const canViewSubcategory = can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS);
   const canViewCategory = can(ACTIONS.CAN_VIEW, MODULES.CATEGORY_PERMS);
+  const canViewCountry = can(ACTIONS.CAN_VIEW, MODULES.COUNTRY_PERMS);
   
   const activateParentDropdown = useCallback((item) => {
     item.classList.add("active");
@@ -241,9 +242,11 @@ const SidebarContent = props => {
                    <span>{props.t("Currency")}</span>
                   </Link>
               </li>
+                {canViewCountry && (
                 <li>
                   <Link to="/country">{props.t('Country')}</Link>
                 </li>
+                )}
                 {can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS) && (
                 <li>
                   <Link to="/cities">{props.t("Cities")}</Link>
@@ -288,6 +291,9 @@ const SidebarContent = props => {
                  )}
               <li>
                   <Link to="/travel-partners">{props.t("Travel Partners")}</Link>
+                </li>
+                <li>
+                  <Link to="/faqs-list">{props.t("Faqs")}</Link>
                 </li>
               </ul>
             </li>

@@ -366,6 +366,10 @@ const updateSystemSettings = (data) =>
     "Content-Type": "multipart/form-data",
   });
 
+  // faqs List
+const getFaqsList = () => get(url.GET_FAQS_LIST);
+const addFaqs = faqData => post(url.ADD_NEW_FAQS, faqData);
+
 export {
     getCountriesList,
     getCurrencyList,
@@ -461,4 +465,7 @@ export {
     getTourBookingDetails,
     getSettings,
     updateSystemSettings,
+    getFaqsList,
+    addFaqs
+
 };

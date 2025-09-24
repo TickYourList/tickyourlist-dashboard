@@ -12,6 +12,8 @@ export const MODULES = {
   CATEGORY_PERMS: 'tylTravelCategory',                // This module controls the Travel Category permissions
   COLLECTION_PERMS: 'tylTravelCollection',            // This module controls the Travel Collection permissions
   BOOKING_PERMS: 'tylTravelBooking',                  // This module controls the Travel Booking permissions
+  FAQS_PERMS: 'tylTravelFaqs',                        // This module controls the Travel FAQs permissions
+  COUNTRY_PERMS: 'tylTravelCountry',                  // This module controls the Travel Country permissions
 };
 
 // Action keys
@@ -65,6 +67,8 @@ export const usePermissions = () => {
   const getCollectionPermissions = useMemo(() => getModulePermissions(MODULES.COLLECTION_PERMS), [getModulePermissions]);
   const getBookingPermissions = useMemo(() => getModulePermissions(MODULES.BOOKING_PERMS), [getModulePermissions]);
   const getBannerPermissions = useMemo(() => getModulePermissions(MODULES.ADMIN_BANNER_PERMS), [getModulePermissions]);
+  const getFaqsPermissions = useMemo(() => getModulePermissions(MODULES.FAQS_PERMS), [getModulePermissions]);
+  const getCountryPermissions = useMemo(() => getModulePermissions(MODULES.COUNTRY_PERMS), [getModulePermissions]);
 
   // Function to manually refresh permissions
   const refreshPermissions = useMemo(() => () => {
@@ -98,6 +102,8 @@ export const usePermissions = () => {
     getCollectionPermissions,
     getBookingPermissions,
     getBannerPermissions,
+    getFaqsPermissions,
+    getCountryPermissions,
     refreshPermissions
   };
 }; 

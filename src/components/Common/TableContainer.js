@@ -107,7 +107,9 @@ const TableContainer = ({
   className,
   customPageSizeOptions,
   isAddTravelPartnerOption,
+  isAddNewFaqsOption,
   handleAddNewTravelPartner,
+  handleAddNewFaqsClick,
   isAddCollectionOptions,
   handleAddCollectionClicks,
   isAddTourGroupVariantOptions,
@@ -301,6 +303,21 @@ const TableContainer = ({
               >
                 <i className="mdi mdi-plus me-1" />
                 Add New Travel Partner
+              </Button>
+            </div>
+          </Col>
+        )}
+        {isAddNewFaqsOption && (
+          <Col sm="7" className="d-flex justify-content-end">
+            <div className="text-sm-end">
+              <Button
+                type="button"
+                color="success"
+                className="btn-rounded  mb-2 me-2"
+                onClick={handleAddNewFaqsClick}
+              >
+                <i className="mdi mdi-plus me-1" />
+                Add New Faqs
               </Button>
             </div>
           </Col>
