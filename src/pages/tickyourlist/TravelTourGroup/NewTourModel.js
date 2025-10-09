@@ -110,6 +110,13 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
     distance: tourGroupById?.distance || "",
     tourType: tourGroupById?.tourType || "",
     descriptors: tourGroupById?.descriptors || [],
+    microBrandsDescriptor: tourGroupById?.microBrandsDescriptor || "",
+    microBrandsHighlight: tourGroupById?.microBrandsHighlight || "",
+    callToAction: tourGroupById?.callToAction || "",
+    canonicalUrl: tourGroupById?.canonicalUrl || "",
+    noIndex: tourGroupById?.noIndex || false,
+    supportedLanguages: tourGroupById?.supportedLanguages || [],
+    contentMachineTranslated: tourGroupById?.contentMachineTranslated || false,
     urlSlugs: Object.fromEntries(
       slugLangs.map(lang => [lang, tourGroupById?.urlSlugs?.[lang] || ""])
     ),
@@ -221,6 +228,13 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
     exclusions: Yup.string(),
     itinerary: Yup.string(),
     additionalInfo: Yup.string(),
+    microBrandsDescriptor: Yup.string(),
+    microBrandsHighlight: Yup.string(),
+    callToAction: Yup.string(),
+    canonicalUrl: Yup.string().url("Please enter a valid URL"),
+    noIndex: Yup.boolean(),
+    supportedLanguages: Yup.array(),
+    contentMachineTranslated: Yup.boolean(),
 
     ticketDeliveryInfo: Yup.string(),
     confirmedTicketInfo: Yup.string(),
@@ -389,6 +403,13 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
     "distance",
     "tourType",
     "descriptors",
+    "microBrandsDescriptor",
+    "microBrandsHighlight", 
+    "callToAction",
+    "canonicalUrl",
+    "noIndex",
+    "supportedLanguages",
+    "contentMachineTranslated",
 
     "cancellationPolicy",
     "cancellationPolicyV2",
@@ -1129,51 +1150,34 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                     Ticket Delivery Info{" "}
                                     <span style={{ color: "red" }}>*</span>
                                   </Label>
-                                  <Field
-                                    as={Input}
-                                    name="ticketDeliveryInfo"
-                                    type="select"
-                                    className="form-select"
-                                    onChange={e =>
-                                      setFieldValue(
-                                        "ticketDeliveryInfo",
-                                        e.target.value === "true"
-                                      )
+                                  <EditorReact
+                                    value={values.ticketDeliveryInfo}
+                                    onChange={val =>
+                                      setFieldValue("ticketDeliveryInfo", val)
                                     }
-                                  >
-                                    <option value="true">True</option>
-                                    <option value="false">False</option>
-                                  </Field>
+                                  />
                                   <ErrorMessage
                                     component={"span"}
                                     className="text-danger"
                                     name="ticketDeliveryInfo"
                                   />
                                 </Col>
+                              </Row>
 
+                              <Row>
                                 <Col className="mb-3">
                                   <Label
                                     className="form-label"
                                     htmlFor="confirmedTicketInfo"
                                   >
-                                    Confirmed Ticket Info{" "}
-                                    <span style={{ color: "red" }}>*</span>
+                                    Confirmed Ticket Info
                                   </Label>
-                                  <Field
-                                    as={Input}
-                                    name="confirmedTicketInfo"
-                                    type="select"
-                                    className="form-select"
-                                    onChange={e =>
-                                      setFieldValue(
-                                        "confirmedTicketInfo",
-                                        e.target.value === "true"
-                                      )
+                                  <EditorReact
+                                    value={values.confirmedTicketInfo}
+                                    onChange={val =>
+                                      setFieldValue("confirmedTicketInfo", val)
                                     }
-                                  >
-                                    <option value="true">True</option>
-                                    <option value="false">False</option>
-                                  </Field>
+                                  />
                                   <ErrorMessage
                                     component={"span"}
                                     className="text-danger"
@@ -1377,6 +1381,155 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                     />
                                   </Col>
                                 </Row>
+                                
+                                {/* Additional Meta Fields */}
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="microBrandsDescriptor"
+                                    >
+                                      Micro Brands Descriptor
+                                    </Label>
+                                    <Field
+                                      as={Input}
+                                      name="microBrandsDescriptor"
+                                      type="text"
+                                      placeholder="Enter micro brands descriptor"
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="microBrandsDescriptor"
+                                    />
+                                  </Col>
+                                </Row>
+                                
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="microBrandsHighlight"
+                                    >
+                                      Micro Brands Highlight
+                                    </Label>
+                                    <EditorReact
+                                      value={values.microBrandsHighlight}
+                                      onChange={val =>
+                                        setFieldValue("microBrandsHighlight", val)
+                                      }
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="microBrandsHighlight"
+                                    />
+                                  </Col>
+                                </Row>
+                                
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="callToAction"
+                                    >
+                                      Call To Action
+                                    </Label>
+                                    <Field
+                                      as={Input}
+                                      name="callToAction"
+                                      type="text"
+                                      placeholder="Enter call to action"
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="callToAction"
+                                    />
+                                  </Col>
+                                </Row>
+                                
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="canonicalUrl"
+                                    >
+                                      Canonical URL
+                                    </Label>
+                                    <Field
+                                      as={Input}
+                                      name="canonicalUrl"
+                                      type="url"
+                                      placeholder="Enter canonical URL"
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="canonicalUrl"
+                                    />
+                                  </Col>
+                                </Row>
+                                
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="noIndex"
+                                    >
+                                      No Index
+                                    </Label>
+                                    <Field
+                                      as={Input}
+                                      name="noIndex"
+                                      type="select"
+                                      className="form-select"
+                                      onChange={e =>
+                                        setFieldValue(
+                                          "noIndex",
+                                          e.target.value === "true"
+                                        )
+                                      }
+                                    >
+                                      <option value="false">False</option>
+                                      <option value="true">True</option>
+                                    </Field>
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="noIndex"
+                                    />
+                                  </Col>
+                                  
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="contentMachineTranslated"
+                                    >
+                                      Content Machine Translated
+                                    </Label>
+                                    <Field
+                                      as={Input}
+                                      name="contentMachineTranslated"
+                                      type="select"
+                                      className="form-select"
+                                      onChange={e =>
+                                        setFieldValue(
+                                          "contentMachineTranslated",
+                                          e.target.value === "true"
+                                        )
+                                      }
+                                    >
+                                      <option value="false">False</option>
+                                      <option value="true">True</option>
+                                    </Field>
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="contentMachineTranslated"
+                                    />
+                                  </Col>
+                                </Row>
                               </Col>
                             </Row>
                           </TabPane>
@@ -1426,6 +1579,93 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                       component={"span"}
                                       className="text-danger"
                                       name="shortSummary"
+                                    />
+                                  </Col>
+                                </Row>
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="highlights"
+                                    >
+                                      Highlights{" "}
+                                      <span style={{ color: "red" }}>*</span>
+                                    </Label>
+                                    <EditorReact
+                                      value={values.highlights}
+                                      onChange={val =>
+                                        setFieldValue("highlights", val)
+                                      }
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="highlights"
+                                    />
+                                  </Col>
+                                </Row>
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="inclusions"
+                                    >
+                                      Inclusions{" "}
+                                      <span style={{ color: "red" }}>*</span>
+                                    </Label>
+                                    <EditorReact
+                                      value={values.inclusions}
+                                      onChange={val =>
+                                        setFieldValue("inclusions", val)
+                                      }
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="inclusions"
+                                    />
+                                  </Col>
+                                </Row>
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="exclusions"
+                                    >
+                                      Exclusions{" "}
+                                      <span style={{ color: "red" }}>*</span>
+                                    </Label>
+                                    <EditorReact
+                                      value={values.exclusions}
+                                      onChange={val =>
+                                        setFieldValue("exclusions", val)
+                                      }
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="exclusions"
+                                    />
+                                  </Col>
+                                </Row>
+                                <Row>
+                                  <Col className="mb-3">
+                                    <Label
+                                      className="form-label"
+                                      htmlFor="itinerary"
+                                    >
+                                      Itinerary
+                                    </Label>
+                                    <EditorReact
+                                      value={values.itinerary}
+                                      onChange={val =>
+                                        setFieldValue("itinerary", val)
+                                      }
+                                    />
+                                    <ErrorMessage
+                                      component={"span"}
+                                      className="text-danger"
+                                      name="itinerary"
                                     />
                                   </Col>
                                 </Row>
