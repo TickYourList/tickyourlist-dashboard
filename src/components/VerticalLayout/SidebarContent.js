@@ -17,12 +17,12 @@ import { withTranslation } from "react-i18next";
 
 const SidebarContent = props => {
   const ref = useRef();
-  const { can } = usePermissions();
+  const { can, isPermissionsReady, loading: permissionsLoading } = usePermissions();
   
   // Use centralized permission system for permissions
-  const canViewSubcategory = can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS);
-  const canViewCategory = can(ACTIONS.CAN_VIEW, MODULES.CATEGORY_PERMS);
-  const canViewCountry = can(ACTIONS.CAN_VIEW, MODULES.COUNTRY_PERMS);
+  const canViewSubcategory = isPermissionsReady ? can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS) : false;
+  const canViewCategory = isPermissionsReady ? can(ACTIONS.CAN_VIEW, MODULES.CATEGORY_PERMS) : false;
+  const canViewCountry = isPermissionsReady ? can(ACTIONS.CAN_VIEW, MODULES.COUNTRY_PERMS) : false;
   
   const activateParentDropdown = useCallback((item) => {
     item.classList.add("active");
@@ -247,7 +247,7 @@ const SidebarContent = props => {
                   <Link to="/country">{props.t('Country')}</Link>
                 </li>
                 )}
-                {can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS) && (
+                {isPermissionsReady && can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS) && (
                 <li>
                   <Link to="/cities">{props.t("Cities")}</Link>
                 </li>
@@ -284,7 +284,7 @@ const SidebarContent = props => {
                 <span>{props.t("Content & Marketing")}</span>
               </Link>
               <ul className="sub-menu">
-              {can(ACTIONS.CAN_VIEW, MODULES.ADMIN_BANNER_PERMS) && (
+              {isPermissionsReady && can(ACTIONS.CAN_VIEW, MODULES.ADMIN_BANNER_PERMS) && (
               <li>
                   <Link to="/content-marketing-home-banner">{props.t("Home Banner")}</Link>
                 </li>

@@ -42,7 +42,13 @@ function TourGroupTable() {
     useState(null)
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { can, getTourGroupPermissions } = usePermissions()
+  const { can, getTourGroupPermissions, isPermissionsReady, loading: permissionsLoading } = usePermissions()
+
+  // Permission checks using standardized usePermissions hook - moved before useEffect
+  const canAddTourGroup = can(ACTIONS.CAN_ADD, MODULES.TOUR_GROUP_PERMS)
+  const canViewTourGroup = can(ACTIONS.CAN_VIEW, MODULES.TOUR_GROUP_PERMS)
+  const canEditTourGroup = can(ACTIONS.CAN_EDIT, MODULES.TOUR_GROUP_PERMS)
+  const canDeleteTourGroup = can(ACTIONS.CAN_DELETE, MODULES.TOUR_GROUP_PERMS)
 
   /* destructuring the tour group state */
   const { tourGroup, currPage, totalCount, error } = useSelector(
@@ -61,14 +67,15 @@ function TourGroupTable() {
   //calling the api
   useEffect(() => {
     /* console.log("called dispatch fetch tour group") */
-
-    dispatch(
-      fetchTourGroupsRequest({
-        page: currPage,
-        limit: pageSize,
-      })
-    )
-  }, [currPage, pageSize])
+    if (isPermissionsReady && canViewTourGroup) {
+      dispatch(
+        fetchTourGroupsRequest({
+          page: currPage,
+          limit: pageSize,
+        })
+      )
+    }
+  }, [currPage, pageSize, isPermissionsReady, canViewTourGroup])
 
   const handlePageChange = newPage => {
     dispatch(
@@ -123,11 +130,38 @@ function TourGroupTable() {
     showToastSuccess("Calender Triggered")
   }
 
-  // Permission checks using standardized usePermissions hook
-  const canAddTourGroup = can(ACTIONS.CAN_ADD, MODULES.TOUR_GROUP_PERMS)
-  const canViewTourGroup = can(ACTIONS.CAN_VIEW, MODULES.TOUR_GROUP_PERMS)
-  const canEditTourGroup = can(ACTIONS.CAN_EDIT, MODULES.TOUR_GROUP_PERMS)
-  const canDeleteTourGroup = can(ACTIONS.CAN_DELETE, MODULES.TOUR_GROUP_PERMS)
+  // Show loading while permissions are being fetched
+  if (permissionsLoading || !isPermissionsReady) {
+    return (
+      <div className="page-content">
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+          <div className="text-center">
+            <div className="spinner-border" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+            <p className="mt-2">Loading page data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Check permissions
+  if (!canViewTourGroup) {
+    return (
+      <div className="page-content">
+        <div className="container-fluid">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+            <div className="alert alert-danger text-center w-100" style={{ maxWidth: '600px' }}>
+              <h5 className="mb-3">Permission Required!</h5>
+              <p className="mb-2">You do not have permission to access this page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const columns = useMemo(
     () => [
       {

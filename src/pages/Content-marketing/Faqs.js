@@ -17,7 +17,7 @@ const FaqsList = () => {
   const { faqs, loading, error } = useSelector(state => state.faqsReducer)
 
   // Use global permission system
-  const { can } = usePermissions()
+  const { can, isPermissionsReady, loading: permissionsLoading } = usePermissions()
 
   // Permission checks using standardized usePermissions hook
   const canAddFaqs = can(ACTIONS.CAN_ADD, MODULES.FAQS_PERMS)
@@ -26,8 +26,10 @@ const FaqsList = () => {
   const canDeleteFaqs = can(ACTIONS.CAN_DELETE, MODULES.FAQS_PERMS)
 
   useEffect(() => {
-    dispatch(getFaqsList())
-  }, [dispatch])
+    if (isPermissionsReady && canViewFaqs) {
+      dispatch(getFaqsList())
+    }
+  }, [dispatch, isPermissionsReady, canViewFaqs])
 
   const handleAddNewFaqsClick = () => {
     navigate("/add-new-faqs")
@@ -116,6 +118,26 @@ const FaqsList = () => {
       ),
     },
   ]
+
+  // Show loading while permissions are being fetched
+  if (permissionsLoading || !isPermissionsReady) {
+    return (
+      <div className="page-content">
+        <Container
+          fluid
+          className="d-flex justify-content-center align-items-center"
+          style={{ height: "70vh" }}
+        >
+          <div className="text-center">
+            <div className="spinner-border" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+            <p className="mt-2">Loading page data...</p>
+          </div>
+        </Container>
+      </div>
+    )
+  }
 
   if (!canViewFaqs) {
     return (

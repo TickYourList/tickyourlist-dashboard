@@ -52,6 +52,22 @@ export const usePermissions = () => {
     return modulePermissions[action] === true;
   }, [hasFullAccess, permissionsMap]);
 
+  // Helper function to check if permissions are ready (loaded and not loading)
+  const isPermissionsReady = useMemo(() => {
+    return !loading && (permissions.length > 0 || hasFullAccess);
+  }, [loading, permissions, hasFullAccess]);
+
+  // Helper function to check permissions with loading state consideration
+  const canWithLoading = useMemo(() => (action, module) => {
+    // If still loading, return null to indicate unknown state
+    if (loading) {
+      return null;
+    }
+    
+    // If permissions are loaded, use normal can function
+    return can(action, module);
+  }, [loading, can]);
+
   // Helper function to get specific module permissions
   const getModulePermissions = useMemo(() => (module) => {
     return permissionsMap.get(module) || {};
@@ -89,6 +105,8 @@ export const usePermissions = () => {
 
   return { 
     can, 
+    canWithLoading,
+    isPermissionsReady,
     loading,
     hasFullAccess,
     permissions,

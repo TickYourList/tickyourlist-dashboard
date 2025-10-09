@@ -55,7 +55,7 @@ function LocationManagement() {
   document.title = "Countries | Scrollit"
 
   // Use global permission system
-  const { can } = usePermissions()
+  const { can, isPermissionsReady, loading: permissionsLoading } = usePermissions()
 
   // Permission checks using standardized usePermissions hook
   const canAddCountry = can(ACTIONS.CAN_ADD, MODULES.COUNTRY_PERMS)
@@ -163,8 +163,10 @@ function LocationManagement() {
 
   // Remove getCurrencyList from useEffect on mount
   useEffect(() => {
-    dispatch(getCountries())
-  }, [dispatch])
+    if (isPermissionsReady && canViewCountry) {
+      dispatch(getCountries())
+    }
+  }, [dispatch, isPermissionsReady, canViewCountry])
 
   useEffect(() => {
     if (error) {
@@ -464,6 +466,24 @@ function LocationManagement() {
     ],
     [canViewCountry, canEditCountry, canDeleteCountry]
   )
+
+  // Show loading while permissions are being fetched
+  if (permissionsLoading || !isPermissionsReady) {
+    return (
+      <div className="page-content">
+        <div className="container-fluid">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+            <div className="text-center">
+              <div className="spinner-border" role="status">
+                <span className="sr-only">Loading...</span>
+              </div>
+              <p className="mt-2">Loading page data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!canViewCountry) {
     return (

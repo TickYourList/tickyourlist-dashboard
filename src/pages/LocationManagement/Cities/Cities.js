@@ -37,15 +37,15 @@ function Cities() {
   const navigate = useNavigate();
 
   const { cities }  = useSelector(state => state.travelCity)
-  const { can, loading: cityPermissionLoading, getCityPermissions } = usePermissions();
+  const { can, loading: cityPermissionLoading, getCityPermissions, isPermissionsReady } = usePermissions();
 
 
   // Effect hooks
   useEffect(() => {
-    if (can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) {
+    if (isPermissionsReady && can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) {
       dispatch(getCities());
     }
-  }, [dispatch, can])
+  }, [dispatch, can, isPermissionsReady])
   
 
 
@@ -180,12 +180,15 @@ function Cities() {
     return value;
   }, [can])
 
-  if ( cityPermissionLoading ) {
+  // Show loading while permissions are being fetched
+  if ( cityPermissionLoading || !isPermissionsReady ) {
       return <div className="page-content">
         <Spinner className="ms-2" color="dark" />
         <p>Loading page data</p>
       </div>
     }
+  
+  // Only check permissions after they are loaded
   if (!can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) return <PermissionDenied />;
 
   return (

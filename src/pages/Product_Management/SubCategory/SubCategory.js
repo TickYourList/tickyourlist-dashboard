@@ -46,7 +46,7 @@ const SubCategory = () => {
         deleteSuccess,
     } = useSelector((state) => state.travelSubCategoryReducer);
     
-    const { can, loading: permissionLoading } = usePermissions();
+    const { can, loading: permissionLoading, isPermissionsReady } = usePermissions();
 
     const [modal, setModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
@@ -71,10 +71,10 @@ const SubCategory = () => {
 
     // Fetch subcategories if user has view permission
     useEffect(() => {
-        if (canView) {
+        if (isPermissionsReady && canView) {
             dispatch(getSubcategories());
         }
-    }, [dispatch, canView]);
+    }, [dispatch, canView, isPermissionsReady]);
     
     // Manage "No Subcategories Found" message delay
     useEffect(() => {
@@ -335,7 +335,7 @@ const SubCategory = () => {
     }, [canEdit, canDelete]);
 
     const renderContent = () => {
-        if (permissionLoading) {
+        if (permissionLoading || !isPermissionsReady) {
             return (
                 <div className="text-center p-5">
                     <i className="mdi mdi-spin mdi-loading display-4 text-primary"></i>

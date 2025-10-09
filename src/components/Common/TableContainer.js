@@ -250,7 +250,7 @@ const TableContainer = ({
             {/* </div> */}
           </Col>
         )}
-        {
+        {/* {
               isDeleteAllCityOption && 
               <div className="text-sm-end">
                 <Button
@@ -263,7 +263,7 @@ const TableContainer = ({
                   Delete All Cities
                 </Button>
               </div>
-            }
+            } */}
         {isAddCarBrandOptions && (
           <Col sm="7" className="d-flex justify-content-end">
             {/* <div className="text-sm-end"> */}

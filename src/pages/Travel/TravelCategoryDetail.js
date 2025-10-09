@@ -32,7 +32,7 @@ function TravelCategoryDetail() {
   const error = useSelector((state) => state.travelCategory.error);
 
   // Use standardized permissions hook
-  const { can } = usePermissions();
+  const { can, isPermissionsReady, loading: permissionsLoading } = usePermissions();
 
   // Permission checks using standardized system
   const permissions = useMemo(() => ({
@@ -49,9 +49,11 @@ function TravelCategoryDetail() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch categories
-    dispatch(getTravelCategoriesRequest());
-  }, [dispatch]);
+    // Fetch categories only when permissions are ready
+    if (isPermissionsReady) {
+      dispatch(getTravelCategoriesRequest());
+    }
+  }, [dispatch, isPermissionsReady]);
 
   const handleOpenViewModal = (category) => {
     // Permission check for view details
@@ -212,6 +214,24 @@ function TravelCategoryDetail() {
     }
     navigate(`/edit-travel-category/${categoryId}`);
   };
+
+  // Show loading while permissions are being fetched
+  if (permissionsLoading || !isPermissionsReady) {
+    return (
+      <div className="page-content">
+        <div className="container-fluid">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+            <div className="text-center">
+              <div className="spinner-border" role="status">
+                <span className="sr-only">Loading...</span>
+              </div>
+              <p className="mt-2">Loading page data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Check canView permission - if false, return No Permission message
   if (!permissions.canView) {

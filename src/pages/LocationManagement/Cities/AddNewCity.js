@@ -26,6 +26,7 @@ import classnames from "classnames"
 import Breadcrumbs from "../../../components/Common/Breadcrumb"
 import { useNavigate } from 'react-router-dom';
 import PermissionDenied from "./PermissionDenied";
+import { usePermissions, ACTIONS, MODULES } from "../../../helpers/permissions";
 
 const AddNewCity = ({isEditMode}) => {
   document.title = `${!isEditMode ? "Add New City" : "Edit City"} | Scrollit`
@@ -36,7 +37,7 @@ const AddNewCity = ({isEditMode}) => {
   const navigate = useNavigate();
   const { cityCode } = useParams();
   const { city, loadingEditCity, loadingNewCity } = useSelector(state => state.travelCity)
-  const { can, loading: cityPermissionLoading } = usePermissions();
+  const { can, canWithLoading, isPermissionsReady, loading: cityPermissionLoading } = usePermissions();
   const initialLanguages = [
     { code: "EN", value: "" },
     { code: "ES", value: "" },
@@ -185,10 +186,10 @@ const AddNewCity = ({isEditMode}) => {
 
 
   useEffect(() => {
-    if (can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) || can(ACTIONS.CAN_ADD, MODULES.CITY_PERMS)) {
+    if (isPermissionsReady && (can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) || can(ACTIONS.CAN_ADD, MODULES.CITY_PERMS))) {
       dispatch(getCountries())
     }
-  }, [dispatch, can]);
+  }, [dispatch, can, isPermissionsReady]);
   const {countries : countryOptions} = useSelector(state => state.travelCity)
 
   useEffect(() => {
@@ -196,19 +197,21 @@ const AddNewCity = ({isEditMode}) => {
       toastr.error("Please enter a valid City Code in the URL.");
       navigate("/city");
     }
-    if(isEditMode && cityCode && can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) && can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) {
+    if(isEditMode && cityCode && isPermissionsReady && can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) && can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) {
       dispatch(getCity(cityCode, callback))
     }
-  }, [dispatch, isEditMode, cityCode, can]);
+  }, [dispatch, isEditMode, cityCode, can, isPermissionsReady]);
 
   
-  if(cityPermissionLoading) {
+  // Show loading while permissions are being fetched
+  if(cityPermissionLoading || !isPermissionsReady) {
     return <div className="page-content">
       <Spinner className="ms-2" color="dark" />
       <p>{`Loading ${isEditMode? "city": "page"} data...`}</p>
     </div>
   }
   
+  // Only check permissions after they are loaded
   if (!can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS) || 
     (isEditMode && (!can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) || !can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS))) ||  
     (!isEditMode && !can(ACTIONS.CAN_ADD, MODULES.CITY_PERMS))
