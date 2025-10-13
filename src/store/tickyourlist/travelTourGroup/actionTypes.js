@@ -23,6 +23,9 @@ export const FETCH_TOUR_GROUP_WITH_ID_FAILURE =
 //Emptying the tour group with id
 export const REMOVE_TOUR_GROUP_WITH_ID = "REMOVE_TOUR_GROUP_WITH_ID"
 
+//Clear tour group list
+export const CLEAR_TOUR_GROUP_LIST = "CLEAR_TOUR_GROUP_LIST"
+
 //Updating the tour group
 export const UPDATE_TOUR_GROUP_REQUEST = "UPDATE_TOUR_GROUP_REQUEST"
 export const UPDATE_TOUR_GROUP_SUCCESS = "UPDATE_TOUR_GROUP_SUCCESS"

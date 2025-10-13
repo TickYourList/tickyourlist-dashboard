@@ -13,6 +13,7 @@ import {
   UPDATE_TOUR_GROUP_SUCCESS,
   UPDATE_TOUR_GROUP_FAILURE,
   REMOVE_TOUR_GROUP_WITH_ID,
+  CLEAR_TOUR_GROUP_LIST,
   DELETE_TOUR_GROUP_REQUEST,
   DELETE_TOUR_GROUP_SUCCESS,
   DELETE_TOUR_GROUP_FAILURE,
@@ -59,6 +60,10 @@ export const fetchTourGroupByIdFailure = error => ({
 
 export const removeTourGroupWithId = () => ({
   type: REMOVE_TOUR_GROUP_WITH_ID,
+})
+
+export const clearTourGroupList = () => ({
+  type: CLEAR_TOUR_GROUP_LIST,
 })
 
 // Add Tour Group

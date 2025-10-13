@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import Select from "react-select"
 
 import Breadcrumbs from "components/Common/Breadcrumb"
 
@@ -14,6 +15,7 @@ import {
   ModalBody,
   ModalHeader,
   Row,
+  Label,
 } from "reactstrap"
 import TableContainerWithServerSidePagination from "components/Common/TableContainerWithServerSidePagination"
 import NewTourModel from "./NewTourModel"
@@ -23,12 +25,14 @@ import {
   fetchTourGroupByIdRequest,
   fetchTourGroupsRequest,
   removeTourGroupWithId,
+  clearTourGroupList,
 } from "store/tickyourlist/travelTourGroup/action"
 import DeleteModal from "components/Common/DeleteModal"
 
 import ViewTourGroup from "./ViewTourGroup"
 import { showToastSuccess } from "helpers/toastBuilder"
 import { usePermissions, MODULES, ACTIONS } from "helpers/permissions"
+import { getCitiesList } from "helpers/location_management_helper"
 function TourGroupTable() {
   const [pageSize, setPageSize] = useState(10)
   const [modal, setModal] = useState(false)
@@ -40,6 +44,10 @@ function TourGroupTable() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [selectedTourGroupToBeDeleted, setSelectedTourGroupToBeDeleted] =
     useState(null)
+  const [cities, setCities] = useState([])
+  const [selectedCity, setSelectedCity] = useState(null)
+  const [loadingCities, setLoadingCities] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { can, getTourGroupPermissions, isPermissionsReady, loading: permissionsLoading } = usePermissions()
@@ -64,26 +72,59 @@ function TourGroupTable() {
   }
   const role = JSON.parse(localStorage.getItem("authUser"))?.data?.user
     ?.roles[0]?.code
+  
+  // Fetch cities list on mount
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setLoadingCities(true)
+        const response = await getCitiesList()
+        const cityOptions = response.data.travelCityList.map(city => ({
+          value: city.cityCode,
+          label: `${city.name} (${city.cityCode})`,
+        }))
+        setCities(cityOptions)
+      } catch (error) {
+        console.error("Error fetching cities:", error)
+      } finally {
+        setLoadingCities(false)
+      }
+    }
+    fetchCities()
+  }, [])
+
   //calling the api
   useEffect(() => {
     /* console.log("called dispatch fetch tour group") */
     if (isPermissionsReady && canViewTourGroup) {
-      dispatch(
-        fetchTourGroupsRequest({
-          page: currPage,
-          limit: pageSize,
-        })
-      )
+      const itemsNeeded = currentPage * pageSize
+      const fetchLimit = selectedCity ? 20 : pageSize
+      
+      // Only fetch if we don't have enough data in Redux (or initial load)
+      if (tourGroup.length < itemsNeeded && (tourGroup.length === 0 || tourGroup.length < totalCount)) {
+        const apiPage = Math.ceil(tourGroup.length / fetchLimit) + 1
+        dispatch(
+          fetchTourGroupsRequest({
+            page: apiPage,
+            limit: fetchLimit,
+            cityCode: selectedCity?.value || null,
+          })
+        )
+      }
     }
-  }, [currPage, pageSize, isPermissionsReady, canViewTourGroup])
+  }, [currentPage, pageSize, selectedCity, tourGroup.length, totalCount, isPermissionsReady, canViewTourGroup])
 
   const handlePageChange = newPage => {
-    dispatch(
-      fetchTourGroupsRequest({
-        page: newPage,
-        limit: pageSize,
-      })
-    )
+    setCurrentPage(newPage)
+  }
+
+  const handleCityChange = (selectedOption) => {
+    setSelectedCity(selectedOption)
+    // Reset pagination when city changes
+    setCurrentPage(1)
+    
+    // Clear Redux tour group state to prevent old data from showing
+    dispatch(clearTourGroupList())
   }
   const handleEdit = id => {
     dispatch(fetchTourGroupByIdRequest(id))
@@ -129,6 +170,16 @@ function TourGroupTable() {
   const handleViewCalender = id => {
     showToastSuccess("Calender Triggered")
   }
+
+  // Calculate which data to display - client-side pagination from Redux data
+  const displayData = useMemo(() => {
+    if (tourGroup.length === 0) return []
+    
+    const startIndex = (currentPage - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    
+    return tourGroup.slice(startIndex, endIndex)
+  }, [tourGroup, currentPage, pageSize])
 
   // Show loading while permissions are being fetched
   if (permissionsLoading || !isPermissionsReady) {
@@ -351,12 +402,33 @@ function TourGroupTable() {
             <Col>
               <Card>
                 <CardBody>
-                  {/* This is the server side pagination component */}
+                  {/* City Filter Dropdown */}
+                  <Row className="mb-3">
+                    <Col md={4}>
+                      <Label htmlFor="cityFilter" className="form-label">
+                        Filter by City
+                      </Label>
+                      <Select
+                        id="cityFilter"
+                        value={selectedCity}
+                        onChange={handleCityChange}
+                        options={cities}
+                        isClearable
+                        isSearchable
+                        isLoading={loadingCities}
+                        placeholder="Search and select a city..."
+                        className="react-select-container"
+                        classNamePrefix="react-select"
+                      />
+                    </Col>
+                  </Row>
+                  
+                  {/* This is the pagination component with search support */}
                   <TableContainerWithServerSidePagination
                     columns={columns}
-                    data={tourGroup}
+                    data={displayData}
                     totalCount={totalCount}
-                    currentPage={currPage}
+                    currentPage={currentPage}
                     pageSize={pageSize}
                     onPageChange={handlePageChange}
                     setPageSize={setPageSize}

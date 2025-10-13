@@ -48,8 +48,13 @@ const getCityCollections = (cityCode) => get(url.CITY_COLLECTIONS_API +'/'+ city
 const getCityBookings = ({cityCode, page, limit}) => get(`${url.CITY_BOOKINGS_API}/${cityCode}?page=${page}&limit=${limit}`)
 
 //GET ALL TOUR GROUPS
-const getAllTourGroupsList = (page, limit) =>
-    get(`${url.FETCH_TOUR_GROUP_LIST}?page=${page}&limit=${limit}`)
+const getAllTourGroupsList = (page, limit, cityCode = null) => {
+    let apiUrl = `${url.FETCH_TOUR_GROUP_LIST}?page=${page}&limit=${limit}`;
+    if (cityCode) {
+        apiUrl += `&cityCode=${cityCode}`;
+    }
+    return get(apiUrl);
+}
 
 const getTourBookingDetails = id =>
   get(`${url.FETCH_TOUR_GROUP_BY_ID}${id}/bookings`)

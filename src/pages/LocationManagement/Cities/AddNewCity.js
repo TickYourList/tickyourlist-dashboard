@@ -195,7 +195,7 @@ const AddNewCity = ({isEditMode}) => {
   useEffect(() => {
     if (isEditMode && (!cityCode || cityCode === "undefined" || cityCode.trim() === "")) {
       toastr.error("Please enter a valid City Code in the URL.");
-      navigate("/city");
+      navigate("/cities");
     }
     if(isEditMode && cityCode && isPermissionsReady && can(ACTIONS.CAN_EDIT, MODULES.CITY_PERMS) && can(ACTIONS.CAN_VIEW, MODULES.CITY_PERMS)) {
       dispatch(getCity(cityCode, callback))
@@ -237,7 +237,7 @@ const AddNewCity = ({isEditMode}) => {
               <CardBody>
                 <h4 className="card-title mb-4 d-flex justify-content-between align-items-center">
                   Enter City Details Below
-                  <Button close onClick={() => navigate("/city")} />
+                  <Button close onClick={() => navigate("/cities")} />
                 </h4>
                 
                 <Formik

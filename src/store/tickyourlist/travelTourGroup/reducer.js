@@ -15,6 +15,7 @@ import {
   GET_TOUR_GROUP_BOOKING_REQUEST,
   GET_TOUR_GROUP_BOOKING_SUCCESS,
   REMOVE_TOUR_GROUP_WITH_ID,
+  CLEAR_TOUR_GROUP_LIST,
   UPDATE_TOUR_GROUP_FAILURE,
   UPDATE_TOUR_GROUP_REQUEST,
   UPDATE_TOUR_GROUP_SUCCESS,
@@ -44,12 +45,25 @@ export default function tourGroupReducer(state = initialState, action) {
       }
     case FETCH_TOUR_GROUP_SUCCESS:
       /* console.log("actionstate ", action.payload) */
+      const newTourGroups = action.payload.tourGroups || []
+      const currentPage = action.payload.page || 1
+      
+      // If page 1, replace data; otherwise append new data
+      let updatedTourGroups
+      if (currentPage === 1) {
+        updatedTourGroups = newTourGroups
+      } else {
+        // Append new data, avoiding duplicates
+        const existingIds = new Set(state.tourGroup.map(tg => tg._id))
+        const uniqueNewGroups = newTourGroups.filter(tg => !existingIds.has(tg._id))
+        updatedTourGroups = [...state.tourGroup, ...uniqueNewGroups]
+      }
+      
       return {
         ...state,
         loading: false,
-        tourGroup: action.payload.tourGroups || [],
-
-        currPage: action.payload.page || 1,
+        tourGroup: updatedTourGroups,
+        currPage: currentPage,
         totalCount: action.payload.total || 0,
       }
     case FETCH_TOUR_GROUP_FAILURE:
@@ -121,6 +135,13 @@ export default function tourGroupReducer(state = initialState, action) {
         error: null,
         tourGroupById: {},
         id: "",
+      }
+    case CLEAR_TOUR_GROUP_LIST:
+      return {
+        ...state,
+        tourGroup: [],
+        currPage: 1,
+        totalCount: 0,
       }
     case UPDATE_TOUR_GROUP_REQUEST:
       return {

@@ -37,8 +37,8 @@ import {
 function* fetchTourGroup(action) {
   try {
     /* console.log("datadata ", action) */
-    const { page = 1, limit = 10 } = action.payload || {}
-    const res = yield call(getAllTourGroupsList, page, limit)
+    const { page = 1, limit = 10, cityCode = null } = action.payload || {}
+    const res = yield call(getAllTourGroupsList, page, limit, cityCode)
 
     const data = res.data
     /*    console.log("datadata ", res) */
