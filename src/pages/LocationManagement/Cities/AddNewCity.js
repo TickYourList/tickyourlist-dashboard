@@ -120,7 +120,7 @@ const AddNewCity = ({isEditMode}) => {
   })
 
   const callback = () => {
-      navigate('/city');
+      navigate('/cities');
     };
 
   const onSubmit = (values) =>  {
