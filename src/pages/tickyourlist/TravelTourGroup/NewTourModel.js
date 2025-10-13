@@ -1586,28 +1586,6 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                   <Col className="mb-3">
                                     <Label
                                       className="form-label"
-                                      htmlFor="highlights"
-                                    >
-                                      Highlights{" "}
-                                      <span style={{ color: "red" }}>*</span>
-                                    </Label>
-                                    <EditorReact
-                                      value={values.highlights}
-                                      onChange={val =>
-                                        setFieldValue("highlights", val)
-                                      }
-                                    />
-                                    <ErrorMessage
-                                      component={"span"}
-                                      className="text-danger"
-                                      name="highlights"
-                                    />
-                                  </Col>
-                                </Row>
-                                <Row>
-                                  <Col className="mb-3">
-                                    <Label
-                                      className="form-label"
                                       htmlFor="inclusions"
                                     >
                                       Inclusions{" "}
