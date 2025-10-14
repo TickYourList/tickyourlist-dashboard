@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button, Container } from "reactstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { getFaqsList } from "../../store/faqs/actions";
 import { getDashboardPermission } from "../../store/dashboard-sub-admin/actions";
 import Breadcrumbs from "components/Common/Breadcrumb";
 import TableContainer from "../../components/Common/TableContainer";
+import FaqPreview from "./FaqPreview";
 import "./faqs.scss";
 import { useNavigate } from "react-router-dom";
 
@@ -14,6 +15,9 @@ const FaqsList = () => {
   const navigate = useNavigate();
 
   const { faqs, loading, error } = useSelector(state => state.faqsReducer);
+  
+  const [previewModal, setPreviewModal] = useState(false);
+  const [selectedFaq, setSelectedFaq] = useState(null);
 
   const authUser = JSON.parse(localStorage.getItem("authUser"))?.data;
   const userID = authUser?.user?._id;
@@ -64,6 +68,12 @@ const FaqsList = () => {
     navigate(`/edit-faqs/${cityCode}`);
   };
 
+  const handleViewButtonClick = (faqData) => {
+    console.log("View FAQs:", faqData);
+    setSelectedFaq(faqData);
+    setPreviewModal(true);
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -86,14 +96,13 @@ const FaqsList = () => {
         Header: "View FAQ Details",
         Cell: ({ row }) => (
           <Button
-            color="primary"
+            color="info"
             className="btn-rounded"
             style={{ width: "100px" }}
-            onClick={() => {
-              console.log("View Faqs Details:", row.original._id);
-            }}
+            onClick={() => handleViewButtonClick(row.original)}
           >
-            View
+            <i className="mdi mdi-eye me-1"></i>
+            Preview
           </Button>
         ),
       },
@@ -193,6 +202,16 @@ const FaqsList = () => {
           />
         </div>
       </Container>
+
+      {/* Preview Modal */}
+      {selectedFaq && (
+        <FaqPreview
+          isOpen={previewModal}
+          toggle={() => setPreviewModal(!previewModal)}
+          faqs={selectedFaq.faqs || []}
+          cityName={selectedFaq.city?.displayName || selectedFaq.cityCode}
+        />
+      )}
     </div>
   );
 };
