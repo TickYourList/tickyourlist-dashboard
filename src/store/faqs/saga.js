@@ -1,13 +1,15 @@
 import { call, put, takeLatest } from "redux-saga/effects"
-import { GET_FAQS_LIST, ADD_NEW_FAQS } from "./actionTypes"
+import { GET_FAQS_LIST, ADD_NEW_FAQS, UPDATE_FAQS } from "./actionTypes"
 import {
   getFaqsListSuccess,
   getFaqsListFail,
   addNewFaqsSuccess,
   addNewFaqsFail,
+  updateFaqsSuccess,
+  updateFaqsFail,
 } from "./actions"
 import axios from "axios"
-import { getFaqsList, addFaqs } from "../../helpers/location_management_helper"
+import { getFaqsList, addFaqs, updateFaqs } from "../../helpers/location_management_helper"
 
 function* fetchFaqsList() {
   try {
@@ -38,7 +40,24 @@ function* onAddNewFaqs({ payload }) {
   }
 }
 
+function* onUpdateFaqs({ payload }) {
+  try {
+    const { id, ...faqData } = payload
+    const response = yield call(updateFaqs, id, faqData)
+    console.log(response)
+
+    if (response?.statusCode === "10000") {
+      yield put(updateFaqsSuccess(response.data))
+    } else {
+      yield put(updateFaqsFail(response.message || "Something went wrong"))
+    }
+  } catch (error) {
+    yield put(updateFaqsFail(error.message))
+  }
+}
+
 export default function* faqsSaga() {
   yield takeLatest(GET_FAQS_LIST, fetchFaqsList)
   yield takeLatest(ADD_NEW_FAQS, onAddNewFaqs)
+  yield takeLatest(UPDATE_FAQS, onUpdateFaqs)
 }

@@ -5,6 +5,9 @@ import {
   ADD_NEW_FAQS,
   ADD_NEW_FAQS_SUCCESS,
   ADD_NEW_FAQS_FAIL,
+  UPDATE_FAQS,
+  UPDATE_FAQS_SUCCESS,
+  UPDATE_FAQS_FAIL,
 } from "./actionTypes"
 
 const initialState = {
@@ -54,6 +57,29 @@ const faqsReducer = (state = initialState, action) => {
       }
 
     case ADD_NEW_FAQS_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      }
+
+    case UPDATE_FAQS:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+
+    case UPDATE_FAQS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        faqs: state.faqs.map(faq =>
+          faq._id === action.payload._id ? action.payload : faq
+        ),
+      }
+
+    case UPDATE_FAQS_FAIL:
       return {
         ...state,
         loading: false,

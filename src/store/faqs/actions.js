@@ -5,6 +5,9 @@ import {
   ADD_NEW_FAQS,
   ADD_NEW_FAQS_SUCCESS,
   ADD_NEW_FAQS_FAIL,
+  UPDATE_FAQS,
+  UPDATE_FAQS_SUCCESS,
+  UPDATE_FAQS_FAIL,
 } from "./actionTypes"
 
 export const getFaqsList = () => ({
@@ -33,5 +36,20 @@ export const addNewFaqsSuccess = faq => ({
 
 export const addNewFaqsFail = error => ({
   type: ADD_NEW_FAQS_FAIL,
+  payload: error,
+})
+
+export const updateFaqs = faq => ({
+  type: UPDATE_FAQS,
+  payload: faq,
+})
+
+export const updateFaqsSuccess = faq => ({
+  type: UPDATE_FAQS_SUCCESS,
+  payload: faq,
+})
+
+export const updateFaqsFail = error => ({
+  type: UPDATE_FAQS_FAIL,
   payload: error,
 })

@@ -395,6 +395,7 @@ const authProtectedRoutes = [
   { path: "/settings", component: <Settings /> },
   { path: "/faqs-list", component: <FaqsList /> },
   { path: "/add-new-faqs", component: <FaqsForm /> },
+  { path: "/edit-faqs/:cityCode", component: <FaqsForm /> },
   {
     path: "/",
     exact: true,

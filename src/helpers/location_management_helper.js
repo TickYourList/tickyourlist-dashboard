@@ -373,7 +373,10 @@ const updateSystemSettings = (data) =>
 
   // faqs List
 const getFaqsList = () => get(url.GET_FAQS_LIST);
+const getFaqsByCity = (cityCode) => get(url.GET_FAQS_BY_CITY + cityCode);
+const getFaqById = (id) => get(url.GET_FAQ_BY_ID + id);
 const addFaqs = faqData => post(url.ADD_NEW_FAQS, faqData);
+const updateFaqs = (id, faqData) => put(url.UPDATE_FAQS + id, faqData);
 
 export {
     getCountriesList,
@@ -471,6 +474,9 @@ export {
     getSettings,
     updateSystemSettings,
     getFaqsList,
-    addFaqs
+    getFaqsByCity,
+    getFaqById,
+    addFaqs,
+    updateFaqs
 
 };

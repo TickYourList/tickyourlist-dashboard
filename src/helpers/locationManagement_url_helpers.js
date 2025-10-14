@@ -154,5 +154,8 @@ export const SORT_CATEGORY_API = "v1/tyltravelcategory/travel-categories/sort"
 export const SORT_SUB_CATEGORY_API = "v1/tyltravelsubcategory/sort/travel-subcategories/by/category"
 
 // Faq List
-export const GET_FAQS_LIST = "/v1/tyltravelfaqs/city/DUBAI";
+export const GET_FAQS_LIST = "/v1/tyltravelfaqs/list/all"; // Get all FAQs
+export const GET_FAQS_BY_CITY = "/v1/tyltravelfaqs/city/"; // Note: cityCode will be appended
+export const GET_FAQ_BY_ID = "/v1/tyltravelfaqs/get/"; // Note: ID will be appended
 export const ADD_NEW_FAQS = "/v1/tyltravelfaqs/create";
+export const UPDATE_FAQS = "/v1/tyltravelfaqs/update/"; // Note: ID will be appended
