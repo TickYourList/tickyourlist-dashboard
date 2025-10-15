@@ -1140,7 +1140,6 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                 </Col>
                               </Row>
                               <br />
-                              {/* ticket delivery info and confirmed ticket info */}
                               <Row>
                                 <Col className="mb-3">
                                   <Label
