@@ -212,146 +212,146 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
 
   const validationSchema = Yup.object({
     name: Yup.string().required("Tour Group name is required"),
-    flowType: Yup.string(),
-    neighbourhood: Yup.string(),
-    url: Yup.string(),
-    cityCode: Yup.string(),
-    metaTitle: Yup.string(),
-    metaDescription: Yup.string(),
-    summary: Yup.string(),
-    highlights: Yup.string(),
-    faq: Yup.string(),
-    validity: Yup.date(),
-    adhoc: Yup.string().nullable(),
-    shortSummary: Yup.string(),
-    inclusions: Yup.string(),
-    exclusions: Yup.string(),
-    itinerary: Yup.string(),
-    additionalInfo: Yup.string(),
-    microBrandsDescriptor: Yup.string(),
-    microBrandsHighlight: Yup.string(),
-    callToAction: Yup.string(),
-    canonicalUrl: Yup.string().url("Please enter a valid URL"),
-    noIndex: Yup.boolean(),
-    supportedLanguages: Yup.array(),
-    contentMachineTranslated: Yup.boolean(),
+    // flowType: Yup.string(),
+    // neighbourhood: Yup.string(),
+    // url: Yup.string(),
+    // cityCode: Yup.string(),
+    // metaTitle: Yup.string(),
+    // metaDescription: Yup.string(),
+    // summary: Yup.string(),
+    // highlights: Yup.string(),
+    // faq: Yup.string(),
+    // validity: Yup.date(),
+    // adhoc: Yup.string().nullable(),
+    // shortSummary: Yup.string(),
+    // inclusions: Yup.string(),
+    // exclusions: Yup.string(),
+    // itinerary: Yup.string(),
+    // additionalInfo: Yup.string(),
+    // microBrandsDescriptor: Yup.string(),
+    // microBrandsHighlight: Yup.string(),
+    // callToAction: Yup.string(),
+    // canonicalUrl: Yup.string().url("Please enter a valid URL"),
+    // noIndex: Yup.boolean(),
+    // supportedLanguages: Yup.array(),
+    // contentMachineTranslated: Yup.boolean(),
 
-    ticketDeliveryInfo: Yup.string(),
-    confirmedTicketInfo: Yup.string(),
-    cancellation: Yup.boolean().oneOf([true, false], "Please select a value."),
-    status: Yup.boolean().oneOf([true, false], "Please select a value."),
-    displaySeatsLeftDisabled: Yup.boolean().oneOf(
-      [true, false],
-      "Please select a value."
-    ),
-    hasMobileTicket: Yup.boolean().oneOf(
-      [true, false],
-      "Please select a value."
-    ),
-    hasHotelPickup: Yup.boolean().oneOf(
-      [true, false],
-      "Please select a value."
-    ),
-    hasInstantConfirmation: Yup.boolean().oneOf(
-      [true, false],
-      "Please select a value."
-    ),
-    hasSkipTheLine: Yup.boolean().oneOf(
-      [true, false],
-      "Please select a value."
-    ),
-    whatsappOnly: Yup.boolean().oneOf([true, false], "Please select a value."),
-    notAvailable: Yup.boolean().oneOf([true, false], "Please select a value."),
+    // ticketDeliveryInfo: Yup.string(),
+    // confirmedTicketInfo: Yup.string(),
+    // cancellation: Yup.boolean().oneOf([true, false], "Please select a value."),
+    // status: Yup.boolean().oneOf([true, false], "Please select a value."),
+    // displaySeatsLeftDisabled: Yup.boolean().oneOf(
+    //   [true, false],
+    //   "Please select a value."
+    // ),
+    // hasMobileTicket: Yup.boolean().oneOf(
+    //   [true, false],
+    //   "Please select a value."
+    // ),
+    // hasHotelPickup: Yup.boolean().oneOf(
+    //   [true, false],
+    //   "Please select a value."
+    // ),
+    // hasInstantConfirmation: Yup.boolean().oneOf(
+    //   [true, false],
+    //   "Please select a value."
+    // ),
+    // hasSkipTheLine: Yup.boolean().oneOf(
+    //   [true, false],
+    //   "Please select a value."
+    // ),
+    // whatsappOnly: Yup.boolean().oneOf([true, false], "Please select a value."),
+    // notAvailable: Yup.boolean().oneOf([true, false], "Please select a value."),
 
-    minDuration: Yup.number(),
-    maxDuration: Yup.number(),
-    distance: Yup.number(),
-    tourType: Yup.string(),
-    descriptors: Yup.array(),
+    // minDuration: Yup.number(),
+    // maxDuration: Yup.number(),
+    // distance: Yup.number(),
+    // tourType: Yup.string(),
+    // descriptors: Yup.array(),
 
-    allTags: Yup.array(),
+    // allTags: Yup.array(),
 
-    urlSlugs: Yup.object().shape(
-      Object.fromEntries(slugLangs.map(lang => [lang, Yup.string().nullable()]))
-    ),
+    // urlSlugs: Yup.object().shape(
+    //   Object.fromEntries(slugLangs.map(lang => [lang, Yup.string().nullable()]))
+    // ),
 
-    venueId: Yup.string(),
-    ticketValidity: Yup.object().shape({
-      ticketValidityType: Yup.string(),
-      ticketValidityUntilDate: Yup.date(),
-      ticketValidityUntilDaysFromPurchase: Yup.number(),
-    }),
-    cancellationPolicy: Yup.object(),
-    cancellationPolicyV2: Yup.object().shape({
-      cancellable: Yup.boolean().oneOf([true, false], "Please select a value."),
-      cancellableUpTo: Yup.number(),
-    }),
-    reschedulePolicy: Yup.object().shape({
-      reschedulable: Yup.boolean().oneOf(
-        [true, false],
-        "Please select a value."
-      ),
-      reschedulableUpTo: Yup.number(),
-    }),
-    supportedLanguages: Yup.array(),
-    startLocation: Yup.object().shape({
-      latitude: Yup.number(),
-      longitude: Yup.number(),
-      addressLine1: Yup.string(),
-      addressLine2: Yup.string(),
-      cityName: Yup.string(),
-      postalCode: Yup.number(),
-      state: Yup.string(),
-      countryCode: Yup.string(),
-    }),
-    endLocation: Yup.object().shape({
-      latitude: Yup.number(),
-      longitude: Yup.number(),
-      addressLine1: Yup.string(),
-      addressLine2: Yup.string(),
-      cityName: Yup.string(),
-      postalCode: Yup.number(),
-      state: Yup.string(),
-      countryCode: Yup.string(),
-    }),
+    // venueId: Yup.string(),
+    // ticketValidity: Yup.object().shape({
+    //   ticketValidityType: Yup.string(),
+    //   ticketValidityUntilDate: Yup.date(),
+    //   ticketValidityUntilDaysFromPurchase: Yup.number(),
+    // }),
+    // cancellationPolicy: Yup.object(),
+    // cancellationPolicyV2: Yup.object().shape({
+    //   cancellable: Yup.boolean().oneOf([true, false], "Please select a value."),
+    //   cancellableUpTo: Yup.number(),
+    // }),
+    // reschedulePolicy: Yup.object().shape({
+    //   reschedulable: Yup.boolean().oneOf(
+    //     [true, false],
+    //     "Please select a value."
+    //   ),
+    //   reschedulableUpTo: Yup.number(),
+    // }),
+    // supportedLanguages: Yup.array(),
+    // startLocation: Yup.object().shape({
+    //   latitude: Yup.number(),
+    //   longitude: Yup.number(),
+    //   addressLine1: Yup.string(),
+    //   addressLine2: Yup.string(),
+    //   cityName: Yup.string(),
+    //   postalCode: Yup.number(),
+    //   state: Yup.string(),
+    //   countryCode: Yup.string(),
+    // }),
+    // endLocation: Yup.object().shape({
+    //   latitude: Yup.number(),
+    //   longitude: Yup.number(),
+    //   addressLine1: Yup.string(),
+    //   addressLine2: Yup.string(),
+    //   cityName: Yup.string(),
+    //   postalCode: Yup.number(),
+    //   state: Yup.string(),
+    //   countryCode: Yup.string(),
+    // }),
 
-    imageUploads: Yup.array()
-      .of(
-        Yup.object().shape({
-          altText: Yup.string(),
-          image: Yup.mixed(),
-        })
-      )
-      .min(5, "At least 5 tour image is required")
-      .max(15, "Maximum 15 tour images allowed"),
+    // imageUploads: Yup.array()
+    //   .of(
+    //     Yup.object().shape({
+    //       altText: Yup.string(),
+    //       image: Yup.mixed(),
+    //     })
+    //   )
+    //   .min(5, "At least 5 tour image is required")
+    //   .max(15, "Maximum 15 tour images allowed"),
 
-    productImages: Yup.array()
-      .of(
-        Yup.object().shape({
-          altText: Yup.string(),
-          image: Yup.mixed(),
-        })
-      )
-      .min(5, "At least 5 tour image is required")
-      .max(10, "Maximum 10 product images allowed"),
-    safetyImages: Yup.array()
-      .of(
-        Yup.object().shape({
-          altText: Yup.string(),
-          image: Yup.mixed(),
-        })
-      )
+    // productImages: Yup.array()
+    //   .of(
+    //     Yup.object().shape({
+    //       altText: Yup.string(),
+    //       image: Yup.mixed(),
+    //     })
+    //   )
+    //   .min(5, "At least 5 tour image is required")
+    //   .max(10, "Maximum 10 product images allowed"),
+    // safetyImages: Yup.array()
+    //   .of(
+    //     Yup.object().shape({
+    //       altText: Yup.string(),
+    //       image: Yup.mixed(),
+    //     })
+    //   )
 
-      .max(10, "Maximum 10 safety images allowed"),
-    safetyVideos: Yup.array()
-      .of(
-        Yup.object().shape({
-          altText: Yup.string(),
-          image: Yup.mixed(),
-        })
-      )
+    //   .max(10, "Maximum 10 safety images allowed"),
+    // safetyVideos: Yup.array()
+    //   .of(
+    //     Yup.object().shape({
+    //       altText: Yup.string(),
+    //       image: Yup.mixed(),
+    //     })
+    //   )
 
-      .max(10, "Maximum 10 safety videos allowed"),
+    //   .max(10, "Maximum 10 safety videos allowed"),
   })
 
   const emptyStringToNull = obj => {
