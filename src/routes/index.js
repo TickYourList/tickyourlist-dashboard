@@ -186,6 +186,7 @@ import SubCategorySorting from "../pages/LocationManagement/Cities/SubCategorySo
 import Settings from "pages/Travel/Settings";
 import FaqsList from "pages/Content-marketing/Faqs";
 import FaqsForm from "pages/Content-marketing/FaqsForm";
+import PricingManagement from "../pages/tickyourlist/PricingManagement";
 
 
 const authProtectedRoutes = [
@@ -396,6 +397,9 @@ const authProtectedRoutes = [
   { path: "/faqs-list", component: <FaqsList /> },
   { path: "/add-new-faqs", component: <FaqsForm /> },
   { path: "/edit-faqs/:cityCode", component: <FaqsForm /> },
+  // Pricing Management
+  { path: "/pricing-management/:variantId", component: <PricingManagement /> },
+  { path: "/pricing-management", component: <PricingManagement /> },
   {
     path: "/",
     exact: true,

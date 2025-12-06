@@ -1,0 +1,317 @@
+{
+  "createVariant": {
+    "simpleListing": {
+      "name": "Dubai Desert Safari",
+      "productId": "507f1f77bcf86cd799439011",
+      "cityCode": "DXB",
+      "status": true,
+      "listingPrice": {
+        "prices": [
+          {
+            "type": "adult",
+            "originalPrice": 100,
+            "finalPrice": 100,
+            "minimumPayablePrice": 20,
+            "bestDiscount": 0,
+            "ageRange": { "min": 18, "max": 99 }
+          },
+          {
+            "type": "child",
+            "originalPrice": 80,
+            "finalPrice": 80,
+            "minimumPayablePrice": 16,
+            "bestDiscount": 0,
+            "ageRange": { "min": 3, "max": 17 }
+          },
+          {
+            "type": "infant",
+            "originalPrice": 0,
+            "finalPrice": 0,
+            "ageRange": { "min": 0, "max": 2 }
+          }
+        ],
+        "groupSize": 1,
+        "otherPricesExist": false
+      }
+    },
+    "multiCurrency": {
+      "name": "Burj Khalifa Ticket",
+      "productId": "507f1f77bcf86cd799439011",
+      "cityCode": "DXB",
+      "status": true,
+      "listingPrice": {
+        "prices": [
+          { "type": "adult", "originalPrice": 100, "finalPrice": 100 },
+          { "type": "child", "originalPrice": 80, "finalPrice": 80 }
+        ],
+        "groupSize": 1
+      },
+      "listingPricesInAllCurrencies": [
+        {
+          "currencyCode": "USD",
+          "prices": [
+            { "type": "adult", "originalPrice": 100, "finalPrice": 100 },
+            { "type": "child", "originalPrice": 80, "finalPrice": 80 }
+          ]
+        },
+        {
+          "currencyCode": "EUR",
+          "prices": [
+            { "type": "adult", "originalPrice": 85, "finalPrice": 85 },
+            { "type": "child", "originalPrice": 68, "finalPrice": 68 }
+          ]
+        },
+        {
+          "currencyCode": "AED",
+          "prices": [
+            { "type": "adult", "originalPrice": 367, "finalPrice": 367 },
+            { "type": "child", "originalPrice": 294, "finalPrice": 294 }
+          ]
+        }
+      ]
+    }
+  },
+  
+  "createPricingRules": {
+    "defaultRule": {
+      "tag": "default_pricing",
+      "name": "Default Pricing",
+      "priority": 5,
+      "conditions": {},
+      "dayPricing": [
+        {
+          "currency": "USD",
+          "prices": [
+            { "type": "adult", "finalPrice": 100, "originalPrice": 100 },
+            { "type": "child", "finalPrice": 80, "originalPrice": 80 },
+            { "type": "infant", "finalPrice": 0, "originalPrice": 0 }
+          ]
+        }
+      ],
+      "isActive": true
+    },
+    
+    "weekendPremium": {
+      "tag": "weekend_premium",
+      "name": "Weekend Premium Pricing",
+      "priority": 18,
+      "conditions": {
+        "weekdays": [5, 6, 0]
+      },
+      "dayPricing": [
+        {
+          "currency": "USD",
+          "prices": [
+            { "type": "adult", "finalPrice": 150, "originalPrice": 150 },
+            { "type": "child", "finalPrice": 120, "originalPrice": 120 }
+          ]
+        }
+      ],
+      "isActive": true
+    },
+    
+    "summerSeason": {
+      "tag": "summer_peak",
+      "name": "Summer Peak Season",
+      "priority": 28,
+      "conditions": {
+        "months": [6, 7, 8]
+      },
+      "dayPricing": [
+        {
+          "currency": "USD",
+          "prices": [
+            { "type": "adult", "finalPrice": 200, "originalPrice": 200 },
+            { "type": "child", "finalPrice": 160, "originalPrice": 160 }
+          ]
+        }
+      ],
+      "isActive": true
+    },
+    
+    "summerWeekendPremium": {
+      "tag": "summer_weekend_premium",
+      "name": "Summer Weekend Premium",
+      "priority": 38,
+      "conditions": {
+        "months": [6, 7, 8],
+        "weekdays": [5, 6, 0]
+      },
+      "dayPricing": [
+        {
+          "currency": "USD",
+          "prices": [
+            { "type": "adult", "finalPrice": 250, "originalPrice": 250 },
+            { "type": "child", "finalPrice": 200, "originalPrice": 200 }
+          ]
+        }
+      ],
+      "isActive": true
+    },
+    
+    "holidaySpecial": {
+      "tag": "christmas_newyear",
+      "name": "Christmas & New Year Special",
+      "priority": 85,
+      "conditions": {
+        "dateRanges": [
+          {
+            "startDate": "2024-12-20",
+            "endDate": "2025-01-05",
+            "year": 2024
+          }
+        ]
+      },
+      "dayPricing": [
+        {
+          "currency": "USD",
+          "prices": [
+            { "type": "adult", "finalPrice": 300, "originalPrice": 300 },
+            { "type": "child", "finalPrice": 240, "originalPrice": 240 }
+          ]
+        }
+      ],
+      "isActive": true
+    },
+    
+    "slotBased": {
+      "tag": "premium_evening_slots",
+      "name": "Premium Evening Slots",
+      "priority": 20,
+      "conditions": {
+        "weekdays": [5, 6, 0]
+      },
+      "slots": [
+        {
+          "startTime": "18:00",
+          "endTime": "20:00",
+          "maxCapacity": 12,
+          "isAvailable": true
+        }
+      ],
+      "dayPricing": [
+        {
+          "currency": "USD",
+          "prices": [
+            { "type": "adult", "finalPrice": 180, "originalPrice": 180 },
+            { "type": "child", "finalPrice": 145, "originalPrice": 145 }
+          ]
+        }
+      ],
+      "isActive": true
+    },
+    
+    "unavailabilityRule": {
+      "tag": "maintenance_closure",
+      "name": "Maintenance Closure",
+      "priority": 95,
+      "conditions": {
+        "dateRanges": [
+          {
+            "startDate": "2024-03-15",
+            "endDate": "2024-03-17"
+          }
+        ]
+      },
+      "isAvailable": false,
+      "reason": "Scheduled maintenance",
+      "isActive": true
+    }
+  },
+  
+  "bulkCreateRules": {
+    "rules": [
+      {
+        "tag": "default_pricing",
+        "name": "Default Pricing",
+        "priority": 5,
+        "conditions": {},
+        "dayPricing": [
+          {
+            "currency": "USD",
+            "prices": [
+              { "type": "adult", "finalPrice": 100, "originalPrice": 100 },
+              { "type": "child", "finalPrice": 80, "originalPrice": 80 }
+            ]
+          }
+        ],
+        "isActive": true
+      },
+      {
+        "tag": "weekday_discount",
+        "name": "Weekday Discount",
+        "priority": 15,
+        "conditions": { "weekdays": [1, 2, 3, 4] },
+        "dayPricing": [
+          {
+            "currency": "USD",
+            "prices": [
+              { "type": "adult", "finalPrice": 80, "originalPrice": 80 },
+              { "type": "child", "finalPrice": 65, "originalPrice": 65 }
+            ]
+          }
+        ],
+        "isActive": true
+      },
+      {
+        "tag": "weekend_premium",
+        "name": "Weekend Premium",
+        "priority": 18,
+        "conditions": { "weekdays": [5, 6, 0] },
+        "dayPricing": [
+          {
+            "currency": "USD",
+            "prices": [
+              { "type": "adult", "finalPrice": 150, "originalPrice": 150 },
+              { "type": "child", "finalPrice": 120, "originalPrice": 120 }
+            ]
+          }
+        ],
+        "isActive": true
+      },
+      {
+        "tag": "summer_peak",
+        "name": "Summer Peak",
+        "priority": 28,
+        "conditions": { "months": [6, 7, 8] },
+        "dayPricing": [
+          {
+            "currency": "USD",
+            "prices": [
+              { "type": "adult", "finalPrice": 200, "originalPrice": 200 },
+              { "type": "child", "finalPrice": 160, "originalPrice": 160 }
+            ]
+          }
+        ],
+        "isActive": true
+      },
+      {
+        "tag": "winter_low",
+        "name": "Winter Low Season",
+        "priority": 25,
+        "conditions": { "months": [12, 1, 2] },
+        "dayPricing": [
+          {
+            "currency": "USD",
+            "prices": [
+              { "type": "adult", "finalPrice": 70, "originalPrice": 70 },
+              { "type": "child", "finalPrice": 55, "originalPrice": 55 }
+            ]
+          }
+        ],
+        "isActive": true
+      }
+    ]
+  },
+  
+  "apiEndpoints": {
+    "getVariant": "GET /api/v1/tyl-travel-tour-group-variants/:variantId",
+    "updateVariant": "PUT /api/v1/tyl-travel-tour-group-variants/:variantId",
+    "getRules": "GET /api/v1/pricing-rules/:variantId",
+    "createRule": "POST /api/v1/pricing-rule/:variantId",
+    "updateRule": "PUT /api/v1/pricing-rule/:variantId/:tag",
+    "deleteRule": "DELETE /api/v1/pricing-rule/:variantId/:tag",
+    "previewRules": "POST /api/v1/preview-rule-matches/:variantId"
+  }
+}
+

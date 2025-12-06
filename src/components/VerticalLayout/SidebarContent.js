@@ -187,6 +187,12 @@ const SidebarContent = props => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/pricing-management">
+                    <i className="bx bx-dollar-circle"></i>
+                    {props.t("Pricing Management")}
+                  </Link>
+                </li>
+                <li>
                   <Link to="/calendar-pricing-&-availability">
                     {props.t("calendar pricing & availability")}
                   </Link>

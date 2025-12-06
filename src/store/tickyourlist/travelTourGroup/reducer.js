@@ -19,6 +19,18 @@ import {
   UPDATE_TOUR_GROUP_FAILURE,
   UPDATE_TOUR_GROUP_REQUEST,
   UPDATE_TOUR_GROUP_SUCCESS,
+  FETCH_TOUR_GROUPS_BY_CITY_REQUEST,
+  FETCH_TOUR_GROUPS_BY_CITY_SUCCESS,
+  FETCH_TOUR_GROUPS_BY_CITY_FAILURE,
+  FETCH_VARIANTS_BY_TOUR_REQUEST,
+  FETCH_VARIANTS_BY_TOUR_SUCCESS,
+  FETCH_VARIANTS_BY_TOUR_FAILURE,
+  FETCH_PRICING_RULES_REQUEST,
+  FETCH_PRICING_RULES_SUCCESS,
+  FETCH_PRICING_RULES_FAILURE,
+  SEARCH_TOUR_GROUPS_REQUEST,
+  SEARCH_TOUR_GROUPS_SUCCESS,
+  SEARCH_TOUR_GROUPS_FAILURE,
 } from "./actionTypes"
 
 //initial state for fetching tourgroups
@@ -26,6 +38,10 @@ const initialState = {
   tourGroup: [],
   tourGroupById: {},
   bookingTourGroupById: [],
+  tourGroupsByCity: [], // Lightweight list for dropdowns
+  variantsByTour: [], // Variants for selected tour
+  pricingRules: [], // Pricing rules for selected variant
+  searchedTourGroups: [], // Search results
   id: "",
   currPage: 1,
   totalCount: 0,
@@ -183,6 +199,86 @@ export default function tourGroupReducer(state = initialState, action) {
       return {
         ...state,
         loading: false,
+        error: action.payload,
+      }
+    case FETCH_TOUR_GROUPS_BY_CITY_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case FETCH_TOUR_GROUPS_BY_CITY_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        tourGroupsByCity: action.payload || [],
+        error: null,
+      }
+    case FETCH_TOUR_GROUPS_BY_CITY_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        tourGroupsByCity: [],
+        error: action.payload,
+      }
+    case FETCH_VARIANTS_BY_TOUR_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case FETCH_VARIANTS_BY_TOUR_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        variantsByTour: action.payload || [],
+        error: null,
+      }
+    case FETCH_VARIANTS_BY_TOUR_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        variantsByTour: [],
+        error: action.payload,
+      }
+    case FETCH_PRICING_RULES_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case FETCH_PRICING_RULES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        pricingRules: action.payload.rules || [],
+        error: null,
+      }
+    case FETCH_PRICING_RULES_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        pricingRules: [],
+        error: action.payload,
+      }
+    case SEARCH_TOUR_GROUPS_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case SEARCH_TOUR_GROUPS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        searchedTourGroups: action.payload || [],
+        error: null,
+      }
+    case SEARCH_TOUR_GROUPS_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        searchedTourGroups: [],
         error: action.payload,
       }
     default:

@@ -20,6 +20,18 @@ import {
   GET_TOUR_GROUP_BOOKING_REQUEST,
   GET_TOUR_GROUP_BOOKING_SUCCESS,
   GET_TOUR_GROUP_BOOKING_FAILURE,
+  FETCH_TOUR_GROUPS_BY_CITY_REQUEST,
+  FETCH_TOUR_GROUPS_BY_CITY_SUCCESS,
+  FETCH_TOUR_GROUPS_BY_CITY_FAILURE,
+  FETCH_VARIANTS_BY_TOUR_REQUEST,
+  FETCH_VARIANTS_BY_TOUR_SUCCESS,
+  FETCH_VARIANTS_BY_TOUR_FAILURE,
+  FETCH_PRICING_RULES_REQUEST,
+  FETCH_PRICING_RULES_SUCCESS,
+  FETCH_PRICING_RULES_FAILURE,
+  SEARCH_TOUR_GROUPS_REQUEST,
+  SEARCH_TOUR_GROUPS_SUCCESS,
+  SEARCH_TOUR_GROUPS_FAILURE,
 } from "./actionTypes"
 
 // Fetch All Tour Groups
@@ -132,4 +144,68 @@ export const getTourGroupBookingDetailSuccess = payload => {
     payload,
   }
 }
+
+// Fetch tour groups by city (lightweight for dropdowns)
+export const fetchTourGroupsByCityRequest = cityCode => ({
+  type: FETCH_TOUR_GROUPS_BY_CITY_REQUEST,
+  payload: cityCode,
+})
+
+export const fetchTourGroupsByCitySuccess = tourGroups => ({
+  type: FETCH_TOUR_GROUPS_BY_CITY_SUCCESS,
+  payload: tourGroups,
+})
+
+export const fetchTourGroupsByCityFailure = error => ({
+  type: FETCH_TOUR_GROUPS_BY_CITY_FAILURE,
+  payload: error,
+})
+
+// Fetch variants by tour
+export const fetchVariantsByTourRequest = tourId => ({
+  type: FETCH_VARIANTS_BY_TOUR_REQUEST,
+  payload: tourId,
+})
+
+export const fetchVariantsByTourSuccess = variants => ({
+  type: FETCH_VARIANTS_BY_TOUR_SUCCESS,
+  payload: variants,
+})
+
+export const fetchVariantsByTourFailure = error => ({
+  type: FETCH_VARIANTS_BY_TOUR_FAILURE,
+  payload: error,
+})
+
+// Fetch pricing rules by variant
+export const fetchPricingRulesRequest = variantId => ({
+  type: FETCH_PRICING_RULES_REQUEST,
+  payload: variantId,
+})
+
+export const fetchPricingRulesSuccess = rules => ({
+  type: FETCH_PRICING_RULES_SUCCESS,
+  payload: rules,
+})
+
+export const fetchPricingRulesFailure = error => ({
+  type: FETCH_PRICING_RULES_FAILURE,
+  payload: error,
+})
+
+// Search tour groups by name
+export const searchTourGroupsRequest = (searchQuery, cityCode) => ({
+  type: SEARCH_TOUR_GROUPS_REQUEST,
+  payload: { searchQuery, cityCode },
+})
+
+export const searchTourGroupsSuccess = tourGroups => ({
+  type: SEARCH_TOUR_GROUPS_SUCCESS,
+  payload: tourGroups,
+})
+
+export const searchTourGroupsFailure = error => ({
+  type: SEARCH_TOUR_GROUPS_FAILURE,
+  payload: error,
+})
 

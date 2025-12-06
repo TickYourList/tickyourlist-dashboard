@@ -16,6 +16,8 @@ import {
   ModalHeader,
   Row,
   Label,
+  Input,
+  Spinner,
 } from "reactstrap"
 import TableContainerWithServerSidePagination from "components/Common/TableContainerWithServerSidePagination"
 import NewTourModel from "./NewTourModel"
@@ -26,6 +28,7 @@ import {
   fetchTourGroupsRequest,
   removeTourGroupWithId,
   clearTourGroupList,
+  searchTourGroupsRequest,
 } from "store/tickyourlist/travelTourGroup/action"
 import DeleteModal from "components/Common/DeleteModal"
 
@@ -48,6 +51,9 @@ function TourGroupTable() {
   const [selectedCity, setSelectedCity] = useState(null)
   const [loadingCities, setLoadingCities] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const [isSearchMode, setIsSearchMode] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { can, getTourGroupPermissions, isPermissionsReady, loading: permissionsLoading } = usePermissions()
@@ -59,7 +65,7 @@ function TourGroupTable() {
   const canDeleteTourGroup = can(ACTIONS.CAN_DELETE, MODULES.TOUR_GROUP_PERMS)
 
   /* destructuring the tour group state */
-  const { tourGroup, currPage, totalCount, error } = useSelector(
+  const { tourGroup, currPage, totalCount, error, searchedTourGroups, loading } = useSelector(
     state => state.tourGroup
   )
 
@@ -125,7 +131,50 @@ function TourGroupTable() {
     
     // Clear Redux tour group state to prevent old data from showing
     dispatch(clearTourGroupList())
+    
+    // Exit search mode when city changes
+    if (isSearchMode) {
+      setIsSearchMode(false)
+      setSearchQuery('')
+    }
   }
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      return
+    }
+    setIsSearching(true)
+    setIsSearchMode(true)
+    setCurrentPage(1)
+    dispatch(searchTourGroupsRequest(searchQuery.trim(), selectedCity?.value || null))
+  }
+
+  const handleClearSearch = () => {
+    setSearchQuery('')
+    setIsSearchMode(false)
+    setIsSearching(false)
+    setCurrentPage(1)
+    dispatch(clearTourGroupList())
+    // Refetch regular tour groups
+    if (isPermissionsReady && canViewTourGroup) {
+      dispatch(
+        fetchTourGroupsRequest({
+          page: 1,
+          limit: pageSize,
+          cityCode: selectedCity?.value || null,
+        })
+      )
+    }
+  }
+
+  // Handle search results
+  useEffect(() => {
+    if (searchedTourGroups && searchedTourGroups.length > 0) {
+      setIsSearching(false)
+    } else if (isSearchMode && searchedTourGroups && searchedTourGroups.length === 0) {
+      setIsSearching(false)
+    }
+  }, [searchedTourGroups, isSearchMode])
   const handleEdit = id => {
     dispatch(fetchTourGroupByIdRequest(id))
     setEditId(id)
@@ -173,13 +222,21 @@ function TourGroupTable() {
 
   // Calculate which data to display - client-side pagination from Redux data
   const displayData = useMemo(() => {
-    if (tourGroup.length === 0) return []
+    // Use search results if in search mode, otherwise use regular tour groups
+    const dataSource = isSearchMode ? (searchedTourGroups || []) : tourGroup
+    
+    if (dataSource.length === 0) return []
     
     const startIndex = (currentPage - 1) * pageSize
     const endIndex = startIndex + pageSize
     
-    return tourGroup.slice(startIndex, endIndex)
-  }, [tourGroup, currentPage, pageSize])
+    return dataSource.slice(startIndex, endIndex)
+  }, [tourGroup, searchedTourGroups, currentPage, pageSize, isSearchMode])
+
+  // Update total count based on search mode
+  const displayTotalCount = useMemo(() => {
+    return isSearchMode ? (searchedTourGroups?.length || 0) : totalCount
+  }, [isSearchMode, searchedTourGroups, totalCount])
 
   // Show loading while permissions are being fetched
   if (permissionsLoading || !isPermissionsReady) {
@@ -402,7 +459,7 @@ function TourGroupTable() {
             <Col>
               <Card>
                 <CardBody>
-                  {/* City Filter Dropdown */}
+                  {/* Search and Filter Section */}
                   <Row className="mb-3">
                     <Col md={4}>
                       <Label htmlFor="cityFilter" className="form-label">
@@ -421,20 +478,74 @@ function TourGroupTable() {
                         classNamePrefix="react-select"
                       />
                     </Col>
+                    <Col md={6}>
+                      <Label htmlFor="tourSearch" className="form-label">
+                        Search Tour Group by Name
+                      </Label>
+                      <div className="d-flex gap-2">
+                        <Input
+                          id="tourSearch"
+                          type="text"
+                          placeholder="Enter tour group name to search..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && searchQuery.trim()) {
+                              handleSearch()
+                            }
+                          }}
+                          disabled={loading || isSearching}
+                        />
+                        <Button
+                          color="primary"
+                          onClick={handleSearch}
+                          disabled={!searchQuery.trim() || loading || isSearching}
+                        >
+                          {isSearching ? (
+                            <>
+                              <Spinner size="sm" className="me-1" />
+                              Searching...
+                            </>
+                          ) : (
+                            <>
+                              <i className="bx bx-search me-1"></i>
+                              Search
+                            </>
+                          )}
+                        </Button>
+                        {isSearchMode && (
+                          <Button
+                            color="secondary"
+                            onClick={handleClearSearch}
+                            disabled={loading || isSearching}
+                          >
+                            <i className="bx bx-x me-1"></i>
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                      {isSearchMode && searchedTourGroups && (
+                        <small className="text-muted mt-1 d-block">
+                          {searchedTourGroups.length > 0 
+                            ? `Found ${searchedTourGroups.length} tour group(s)`
+                            : 'No tour groups found matching your search'}
+                        </small>
+                      )}
+                    </Col>
                   </Row>
                   
                   {/* This is the pagination component with search support */}
                   <TableContainerWithServerSidePagination
                     columns={columns}
                     data={displayData}
-                    totalCount={totalCount}
+                    totalCount={displayTotalCount}
                     currentPage={currentPage}
                     pageSize={pageSize}
                     onPageChange={handlePageChange}
                     setPageSize={setPageSize}
                     toggleViewModal={toggle}
                     isAddNewTourGroup={canAddTourGroup}
-                    isGlobalFilter={true}
+                    isGlobalFilter={!isSearchMode}
                     customPageSize={10}
                     className="custom-header-css"
                   />

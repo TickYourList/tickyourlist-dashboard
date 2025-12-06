@@ -31,7 +31,11 @@ export const CITY_BOOKINGS_API = "v1/tyltravelcity/get/travelcity-details/bookin
 
 export const FETCH_TOUR_GROUP_LIST =
   "/v1/tyltraveltourgroup/get/all/travel-tour-groups-list"
-  export const FETCH_CITY_CODE_LIST =
+export const FETCH_TOUR_GROUPS_BY_CITY = "/v1/tyltraveltourgroup/tour-groups-by-city"
+export const SEARCH_TOUR_GROUPS = "/v1/tyltraveltourgroup/search/travel-tour-groups"
+export const FETCH_VARIANTS_BY_TOUR = "/v1/tyltraveltourgroupvariant/by-tour"
+export const FETCH_PRICING_RULES = "/v1/variant-calendar-pricing/pricing-rules"
+export const FETCH_CITY_CODE_LIST =
   "/v1/tyltravelcity/get/travelcity/submitted/all"
 export const ADD_TOUR_GROUP = "/v1/tyltraveltourgroup/add/travel-tour-group"
 export const UPDATE_TOUR_GROUP = "/v1/tyltraveltourgroup/update/tour-group"

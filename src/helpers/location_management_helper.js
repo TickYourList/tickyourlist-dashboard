@@ -56,6 +56,30 @@ const getAllTourGroupsList = (page, limit, cityCode = null) => {
     return get(apiUrl);
 }
 
+//GET TOUR GROUPS BY CITY (lightweight for dropdowns)
+const getTourGroupsByCity = (cityCode) => {
+    return get(`${url.FETCH_TOUR_GROUPS_BY_CITY}?cityCode=${cityCode}`);
+}
+
+//SEARCH TOUR GROUPS BY NAME
+const searchTourGroupsByName = (searchQuery, cityCode = null) => {
+    let apiUrl = `${url.SEARCH_TOUR_GROUPS}?q=${encodeURIComponent(searchQuery)}`;
+    if (cityCode) {
+        apiUrl += `&cityCode=${cityCode}`;
+    }
+    return get(apiUrl);
+}
+
+//GET VARIANTS BY TOUR
+const getVariantsByTour = (tourId) => {
+    return get(`${url.FETCH_VARIANTS_BY_TOUR}/${tourId}`);
+}
+
+//GET PRICING RULES BY VARIANT
+const getPricingRulesByVariant = (variantId) => {
+    return get(`${url.FETCH_PRICING_RULES}/${variantId}`);
+}
+
 const getTourBookingDetails = id =>
   get(`${url.FETCH_TOUR_GROUP_BY_ID}${id}/bookings`)
 
@@ -398,6 +422,10 @@ export {
     getCityCollections,
     getCityBookings,
     getAllTourGroupsList,
+    getTourGroupsByCity,
+    searchTourGroupsByName,
+    getVariantsByTour,
+    getPricingRulesByVariant,
     getTourById,
     addNewTourGroup,
     updateTourGroupHelper,
