@@ -10,6 +10,13 @@ import {
   FETCH_VARIANTS_BY_TOUR_REQUEST,
   FETCH_PRICING_RULES_REQUEST,
   SEARCH_TOUR_GROUPS_REQUEST,
+  CREATE_PRICING_RULE_REQUEST,
+  UPDATE_PRICING_RULE_REQUEST,
+  DELETE_PRICING_RULE_REQUEST,
+  FETCH_DATE_PRICING_REQUEST,
+  SAVE_DATE_PRICING_REQUEST,
+  FETCH_VARIANT_DETAIL_REQUEST,
+  UPDATE_VARIANT_PRICES_REQUEST,
 } from "./actionTypes"
 import {
   fetchTourGroupsSuccess,
@@ -32,6 +39,21 @@ import {
   fetchPricingRulesFailure,
   searchTourGroupsSuccess,
   searchTourGroupsFailure,
+  createPricingRuleSuccess,
+  createPricingRuleFailure,
+  updatePricingRuleSuccess,
+  updatePricingRuleFailure,
+  deletePricingRuleSuccess,
+  deletePricingRuleFailure,
+  fetchDatePricingSuccess,
+  fetchDatePricingFailure,
+  saveDatePricingSuccess,
+  saveDatePricingFailure,
+  fetchVariantDetailSuccess,
+  fetchVariantDetailFailure,
+  updateVariantPricesSuccess,
+  updateVariantPricesFailure,
+  fetchVariantDetailRequest,
 } from "./action"
 
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
@@ -43,9 +65,17 @@ import {
   searchTourGroupsByName,
   getVariantsByTour,
   getPricingRulesByVariant,
+  createPricingRule,
+  updatePricingRule,
+  deletePricingRule,
+  getPricingRule,
+  fetchDatePricing,
+  saveDatePricing,
   getTourBookingDetails,
   getTourById,
   updateTourGroupHelper,
+  getTourGroupVariantDetailAPI,
+  updateVariantPrices,
 } from "helpers/location_management_helper"
 
 // 1. Fetch All Tour Groups
@@ -181,8 +211,18 @@ function* fetchPricingRulesSaga(action) {
     console.log('🔵 Saga: Fetching pricing rules for variant:', variantId)
     const response = yield call(getPricingRulesByVariant, variantId)
     console.log('🟢 Saga: Pricing rules response:', response)
-    const data = response.data
-    yield put(fetchPricingRulesSuccess(data || []))
+
+    // Handle different response structures
+    let rules = []
+    if (response?.data?.rules) {
+      rules = response.data.rules
+    } else if (Array.isArray(response?.data)) {
+      rules = response.data
+    } else if (Array.isArray(response)) {
+      rules = response
+    }
+
+    yield put(fetchPricingRulesSuccess({ rules }))
   } catch (error) {
     console.error('🔴 Saga Error fetching pricing rules:', error)
     yield put(fetchPricingRulesFailure(error.message))
@@ -197,7 +237,7 @@ function* searchTourGroupsSaga(action) {
     console.log('🔵 Saga: Searching tour groups with query:', searchQuery, 'cityCode:', cityCode)
     const response = yield call(searchTourGroupsByName, searchQuery, cityCode)
     console.log('🟢 Saga: Search response:', response)
-    
+
     // Handle different response structures
     let tourGroups = []
     if (Array.isArray(response)) {
@@ -209,13 +249,118 @@ function* searchTourGroupsSaga(action) {
       const arr = Object.values(response).find(v => Array.isArray(v))
       if (arr) tourGroups = arr
     }
-    
+
     console.log('🟢 Saga: Extracted tour groups:', tourGroups)
     yield put(searchTourGroupsSuccess(tourGroups))
   } catch (error) {
     console.error('🔴 Saga Error searching tour groups:', error)
     const errorMessage = error.response?.data?.message || error.message || 'Failed to search tour groups'
     yield put(searchTourGroupsFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
+// 11. Create Pricing Rule
+function* createPricingRuleSaga(action) {
+  try {
+    const { variantId, ruleData } = action.payload
+    console.log('🔵 Saga: Creating pricing rule for variant:', variantId)
+    const response = yield call(createPricingRule, variantId, ruleData)
+    console.log('🟢 Saga: Create pricing rule response:', response)
+    const rule = response.data?.rule || response.data || response
+    yield put(createPricingRuleSuccess(rule))
+    showToastSuccess('Pricing rule created successfully')
+    // Refresh pricing rules list
+    yield put({ type: FETCH_PRICING_RULES_REQUEST, payload: variantId })
+  } catch (error) {
+    console.error('🔴 Saga Error creating pricing rule:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to create pricing rule'
+    yield put(createPricingRuleFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
+// 12. Update Pricing Rule
+function* updatePricingRuleSaga(action) {
+  try {
+    const { variantId, tag, ruleData } = action.payload
+    console.log('🔵 Saga: Updating pricing rule:', tag, 'for variant:', variantId)
+    const response = yield call(updatePricingRule, variantId, tag, ruleData)
+    console.log('🟢 Saga: Update pricing rule response:', response)
+    const rule = response.data?.rule || response.data || response
+    yield put(updatePricingRuleSuccess(rule))
+    showToastSuccess('Pricing rule updated successfully')
+    // Refresh pricing rules list
+    yield put({ type: FETCH_PRICING_RULES_REQUEST, payload: variantId })
+  } catch (error) {
+    console.error('🔴 Saga Error updating pricing rule:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to update pricing rule'
+    yield put(updatePricingRuleFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
+// 13. Delete Pricing Rule
+function* deletePricingRuleSaga(action) {
+  try {
+    const { variantId, tag } = action.payload
+    console.log('🔵 Saga: Deleting pricing rule:', tag, 'for variant:', variantId)
+    yield call(deletePricingRule, variantId, tag)
+    yield put(deletePricingRuleSuccess(tag))
+    showToastSuccess('Pricing rule deleted successfully')
+    // Refresh pricing rules list
+    yield put({ type: FETCH_PRICING_RULES_REQUEST, payload: variantId })
+  } catch (error) {
+    console.error('🔴 Saga Error deleting pricing rule:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to delete pricing rule'
+    yield put(deletePricingRuleFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
+// 14. Fetch Date-Specific Pricing
+function* fetchDatePricingSaga(action) {
+  try {
+    const { variantId, date } = action.payload
+    // Calculate date range (30 days before and after the selected date)
+    const selectedDate = new Date(date)
+    const startDate = new Date(selectedDate)
+    startDate.setDate(startDate.getDate() - 30)
+    const endDate = new Date(selectedDate)
+    endDate.setDate(endDate.getDate() + 30)
+
+    const response = yield call(
+      fetchDatePricing,
+      variantId,
+      startDate.toISOString().split('T')[0],
+      endDate.toISOString().split('T')[0]
+    )
+
+    const datePricing = response.data?.dateOverrides || response.data || []
+    yield put(fetchDatePricingSuccess(datePricing))
+  } catch (error) {
+    console.error('🔴 Saga Error fetching date pricing:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch date pricing'
+    yield put(fetchDatePricingFailure(errorMessage))
+  }
+}
+
+// 15. Save Date-Specific Pricing
+function* saveDatePricingSaga(action) {
+  try {
+    const { variantId, date, pricingData } = action.payload
+    console.log('🔵 Saga: Saving date pricing for:', date, 'variant:', variantId)
+    const response = yield call(saveDatePricing, variantId, date, pricingData)
+    console.log('🟢 Saga: Save date pricing response:', response)
+    const savedPricing = response.data?.data || response.data || response
+    yield put(saveDatePricingSuccess(savedPricing))
+    showToastSuccess('Date pricing saved successfully')
+    // Refresh date pricing for the calendar
+    yield put({ type: FETCH_DATE_PRICING_REQUEST, payload: { variantId, date } })
+  } catch (error) {
+    console.error('🔴 Saga Error saving date pricing:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to save date pricing'
+    yield put(saveDatePricingFailure(errorMessage))
     showToastError(errorMessage)
   }
 }
@@ -232,4 +377,49 @@ export default function* tourGroupSaga() {
   yield takeEvery(FETCH_VARIANTS_BY_TOUR_REQUEST, fetchVariantsByTourSaga)
   yield takeEvery(FETCH_PRICING_RULES_REQUEST, fetchPricingRulesSaga)
   yield takeEvery(SEARCH_TOUR_GROUPS_REQUEST, searchTourGroupsSaga)
+  yield takeEvery(CREATE_PRICING_RULE_REQUEST, createPricingRuleSaga)
+  yield takeEvery(UPDATE_PRICING_RULE_REQUEST, updatePricingRuleSaga)
+  yield takeEvery(DELETE_PRICING_RULE_REQUEST, deletePricingRuleSaga)
+  yield takeEvery(FETCH_DATE_PRICING_REQUEST, fetchDatePricingSaga)
+  yield takeEvery(SAVE_DATE_PRICING_REQUEST, saveDatePricingSaga)
+  yield takeEvery(FETCH_VARIANT_DETAIL_REQUEST, fetchVariantDetailSaga)
+  yield takeEvery(UPDATE_VARIANT_PRICES_REQUEST, updateVariantPricesSaga)
+}
+
+// Fetch variant details
+function* fetchVariantDetailSaga(action) {
+  try {
+    const variantId = action.payload
+    const response = yield call(getTourGroupVariantDetailAPI, variantId)
+    const variant = response?.data?.data || response?.data || response
+    yield put(fetchVariantDetailSuccess(variant))
+  } catch (error) {
+    console.error('Error fetching variant details:', error)
+    yield put(fetchVariantDetailFailure(error.message))
+  }
+}
+
+// Update variant prices
+function* updateVariantPricesSaga(action) {
+  try {
+    const { variantId, payload, onSuccess } = action.payload
+    console.log('🔵 Saga: Updating variant prices:', variantId)
+    const response = yield call(updateVariantPrices, variantId, payload)
+    console.log('🟢 Saga: Update variant prices response:', response)
+
+    yield put(updateVariantPricesSuccess(response))
+    showToastSuccess("Listing price updated successfully")
+
+    // Refresh variant details
+    yield put(fetchVariantDetailRequest(variantId))
+
+    if (onSuccess) {
+      yield call(onSuccess)
+    }
+  } catch (error) {
+    console.error('🔴 Saga Error updating variant prices:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to update listing price'
+    yield put(updateVariantPricesFailure(errorMessage))
+    showToastError(errorMessage)
+  }
 }

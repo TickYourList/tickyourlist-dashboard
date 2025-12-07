@@ -17,6 +17,7 @@ import {
   Label,
   Input,
   FormFeedback,
+  Alert,
 } from "reactstrap"
 import classnames from "classnames"
 import { useFormik, getIn } from "formik"
@@ -267,6 +268,8 @@ const OnBulkUpdate = ({ isOpen, toggle, addDefaultPricing }) => {
     description: Yup.string(),
   })
 
+  const [useTimeSlots, setUseTimeSlots] = useState(false)
+
   const validation = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -315,7 +318,7 @@ const OnBulkUpdate = ({ isOpen, toggle, addDefaultPricing }) => {
             })) || [],
           excludeDates: values.excludeDate || [],
         },
-        dayPricing: [
+        dayPricing: useTimeSlots ? [] : [
           {
             currency: values.currency,
             prices: values.pricingTypes.map(pt => ({
@@ -331,7 +334,7 @@ const OnBulkUpdate = ({ isOpen, toggle, addDefaultPricing }) => {
             })),
           },
         ],
-        slots: values.slots
+        slots: useTimeSlots ? values.slots
           .filter(
             s =>
               s.startTime ||
@@ -344,12 +347,15 @@ const OnBulkUpdate = ({ isOpen, toggle, addDefaultPricing }) => {
             endTime: s.endTime,
             capacity: Number(s.capacity) || 0,
             slotType: s.slotType,
-            slotPricing: s.slotPricing.map(p => ({
-              type: p.type ? p.type.toUpperCase() : "GUEST",
-              finalPrice: Number(p.finalPrice) || 0,
-              originalPrice: Number(p.originalPrice) || 0,
-            })),
-          })),
+            pricing: [{
+              currency: values.currency,
+              prices: s.slotPricing.map(p => ({
+                type: p.type ? p.type.toLowerCase() : "guest",
+                finalPrice: Number(p.finalPrice) || 0,
+                originalPrice: Number(p.originalPrice) || 0,
+              })),
+            }],
+          })) : undefined,
         isAvailable: values.isAvailable === "available",
         description: values.description,
       }
@@ -858,9 +864,43 @@ const OnBulkUpdate = ({ isOpen, toggle, addDefaultPricing }) => {
             </TabPane>
 
             <TabPane tabId="4">
-              <h5 className="mb-3">Time Slots (optional)</h5>
+              <div className="mb-3">
+                <div className="form-check form-switch" style={{ paddingLeft: "2.5em" }}>
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="bulkUseTimeSlots"
+                    checked={useTimeSlots}
+                    onChange={(e) => {
+                      const newValue = e.target.checked
+                      setUseTimeSlots(newValue)
+                      if (!newValue) {
+                        validation.setFieldValue("slots", [initialSlot])
+                      }
+                    }}
+                    style={{ 
+                      cursor: "pointer", 
+                      marginLeft: "-2.5em",
+                      width: "2em",
+                      height: "1.25em"
+                    }}
+                  />
+                  <Label 
+                    className="form-check-label" 
+                    htmlFor="bulkUseTimeSlots" 
+                    style={{ cursor: "pointer", userSelect: "none", paddingLeft: "0.5em" }}
+                  >
+                    Use Time Slots (instead of day pricing)
+                  </Label>
+                </div>
+                <small className="text-muted d-block mt-1">
+                  Enable time slots to set different pricing and capacity for specific time periods
+                </small>
+              </div>
 
-              {validation.values.slots.map((slot, slotIndex) => (
+              {useTimeSlots && (
+                <>
+                  {validation.values.slots.map((slot, slotIndex) => (
                 <div key={slotIndex} className="border p-3 rounded mb-3">
                   <Row>
                     <Col md={6}>
@@ -1003,27 +1043,35 @@ const OnBulkUpdate = ({ isOpen, toggle, addDefaultPricing }) => {
                 </div>
               ))}
 
-              <Button
-                color="primary"
-                className="mt-2"
-                onClick={() => {
-                  const newSlot = {
-                    startTime: "",
-                    endTime: "",
-                    capacity: "",
-                    slotType: "",
-                    slotPricing: [
-                      { type: "", finalPrice: "", originalPrice: "" },
-                    ],
-                  }
-                  validation.setFieldValue("slots", [
-                    ...validation.values.slots,
-                    newSlot,
-                  ])
-                }}
-              >
-                + Add Slot
-              </Button>
+                  <Button
+                    color="primary"
+                    className="mt-2"
+                    onClick={() => {
+                      const newSlot = {
+                        startTime: "",
+                        endTime: "",
+                        capacity: "",
+                        slotType: "",
+                        slotPricing: [
+                          { type: "", finalPrice: "", originalPrice: "" },
+                        ],
+                      }
+                      validation.setFieldValue("slots", [
+                        ...validation.values.slots,
+                        newSlot,
+                      ])
+                    }}
+                  >
+                    + Add Slot
+                  </Button>
+                </>
+              )}
+
+              {!useTimeSlots && (
+                <Alert color="info" className="mt-3">
+                  Time slots are disabled. Enable the toggle above to add time slots.
+                </Alert>
+              )}
             </TabPane>
 
             <TabPane tabId="5">

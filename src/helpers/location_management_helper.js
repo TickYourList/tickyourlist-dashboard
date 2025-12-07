@@ -1,4 +1,4 @@
-import {get, post, put, del, postFormData, putFormData } from "./api_helper";
+import { get, post, put, del, postFormData, putFormData } from "./api_helper";
 import * as url from "./locationManagement_url_helpers";
 
 
@@ -13,13 +13,13 @@ const getCategoriesByCountryId = (countryId) => get(url.GET_CATEGORIES_BY_COUNTR
 const getCitiesByCountryId = (countryId) => get(url.GET_CITIES_BY_COUNTRY_ID.replace('{country_id}', countryId));
 // New code with the debugging line
 const getCollectionsByCountryId = (countryId) => {
-    const finalUrl = url.GET_COLLECTIONS_BY_COUNTRY_ID.replace('{country_id}', countryId);
-    return get(finalUrl);
+  const finalUrl = url.GET_COLLECTIONS_BY_COUNTRY_ID.replace('{country_id}', countryId);
+  return get(finalUrl);
 };
 const getBookingByCountryId = (countryId, { page, limit } = {}) => {
-    const finalUrl = url.GET_BOOKING_BY_COUNTRY_ID.replace('{country_id}', countryId);
-    const config = (page || limit) ? { params: { page, limit } } : {};
-    return get(finalUrl, config);
+  const finalUrl = url.GET_BOOKING_BY_COUNTRY_ID.replace('{country_id}', countryId);
+  const config = (page || limit) ? { params: { page, limit } } : {};
+  return get(finalUrl, config);
 };
 const getSubcategoriesByCountryId = (countryId) => get(url.GET_SUBCATEGORIES_BY_COUNTRY_ID.replace('{country_id}', countryId));
 
@@ -27,57 +27,91 @@ const getSubcategoriesByCountryId = (countryId) => get(url.GET_SUBCATEGORIES_BY_
 const updateCountry = (countryCode, data) => put(url.UPDATE_COUNTRY.replace('{code}', countryCode), data);
 
 const deleteCountryApi = (countryCode) => {
-    // Placeholder for actual API call
-    return del(url.DELETE_COUNTRY.replace("{code}", countryCode));
-    return new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API
+  // Placeholder for actual API call
+  return del(url.DELETE_COUNTRY.replace("{code}", countryCode));
+  return new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API
 };
 
 const getCitiesList = () => get(url.GET_CITIES_LIST)
-const getCityData = (cityCode) => get(url.GET_CITY_DATA +'/' + cityCode)
-const getCityDetails = (cityCode) => get(url.GET_CITY_DETAILS +'/' + cityCode)
+const getCityData = (cityCode) => get(url.GET_CITY_DATA + '/' + cityCode)
+const getCityDetails = (cityCode) => get(url.GET_CITY_DETAILS + '/' + cityCode)
 
 const createNewCity = (formData) => postFormData(url.CREATE_NEW_CITY, formData)
 const updateCity = (cityCode, formData) => putFormData(url.UPDATE_CITY + '/' + cityCode, formData)
 
 const removeCity = (cityCode) => del(url.REMOVE_CITY + '/' + cityCode)
 
-const getCityTours = ({cityCode, page, limit}) => get(`${url.CITY_TOURS_API}/${cityCode}?page=${page}&limit=${limit}`)
-const getCityCategories = (cityCode) => get(url.CITY_CATEGORIES_API +'/'+ cityCode)
-const getCitySubCategories = (cityCode) => get(url.CITY_SUBCATEGORIES_API +'/'+ cityCode)
-const getCityCollections = (cityCode) => get(url.CITY_COLLECTIONS_API +'/'+ cityCode)
-const getCityBookings = ({cityCode, page, limit}) => get(`${url.CITY_BOOKINGS_API}/${cityCode}?page=${page}&limit=${limit}`)
+const getCityTours = ({ cityCode, page, limit }) => get(`${url.CITY_TOURS_API}/${cityCode}?page=${page}&limit=${limit}`)
+const getCityCategories = (cityCode) => get(url.CITY_CATEGORIES_API + '/' + cityCode)
+const getCitySubCategories = (cityCode) => get(url.CITY_SUBCATEGORIES_API + '/' + cityCode)
+const getCityCollections = (cityCode) => get(url.CITY_COLLECTIONS_API + '/' + cityCode)
+const getCityBookings = ({ cityCode, page, limit }) => get(`${url.CITY_BOOKINGS_API}/${cityCode}?page=${page}&limit=${limit}`)
 
 //GET ALL TOUR GROUPS
 const getAllTourGroupsList = (page, limit, cityCode = null) => {
-    let apiUrl = `${url.FETCH_TOUR_GROUP_LIST}?page=${page}&limit=${limit}`;
-    if (cityCode) {
-        apiUrl += `&cityCode=${cityCode}`;
-    }
-    return get(apiUrl);
+  let apiUrl = `${url.FETCH_TOUR_GROUP_LIST}?page=${page}&limit=${limit}`;
+  if (cityCode) {
+    apiUrl += `&cityCode=${cityCode}`;
+  }
+  return get(apiUrl);
 }
 
 //GET TOUR GROUPS BY CITY (lightweight for dropdowns)
 const getTourGroupsByCity = (cityCode) => {
-    return get(`${url.FETCH_TOUR_GROUPS_BY_CITY}?cityCode=${cityCode}`);
+  return get(`${url.FETCH_TOUR_GROUPS_BY_CITY}?cityCode=${cityCode}`);
 }
 
 //SEARCH TOUR GROUPS BY NAME
 const searchTourGroupsByName = (searchQuery, cityCode = null) => {
-    let apiUrl = `${url.SEARCH_TOUR_GROUPS}?q=${encodeURIComponent(searchQuery)}`;
-    if (cityCode) {
-        apiUrl += `&cityCode=${cityCode}`;
-    }
-    return get(apiUrl);
+  let apiUrl = `${url.SEARCH_TOUR_GROUPS}?q=${encodeURIComponent(searchQuery)}`;
+  if (cityCode) {
+    apiUrl += `&cityCode=${cityCode}`;
+  }
+  return get(apiUrl);
 }
 
 //GET VARIANTS BY TOUR
 const getVariantsByTour = (tourId) => {
-    return get(`${url.FETCH_VARIANTS_BY_TOUR}/${tourId}`);
+  return get(`${url.FETCH_VARIANTS_BY_TOUR}/${tourId}`);
 }
 
 //GET PRICING RULES BY VARIANT
 const getPricingRulesByVariant = (variantId) => {
-    return get(`${url.FETCH_PRICING_RULES}/${variantId}`);
+  return get(`${url.FETCH_PRICING_RULES}/${variantId}`);
+}
+
+//CREATE PRICING RULE
+const createPricingRule = (variantId, ruleData) => {
+  return post(`${url.CREATE_PRICING_RULE}/${variantId}`, ruleData);
+}
+
+//UPDATE PRICING RULE
+const updatePricingRule = (variantId, tag, ruleData) => {
+  return put(`${url.UPDATE_PRICING_RULE}/${variantId}/${tag}`, ruleData);
+}
+
+//DELETE PRICING RULE
+const deletePricingRule = (variantId, tag) => {
+  return del(`${url.DELETE_PRICING_RULE}/${variantId}/${tag}`);
+}
+
+//GET SINGLE PRICING RULE
+const getPricingRule = (variantId, tag) => {
+  return get(`${url.GET_PRICING_RULE}/${variantId}/${tag}`);
+}
+
+//FETCH DATE-SPECIFIC PRICING
+const fetchDatePricing = (variantId, startDate, endDate) => {
+  const params = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : '';
+  return get(`${url.FETCH_DATE_PRICING}/${variantId}${params}`);
+}
+
+//SAVE DATE-SPECIFIC PRICING (create/update)
+const saveDatePricing = (variantId, date, pricingData) => {
+  return post(`${url.SAVE_DATE_PRICING}/${variantId}`, {
+    date,
+    ...pricingData
+  });
 }
 
 const getTourBookingDetails = id =>
@@ -117,7 +151,7 @@ const addTravelPartner = data => postFormData(url.ADD_NEW_TRAVEL_PARTNER, data);
 const updateTravelPartner = (userId, data) => putFormData(`${url.UPDATE_TRAVEL_PARTNER}/${userId}`, data);
 
 //delete Travel Partner
-const deleteTravelPartner= id => del(`${url.DELETE_TRAVEL_PARTNER}/${id}`);
+const deleteTravelPartner = id => del(`${url.DELETE_TRAVEL_PARTNER}/${id}`);
 
 // GET COUPON
 const getCouponList = (page = 1, limit = 10) => get(`${url.GET_COUPON}?page=${page}&limit=${limit}`);
@@ -146,11 +180,11 @@ const addPMCollection = ({ cityCode, formData }) =>
 
 const getPMCitylist = () => get(url.GET_PM_CITY_LIST)
 
-const getPMCollectionById =({collectionId, language})=> get(`${url.GET_PM_COLLECTION_BY_ID}${collectionId}/${language}`)
+const getPMCollectionById = ({ collectionId, language }) => get(`${url.GET_PM_COLLECTION_BY_ID}${collectionId}/${language}`)
 
 const updatePMCollection = ({ collectionId, formData }) => putFormData(`${url.UPDATE_PM_COLLECTION}${collectionId}`, formData)
 
-const deletePMCollection = ({ collectionId }) => del(`${url.DELETE_PM_COLLECTION}${collectionId}`)  
+const deletePMCollection = ({ collectionId }) => del(`${url.DELETE_PM_COLLECTION}${collectionId}`)
 
 //----------------------------------------Product Management Collections--------------------------------------------------
 
@@ -174,49 +208,49 @@ const updateTourGroupVariantAPI = (variantId, data) =>
   put(`${url.PUT_UPDATE_TOUR_GROUP_VARIANT_API}/${variantId}`, data);
 
 // GET SUB CATEGORIES
-const getSubcategoriesList= () => { 
-  console.log("The url for getsubcategories ",url.GET_SUBCATEGORIES)
+const getSubcategoriesList = () => {
+  console.log("The url for getsubcategories ", url.GET_SUBCATEGORIES)
   return get(url.GET_SUBCATEGORIES);
 }
 
 
 //GET_EXISTING_SUBCATEGORY
-const getExistingSubcategory=(subCategoryId)=>{
+const getExistingSubcategory = (subCategoryId) => {
   const newurl = `${url.GET_EXISTING_SUBCATEGORY}${subCategoryId}`;
-return get(newurl);
+  return get(newurl);
 }
 
-const addTravelSubcategoryApi = (formData,cityCode) => {
-const finalUrl = `${url.ADD_TRAVEL_SUBCATEGORY}?city=${cityCode}`;
-return postFormData(finalUrl, formData);
+const addTravelSubcategoryApi = (formData, cityCode) => {
+  const finalUrl = `${url.ADD_TRAVEL_SUBCATEGORY}?city=${cityCode}`;
+  return postFormData(finalUrl, formData);
 };
 
-const updateSubcategory=(formData,subCategoryid)=>{
-const finalUrl=`${url.UPDATE_SUBCATEGORY}${subCategoryid}`;
-return putFormData(finalUrl, formData);
+const updateSubcategory = (formData, subCategoryid) => {
+  const finalUrl = `${url.UPDATE_SUBCATEGORY}${subCategoryid}`;
+  return putFormData(finalUrl, formData);
 }
 
-const deleteSubcategoryApi=(subCategoryId)=>{
-const finalUrl=`${url.DELETE_SUBCATEGORY}${subCategoryId}`;
-return del(finalUrl);
+const deleteSubcategoryApi = (subCategoryId) => {
+  const finalUrl = `${url.DELETE_SUBCATEGORY}${subCategoryId}`;
+  return del(finalUrl);
 }
 
 // GET TRAVEL CATEGORIES
-const getTravelCategoriesList= (cityCode) => {
+const getTravelCategoriesList = (cityCode) => {
   const newurl = `${url.GET_TRAVELCATEGORIES}${cityCode}`;
   console.log("Fetching travel categories from URL:", newurl);
   return get(newurl);
 };
 
 //GET_TRAVEL_CITIES
-const getTravelCitiesList= () => {
+const getTravelCitiesList = () => {
   return get(url.GET_TRAVEL_CITIES);
 };
 
 //GET_EXISTING_SUBCATEGORY
-const getExistingSubcategoryForEdit=(subCategoryId)=>{
+const getExistingSubcategoryForEdit = (subCategoryId) => {
   const newurl = `${url.GET_EXISTING_SUBCATEGORY_FOR_EDIT}${subCategoryId}`;
-return get(newurl);
+  return get(newurl);
 }
 
 
@@ -225,41 +259,41 @@ return get(newurl);
 
 const getBannerList = () => get(url.GET_BANNER_LIST);
 
-const getCityList = () => get(url.GET_CITY_LIST).then(res => 
+const getCityList = () => get(url.GET_CITY_LIST).then(res =>
 
-  res.data.travelCityList.map(city => ({ 
-    value: city._id,          
-    label: city.name   
+  res.data.travelCityList.map(city => ({
+    value: city._id,
+    label: city.name
   }))
 );
 
-const getTours = (city) =>
-  { const cityId = city.value;
-  let baseUrl = url.GET_TOURS; 
+const getTours = (city) => {
+  const cityId = city.value;
+  let baseUrl = url.GET_TOURS;
 
   const separator = baseUrl.includes('?') ? '&' : '?';
 
   const fullUrl = `${baseUrl}${separator}city=${cityId}`;
 
-  return get(fullUrl).then(res => 
-    res.data.map(tour => ({ 
+  return get(fullUrl).then(res =>
+    res.data.map(tour => ({
       value: tour._id,
       label: tour.displayName
     }))
   );
 };
 
-const getCategories = (cityId) => get(`${url.GET_CATEGORIES}?city=${cityId}`).then(res => 
- res.data.map(category => ({ 
-    value: category._id,          
-    label: category.displayName 
+const getCategories = (cityId) => get(`${url.GET_CATEGORIES}?city=${cityId}`).then(res =>
+  res.data.map(category => ({
+    value: category._id,
+    label: category.displayName
   }))
 );
 
-const getSubcategories = (cityId) => get(`${url.GET_SUBCATEGORIES}?city=${cityId}`).then(res => 
-  res.data.map(subcategory => ({ 
-    value: subcategory._id,          
-    label: subcategory.displayName   
+const getSubcategories = (cityId) => get(`${url.GET_SUBCATEGORIES}?city=${cityId}`).then(res =>
+  res.data.map(subcategory => ({
+    value: subcategory._id,
+    label: subcategory.displayName
   }))
 );
 
@@ -267,14 +301,14 @@ const getSubcategories = (cityId) => get(`${url.GET_SUBCATEGORIES}?city=${cityId
 const getBannerCollections = (city) => {
 
   const cityId = city.value;
-  let baseUrl = url.GET_BANNER_COLLECTIONS; 
+  let baseUrl = url.GET_BANNER_COLLECTIONS;
 
   const separator = baseUrl.includes('?') ? '&' : '?';
 
   const fullUrl = `${baseUrl}${separator}city=${cityId}`;
 
-  return get(fullUrl).then(res => 
-    res.data.map(collection => ({ 
+  return get(fullUrl).then(res =>
+    res.data.map(collection => ({
       value: collection._id,
       label: collection.displayName
     }))
@@ -311,8 +345,8 @@ const getCategoryByUrl = (id) => {
   return get(url.GET_CATEGORY_URL.replace("{id}", id));
 };
 
- const getCategoryTours = (id) => get(url.GET_CATEGORY_TOURS.replace("{id}", id));
-  const getCategorySubcategories = (id) => get(url.GET_CATEGORY_SUBCATEGORIES.replace("{id}", id));
+const getCategoryTours = (id) => get(url.GET_CATEGORY_TOURS.replace("{id}", id));
+const getCategorySubcategories = (id) => get(url.GET_CATEGORY_SUBCATEGORIES.replace("{id}", id));
 
 const getCategoryBookings = (id) => get(url.GET_CATEGORY_BOOKINGS.replace("{id}", id));
 const getCities = () => get(url.GET_CITIES);
@@ -335,8 +369,11 @@ export const getPricingListAPI = variantId =>
 export const getBookingListAPI = variantId =>
   get(`${url.GET_BOOKING_LIST_API}/${variantId}/bookings`);
 
+const updateVariantPrices = (variantId, data) =>
+  put(`${url.UPDATE_VARIANT_PRICES}/${variantId}`, data);
 
-const getSectionDetailsById = (sectionId) =>  get(`${url.GET_SECTION_LIST}/${sectionId}`);
+
+const getSectionDetailsById = (sectionId) => get(`${url.GET_SECTION_LIST}/${sectionId}`);
 
 const getCategoriesForCity = (cityCode) => get(`${url.GET_CATEGORIES_FOR_CITY}/${cityCode}`);
 
@@ -347,8 +384,8 @@ const getToursForCity = (cityCode) => get(`${url.GET_TOURS_FOR_CITY}/${cityCode}
 const getCollectionsForCity = (cityCode) => get(`${url.GET_COLLECTIONS_FOR_CITY}/${cityCode}`);
 
 //Pricing Calendar
-const onAddDefaultCalendarPricing = (data)=>{
-  return postFormData(`${url.ON_ADD_DEFAUL_PRICING}`,data)
+const onAddDefaultCalendarPricing = (data) => {
+  return postFormData(`${url.ON_ADD_DEFAUL_PRICING}`, data)
 }
 
 // GET SUBCATEGORY DETAILS FOR VIEW
@@ -371,14 +408,14 @@ const getSubcategoryDetailsForViewBookingsTable = (subcategoryId) => {
   return get(newurl);
 };
 
-const getUsersPermissionsForSubcategory = () => {  
-const newurl = `${url.GET_USERS_PERMISSIONS_FOR_SUBCATEGORY}`;
-console.log("Fetching user permissions for subcategory from URL:", newurl);
-return get(newurl);
+const getUsersPermissionsForSubcategory = () => {
+  const newurl = `${url.GET_USERS_PERMISSIONS_FOR_SUBCATEGORY}`;
+  console.log("Fetching user permissions for subcategory from URL:", newurl);
+  return get(newurl);
 }
 
 const sortCategory = (categoryOrder) => put(url.SORT_CATEGORY_API, categoryOrder);
-const sortSubCategory = ({categoryId, subcategoryOrders}) => put(url.SORT_SUB_CATEGORY_API + '/' + categoryId, { subcategoryOrders });
+const sortSubCategory = ({ categoryId, subcategoryOrders }) => put(url.SORT_SUB_CATEGORY_API + '/' + categoryId, { subcategoryOrders });
 
 // Sort City Categories - using the same API as sortCategory
 const sortCityCategories = (data) => put(url.SORT_CATEGORY_API, data);
@@ -395,7 +432,7 @@ const updateSystemSettings = (data) =>
     "Content-Type": "multipart/form-data",
   });
 
-  // faqs List
+// faqs List
 const getFaqsList = () => get(url.GET_FAQS_LIST);
 const getFaqsByCity = (cityCode) => get(url.GET_FAQS_BY_CITY + cityCode);
 const getFaqById = (id) => get(url.GET_FAQ_BY_ID + id);
@@ -403,108 +440,115 @@ const addFaqs = faqData => post(url.ADD_NEW_FAQS, faqData);
 const updateFaqs = (id, faqData) => put(url.UPDATE_FAQS + id, faqData);
 
 export {
-    getCountriesList,
-    getCurrencyList,
-    getCountryByCode,
-    getCountryById,
-    addCountry,
-    updateCountry,
-    deleteCountryApi,
-    getCitiesList,
-    getCityData,
-    getCityDetails,
-    createNewCity,
-    updateCity,
-    removeCity,
-    getCityTours,
-    getCityCategories,
-    getCitySubCategories,
-    getCityCollections,
-    getCityBookings,
-    getAllTourGroupsList,
-    getTourGroupsByCity,
-    searchTourGroupsByName,
-    getVariantsByTour,
-    getPricingRulesByVariant,
-    getTourById,
-    addNewTourGroup,
-    updateTourGroupHelper,
-    deleteTourGroupById,
-    getTravelPartnerList,
-    addTravelPartner,
-    updateTravelPartner,
-    deleteTravelPartner,
-    getCouponList,
-    addCoupon,
-    updateCoupon,
-    importCoupons,
-    deleteCoupon,
-    getInvoiceListAPI,
-    getCustomerListAPI,
-    getPMCollectionById,
-    getPMCollections,
-    addPMCollection,
-    updatePMCollection,
-    deletePMCollection,
-    getPMCitylist,
-    getTourGroupVariants,
-    getTourGroupVariantsAPI,
-    getTravelTourGroupAPI,
-    addTourGroupVariantAPI,
-    updateTourGroupVariantAPI,
-    getSubcategoriesList,
-    getExistingSubcategory,
-    addTravelSubcategoryApi,
-    updateSubcategory,
-    deleteSubcategoryApi,
-    getTravelCategoriesList,
-    getBannerList,
-    getCityList,
-    getTours,
-    getCategories,
-    getSubcategories,
-    getBannerCollections,
-    addNewBanner,
-    editBanner,
-    deleteBanner,
-    getCategoriesList,
-    getCategoryById,
-    deleteCategory,
-    updateCategory,
-    addCategory,
-    getToursByCountryId,
-    getCitiesByCountryId,
-    getCategoriesByCountryId,
-    getCollectionsByCountryId,
-    getSubcategoriesByCountryId,
-    getBookingByCountryId,
-    getCategoryByUrl,
-    getCategoryTours,
-    getCategorySubcategories,
-    getCategoryBookings,
-    getCities,
-    getSectionDetailsById,
-    getCategoriesForCity,
-    getSubcategoriesForCity,
-    getToursForCity,
-    getCollectionsForCity,
-    getPermissionsList,
-    onAddDefaultCalendarPricing,
-    getSubcategoryDetailsForView,
-    getSubcategoryDetailsForViewToursTable,
-    getSubcategoryDetailsForViewBookingsTable,
-    getUsersPermissionsForSubcategory,
-    sortCategory,
-    sortSubCategory,
-    sortCityCategories,
-    sortCitySubCategories,
-    getTourBookingDetails,
-    getSettings,
-    updateSystemSettings,
-    getFaqsList,
-    getFaqsByCity,
-    getFaqById,
-    addFaqs,
-    updateFaqs
+  getCountriesList,
+  getCurrencyList,
+  getCountryByCode,
+  getCountryById,
+  addCountry,
+  updateCountry,
+  deleteCountryApi,
+  getCitiesList,
+  getCityData,
+  getCityDetails,
+  createNewCity,
+  updateCity,
+  removeCity,
+  getCityTours,
+  getCityCategories,
+  getCitySubCategories,
+  getCityCollections,
+  getCityBookings,
+  getAllTourGroupsList,
+  getTourGroupsByCity,
+  searchTourGroupsByName,
+  getVariantsByTour,
+  getPricingRulesByVariant,
+  createPricingRule,
+  updatePricingRule,
+  deletePricingRule,
+  getPricingRule,
+  fetchDatePricing,
+  saveDatePricing,
+  getTourById,
+  addNewTourGroup,
+  updateTourGroupHelper,
+  deleteTourGroupById,
+  getTravelPartnerList,
+  addTravelPartner,
+  updateTravelPartner,
+  deleteTravelPartner,
+  getCouponList,
+  addCoupon,
+  updateCoupon,
+  importCoupons,
+  deleteCoupon,
+  getInvoiceListAPI,
+  getCustomerListAPI,
+  getPMCollectionById,
+  getPMCollections,
+  addPMCollection,
+  updatePMCollection,
+  deletePMCollection,
+  getPMCitylist,
+  getTourGroupVariants,
+  getTourGroupVariantsAPI,
+  getTravelTourGroupAPI,
+  addTourGroupVariantAPI,
+  updateTourGroupVariantAPI,
+  updateVariantPrices,
+  getSubcategoriesList,
+  getExistingSubcategory,
+  addTravelSubcategoryApi,
+  updateSubcategory,
+  deleteSubcategoryApi,
+  getTravelCategoriesList,
+  getBannerList,
+  getCityList,
+  getTours,
+  getCategories,
+  getSubcategories,
+  getBannerCollections,
+  addNewBanner,
+  editBanner,
+  deleteBanner,
+  getCategoriesList,
+  getCategoryById,
+  deleteCategory,
+  updateCategory,
+  addCategory,
+  getToursByCountryId,
+  getCitiesByCountryId,
+  getCategoriesByCountryId,
+  getCollectionsByCountryId,
+  getSubcategoriesByCountryId,
+  getBookingByCountryId,
+  getCategoryByUrl,
+  getCategoryTours,
+  getCategorySubcategories,
+  getCategoryBookings,
+  getCities,
+  getSectionDetailsById,
+  getCategoriesForCity,
+  getSubcategoriesForCity,
+  getToursForCity,
+  getCollectionsForCity,
+  getPermissionsList,
+  onAddDefaultCalendarPricing,
+  getSubcategoryDetailsForView,
+  getSubcategoryDetailsForViewToursTable,
+  getSubcategoryDetailsForViewBookingsTable,
+  getUsersPermissionsForSubcategory,
+  sortCategory,
+  sortSubCategory,
+  sortCityCategories,
+  sortCitySubCategories,
+  getTourBookingDetails,
+  getSettings,
+  updateSystemSettings,
+  getFaqsList,
+  getFaqsByCity,
+  getFaqById,
+  addFaqs,
+  updateFaqs
 
 };

@@ -31,6 +31,27 @@ import {
   SEARCH_TOUR_GROUPS_REQUEST,
   SEARCH_TOUR_GROUPS_SUCCESS,
   SEARCH_TOUR_GROUPS_FAILURE,
+  CREATE_PRICING_RULE_REQUEST,
+  CREATE_PRICING_RULE_SUCCESS,
+  CREATE_PRICING_RULE_FAILURE,
+  UPDATE_PRICING_RULE_REQUEST,
+  UPDATE_PRICING_RULE_SUCCESS,
+  UPDATE_PRICING_RULE_FAILURE,
+  DELETE_PRICING_RULE_REQUEST,
+  DELETE_PRICING_RULE_SUCCESS,
+  DELETE_PRICING_RULE_FAILURE,
+  FETCH_DATE_PRICING_REQUEST,
+  FETCH_DATE_PRICING_SUCCESS,
+  FETCH_DATE_PRICING_FAILURE,
+  SAVE_DATE_PRICING_REQUEST,
+  SAVE_DATE_PRICING_SUCCESS,
+  SAVE_DATE_PRICING_FAILURE,
+  FETCH_VARIANT_DETAIL_REQUEST,
+  FETCH_VARIANT_DETAIL_SUCCESS,
+  FETCH_VARIANT_DETAIL_FAILURE,
+  UPDATE_VARIANT_PRICES_REQUEST,
+  UPDATE_VARIANT_PRICES_SUCCESS,
+  UPDATE_VARIANT_PRICES_FAILURE,
 } from "./actionTypes"
 
 //initial state for fetching tourgroups
@@ -42,6 +63,8 @@ const initialState = {
   variantsByTour: [], // Variants for selected tour
   pricingRules: [], // Pricing rules for selected variant
   searchedTourGroups: [], // Search results
+  datePricing: [], // Date-specific pricing overrides
+  variantDetail: null, // Variant details with pricing types
   id: "",
   currPage: 1,
   totalCount: 0,
@@ -63,7 +86,7 @@ export default function tourGroupReducer(state = initialState, action) {
       /* console.log("actionstate ", action.payload) */
       const newTourGroups = action.payload.tourGroups || []
       const currentPage = action.payload.page || 1
-      
+
       // If page 1, replace data; otherwise append new data
       let updatedTourGroups
       if (currentPage === 1) {
@@ -74,7 +97,7 @@ export default function tourGroupReducer(state = initialState, action) {
         const uniqueNewGroups = newTourGroups.filter(tg => !existingIds.has(tg._id))
         updatedTourGroups = [...state.tourGroup, ...uniqueNewGroups]
       }
-      
+
       return {
         ...state,
         loading: false,
@@ -279,6 +302,151 @@ export default function tourGroupReducer(state = initialState, action) {
         ...state,
         loading: false,
         searchedTourGroups: [],
+        error: action.payload,
+      }
+    case CREATE_PRICING_RULE_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case CREATE_PRICING_RULE_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        pricingRules: [...state.pricingRules, action.payload],
+        error: null,
+      }
+    case CREATE_PRICING_RULE_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      }
+    case UPDATE_PRICING_RULE_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case UPDATE_PRICING_RULE_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        pricingRules: state.pricingRules.map(rule =>
+          rule.tag === action.payload.tag ? action.payload : rule
+        ),
+        error: null,
+      }
+    case UPDATE_PRICING_RULE_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      }
+    case DELETE_PRICING_RULE_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case DELETE_PRICING_RULE_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        pricingRules: state.pricingRules.filter(rule => rule.tag !== action.payload),
+        error: null,
+      }
+    case DELETE_PRICING_RULE_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      }
+    case FETCH_DATE_PRICING_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case FETCH_DATE_PRICING_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        datePricing: action.payload || [],
+        error: null,
+      }
+    case FETCH_DATE_PRICING_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        datePricing: [],
+        error: action.payload,
+      }
+    case SAVE_DATE_PRICING_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case SAVE_DATE_PRICING_SUCCESS:
+      // Update or add the date pricing in the array
+      const savedDate = action.payload
+      const existingIndex = state.datePricing.findIndex(
+        dp => dp.date === savedDate.date ||
+          (dp.date && new Date(dp.date).toISOString().split('T')[0] === new Date(savedDate.date).toISOString().split('T')[0])
+      )
+      const updatedDatePricing = existingIndex >= 0
+        ? state.datePricing.map((dp, idx) => idx === existingIndex ? savedDate : dp)
+        : [...state.datePricing, savedDate]
+      return {
+        ...state,
+        loading: false,
+        datePricing: updatedDatePricing,
+        error: null,
+      }
+    case SAVE_DATE_PRICING_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      }
+    case FETCH_VARIANT_DETAIL_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case FETCH_VARIANT_DETAIL_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        variantDetail: action.payload,
+        error: null,
+      }
+    case FETCH_VARIANT_DETAIL_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        variantDetail: null,
+        error: action.payload,
+      }
+    case UPDATE_VARIANT_PRICES_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case UPDATE_VARIANT_PRICES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        error: null,
+      }
+    case UPDATE_VARIANT_PRICES_FAILURE:
+      return {
+        ...state,
+        loading: false,
         error: action.payload,
       }
     default:

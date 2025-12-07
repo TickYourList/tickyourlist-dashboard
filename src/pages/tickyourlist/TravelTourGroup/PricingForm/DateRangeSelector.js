@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Label, Button, FormGroup, Row, Col, Input, ListGroup, ListGroupItem } from "reactstrap"
+import { Label, Button, FormGroup, Row, Col, Input, ListGroup, ListGroupItem, Alert } from "reactstrap"
 
 /**
  * Date Range Selector Component
@@ -20,7 +20,7 @@ const DateRangeSelector = ({ value = [], onChange }) => {
     }
 
     onChange([...value, newRange])
-    
+
     // Reset
     setStartDate("")
     setEndDate("")
@@ -34,7 +34,7 @@ const DateRangeSelector = ({ value = [], onChange }) => {
   return (
     <FormGroup>
       <Label className="d-block mb-2">Specific Date Ranges</Label>
-      
+
       {/* Add Date Range Form */}
       <Row className="mb-3">
         <Col md={4}>
@@ -76,6 +76,14 @@ const DateRangeSelector = ({ value = [], onChange }) => {
           </Button>
         </Col>
       </Row>
+
+      {/* Warning for unsaved dates */}
+      {(startDate || endDate) && (
+        <Alert color="warning" className="mb-3 py-2">
+          <i className="bx bx-error-circle me-2"></i>
+          You have entered dates but haven't added them. Click the <strong className="text-success">+</strong> button to include this range.
+        </Alert>
+      )}
 
       {/* Display Added Date Ranges */}
       {value.length > 0 && (

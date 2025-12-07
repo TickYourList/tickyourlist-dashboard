@@ -23,7 +23,7 @@ export const GET_SUBCATEGORIES_BY_COUNTRY_ID = "/v1/tyltravelcountry/get/travelc
 export const GET_BOOKING_BY_COUNTRY_ID = "/v1/tyltravelcountry/get/travelcountry/bookings/{country_id}";
 
 
-export const CITY_TOURS_API = "v1/tyltravelcity/get/travelcity-details/tours" 
+export const CITY_TOURS_API = "v1/tyltravelcity/get/travelcity-details/tours"
 export const CITY_CATEGORIES_API = "v1/tyltravelcity/get/travelcity-details/categories"
 export const CITY_SUBCATEGORIES_API = "v1/tyltravelcity/get/travelcity-details/sub-categories"
 export const CITY_COLLECTIONS_API = "v1/tyltravelcity/get/travelcity-details/collections"
@@ -35,6 +35,12 @@ export const FETCH_TOUR_GROUPS_BY_CITY = "/v1/tyltraveltourgroup/tour-groups-by-
 export const SEARCH_TOUR_GROUPS = "/v1/tyltraveltourgroup/search/travel-tour-groups"
 export const FETCH_VARIANTS_BY_TOUR = "/v1/tyltraveltourgroupvariant/by-tour"
 export const FETCH_PRICING_RULES = "/v1/variant-calendar-pricing/pricing-rules"
+export const CREATE_PRICING_RULE = "/v1/variant-calendar-pricing/pricing-rule"
+export const UPDATE_PRICING_RULE = "/v1/variant-calendar-pricing/pricing-rule"
+export const DELETE_PRICING_RULE = "/v1/variant-calendar-pricing/pricing-rule"
+export const GET_PRICING_RULE = "/v1/variant-calendar-pricing/pricing-rule"
+export const FETCH_DATE_PRICING = "/v1/variant-calendar-pricing/date-pricing"
+export const SAVE_DATE_PRICING = "/v1/variant-calendar-pricing/date-pricing"
 export const FETCH_CITY_CODE_LIST =
   "/v1/tyltravelcity/get/travelcity/submitted/all"
 export const ADD_TOUR_GROUP = "/v1/tyltraveltourgroup/add/travel-tour-group"
@@ -61,18 +67,18 @@ export const GET_INVOICES_LIST = "/v1/tyltravelcustomerinvoice?page=1&limit=20";
 export const GET_CUSTOMERS_LIST =
   "v1/tyltourcustomerbooking/get/all/travel-booking-list?page=1&limit=20";
 
-  // --------------------------------------Project management Collections------------------------------------------------------------
+// --------------------------------------Project management Collections------------------------------------------------------------
 export const GET_PM_COLLECTIONS =
-"/v1/tyltravelcollection/get/travel-collection/top/list/all?page=1&limit=10&sortOrder=asc"
+  "/v1/tyltravelcollection/get/travel-collection/top/list/all?page=1&limit=10&sortOrder=asc"
 export const ADD_PM_COLLECTION =
-"/v1/tyltravelcollection/add/travel-collection/top/list?cityCode="
+  "/v1/tyltravelcollection/add/travel-collection/top/list?cityCode="
 
 export const GET_PM_CITY_LIST = "/v1/tyltravelcity/get/travelcity/submitted/all"
 
-export const GET_PM_COLLECTION_BY_ID ="/v1/tyltravelcollection/get/travel-collection/by-id/"
+export const GET_PM_COLLECTION_BY_ID = "/v1/tyltravelcollection/get/travel-collection/by-id/"
 
 export const UPDATE_PM_COLLECTION =
-"/v1/tyltravelcollection/update-travel-collection/"
+  "/v1/tyltravelcollection/update-travel-collection/"
 
 export const DELETE_PM_COLLECTION = "/v1/tyltravelcollection/delete/"
 
@@ -93,16 +99,16 @@ export const PUT_UPDATE_TOUR_GROUP_VARIANT_API =
   "v1/tyltraveltourgroupvariant/update";
 
 export const GET_SUBCATEGORIES = "/v1/tyltravelsubcategory/get/travel-subcategories";
-export const GET_TRAVELCATEGORIES="/v1/tyltravelcategory/travel-categories/city/"
-export const ADD_TRAVEL_SUBCATEGORY="/v1/tyltravelsubcategory/add/travel-sub-category"
-export const GET_TRAVEL_CITIES="/v1/tyltravelcategory/get/travel-category"
-export const GET_EXISTING_SUBCATEGORY="/v1/tyltravelsubcategory/get/travel-subcategory/"
-export const UPDATE_SUBCATEGORY="/v1/tyltravelsubcategory/travel-subcategory/"
-export const GET_EXISTING_SUBCATEGORY_FOR_EDIT="/v1/tyltravelsubcategory/get/travel-subcategory/"
-export const DELETE_SUBCATEGORY="/v1/tyltravelsubcategory/delete/travel-subcategory/"
-export const GET_SUBCATEGORY_DETAILS_FOR_VIEW="/v1/tyltravelsubcategory/get/travel-subcategory/"
-export const GET_SUBCATEGORY_VIEW_TOURS_TABLE="/v1/tyltravelsubcategory/travel-subcategory/"
-export const GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE="/v1/tyltravelsubcategory/travel-subcategory/"
+export const GET_TRAVELCATEGORIES = "/v1/tyltravelcategory/travel-categories/city/"
+export const ADD_TRAVEL_SUBCATEGORY = "/v1/tyltravelsubcategory/add/travel-sub-category"
+export const GET_TRAVEL_CITIES = "/v1/tyltravelcategory/get/travel-category"
+export const GET_EXISTING_SUBCATEGORY = "/v1/tyltravelsubcategory/get/travel-subcategory/"
+export const UPDATE_SUBCATEGORY = "/v1/tyltravelsubcategory/travel-subcategory/"
+export const GET_EXISTING_SUBCATEGORY_FOR_EDIT = "/v1/tyltravelsubcategory/get/travel-subcategory/"
+export const DELETE_SUBCATEGORY = "/v1/tyltravelsubcategory/delete/travel-subcategory/"
+export const GET_SUBCATEGORY_DETAILS_FOR_VIEW = "/v1/tyltravelsubcategory/get/travel-subcategory/"
+export const GET_SUBCATEGORY_VIEW_TOURS_TABLE = "/v1/tyltravelsubcategory/travel-subcategory/"
+export const GET_SUBCATEGORY_VIEW_BOOKINGS_TABLE = "/v1/tyltravelsubcategory/travel-subcategory/"
 export const GET_USERS_PERMISSIONS_FOR_SUBCATEGORY = "/v1/admin/subusers/my-permissions";
 
 // HomeBanner
@@ -139,6 +145,7 @@ export const GET_TOUR_GROUP_VARIANT_DETAIL_API =
 export const GET_PRICING_LIST_API = "/v1/tyltraveltourgroupvariant/variant";
 
 export const GET_BOOKING_LIST_API = "v1/tyltraveltourgroupvariant/variant";
+export const UPDATE_VARIANT_PRICES = "/v1/tyltraveltourgroupvariant/update-prices";
 
 // HomeBanner Permissions
 export const GET_PERMISSIONS_LIST = "/v1/admin/subusers/my-permissions";
@@ -149,7 +156,7 @@ export const GET_SECTION_ID = "/v1/tylTravelCity/get/travelcity/";
 export const GET_CATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/categories";
 export const GET_TOURS_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/tours";
 export const GET_COLLECTIONS_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/collections";
-export const GET_SUBCATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/sub-categories"; 
+export const GET_SUBCATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/sub-categories";
 
 //Pricing Calendar
 export const ON_ADD_DEFAUL_PRICING = "/v1/variant-calendar-pricing/pricing-rule/685e6b39a5cea386da8cb312"

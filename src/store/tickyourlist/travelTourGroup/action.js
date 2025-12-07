@@ -32,6 +32,27 @@ import {
   SEARCH_TOUR_GROUPS_REQUEST,
   SEARCH_TOUR_GROUPS_SUCCESS,
   SEARCH_TOUR_GROUPS_FAILURE,
+  CREATE_PRICING_RULE_REQUEST,
+  CREATE_PRICING_RULE_SUCCESS,
+  CREATE_PRICING_RULE_FAILURE,
+  UPDATE_PRICING_RULE_REQUEST,
+  UPDATE_PRICING_RULE_SUCCESS,
+  UPDATE_PRICING_RULE_FAILURE,
+  DELETE_PRICING_RULE_REQUEST,
+  DELETE_PRICING_RULE_SUCCESS,
+  DELETE_PRICING_RULE_FAILURE,
+  FETCH_DATE_PRICING_REQUEST,
+  FETCH_DATE_PRICING_SUCCESS,
+  FETCH_DATE_PRICING_FAILURE,
+  SAVE_DATE_PRICING_REQUEST,
+  SAVE_DATE_PRICING_SUCCESS,
+  SAVE_DATE_PRICING_FAILURE,
+  FETCH_VARIANT_DETAIL_REQUEST,
+  FETCH_VARIANT_DETAIL_SUCCESS,
+  FETCH_VARIANT_DETAIL_FAILURE,
+  UPDATE_VARIANT_PRICES_REQUEST,
+  UPDATE_VARIANT_PRICES_SUCCESS,
+  UPDATE_VARIANT_PRICES_FAILURE,
 } from "./actionTypes"
 
 // Fetch All Tour Groups
@@ -206,6 +227,118 @@ export const searchTourGroupsSuccess = tourGroups => ({
 
 export const searchTourGroupsFailure = error => ({
   type: SEARCH_TOUR_GROUPS_FAILURE,
+  payload: error,
+})
+
+// Create pricing rule
+export const createPricingRuleRequest = (variantId, ruleData) => ({
+  type: CREATE_PRICING_RULE_REQUEST,
+  payload: { variantId, ruleData },
+})
+
+export const createPricingRuleSuccess = (rule) => ({
+  type: CREATE_PRICING_RULE_SUCCESS,
+  payload: rule,
+})
+
+export const createPricingRuleFailure = error => ({
+  type: CREATE_PRICING_RULE_FAILURE,
+  payload: error,
+})
+
+// Update pricing rule
+export const updatePricingRuleRequest = (variantId, tag, ruleData) => ({
+  type: UPDATE_PRICING_RULE_REQUEST,
+  payload: { variantId, tag, ruleData },
+})
+
+export const updatePricingRuleSuccess = (rule) => ({
+  type: UPDATE_PRICING_RULE_SUCCESS,
+  payload: rule,
+})
+
+export const updatePricingRuleFailure = error => ({
+  type: UPDATE_PRICING_RULE_FAILURE,
+  payload: error,
+})
+
+// Delete pricing rule
+export const deletePricingRuleRequest = (variantId, tag) => ({
+  type: DELETE_PRICING_RULE_REQUEST,
+  payload: { variantId, tag },
+})
+
+export const deletePricingRuleSuccess = (tag) => ({
+  type: DELETE_PRICING_RULE_SUCCESS,
+  payload: tag,
+})
+
+export const deletePricingRuleFailure = error => ({
+  type: DELETE_PRICING_RULE_FAILURE,
+  payload: error,
+})
+
+// Fetch date-specific pricing
+export const fetchDatePricingRequest = (variantId, date) => ({
+  type: FETCH_DATE_PRICING_REQUEST,
+  payload: { variantId, date },
+})
+
+export const fetchDatePricingSuccess = (datePricing) => ({
+  type: FETCH_DATE_PRICING_SUCCESS,
+  payload: datePricing,
+})
+
+export const fetchDatePricingFailure = error => ({
+  type: FETCH_DATE_PRICING_FAILURE,
+  payload: error,
+})
+
+// Save date-specific pricing (create/update)
+export const saveDatePricingRequest = (variantId, date, pricingData) => ({
+  type: SAVE_DATE_PRICING_REQUEST,
+  payload: { variantId, date, pricingData },
+})
+
+export const saveDatePricingSuccess = (datePricing) => ({
+  type: SAVE_DATE_PRICING_SUCCESS,
+  payload: datePricing,
+})
+
+export const saveDatePricingFailure = error => ({
+  type: SAVE_DATE_PRICING_FAILURE,
+  payload: error,
+})
+
+// Fetch variant details
+export const fetchVariantDetailRequest = variantId => ({
+  type: FETCH_VARIANT_DETAIL_REQUEST,
+  payload: variantId,
+})
+
+export const fetchVariantDetailSuccess = variant => ({
+  type: FETCH_VARIANT_DETAIL_SUCCESS,
+  payload: variant,
+})
+
+export const fetchVariantDetailFailure = error => ({
+  type: FETCH_VARIANT_DETAIL_FAILURE,
+  payload: error,
+})
+
+// Update variant prices
+export const updateVariantPricesRequest = (variantId, payload, onSuccess) => ({
+  type: UPDATE_VARIANT_PRICES_REQUEST,
+  payload: { variantId, payload, onSuccess },
+})
+
+export const updateVariantPricesSuccess = (data) => ({
+  type: UPDATE_VARIANT_PRICES_SUCCESS,
+  payload: data,
+})
+
+export const updateVariantPricesFailure = error => ({
+  type: UPDATE_VARIANT_PRICES_FAILURE,
   payload: error,
 })
 

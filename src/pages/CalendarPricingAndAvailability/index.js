@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Container, Row, Col, Card, CardBody, CardHeader, Button, Input, Label, Spinner, Alert, Badge } from 'reactstrap';
+import { Container, Row, Col, Card, CardBody, CardHeader, Button, Input, Label, Spinner, Alert, Badge, Modal, ModalHeader, ModalBody } from 'reactstrap';
 import axios from "axios";
 import Select from 'react-select';
 
@@ -13,13 +13,17 @@ import BootstrapTheme from '@fullcalendar/bootstrap';
 import '@fullcalendar/bootstrap/main.css';
 import '@fullcalendar/daygrid/main.css';
 import OnBulkUpdate from './onBulkUpdate';
+import PricingForm from '../tickyourlist/TravelTourGroup/PricingForm';
+import DateEditorModal from './DateEditorModal';
+import HolidayManagerModal from './HolidayManagerModal';
 import { addDefaultPricing } from 'store/CalendarPricingAndAvailability/actions';
 import { getCities } from 'store/travelCity/action';
-import { 
+import {
   fetchTourGroupsByCityRequest,
   fetchVariantsByTourRequest,
   fetchPricingRulesRequest,
-  searchTourGroupsRequest
+  searchTourGroupsRequest,
+  fetchDatePricingRequest,
 } from 'store/tickyourlist/travelTourGroup/action';
 
 const Breadcrumbs = ({ title }) => (
@@ -36,6 +40,10 @@ const CalendarPricingAndAvailability = () => {
 
   // State management
   const [model, setModel] = useState(false);
+  const [pricingModal, setPricingModal] = useState(false);
+  const [holidayModal, setHolidayModal] = useState(false);
+  const [dateEditorModal, setDateEditorModal] = useState(false);
+  const [selectedDateForEdit, setSelectedDateForEdit] = useState(null);
   const [events, setEvents] = useState([]);
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedTour, setSelectedTour] = useState('');
@@ -55,7 +63,12 @@ const CalendarPricingAndAvailability = () => {
   });
   const searchedTourGroups = useSelector(state => state.tourGroup?.searchedTourGroups || []);
   const variants = useSelector(state => state.tourGroup?.variantsByTour || []);
-  const pricingRules = useSelector(state => state.tourGroup?.pricingRules || []);
+  const pricingRules = useSelector(state => {
+    const rules = state.tourGroup?.pricingRules || []
+    // Handle both array format and object with rules property
+    return Array.isArray(rules) ? rules : (rules?.rules || rules || [])
+  });
+  const datePricing = useSelector(state => state.tourGroup?.datePricing || []);
   const loading = useSelector(state => state.tourGroup?.loading || false);
 
   // Fetch cities on mount using Redux
@@ -84,24 +97,43 @@ const CalendarPricingAndAvailability = () => {
     }
   }, [selectedTour, dispatch]);
 
-  // Fetch pricing rules when variant is selected (using Redux)
+  // Fetch pricing rules and date pricing when variant is selected (using Redux)
   useEffect(() => {
     if (selectedVariant) {
       console.log('🟡 Component: Dispatching fetchPricingRulesRequest for:', selectedVariant);
       dispatch(fetchPricingRulesRequest(selectedVariant));
+      // Fetch date pricing for the next 6 months
+      const today = new Date();
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 6);
+      dispatch(fetchDatePricingRequest({
+        variantId: selectedVariant,
+        date: today.toISOString().split('T')[0]
+      }));
     } else {
       setEvents([]);
     }
   }, [selectedVariant, dispatch]);
 
-  // Generate calendar events when pricing rules change
+  // Generate calendar events when pricing rules or date pricing change
   useEffect(() => {
-    if (pricingRules && pricingRules.length > 0) {
-      console.log('🎨 Component: Generating calendar events from rules:', pricingRules);
-      const calendarEvents = generateEventsFromRules(pricingRules);
-      setEvents(calendarEvents);
+    // Handle both array format and object with rules property
+    const rules = Array.isArray(pricingRules) ? pricingRules : (pricingRules?.rules || [])
+    if (rules && rules.length > 0) {
+      console.log('🎨 Component: Generating calendar events from rules:', rules);
+      const ruleEvents = generateEventsFromRules(rules);
+      const dateOverrideEvents = generateEventsFromDatePricing(datePricing);
+      // Merge events, with date overrides taking priority
+      const allEvents = [...ruleEvents, ...dateOverrideEvents];
+      setEvents(allEvents);
+    } else if (datePricing && datePricing.length > 0) {
+      // Only date overrides, no rules
+      const dateOverrideEvents = generateEventsFromDatePricing(datePricing);
+      setEvents(dateOverrideEvents);
+    } else {
+      setEvents([]);
     }
-  }, [pricingRules]);
+  }, [pricingRules, datePricing]);
 
 
   const generateEventsFromRules = (rules) => {
@@ -110,8 +142,11 @@ const CalendarPricingAndAvailability = () => {
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 6); // Show 6 months ahead
 
+    // Ensure rules is an array
+    const rulesArray = Array.isArray(rules) ? rules : (rules?.rules || [])
+
     // Sort rules by priority (highest first)
-    const sortedRules = [...rules].sort((a, b) => b.priority - a.priority);
+    const sortedRules = [...rulesArray].sort((a, b) => (b.priority || 0) - (a.priority || 0));
 
     let currentDate = new Date(today);
     while (currentDate <= endDate) {
@@ -123,7 +158,7 @@ const CalendarPricingAndAvailability = () => {
         if (!rule.isActive) return false;
 
         const conditions = rule.conditions || {};
-        
+
         // Check weekday condition
         if (conditions.weekdays && conditions.weekdays.length > 0) {
           if (!conditions.weekdays.includes(weekday)) return false;
@@ -180,6 +215,67 @@ const CalendarPricingAndAvailability = () => {
     return events;
   };
 
+  const generateEventsFromDatePricing = (datePricingArray) => {
+    const events = [];
+
+    if (!datePricingArray || !Array.isArray(datePricingArray)) return events;
+
+    datePricingArray.forEach(dateOverride => {
+      if (!dateOverride.date) return;
+
+      const date = new Date(dateOverride.date);
+      const dateStr = date.toISOString().split('T')[0];
+
+      // Determine event color based on availability
+      let backgroundColor = '#28a745'; // Green for available
+      let borderColor = '#28a745';
+      let title = 'Available';
+
+      if (!dateOverride.isAvailable) {
+        backgroundColor = '#dc3545'; // Red for not available
+        borderColor = '#dc3545';
+        title = dateOverride.reason || 'Not Available';
+      } else if (dateOverride.reason && dateOverride.reason.toLowerCase().includes('holiday')) {
+        backgroundColor = '#ffc107'; // Yellow for holiday
+        borderColor = '#ffc107';
+        title = 'Holiday';
+      }
+
+      // Get pricing info
+      const dayPricing = dateOverride.dayPricing?.[0];
+      const adultPrice = dayPricing?.prices?.find(p => p.type === 'adult' || p.type === 'ADULT')?.finalPrice;
+      const childPrice = dayPricing?.prices?.find(p => p.type === 'child' || p.type === 'CHILD')?.finalPrice;
+
+      // Check if has time slots
+      const hasTimeSlots = dateOverride.slots && dateOverride.slots.length > 0;
+
+      events.push({
+        id: `date-override-${dateStr}`,
+        title: title,
+        start: date,
+        end: date,
+        allDay: true,
+        backgroundColor,
+        borderColor,
+        extendedProps: {
+          type: 'date_override',
+          availability: dateOverride.isAvailable ? "Available" : "Not Available",
+          currency: dayPricing?.currency || 'USD',
+          adultPrice,
+          childPrice,
+          hasTimeSlots,
+          timeSlots: dateOverride.slots || [],
+          reason: dateOverride.reason || '',
+          notes: dateOverride.notes || '',
+          dayCapacity: dateOverride.dayCapacity || 0,
+          bookedCapacity: dateOverride.bookedCapacity || 0,
+        },
+      });
+    });
+
+    return events;
+  };
+
   const getPriorityColor = (priority) => {
     if (priority >= 90) return '#dc3545'; // Red - Emergency
     if (priority >= 51) return '#fd7e14'; // Orange - Special
@@ -190,11 +286,32 @@ const CalendarPricingAndAvailability = () => {
   };
 
   const renderEventContent = (eventInfo) => {
-    const { availability, currency, adultPrice, childPrice, priority, tag } = eventInfo.event.extendedProps;
-    
+    const {
+      availability,
+      currency,
+      adultPrice,
+      childPrice,
+      priority,
+      tag,
+      type,
+      hasTimeSlots,
+      reason
+    } = eventInfo.event.extendedProps;
+
     return (
       <div className="p-1 text-white small" style={{ fontSize: '0.75rem' }}>
         <div className="fw-bold text-truncate">{eventInfo.event.title}</div>
+        {type === 'date_override' && reason && (
+          <div className="text-truncate" style={{ fontSize: '0.7rem', opacity: 0.9 }}>
+            {reason}
+          </div>
+        )}
+        {hasTimeSlots && (
+          <div className="text-truncate" style={{ fontSize: '0.7rem' }}>
+            <i className="bx bx-time me-1"></i>
+            {eventInfo.event.extendedProps.timeSlots?.length || 0} slot(s)
+          </div>
+        )}
         {adultPrice && (
           <div className="text-truncate">
             Adult: {currency} {adultPrice}
@@ -206,14 +323,16 @@ const CalendarPricingAndAvailability = () => {
           </div>
         )}
         <div className="d-flex justify-content-between align-items-center mt-1">
-          <small className="text-truncate">{tag}</small>
-          <Badge 
-            color="light" 
-            className="text-dark" 
-            style={{ fontSize: '0.65rem' }}
-          >
-            P{priority}
-          </Badge>
+          {tag && <small className="text-truncate">{tag}</small>}
+          {priority && (
+            <Badge
+              color="light"
+              className="text-dark"
+              style={{ fontSize: '0.65rem' }}
+            >
+              P{priority}
+            </Badge>
+          )}
         </div>
       </div>
     );
@@ -225,7 +344,8 @@ const CalendarPricingAndAvailability = () => {
       return;
     }
     console.log('Date clicked:', arg.dateStr);
-    // Could open a modal to edit pricing for this specific date
+    setSelectedDateForEdit(arg.dateStr);
+    setDateEditorModal(true);
   };
 
   const handleEventClick = (clickInfo) => {
@@ -309,13 +429,65 @@ const CalendarPricingAndAvailability = () => {
       `}</style>
 
       <div className="page-content">
-        <OnBulkUpdate 
-          isOpen={model} 
-          toggle={toggleModel} 
+        <OnBulkUpdate
+          isOpen={model}
+          toggle={toggleModel}
           addDefaultPricing={addDefaultPricing}
           selectedVariant={selectedVariant}
         />
-        
+
+        {/* Holiday Manager Modal */}
+        <HolidayManagerModal
+          isOpen={holidayModal}
+          toggle={() => setHolidayModal(!holidayModal)}
+          variantId={selectedVariant}
+          pricingRules={pricingRules}
+        />
+
+        {/* Pricing Rules Management Modal */}
+        <Modal isOpen={pricingModal} toggle={() => setPricingModal(false)} size="xl">
+          <ModalHeader toggle={() => setPricingModal(false)}>
+            Pricing Rules Management
+          </ModalHeader>
+          <ModalBody>
+            {selectedVariant ? (
+              <PricingForm
+                variantId={selectedVariant}
+                variantName={variants.find(v => (v._id || v.id) === selectedVariant)?.name}
+                onClose={() => {
+                  setPricingModal(false)
+                  // Refresh pricing rules after modal closes
+                  if (selectedVariant) {
+                    dispatch(fetchPricingRulesRequest(selectedVariant))
+                  }
+                }}
+              />
+            ) : (
+              <Alert color="warning">Please select a variant first</Alert>
+            )}
+          </ModalBody>
+        </Modal>
+
+        {/* Date Editor Modal */}
+        <DateEditorModal
+          isOpen={dateEditorModal}
+          toggle={() => {
+            const dateToRefresh = selectedDateForEdit
+            setDateEditorModal(false)
+            setSelectedDateForEdit(null)
+            // Refresh date pricing after modal closes
+            if (selectedVariant && dateToRefresh) {
+              dispatch(fetchDatePricingRequest({
+                variantId: selectedVariant,
+                date: dateToRefresh
+              }))
+            }
+          }}
+          variantId={selectedVariant}
+          selectedDate={selectedDateForEdit}
+          variantName={variants.find(v => (v._id || v.id) === selectedVariant)?.name}
+        />
+
         <Container fluid={true}>
           <Breadcrumbs title="Calendar Pricing & Availability" />
 
@@ -344,19 +516,19 @@ const CalendarPricingAndAvailability = () => {
                       options={
                         Array.isArray(cities)
                           ? cities.map(city => ({
-                              value: city.cityCode,
-                              label: `${city.cityName} (${city.cityCode})`,
-                            }))
+                            value: city.cityCode,
+                            label: `${city.cityName} (${city.cityCode})`,
+                          }))
                           : []
                       }
                       value={
                         selectedCity
                           ? {
-                              value: selectedCity,
-                              label: cities.find(c => c.cityCode === selectedCity)
-                                ? `${cities.find(c => c.cityCode === selectedCity).cityName} (${selectedCity})`
-                                : selectedCity
-                            }
+                            value: selectedCity,
+                            label: cities.find(c => c.cityCode === selectedCity)
+                              ? `${cities.find(c => c.cityCode === selectedCity).cityName} (${selectedCity})`
+                              : selectedCity
+                          }
                           : null
                       }
                       onChange={(selectedOption) => {
@@ -443,9 +615,9 @@ const CalendarPricingAndAvailability = () => {
                         console.log('🎨 Rendering: Is Array?', Array.isArray(tourGroupsByCity));
                         const options = Array.isArray(tourGroupsByCity)
                           ? tourGroupsByCity.map(tour => ({
-                              value: tour.id,
-                              label: tour.name,
-                            }))
+                            value: tour.id,
+                            label: tour.name,
+                          }))
                           : [];
                         console.log('🎨 Rendering: Dropdown options:', options);
                         return options;
@@ -453,9 +625,9 @@ const CalendarPricingAndAvailability = () => {
                       value={
                         selectedTour
                           ? {
-                              value: selectedTour,
-                              label: tourGroupsByCity.find(t => t.id === selectedTour)?.name || selectedTour
-                            }
+                            value: selectedTour,
+                            label: tourGroupsByCity.find(t => t.id === selectedTour)?.name || selectedTour
+                          }
                           : null
                       }
                       onChange={(selectedOption) => {
@@ -471,7 +643,7 @@ const CalendarPricingAndAvailability = () => {
                       </small>
                     )}
                   </div>
-                  
+
                   <div className="mb-4">
                     <Label htmlFor="variant-select">
                       Variant <span className="text-danger">*</span>
@@ -484,17 +656,17 @@ const CalendarPricingAndAvailability = () => {
                       options={
                         Array.isArray(variants)
                           ? variants.map(variant => ({
-                              value: variant._id || variant.id,
-                              label: variant.name,
-                            }))
+                            value: variant._id || variant.id,
+                            label: variant.name,
+                          }))
                           : []
                       }
                       value={
                         selectedVariant
                           ? {
-                              value: selectedVariant,
-                              label: variants.find(v => (v._id || v.id) === selectedVariant)?.name || selectedVariant
-                            }
+                            value: selectedVariant,
+                            label: variants.find(v => (v._id || v.id) === selectedVariant)?.name || selectedVariant
+                          }
                           : null
                       }
                       onChange={(selectedOption) => {
@@ -513,24 +685,34 @@ const CalendarPricingAndAvailability = () => {
 
                   {selectedVariant && (
                     <>
-                  <Button
-                    color="primary"
+                      <Button
+                        color="primary"
                         className="w-100 mb-2"
-                        onClick={handleManagePricing}
+                        onClick={() => setPricingModal(true)}
                       >
                         <i className="bx bx-dollar-circle me-1"></i>
                         Manage Pricing Rules
                       </Button>
-                      
+
+                      <Button
+                        color="danger"
+                        outline
+                        className="w-100 mb-2"
+                        onClick={() => setHolidayModal(true)}
+                      >
+                        <i className="bx bx-calendar-x me-1"></i>
+                        Manage Holidays
+                      </Button>
+
                       <Button
                         color="success"
                         outline
-                    className="w-100"
-                    onClick={() => setModel(true)}
-                  >
-                    <i className="mdi mdi-cogs me-1"></i>
-                    Bulk Update Pricing
-                  </Button>
+                        className="w-100"
+                        onClick={() => setModel(true)}
+                      >
+                        <i className="mdi mdi-cogs me-1"></i>
+                        Bulk Update Pricing
+                      </Button>
                     </>
                   )}
                 </CardBody>
@@ -549,8 +731,8 @@ const CalendarPricingAndAvailability = () => {
                         .filter(r => r.isActive)
                         .sort((a, b) => b.priority - a.priority)
                         .map(rule => (
-                          <div 
-                            key={rule._id} 
+                          <div
+                            key={rule._id}
                             className="d-flex align-items-center justify-content-between mb-2 p-2 border rounded"
                             style={{ backgroundColor: getPriorityColor(rule.priority) + '15' }}
                           >
@@ -558,8 +740,8 @@ const CalendarPricingAndAvailability = () => {
                               <div className="fw-bold small">{rule.name}</div>
                               <small className="text-muted">{rule.tag}</small>
                             </div>
-                            <Badge 
-                              style={{ 
+                            <Badge
+                              style={{
                                 backgroundColor: getPriorityColor(rule.priority),
                                 color: 'white'
                               }}
@@ -580,10 +762,10 @@ const CalendarPricingAndAvailability = () => {
                 <CardBody>
                   <div className="d-flex flex-column gap-2">
                     <div className="d-flex align-items-center">
-                      <div 
-                        style={{ 
-                          width: '20px', 
-                          height: '20px', 
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
                           backgroundColor: '#dc3545',
                           marginRight: '8px',
                           borderRadius: '3px'
@@ -592,10 +774,10 @@ const CalendarPricingAndAvailability = () => {
                       <small>90-100: Emergency</small>
                     </div>
                     <div className="d-flex align-items-center">
-                      <div 
-                        style={{ 
-                          width: '20px', 
-                          height: '20px', 
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
                           backgroundColor: '#fd7e14',
                           marginRight: '8px',
                           borderRadius: '3px'
@@ -604,10 +786,10 @@ const CalendarPricingAndAvailability = () => {
                       <small>51-89: Special Events</small>
                     </div>
                     <div className="d-flex align-items-center">
-                      <div 
-                        style={{ 
-                          width: '20px', 
-                          height: '20px', 
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
                           backgroundColor: '#ffc107',
                           marginRight: '8px',
                           borderRadius: '3px'
@@ -616,10 +798,10 @@ const CalendarPricingAndAvailability = () => {
                       <small>31-50: Complex</small>
                     </div>
                     <div className="d-flex align-items-center">
-                      <div 
-                        style={{ 
-                          width: '20px', 
-                          height: '20px', 
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
                           backgroundColor: '#0dcaf0',
                           marginRight: '8px',
                           borderRadius: '3px'
@@ -628,10 +810,10 @@ const CalendarPricingAndAvailability = () => {
                       <small>21-30: Seasonal</small>
                     </div>
                     <div className="d-flex align-items-center">
-                      <div 
-                        style={{ 
-                          width: '20px', 
-                          height: '20px', 
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
                           backgroundColor: '#198754',
                           marginRight: '8px',
                           borderRadius: '3px'
@@ -640,10 +822,10 @@ const CalendarPricingAndAvailability = () => {
                       <small>11-20: Weekly</small>
                     </div>
                     <div className="d-flex align-items-center">
-                      <div 
-                        style={{ 
-                          width: '20px', 
-                          height: '20px', 
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
                           backgroundColor: '#6c757d',
                           marginRight: '8px',
                           borderRadius: '3px'
@@ -660,9 +842,9 @@ const CalendarPricingAndAvailability = () => {
                   <h5 className="mb-0">Quick Actions</h5>
                 </CardHeader>
                 <CardBody className="d-flex flex-column gap-2">
-                  <Button 
-                    outline 
-                    color="secondary" 
+                  <Button
+                    outline
+                    color="secondary"
                     className="w-100 text-start"
                     onClick={handleQuickCopy}
                     disabled={!selectedVariant}
@@ -670,9 +852,9 @@ const CalendarPricingAndAvailability = () => {
                     <i className="bx bx-copy me-2"></i>
                     Copy from Date
                   </Button>
-                  <Button 
-                    outline 
-                    color="secondary" 
+                  <Button
+                    outline
+                    color="secondary"
                     className="w-100 text-start"
                     onClick={handleSeasonalPricing}
                     disabled={!selectedVariant}
@@ -722,29 +904,29 @@ const CalendarPricingAndAvailability = () => {
                       <p className="text-muted mb-4">
                         This variant doesn't have any pricing rules yet
                       </p>
-                      <Button color="primary" onClick={handleManagePricing}>
+                      <Button color="primary" onClick={() => setPricingModal(true)}>
                         <i className="bx bx-plus-circle me-2"></i>
                         Create Pricing Rules
                       </Button>
                     </div>
                   ) : (
-                  <FullCalendar
-                    plugins={[BootstrapTheme, dayGridPlugin, interactionPlugin]}
-                    themeSystem="bootstrap"
-                    headerToolbar={{
+                    <FullCalendar
+                      plugins={[BootstrapTheme, dayGridPlugin, interactionPlugin]}
+                      themeSystem="bootstrap"
+                      headerToolbar={{
                         left: 'prev,today',
-                      center: 'title',
-                      right: 'next',
-                    }}
-                    initialView="dayGridMonth"
-                    selectable={true}
-                    dateClick={handleDateClick}
+                        center: 'title',
+                        right: 'next',
+                      }}
+                      initialView="dayGridMonth"
+                      selectable={true}
+                      dateClick={handleDateClick}
                       eventClick={handleEventClick}
-                    events={events}   
-                    eventContent={renderEventContent}
+                      events={events}
+                      eventContent={renderEventContent}
                       height="auto"
                       dayMaxEvents={3}
-                  />
+                    />
                   )}
                 </CardBody>
               </Card>
