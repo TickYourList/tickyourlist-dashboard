@@ -170,3 +170,8 @@ export const GET_FAQS_BY_CITY = "/v1/tyltravelfaqs/city/"; // Note: cityCode wil
 export const GET_FAQ_BY_ID = "/v1/tyltravelfaqs/get/"; // Note: ID will be appended
 export const ADD_NEW_FAQS = "/v1/tyltravelfaqs/create";
 export const UPDATE_FAQS = "/v1/tyltravelfaqs/update/"; // Note: ID will be appended
+
+// Tour Group Connections
+export const CONNECT_TOUR_GROUP = "/v1/tyltraveltourgroup/connect/tour-group"; // Connect tour group to categories/subcategories
+export const BULK_CONNECT_TOURS_TO_CATEGORY = "/v1/tyltravelcategory/bulk-connect/tours"; // Bulk connect tours to category
+export const BULK_CONNECT_TOURS_TO_SUBCATEGORY = "/v1/tyltravelsubcategory/bulk-connect/tours"; // Bulk connect tours to subcategory

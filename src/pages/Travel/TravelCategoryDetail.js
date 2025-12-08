@@ -21,6 +21,8 @@ import {
   deleteTravelCategoryRequest,
 } from "../../store/travelCategories/actions";
 import { usePermissions, MODULES, ACTIONS } from "helpers/permissions";
+import { getCitiesList } from "helpers/location_management_helper";
+import Select from "react-select";
 
 function TravelCategoryDetail() {
   const dispatch = useDispatch();
@@ -47,6 +49,30 @@ function TravelCategoryDetail() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [cities, setCities] = useState([]);
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [filteredData, setFilteredData] = useState([]);
+
+  // Fetch cities list on mount
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setLoadingCities(true);
+        const response = await getCitiesList();
+        const cityOptions = response.data.travelCityList.map(city => ({
+          value: city.cityCode,
+          label: `${city.name} (${city.cityCode})`,
+        }));
+        setCities(cityOptions);
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, []);
 
   useEffect(() => {
     // Fetch categories only when permissions are ready
@@ -54,6 +80,18 @@ function TravelCategoryDetail() {
       dispatch(getTravelCategoriesRequest());
     }
   }, [dispatch, isPermissionsReady]);
+
+  // Filter data based on selected city
+  useEffect(() => {
+    if (selectedCity) {
+      const filtered = data.filter(
+        (category) => category.cityCode === selectedCity.value
+      );
+      setFilteredData(filtered);
+    } else {
+      setFilteredData(data);
+    }
+  }, [selectedCity, data]);
 
   const handleOpenViewModal = (category) => {
     // Permission check for view details
@@ -245,7 +283,21 @@ function TravelCategoryDetail() {
 
         <div className="card">
           <div className="card-body">
-            <div className="d-flex justify-content-end mb-0">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <div style={{ width: '300px' }}>
+                <label className="form-label">Filter by City Code</label>
+                <Select
+                  value={selectedCity}
+                  onChange={setSelectedCity}
+                  options={cities}
+                  isClearable
+                  isSearchable
+                  isLoading={loadingCities}
+                  placeholder="Select city to filter..."
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                />
+              </div>
               {/* Add button - show only if API says canAdd is true */}
               {permissions.canAdd && (
                 <button
@@ -268,7 +320,7 @@ function TravelCategoryDetail() {
 
             <TableContainer
               columns={columns}
-              data={data}
+              data={filteredData.length > 0 || selectedCity ? filteredData : data}
               loading={loading}
               isGlobalFilter={true}
               isAddOptions={false}

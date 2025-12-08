@@ -439,6 +439,26 @@ const getFaqById = (id) => get(url.GET_FAQ_BY_ID + id);
 const addFaqs = faqData => post(url.ADD_NEW_FAQS, faqData);
 const updateFaqs = (id, faqData) => put(url.UPDATE_FAQS + id, faqData);
 
+// Tour Group Connections
+const connectTourGroupToCategories = (tourGroupId, categoryIds, subcategoryIds) => {
+  // Convert to array of IDs (strings) as expected by the API
+  const categoryConnections = Array.isArray(categoryIds) ? categoryIds : [];
+  const subcategoryConnections = Array.isArray(subcategoryIds) ? subcategoryIds : [];
+  
+  return put(`${url.CONNECT_TOUR_GROUP}/${tourGroupId}/connections`, {
+    categoryConnections,
+    subcategoryConnections
+  });
+};
+
+const bulkConnectToursToCategory = (categoryId, tourGroupIds) => {
+  return put(`${url.BULK_CONNECT_TOURS_TO_CATEGORY}/${categoryId}`, { tourGroupIds });
+};
+
+const bulkConnectToursToSubcategory = (subcategoryId, tourGroupIds) => {
+  return put(`${url.BULK_CONNECT_TOURS_TO_SUBCATEGORY}/${subcategoryId}`, { tourGroupIds });
+};
+
 export {
   getCountriesList,
   getCurrencyList,
@@ -549,6 +569,9 @@ export {
   getFaqsByCity,
   getFaqById,
   addFaqs,
-  updateFaqs
+  updateFaqs,
+  connectTourGroupToCategories,
+  bulkConnectToursToCategory,
+  bulkConnectToursToSubcategory
 
 };

@@ -16,6 +16,10 @@ import {
   TabContent,
   TabPane,
   Alert,
+  Input,
+  Label,
+  Spinner,
+  Badge,
 } from "reactstrap";
 import classnames from "classnames";
 import { Link } from "react-router-dom";
@@ -28,6 +32,8 @@ import {
   clearSubCategoryViewData
 } from "store/actions";
 import TableContainer from '../../../components/Common/TableContainer';
+import { getCityTours, bulkConnectToursToSubcategory } from "helpers/location_management_helper";
+import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 
 
 import './SubCategoryCss.css';
@@ -241,6 +247,14 @@ const BookingsTable = ({ bookings }) => {
 const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit }) => {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("1");
+  
+  // Bulk connection state
+  const [connectCityCode, setConnectCityCode] = useState("");
+  const [availableTours, setAvailableTours] = useState([]);
+  const [selectedTourIds, setSelectedTourIds] = useState([]);
+  const [loadingTours, setLoadingTours] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [showConnectSection, setShowConnectSection] = useState(false);
 
   const {
     travelSubcategoryDetails,
@@ -277,6 +291,57 @@ const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit 
       } else if (tab === "1" && !SubcategoryViewToursTable?.tours) {
         dispatch(getSubCategoryViewToursTable(subCategoryId));
       }
+    }
+  };
+
+  const handleFetchToursByCity = async () => {
+    if (!connectCityCode || !subCategoryId) return;
+    
+    setLoadingTours(true);
+    try {
+      const response = await getCityTours({ cityCode: connectCityCode, page: 1, limit: 100 });
+      if (response?.data?.tours) {
+        setAvailableTours(response.data.tours);
+      }
+    } catch (error) {
+      console.error("Error fetching tours:", error);
+      showToastError("Failed to load tours for this city");
+    } finally {
+      setLoadingTours(false);
+    }
+  };
+
+  const handleTourToggle = (tourId) => {
+    setSelectedTourIds((prev) => {
+      if (prev.includes(tourId)) {
+        return prev.filter((id) => id !== tourId);
+      } else {
+        return [...prev, tourId];
+      }
+    });
+  };
+
+  const handleBulkConnect = async () => {
+    if (!subCategoryId || selectedTourIds.length === 0) {
+      showToastError("Please select at least one tour");
+      return;
+    }
+
+    setConnecting(true);
+    try {
+      await bulkConnectToursToSubcategory(subCategoryId, selectedTourIds);
+      showToastSuccess(`Successfully connected ${selectedTourIds.length} tour(s) to subcategory`);
+      setSelectedTourIds([]);
+      setAvailableTours([]);
+      setConnectCityCode("");
+      setShowConnectSection(false);
+      // Refresh subcategory tours
+      dispatch(getSubCategoryViewToursTable(subCategoryId));
+    } catch (error) {
+      console.error("Error connecting tours:", error);
+      showToastError("Failed to connect tours to subcategory");
+    } finally {
+      setConnecting(false);
     }
   };
 
@@ -366,6 +431,105 @@ const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit 
               {/* Tab Content */}
               <TabContent activeTab={activeTab} className="p-3 text-muted">
                 <TabPane tabId="1">
+                  {/* Bulk Connect Section */}
+                  <div className="mb-4 p-3 bg-light rounded">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h5 className="mb-0">Connect Tours to Subcategory</h5>
+                      {canEdit && (
+                        <Button
+                          size="sm"
+                          color={showConnectSection ? "secondary" : "primary"}
+                          onClick={() => {
+                            setShowConnectSection(!showConnectSection);
+                            if (!showConnectSection) {
+                              setSelectedTourIds([]);
+                              setAvailableTours([]);
+                              setConnectCityCode("");
+                            }
+                          }}
+                        >
+                          {showConnectSection ? "Hide" : "Connect Tours"}
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {showConnectSection && canEdit && (
+                      <Row>
+                        <Col md={4}>
+                          <Label>City Code</Label>
+                          <Input
+                            type="text"
+                            value={connectCityCode}
+                            onChange={(e) => setConnectCityCode(e.target.value.toUpperCase())}
+                            placeholder="Enter city code (e.g., DUBAI, PNQ)"
+                            className="text-uppercase"
+                          />
+                        </Col>
+                        <Col md={4} className="d-flex align-items-end">
+                          <Button
+                            color="primary"
+                            onClick={handleFetchToursByCity}
+                            disabled={!connectCityCode || loadingTours}
+                          >
+                            {loadingTours ? (
+                              <>
+                                <Spinner size="sm" className="me-2" />
+                                Loading...
+                              </>
+                            ) : (
+                              "Fetch Tours"
+                            )}
+                          </Button>
+                        </Col>
+                      </Row>
+                    )}
+
+                    {showConnectSection && canEdit && availableTours.length > 0 && (
+                      <div className="mt-3">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span>
+                            <Badge color="info">{selectedTourIds.length} selected</Badge> out of {availableTours.length} tours
+                          </span>
+                          <Button
+                            color="success"
+                            size="sm"
+                            onClick={handleBulkConnect}
+                            disabled={selectedTourIds.length === 0 || connecting}
+                          >
+                            {connecting ? (
+                              <>
+                                <Spinner size="sm" className="me-2" />
+                                Connecting...
+                              </>
+                            ) : (
+                              `Connect ${selectedTourIds.length} Tour(s)`
+                            )}
+                          </Button>
+                        </div>
+                        <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "10px" }}>
+                          {availableTours.map((tour) => {
+                            const tourId = tour._id || tour.id;
+                            const isSelected = selectedTourIds.includes(tourId);
+                            return (
+                              <div key={tourId} className="d-flex align-items-center mb-2">
+                                <Input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleTourToggle(tourId)}
+                                  className="me-2"
+                                />
+                                <Label className="mb-0 flex-grow-1">
+                                  {tour.name || "Unnamed Tour"} {tour.cityCode && `(${tour.cityCode})`}
+                                </Label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <h5 className="mb-3">Connected Tours</h5>
                   <ToursTable tours={SubcategoryViewToursTable?.tours} />
                 </TabPane>
                 <TabPane tabId="2">

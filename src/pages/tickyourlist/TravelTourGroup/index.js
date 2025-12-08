@@ -33,6 +33,7 @@ import {
 import DeleteModal from "components/Common/DeleteModal"
 
 import ViewTourGroup from "./ViewTourGroup"
+import ConnectCategoriesModal from "./ConnectCategoriesModal"
 import { showToastSuccess } from "helpers/toastBuilder"
 import { usePermissions, MODULES, ACTIONS } from "helpers/permissions"
 import { getCitiesList } from "helpers/location_management_helper"
@@ -54,6 +55,8 @@ function TourGroupTable() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [isSearchMode, setIsSearchMode] = useState(false)
+  const [connectModal, setConnectModal] = useState(false)
+  const [selectedTourGroupForConnection, setSelectedTourGroupForConnection] = useState(null)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { can, getTourGroupPermissions, isPermissionsReady, loading: permissionsLoading } = usePermissions()
@@ -220,6 +223,24 @@ function TourGroupTable() {
     showToastSuccess("Calender Triggered")
   }
 
+  const handleConnectCategories = (tourGroup) => {
+    setSelectedTourGroupForConnection(tourGroup)
+    setConnectModal(true)
+  }
+
+  const handleConnectionSuccess = () => {
+    // Refresh the tour group data
+    if (isPermissionsReady && canViewTourGroup) {
+      dispatch(
+        fetchTourGroupsRequest({
+          page: currentPage,
+          limit: pageSize,
+          cityCode: selectedCity?.value || null,
+        })
+      )
+    }
+  }
+
   // Calculate which data to display - client-side pagination from Redux data
   const displayData = useMemo(() => {
     // Use search results if in search mode, otherwise use regular tour groups
@@ -381,6 +402,15 @@ function TourGroupTable() {
             >
               <i className="fas fa-calendar-alt font-size-18 text-warning"></i>
             </button>
+            {canEditTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
+                title="Connect Categories"
+                onClick={() => handleConnectCategories(row.original)}
+              >
+                <i className="fas fa-link font-size-18 text-info"></i>
+              </button>
+            )}
             {canDeleteTourGroup && (
               <button
                 className="btn p-0 border-0 bg-transparent"
@@ -575,6 +605,17 @@ function TourGroupTable() {
                       )}
                     </ModalBody>
                   </Modal>
+                  
+                  {/* Connect Categories Modal */}
+                  <ConnectCategoriesModal
+                    isOpen={connectModal}
+                    toggle={() => {
+                      setConnectModal(false)
+                      setSelectedTourGroupForConnection(null)
+                    }}
+                    tourGroup={selectedTourGroupForConnection}
+                    onSuccess={handleConnectionSuccess}
+                  />
                 </CardBody>
               </Card>
             </Col>
