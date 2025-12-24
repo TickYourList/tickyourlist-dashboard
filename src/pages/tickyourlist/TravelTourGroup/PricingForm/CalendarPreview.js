@@ -50,7 +50,19 @@ const CalendarPreview = ({ variantId, rules }) => {
         }
       )
 
-      setPreviewData(response.data.data)
+      // Response structure: { data: { preview: [...], summary: {...}, ... } }
+      const data = response.data.data || response.data
+      setPreviewData(data)
+      
+      // Debug: Log availability data
+      if (data.preview && data.preview.length > 0) {
+        const datesWithAvailability = data.preview.filter(p => p.hasAvailabilityOverride)
+        console.log('Dates with availability overrides:', datesWithAvailability.length)
+        if (datesWithAvailability.length > 0) {
+          console.log('Sample availability data:', datesWithAvailability[0])
+        }
+      }
+      
       setLoading(false)
     } catch (err) {
       console.error("Error loading preview:", err)
@@ -96,11 +108,13 @@ const CalendarPreview = ({ variantId, rules }) => {
   }
 
   const getPriceForDate = (day) => {
-    if (!day || !previewData?.preview) return null
+    if (!day || !previewData) return null
     
     const dateStr = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
     
-    return previewData.preview.find(p => p.date === dateStr)
+    // Handle response structure: { preview: [...] }
+    const previewArray = previewData.preview || []
+    return previewArray.find(p => p.date === dateStr)
   }
 
   const getPriorityColor = (priority) => {
@@ -122,8 +136,9 @@ const CalendarPreview = ({ variantId, rules }) => {
     <div>
       <h5 className="mb-3">Calendar Preview</h5>
       <p className="text-muted">
-        Preview how your pricing rules apply across different dates. Higher priority rules
-        are shown when multiple rules match.
+        Preview how pricing and availability apply across different dates. Shows rule-based pricing (with priority badges), 
+        legacy/base pricing (shown as "Legacy"), and unavailable dates/holidays (shown with red "Holiday" badge). 
+        Higher priority rules override lower priority ones.
       </p>
 
       {error && (
@@ -206,40 +221,116 @@ const CalendarPreview = ({ variantId, rules }) => {
 
                         const priceData = getPriceForDate(day)
                         const matchedRule = priceData?.matchedRules?.[0] // Highest priority
-                        const adultPrice = matchedRule?.appliedPricing?.dayPricing?.[0]?.prices?.find(
-                          p => p.type === "adult"
-                        )?.finalPrice
+                        const isAvailable = priceData?.isAvailable !== false
+                        const hasAvailabilityOverride = priceData?.hasAvailabilityOverride || false
+                        const availabilityNotes = priceData?.availabilityNotes
+                        const availabilityReason = priceData?.availabilityReason
+                        
+                        // Get price from either matched rule or legacy pricing
+                        let adultPrice = null
+                        let pricingSource = null
+                        let ruleTag = null
+                        let rulePriority = null
+                        
+                        if (matchedRule?.appliedPricing?.dayPricing?.[0]?.prices) {
+                          adultPrice = matchedRule.appliedPricing.dayPricing[0].prices.find(
+                            p => p.type === "adult" || p.type === "guest"
+                          )?.finalPrice
+                          pricingSource = priceData?.pricingSource || "rule_based"
+                          ruleTag = matchedRule.tag
+                          rulePriority = matchedRule.priority
+                        } else if (priceData?.appliedPricing?.dayPricing?.[0]?.prices) {
+                          // Legacy pricing or other pricing source
+                          adultPrice = priceData.appliedPricing.dayPricing[0].prices.find(
+                            p => p.type === "adult" || p.type === "guest"
+                          )?.finalPrice
+                          pricingSource = priceData?.pricingSource || "legacy"
+                        }
 
                         return (
                           <td
                             key={dayIdx}
-                            className="text-center"
-                            style={{ minHeight: "80px", padding: "8px" }}
+                            className={`text-center ${!isAvailable ? "bg-light" : ""}`}
+                            style={{ 
+                              minHeight: "80px", 
+                              padding: "8px",
+                              opacity: !isAvailable ? 0.6 : 1
+                            }}
+                            title={
+                              hasAvailabilityOverride 
+                                ? (availabilityNotes || availabilityReason || (isAvailable ? "Available with override" : "Not available"))
+                                : ""
+                            }
                           >
                             <div className="fw-bold mb-1">{day}</div>
-                            {matchedRule ? (
+                            {/* Show availability badge if there's an override */}
+                            {hasAvailabilityOverride && (
+                              <Badge
+                                color={isAvailable ? "success" : "danger"}
+                                className="mb-1"
+                                style={{ fontSize: "0.7rem" }}
+                              >
+                                <i className={`bx ${isAvailable ? "bx-check-circle" : "bx-x-circle"} me-1`}></i>
+                                {isAvailable ? "Override" : "Holiday"}
+                              </Badge>
+                            )}
+                            {adultPrice !== null && adultPrice !== undefined && isAvailable ? (
                               <>
-                                <Badge
-                                  color={getPriorityColor(matchedRule.priority)}
-                                  className="mb-1"
-                                  style={{ fontSize: "0.7rem" }}
-                                >
-                                  P{matchedRule.priority}
-                                </Badge>
+                                {pricingSource === "legacy" ? (
+                                  <Badge
+                                    color="secondary"
+                                    className="mb-1"
+                                    style={{ fontSize: "0.7rem" }}
+                                  >
+                                    Legacy
+                                  </Badge>
+                                ) : rulePriority !== null ? (
+                                  <Badge
+                                    color={getPriorityColor(rulePriority)}
+                                    className="mb-1"
+                                    style={{ fontSize: "0.7rem" }}
+                                  >
+                                    P{rulePriority}
+                                  </Badge>
+                                ) : null}
                                 <div style={{ fontSize: "0.75rem" }}>
                                   <strong>{currency} {adultPrice}</strong>
                                 </div>
-                                <div
-                                  style={{ fontSize: "0.65rem" }}
-                                  className="text-muted text-truncate"
-                                  title={matchedRule.name}
-                                >
-                                  {matchedRule.tag}
-                                </div>
+                                {ruleTag && (
+                                  <div
+                                    style={{ fontSize: "0.65rem" }}
+                                    className="text-muted text-truncate"
+                                    title={matchedRule?.name}
+                                  >
+                                    {ruleTag}
+                                  </div>
+                                )}
+                                {pricingSource === "legacy" && (
+                                  <div
+                                    style={{ fontSize: "0.65rem" }}
+                                    className="text-muted"
+                                  >
+                                    Base Price
+                                  </div>
+                                )}
                               </>
+                            ) : !isAvailable ? (
+                              <div className="text-danger" style={{ fontSize: "0.7rem", fontWeight: "bold" }}>
+                                Unavailable
+                              </div>
                             ) : (
                               <div className="text-muted" style={{ fontSize: "0.7rem" }}>
                                 No price
+                              </div>
+                            )}
+                            {/* Show notes/reason for all dates with availability overrides */}
+                            {hasAvailabilityOverride && (availabilityNotes || availabilityReason) && (
+                              <div
+                                style={{ fontSize: "0.6rem" }}
+                                className="text-muted text-truncate mt-1"
+                                title={availabilityNotes || availabilityReason}
+                              >
+                                {availabilityNotes || availabilityReason}
                               </div>
                             )}
                           </td>
@@ -260,14 +351,21 @@ const CalendarPreview = ({ variantId, rules }) => {
             <CardBody>
               <Row>
                 <Col md={6}>
-                  <h6 className="mb-2">Priority Levels</h6>
-                  <div className="d-flex flex-wrap gap-2">
+                  <h6 className="mb-2">Priority Levels & Status</h6>
+                  <div className="d-flex flex-wrap gap-2 mb-2">
                     <Badge color="danger">90-100: Emergency</Badge>
                     <Badge color="warning">51-89: Special</Badge>
                     <Badge color="info">31-50: Complex</Badge>
                     <Badge color="primary">21-30: Seasonal</Badge>
                     <Badge color="success">11-20: Weekly</Badge>
                     <Badge color="secondary">1-10: Default</Badge>
+                    <Badge color="secondary">Legacy: Base Price</Badge>
+                  </div>
+                  <div className="d-flex flex-wrap gap-2">
+                    <Badge color="danger">
+                      <i className="bx bx-x-circle me-1"></i>
+                      Holiday/Unavailable
+                    </Badge>
                   </div>
                 </Col>
                 <Col md={6}>
