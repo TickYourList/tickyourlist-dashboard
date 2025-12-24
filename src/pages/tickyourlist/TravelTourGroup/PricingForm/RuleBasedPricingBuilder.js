@@ -40,6 +40,8 @@ const RuleBasedPricingBuilder = ({ variantId, variantData, existingRules, editin
   const [useTimeSlots, setUseTimeSlots] = useState(false)
   const [variantPricingTypes, setVariantPricingTypes] = useState([])
   const [selectedPricingTypes, setSelectedPricingTypes] = useState(["adult"])
+  // Shared pricing types for all slots
+  const [selectedSlotPricingTypes, setSelectedSlotPricingTypes] = useState(["adult"])
   const [customSlotType, setCustomSlotType] = useState("")
   const [showOldPricing, setShowOldPricing] = useState(false)
 
@@ -233,19 +235,41 @@ const RuleBasedPricingBuilder = ({ variantId, variantData, existingRules, editin
 
       // Initialize time slots if they exist
       if (editingRule.slots && editingRule.slots.length > 0) {
-        setTimeSlots(editingRule.slots.map(slot => {
-          const slotPricing = slot.pricing?.[0] || { prices: [] }
+        // Extract pricing types from first slot (they should be same across all slots)
+        const firstSlot = editingRule.slots[0]
+        const slotPricing = firstSlot.pricing?.[0] || { prices: [] }
+        const foundTypes = []
+        const pricingTypes = ['adult', 'child', 'guest', 'youth', 'infant', 'senior', 'family', 'couple']
+        
+        pricingTypes.forEach(type => {
+          const priceObj = slotPricing.prices?.find(p =>
+            p.type?.toLowerCase() === type.toLowerCase()
+          ) || {}
+          
+          if (priceObj.finalPrice > 0 || priceObj.originalPrice > 0) {
+            foundTypes.push(type)
+          }
+        })
 
-          // Extract all pricing types
+        // Set shared pricing types for all slots
+        setSelectedSlotPricingTypes(foundTypes.length > 0 ? foundTypes : ["adult"])
+
+        const slotsWithPricing = editingRule.slots.map((slot) => {
+          const slotPricing = slot.pricing?.[0] || { prices: [] }
           const pricing = {}
-          const pricingTypes = ['adult', 'child', 'guest', 'youth', 'infant', 'senior', 'family', 'couple']
+          
           pricingTypes.forEach(type => {
             const priceObj = slotPricing.prices?.find(p =>
               p.type?.toLowerCase() === type.toLowerCase()
             ) || {}
+            
             pricing[type] = {
               finalPrice: priceObj.finalPrice || 0,
-              originalPrice: priceObj.originalPrice || priceObj.finalPrice || 0
+              originalPrice: priceObj.originalPrice || priceObj.finalPrice || 0,
+              minAge: priceObj.ageRange?.min ?? null,
+              maxAge: priceObj.ageRange?.max ?? null,
+              minHeight: priceObj.minHeight || "",
+              description: priceObj.description || ""
             }
           })
 
@@ -259,10 +283,13 @@ const RuleBasedPricingBuilder = ({ variantId, variantData, existingRules, editin
             pricing: pricing,
             notes: slot.notes || "",
           }
-        }))
+        })
+        
+        setTimeSlots(slotsWithPricing)
         setUseTimeSlots(true)
       } else {
         setTimeSlots([])
+        setSelectedSlotPricingTypes(["adult"])
         setUseTimeSlots(false)
       }
     } else {
@@ -378,30 +405,48 @@ const RuleBasedPricingBuilder = ({ variantId, variantData, existingRules, editin
 
 
       // Build slots structure
-      const slots = useTimeSlots ? timeSlots.map(slot => {
-        // Build prices array from pricing object, only including non-zero prices
-        const prices = []
-        const pricingTypes = ['adult', 'child', 'guest', 'youth', 'infant', 'senior', 'family', 'couple']
-
-        pricingTypes.forEach(type => {
-          const priceData = slot.pricing?.[type]
-          if (priceData) {
-            const finalPrice = typeof priceData === 'object' ? priceData.finalPrice : priceData
-            const originalPrice = typeof priceData === 'object' ? priceData.originalPrice : priceData
-            if (finalPrice > 0 || originalPrice > 0) {
-              prices.push({
+      const slots = useTimeSlots ? timeSlots.map((slot) => {
+        // Use shared pricing types for all slots
+        const selectedTypes = selectedSlotPricingTypes.length > 0 ? selectedSlotPricingTypes : ["adult"]
+        
+        // Build prices array from selected pricing types
+        const prices = selectedTypes.map(type => {
+          const priceData = slot.pricing?.[type] || {}
+          const finalPrice = typeof priceData === 'object' ? (priceData.finalPrice || 0) : (priceData || 0)
+          const originalPrice = typeof priceData === 'object' ? (priceData.originalPrice || finalPrice || 0) : (priceData || 0)
+          
+          const priceObj = {
                 type: type.toUpperCase(),
                 finalPrice: parseFloat(finalPrice) || 0,
                 originalPrice: parseFloat(originalPrice) || parseFloat(finalPrice) || 0
-              })
+          }
+
+          // Add age range if provided
+          if (priceData.minAge !== null && priceData.minAge !== undefined && 
+              priceData.maxAge !== null && priceData.maxAge !== undefined) {
+            priceObj.ageRange = {
+              min: parseInt(priceData.minAge),
+              max: parseInt(priceData.maxAge)
             }
           }
+
+          // Add minHeight if provided
+          if (priceData.minHeight) {
+            priceObj.minHeight = String(priceData.minHeight)
+          }
+
+          // Add description if provided
+          if (priceData.description) {
+            priceObj.description = String(priceData.description)
+          }
+
+          return priceObj
         })
 
         // If no prices set, at least include adult with 0 price
         if (prices.length === 0) {
           prices.push({
-            type: "adult",
+            type: "ADULT",
             finalPrice: 0,
             originalPrice: 0
           })
@@ -907,6 +952,29 @@ const RuleBasedPricingBuilder = ({ variantId, variantData, existingRules, editin
                         size="sm"
                         className="float-end"
                         onClick={() => {
+                          const defaultPricing = {}
+                          const allTypes = ["adult", "child", "guest", "youth", "infant", "senior", "family", "couple"]
+                          allTypes.forEach(type => {
+                            const ageDefaults = {
+                              adult: { min: 18, max: 99 },
+                              child: { min: 3, max: 17 },
+                              guest: { min: 18, max: 99 },
+                              youth: { min: 13, max: 17 },
+                              infant: { min: 0, max: 2 },
+                              senior: { min: 60, max: 99 },
+                              family: { min: null, max: null },
+                              couple: { min: null, max: null },
+                            }
+                            defaultPricing[type] = {
+                              finalPrice: 0,
+                              originalPrice: 0,
+                              minAge: ageDefaults[type]?.min ?? null,
+                              maxAge: ageDefaults[type]?.max ?? null,
+                              minHeight: "",
+                              description: ""
+                            }
+                          })
+                          
                           setTimeSlots([...timeSlots, {
                             startTime: "09:00",
                             endTime: "12:00",
@@ -914,18 +982,10 @@ const RuleBasedPricingBuilder = ({ variantId, variantData, existingRules, editin
                             bookedCapacity: 0,
                             slotType: "morning",
                             isAvailable: true,
-                            pricing: {
-                              adult: { finalPrice: 0, originalPrice: 0 },
-                              child: { finalPrice: 0, originalPrice: 0 },
-                              guest: { finalPrice: 0, originalPrice: 0 },
-                              youth: { finalPrice: 0, originalPrice: 0 },
-                              infant: { finalPrice: 0, originalPrice: 0 },
-                              senior: { finalPrice: 0, originalPrice: 0 },
-                              family: { finalPrice: 0, originalPrice: 0 },
-                              couple: { finalPrice: 0, originalPrice: 0 },
-                            },
+                            pricing: defaultPricing,
                             notes: "",
                           }])
+                          // New slots automatically use the shared selectedSlotPricingTypes
                         }}
                         type="button"
                       >
@@ -1052,26 +1112,88 @@ const RuleBasedPricingBuilder = ({ variantId, variantData, existingRules, editin
 
                                 <hr />
 
+                                {/* Pricing Type Selection - Show once for all slots */}
+                                {index === 0 && (
+                                  <div className="mb-3">
+                                    <Label className="mb-2 d-block">Select Pricing Types (Applies to All Slots) *</Label>
+                                    <div className="d-flex flex-wrap gap-2 mb-3">
+                                      {["adult", "child", "guest", "youth", "infant", "senior", "family", "couple", ...variantPricingTypes.filter(t => !["adult", "child", "guest", "youth", "infant", "senior", "family", "couple"].includes(t))].map(type => {
+                                        const isChecked = selectedSlotPricingTypes.includes(type)
+                                        const canRemove = selectedSlotPricingTypes.length > 1
+
+                                        return (
+                                          <Button
+                                            key={type}
+                                            color={isChecked ? "primary" : "outline-secondary"}
+                                            size="sm"
+                                            className="rounded-pill px-3"
+                                            disabled={!canRemove && isChecked}
+                                            onClick={() => {
+                                              if (!isChecked) {
+                                                setSelectedSlotPricingTypes([...selectedSlotPricingTypes, type])
+                                              } else {
+                                                if (canRemove) {
+                                                  setSelectedSlotPricingTypes(selectedSlotPricingTypes.filter(t => t !== type))
+                                                }
+                                              }
+                                            }}
+                                            style={{ textTransform: "capitalize" }}
+                                            type="button"
+                                          >
+                                            {type}
+                                            {isChecked && <i className="bx bx-check ms-1"></i>}
+                                          </Button>
+                                        )
+                                      })}
+                                    </div>
+                                    <small className="text-muted d-block mb-3">
+                                      Select pricing types. These apply to all slots. At least one type must be selected.
+                                    </small>
+                                    <hr />
+                                  </div>
+                                )}
+
                                 <h6 className="mb-3">Pricing</h6>
-                                {["adult", "child", "guest", "youth", "infant", "senior", "family", "couple"].map(type => (
-                                  <Row key={type} className="mb-2">
-                                    <Col md={6}>
+                                {selectedSlotPricingTypes.map(type => {
+                                  const priceData = slot.pricing?.[type] || {
+                                    finalPrice: 0,
+                                    originalPrice: 0,
+                                    minAge: type === "adult" ? 18 : type === "child" ? 3 : type === "youth" ? 13 : type === "infant" ? 0 : type === "senior" ? 60 : null,
+                                    maxAge: type === "adult" ? 99 : type === "child" ? 17 : type === "youth" ? 17 : type === "infant" ? 2 : type === "senior" ? 99 : null,
+                                    minHeight: "",
+                                    description: ""
+                                  }
+                                  const hasAgeRange = !["family", "couple"].includes(type)
+
+                                  return (
+                                    <Card key={type} className="mb-3">
+                                      <CardHeader className="bg-light">
+                                        <h6 className="mb-0" style={{ textTransform: "capitalize" }}>
+                                          {type} Pricing
+                                        </h6>
+                                      </CardHeader>
+                                      <CardBody>
+                                        <Row>
+                                          <Col md={3}>
                                       <FormGroup>
-                                        <Label style={{ textTransform: "capitalize" }}>{type} Final Price</Label>
+                                              <Label>Final Price *</Label>
                                         <Input
                                           type="number"
-                                          value={slot.pricing?.[type]?.finalPrice || slot.pricing?.[type] || 0}
+                                                value={priceData.finalPrice || 0}
                                           onChange={(e) => {
                                             const newSlots = [...timeSlots]
                                             if (!newSlots[index].pricing) newSlots[index].pricing = {}
-                                            if (typeof newSlots[index].pricing[type] === 'object') {
-                                              newSlots[index].pricing[type].finalPrice = parseFloat(e.target.value) || 0
-                                            } else {
+                                                  if (!newSlots[index].pricing[type]) {
                                               newSlots[index].pricing[type] = {
-                                                finalPrice: parseFloat(e.target.value) || 0,
-                                                originalPrice: newSlots[index].pricing[type]?.originalPrice || parseFloat(e.target.value) || 0
-                                              }
-                                            }
+                                                      finalPrice: 0,
+                                                      originalPrice: 0,
+                                                      minAge: priceData.minAge,
+                                                      maxAge: priceData.maxAge,
+                                                      minHeight: priceData.minHeight || "",
+                                                      description: priceData.description || ""
+                                                    }
+                                                  }
+                                                  newSlots[index].pricing[type].finalPrice = parseFloat(e.target.value) || 0
                                             setTimeSlots(newSlots)
                                           }}
                                           min="0"
@@ -1079,23 +1201,26 @@ const RuleBasedPricingBuilder = ({ variantId, variantData, existingRules, editin
                                         />
                                       </FormGroup>
                                     </Col>
-                                    <Col md={6}>
+                                          <Col md={3}>
                                       <FormGroup>
-                                        <Label style={{ textTransform: "capitalize" }}>{type} Original Price</Label>
+                                              <Label>Original Price</Label>
                                         <Input
                                           type="number"
-                                          value={slot.pricing?.[type]?.originalPrice || slot.pricing?.[type] || 0}
+                                                value={priceData.originalPrice || 0}
                                           onChange={(e) => {
                                             const newSlots = [...timeSlots]
                                             if (!newSlots[index].pricing) newSlots[index].pricing = {}
-                                            if (typeof newSlots[index].pricing[type] === 'object') {
-                                              newSlots[index].pricing[type].originalPrice = parseFloat(e.target.value) || 0
-                                            } else {
+                                                  if (!newSlots[index].pricing[type]) {
                                               newSlots[index].pricing[type] = {
-                                                finalPrice: newSlots[index].pricing[type] || 0,
-                                                originalPrice: parseFloat(e.target.value) || 0
-                                              }
-                                            }
+                                                      finalPrice: 0,
+                                                      originalPrice: 0,
+                                                      minAge: priceData.minAge,
+                                                      maxAge: priceData.maxAge,
+                                                      minHeight: priceData.minHeight || "",
+                                                      description: priceData.description || ""
+                                                    }
+                                                  }
+                                                  newSlots[index].pricing[type].originalPrice = parseFloat(e.target.value) || 0
                                             setTimeSlots(newSlots)
                                           }}
                                           min="0"
@@ -1105,9 +1230,123 @@ const RuleBasedPricingBuilder = ({ variantId, variantData, existingRules, editin
                                       </FormGroup>
                                     </Col>
                                   </Row>
-                                ))}
 
-                                <Row>
+                                        {hasAgeRange && (
+                                          <Row className="mt-2">
+                                            <Col md={3}>
+                                              <FormGroup>
+                                                <Label>Min Age</Label>
+                                                <Input
+                                                  type="number"
+                                                  value={priceData.minAge ?? ""}
+                                                  onChange={(e) => {
+                                                    const newSlots = [...timeSlots]
+                                                    if (!newSlots[index].pricing) newSlots[index].pricing = {}
+                                                    if (!newSlots[index].pricing[type]) {
+                                                      newSlots[index].pricing[type] = {
+                                                        finalPrice: 0,
+                                                        originalPrice: 0,
+                                                        minAge: null,
+                                                        maxAge: null,
+                                                        minHeight: "",
+                                                        description: ""
+                                                      }
+                                                    }
+                                                    newSlots[index].pricing[type].minAge = e.target.value !== "" ? parseInt(e.target.value) : null
+                                                    setTimeSlots(newSlots)
+                                                  }}
+                                                  placeholder="0"
+                                                  min="0"
+                                                />
+                                              </FormGroup>
+                                            </Col>
+                                            <Col md={3}>
+                                              <FormGroup>
+                                                <Label>Max Age</Label>
+                                                <Input
+                                                  type="number"
+                                                  value={priceData.maxAge ?? ""}
+                                                  onChange={(e) => {
+                                                    const newSlots = [...timeSlots]
+                                                    if (!newSlots[index].pricing) newSlots[index].pricing = {}
+                                                    if (!newSlots[index].pricing[type]) {
+                                                      newSlots[index].pricing[type] = {
+                                                        finalPrice: 0,
+                                                        originalPrice: 0,
+                                                        minAge: null,
+                                                        maxAge: null,
+                                                        minHeight: "",
+                                                        description: ""
+                                                      }
+                                                    }
+                                                    newSlots[index].pricing[type].maxAge = e.target.value !== "" ? parseInt(e.target.value) : null
+                                                    setTimeSlots(newSlots)
+                                                  }}
+                                                  placeholder="99"
+                                                  min="0"
+                                                />
+                                              </FormGroup>
+                                            </Col>
+                                            <Col md={3}>
+                                              <FormGroup>
+                                                <Label>Min Height (optional)</Label>
+                                                <Input
+                                                  type="text"
+                                                  value={priceData.minHeight || ""}
+                                                  onChange={(e) => {
+                                                    const newSlots = [...timeSlots]
+                                                    if (!newSlots[index].pricing) newSlots[index].pricing = {}
+                                                    if (!newSlots[index].pricing[type]) {
+                                                      newSlots[index].pricing[type] = {
+                                                        finalPrice: 0,
+                                                        originalPrice: 0,
+                                                        minAge: priceData.minAge,
+                                                        maxAge: priceData.maxAge,
+                                                        minHeight: "",
+                                                        description: ""
+                                                      }
+                                                    }
+                                                    newSlots[index].pricing[type].minHeight = e.target.value
+                                                    setTimeSlots(newSlots)
+                                                  }}
+                                                  placeholder="e.g., 120cm"
+                                                />
+                                              </FormGroup>
+                                            </Col>
+                                            <Col md={3}>
+                                              <FormGroup>
+                                                <Label>Description (optional)</Label>
+                                                <Input
+                                                  type="text"
+                                                  value={priceData.description || ""}
+                                                  onChange={(e) => {
+                                                    const newSlots = [...timeSlots]
+                                                    if (!newSlots[index].pricing) newSlots[index].pricing = {}
+                                                    if (!newSlots[index].pricing[type]) {
+                                                      newSlots[index].pricing[type] = {
+                                                        finalPrice: 0,
+                                                        originalPrice: 0,
+                                                        minAge: priceData.minAge,
+                                                        maxAge: priceData.maxAge,
+                                                        minHeight: "",
+                                                        description: ""
+                                                      }
+                                                    }
+                                                    newSlots[index].pricing[type].description = e.target.value
+                                                    setTimeSlots(newSlots)
+                                                  }}
+                                                  placeholder="Description"
+                                                />
+                                              </FormGroup>
+                                            </Col>
+                                          </Row>
+                                        )}
+                                      </CardBody>
+                                    </Card>
+                                  )
+                                })}
+
+                                <Row className="mt-3">
                                   <Col md={6}>
                                     <FormGroup>
                                       <div className="form-check">

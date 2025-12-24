@@ -28,6 +28,7 @@ import {
 } from "store/tickyourlist/travelTourGroup/action"
 import RuleBasedPricingBuilder from "./RuleBasedPricingBuilder"
 import NormalPricingForm from "./NormalPricingForm"
+import CalendarAvailabilityManager from "./CalendarAvailabilityManager"
 
 import { showToastSuccess, showToastError } from "helpers/toastBuilder"
 import axios from "axios"
@@ -177,7 +178,8 @@ const PricingForm = ({ variantId, variantName, onClose }) => {
                     onChange={(key) => setPricingMethod(key)}
                     items={[
                       { label: "Normal Pricing (Update Listing Price)", key: "normal" },
-                      { label: "Rule-Based Pricing", key: "rule-based" }
+                      { label: "Rule-Based Pricing", key: "rule-based" },
+                      { label: "Calendar & Availability", key: "calendar-availability" }
                     ]}
                   />
                 </FormGroup>
@@ -216,6 +218,14 @@ const PricingForm = ({ variantId, variantName, onClose }) => {
                 setEditMode(false)
                 setEditingRule(null)
               }}
+            />
+          )}
+
+          {/* Calendar & Availability Manager */}
+          {pricingMethod === "calendar-availability" && !editMode && (
+            <CalendarAvailabilityManager
+              variantId={variantId}
+              variantName={variantName}
             />
           )}
 
