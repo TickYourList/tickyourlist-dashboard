@@ -13,13 +13,15 @@ import {
 
 import { getCustomerListAPI } from "../../helpers/location_management_helper"
 
-function* fetchCustomerList() {
+function* fetchCustomerList(action) {
   try {
-    const response = yield call(getCustomerListAPI)
+    const { page = 1, limit = 10, dateType = "bookingDate", startDate = "", endDate = "" } = action.payload || {}
+    const response = yield call(getCustomerListAPI, page, limit, dateType, startDate, endDate)
     const bookings = response?.data?.bookings || []
-    yield put(getCustomerListSuccess(bookings))
+    const total = response?.data?.total || 0
+    yield put(getCustomerListSuccess(bookings, total))
   } catch (error) {
-    yield put(getCustomerListFail(response.data) || "Failed to fetch customers")
+    yield put(getCustomerListFail(error?.response?.data || "Failed to fetch customers"))
   }
 }
 

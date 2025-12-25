@@ -7,6 +7,7 @@ import {
 const initialState = {
   loading: false,
   customers: [],
+  total: 0,
   error: null,
 }
 const customerReducer = (state = initialState, action) => {
@@ -22,7 +23,8 @@ const customerReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
-        customers: action.payload,
+        customers: action.payload.customerList || action.payload,
+        total: action.payload.total || 0,
         error: null,
       }
 

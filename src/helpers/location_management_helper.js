@@ -170,7 +170,30 @@ const deleteCoupon = couponId => del(`${url.DELETE_COUPON}${couponId}`);
 const getInvoiceListAPI = () => get(url.GET_INVOICES_LIST);
 
 // GET CUSTOMERS LIST
-const getCustomerListAPI = () => get(url.GET_CUSTOMERS_LIST);
+const getCustomerListAPI = (page = 1, limit = 20, dateType = "bookingDate", startDate = "", endDate = "") => {
+  let queryString = `page=${page}&limit=${limit}&dateType=${dateType}`;
+  if (startDate) queryString += `&startDate=${startDate}`;
+  if (endDate) queryString += `&endDate=${endDate}`;
+  return get(`${url.GET_CUSTOMERS_LIST.replace('?page=1&limit=20', '')}?${queryString}`);
+};
+
+// PREVIEW PENDING EMAIL
+const getPreviewPendingEmailAPI = (bookingId) => get(`/v1/tyltourcustomerbooking/booking/${bookingId}/preview-pending-email`);
+
+// SEND PENDING EMAIL
+const sendPendingEmailAPI = (bookingId) => post('/v1/access/send-pending-booking-email', { bookingId });
+
+// RESEND CONFIRMATION EMAIL
+const resendConfirmationEmailAPI = (bookingId) => post(`/v1/tyltourcustomerbooking/booking/${bookingId}/resend-confirmation-email`, {});
+
+// GET BOOKING DETAILS
+const getBookingDetailsAPI = (bookingId) => get(`/v1/access/booking-details/${bookingId}`);
+
+// CONFIRM BOOKING (Manual confirmation)
+const confirmBookingAPI = (bookingId, sendInvoice = true) => post(`/v1/tyltourcustomerbooking/booking/${bookingId}/confirm`, { sendInvoice });
+
+// SEND INVOICE (Send invoice email separately)
+const sendInvoiceAPI = (bookingId) => post(`/v1/tyltourcustomerbooking/booking/${bookingId}/send-invoice`, {});
 
 //----------------------------------------Product Management Collections--------------------------------------------------
 const getPMCollections = () => get(url.GET_PM_COLLECTIONS)
@@ -504,6 +527,12 @@ export {
   deleteCoupon,
   getInvoiceListAPI,
   getCustomerListAPI,
+  getPreviewPendingEmailAPI,
+  sendPendingEmailAPI,
+  resendConfirmationEmailAPI,
+  getBookingDetailsAPI,
+  confirmBookingAPI,
+  sendInvoiceAPI,
   getPMCollectionById,
   getPMCollections,
   addPMCollection,

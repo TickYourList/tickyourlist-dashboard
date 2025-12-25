@@ -402,6 +402,25 @@ function TourGroupTable() {
             >
               <i className="fas fa-calendar-alt font-size-18 text-warning"></i>
             </button>
+            <button
+              className="btn p-0 border-0 bg-transparent"
+              title={row.original?.urlSlugs?.EN ? "View on Website" : "No URL slug available"}
+              disabled={!row.original?.urlSlugs?.EN}
+              onClick={(e) => {
+                e.preventDefault();
+                if (row.original?.urlSlugs?.EN) {
+                  const urlSlug = row.original.urlSlugs.EN;
+                  const cleanSlug = urlSlug.startsWith('/') ? urlSlug : `/${urlSlug}`;
+                  window.open(`https://www.tickyourlist.com${cleanSlug}`, '_blank', 'noopener,noreferrer');
+                }
+              }}
+              style={{ 
+                opacity: row.original?.urlSlugs?.EN ? 1 : 0.3,
+                cursor: row.original?.urlSlugs?.EN ? 'pointer' : 'not-allowed'
+              }}
+            >
+              <i className="fas fa-external-link-alt font-size-18 text-primary"></i>
+            </button>
             {canEditTourGroup && (
               <button
                 className="btn p-0 border-0 bg-transparent"
