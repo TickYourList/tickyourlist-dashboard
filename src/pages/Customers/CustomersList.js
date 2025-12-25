@@ -363,6 +363,27 @@ const CustomersList = () => {
         filterable: true,
       },
       {
+        Header: "Created At",
+        accessor: "createdAt",
+        filterable: true,
+        Cell: ({ value }) => {
+          if (!value) return "-";
+          try {
+            const date = new Date(value);
+            return date.toLocaleString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            });
+          } catch (e) {
+            return value;
+          }
+        },
+      },
+      {
         Header: "Status",
         accessor: "status",
         filterable: true,
@@ -424,29 +445,29 @@ const CustomersList = () => {
                   />
                 </button>
               )}
-              <button
-                style={{ border: "none", background: "transparent", padding: 0 }}
-                onClick={() => {
-                  console.log("Edit booking", row.original._id);
-                }}
-              >
-                <i
-                  className="bx bxs-pencil"
-                  style={{ fontSize: "20px", color: "#34c38f" }}
-                />
-              </button>
-              <button
-                style={{ border: "none", background: "transparent", padding: 0 }}
-                onClick={() => {
-                  console.log("Delete booking", row.original._id);
-                }}
-              >
-                <i
-                  className="mdi mdi-delete"
-                  style={{ fontSize: "20px", color: "#f46a6a" }}
-                />
-              </button>
-            </div>
+            <button
+              style={{ border: "none", background: "transparent", padding: 0 }}
+              onClick={() => {
+                console.log("Edit booking", row.original._id);
+              }}
+            >
+              <i
+                className="bx bxs-pencil"
+                style={{ fontSize: "20px", color: "#34c38f" }}
+              />
+            </button>
+            <button
+              style={{ border: "none", background: "transparent", padding: 0 }}
+              onClick={() => {
+                console.log("Delete booking", row.original._id);
+              }}
+            >
+              <i
+                className="mdi mdi-delete"
+                style={{ fontSize: "20px", color: "#f46a6a" }}
+              />
+            </button>
+          </div>
           );
         },
       },
