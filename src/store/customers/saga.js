@@ -17,8 +17,11 @@ function* fetchCustomerList(action) {
   try {
     const { page = 1, limit = 10, dateType = "bookingDate", startDate = "", endDate = "" } = action.payload || {}
     const response = yield call(getCustomerListAPI, page, limit, dateType, startDate, endDate)
+    // Response structure from API: { statusCode, message, data: { bookings, total, totalPages, currentPage } }
+    // Since api_helper.get() returns response.data, the response here is the entire API response
     const bookings = response?.data?.bookings || []
     const total = response?.data?.total || 0
+    // getCustomerListSuccess expects (customerList, total) as separate parameters
     yield put(getCustomerListSuccess(bookings, total))
   } catch (error) {
     yield put(getCustomerListFail(error?.response?.data || "Failed to fetch customers"))

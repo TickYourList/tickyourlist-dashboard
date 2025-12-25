@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { getCustomerList } from "../../store/customers/actions";
 import Breadcrumbs from "components/Common/Breadcrumb";
-import TableContainer from "components/Common/TableContainer";
+import TableContainerWithServerSidePagination from "components/Common/TableContainerWithServerSidePagination";
 import {
   getPreviewPendingEmailAPI,
   sendPendingEmailAPI,
@@ -308,13 +308,17 @@ const CustomersList = () => {
   const processedCustomers = Array.isArray(customers)
     ? customers.map(row => {
         const user = row.customerUserId || {};
+        // Calculate total guests for AGEGROUP type bookings
+        const totalGuests = row.type === "AGEGROUP" 
+          ? (row.adultsCount || 0) + (row.childCount || 0) + (row.infantCount || 0) + (row.seniorCount || 0)
+          : (row.guestsCount || 0);
         return {
           ...row,
           customerName: `${user.firstName || "Guest"} ${user.lastName || ""}`,
           customerEmail: user.email || row.email || "-",
           phone: `${row.phoneCode || ""} ${row.phoneNumber || "-"}`,
           amount: `${row.amount || "0"} ${row.currency || ""}`,
-          guestsCount: row.guestsCount || 0,
+          guestsCount: totalGuests,
           bookingDate: row.bookingDate || "-",
           status: row.status || "-",
         };
@@ -528,21 +532,21 @@ const CustomersList = () => {
             </Alert>
           )}
 
-          <TableContainer
+          <TableContainerWithServerSidePagination
             columns={columns}
             data={processedCustomers}
-            isGlobalFilter={true}
-            isFilterable={true}
-            isAddOptions={false}
-            customPageSize={limit}
-            totalRecords={total}
+            totalCount={total || 0}
             currentPage={page}
-            onPageChange={newPage => setPage(newPage)}
-            onPageSizeChange={newLimit => {
+            pageSize={limit}
+            onPageChange={(newPage) => {
+              setPage(newPage);
+            }}
+            setPageSize={(newLimit) => {
               setLimit(newLimit);
               setPage(1);
             }}
-            isLoading={loading}
+            isGlobalFilter={true}
+            customPageSizeOptions={[10, 20, 30, 50]}
             className="custom-header-css"
           />
         </div>
