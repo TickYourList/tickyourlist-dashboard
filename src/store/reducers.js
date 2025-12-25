@@ -97,6 +97,7 @@ import citiesSection from "./section-banners/sectionReducer";
 import UserPermissionsReducer from "./user-permissions/reducer";
 import CalendarPricing from "./CalendarPricingAndAvailability/reducers";
 import faqsReducer from "./faqs/reducer";
+import continents from "./continents/reducer";
 
 const rootReducer = combineReducers({
   // public
@@ -152,7 +153,8 @@ const rootReducer = combineReducers({
   citiesSection,
   UserPermissionsReducer,
   CalendarPricing,
-  faqsReducer
+  faqsReducer,
+  continents
 });
 
 export default rootReducer;

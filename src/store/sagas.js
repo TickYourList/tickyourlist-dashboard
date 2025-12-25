@@ -56,6 +56,7 @@ import cityDetailsSaga from "./city-details/saga"
 import calendarPricingSaga from "./CalendarPricingAndAvailability/sagas";
 
 import faqsSaga from "./faqs/saga";
+import continentsSaga from "./continents/saga";
 
  //travel currency
 
@@ -115,5 +116,6 @@ export default function* rootSaga() {
     fork(UserPermissionsSaga),
     fork(calendarPricingSaga),
     fork(faqsSaga),
+    fork(continentsSaga),
   ]);
 }

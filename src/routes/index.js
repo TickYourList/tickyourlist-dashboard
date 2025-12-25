@@ -151,6 +151,7 @@ import Banner from "pages/Automobile/Banner/Banner";
 import EcommerceCustomers from "pages/Ecommerce/EcommerceCustomers";
 import Country from "../pages/LocationManagement/Country/Country";
 import Cities from "../pages/LocationManagement/Cities/Cities";
+import Continents from "../pages/LocationManagement/Continents/Continents";
 import CityDetails from "../pages/LocationManagement/Cities/CityDetails";
 import AddNewCity from "../pages/LocationManagement/Cities/AddNewCity";
 // Travel currency
@@ -333,6 +334,8 @@ const authProtectedRoutes = [
   { path: "/country", component: <Country /> },
   //Cities
   { path: "/cities", component: <Cities /> },
+  //Continents
+  { path: "/continents", component: <Continents /> },
   { path: "/city-details/:cityCode", component: <CityDetails /> },
   { path: "/add-new-city", component: <AddNewCity isEditMode={false} /> },
   { path: "/edit-city/:cityCode", component: <AddNewCity isEditMode={true} /> },

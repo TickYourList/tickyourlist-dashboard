@@ -176,5 +176,10 @@ export const CONNECT_TOUR_GROUP = "/v1/tyltraveltourgroup/connect/tour-group"; /
 export const BULK_CONNECT_TOURS_TO_CATEGORY = "/v1/tyltravelcategory/bulk-connect/tours"; // Bulk connect tours to category
 export const BULK_CONNECT_TOURS_TO_SUBCATEGORY = "/v1/tyltravelsubcategory/bulk-connect/tours"; // Bulk connect tours to subcategory
 
+// Continent APIs
+export const GET_CONTINENTS_DASHBOARD = "/v1/tyltravelcontinent/admin/dashboard"; // Get continents with countries and cities for dashboard
+export const BULK_LINK_CONTINENT = "/v1/tyltravelcontinent/:continentId/bulk-link"; // Bulk link countries to continent
+export const BULK_LINK_ALL_COUNTRIES = "/v1/tyltravelcontinent/bulk-link-all"; // Bulk link all countries to continents based on mapping
+
 // Variant Pricing Refresh
 export const REFRESH_VARIANT_PRICING = "/v1/tyltraveltourgroupvariant/variant/:variantId/refresh-pricing";

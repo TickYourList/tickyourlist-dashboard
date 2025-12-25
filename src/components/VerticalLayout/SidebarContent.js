@@ -258,6 +258,9 @@ const SidebarContent = props => {
                   <Link to="/cities">{props.t("Cities")}</Link>
                 </li>
                 )}
+                <li>
+                  <Link to="/continents">{props.t("Continents")}</Link>
+                </li>
               </ul>
             </li>
 

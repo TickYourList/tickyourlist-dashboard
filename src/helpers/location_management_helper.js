@@ -80,6 +80,21 @@ const refreshVariantPricing = (variantId) => {
   return post(url.REFRESH_VARIANT_PRICING.replace(':variantId', variantId), {});
 }
 
+//GET CONTINENTS DASHBOARD
+const getContinentsDashboard = () => {
+  return get(url.GET_CONTINENTS_DASHBOARD);
+}
+
+//BULK LINK COUNTRIES TO CONTINENT
+const bulkLinkContinent = (continentId, countryIds) => {
+  return put(url.BULK_LINK_CONTINENT.replace(':continentId', continentId), { countryIds });
+}
+
+//BULK LINK ALL COUNTRIES TO CONTINENTS
+const bulkLinkAllCountries = () => {
+  return post(url.BULK_LINK_ALL_COUNTRIES, {});
+}
+
 //GET PRICING RULES BY VARIANT
 const getPricingRulesByVariant = (variantId) => {
   return get(`${url.FETCH_PRICING_RULES}/${variantId}`);
@@ -511,6 +526,9 @@ export {
   searchTourGroupsByName,
   getVariantsByTour,
   refreshVariantPricing,
+  getContinentsDashboard,
+  bulkLinkContinent,
+  bulkLinkAllCountries,
   getPricingRulesByVariant,
   createPricingRule,
   updatePricingRule,
