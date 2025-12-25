@@ -75,6 +75,11 @@ const getVariantsByTour = (tourId) => {
   return get(`${url.FETCH_VARIANTS_BY_TOUR}/${tourId}`);
 }
 
+//REFRESH VARIANT PRICING
+const refreshVariantPricing = (variantId) => {
+  return post(url.REFRESH_VARIANT_PRICING.replace(':variantId', variantId), {});
+}
+
 //GET PRICING RULES BY VARIANT
 const getPricingRulesByVariant = (variantId) => {
   return get(`${url.FETCH_PRICING_RULES}/${variantId}`);
@@ -505,6 +510,7 @@ export {
   getTourGroupsByCity,
   searchTourGroupsByName,
   getVariantsByTour,
+  refreshVariantPricing,
   getPricingRulesByVariant,
   createPricingRule,
   updatePricingRule,

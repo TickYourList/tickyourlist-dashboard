@@ -175,3 +175,6 @@ export const UPDATE_FAQS = "/v1/tyltravelfaqs/update/"; // Note: ID will be appe
 export const CONNECT_TOUR_GROUP = "/v1/tyltraveltourgroup/connect/tour-group"; // Connect tour group to categories/subcategories
 export const BULK_CONNECT_TOURS_TO_CATEGORY = "/v1/tyltravelcategory/bulk-connect/tours"; // Bulk connect tours to category
 export const BULK_CONNECT_TOURS_TO_SUBCATEGORY = "/v1/tyltravelsubcategory/bulk-connect/tours"; // Bulk connect tours to subcategory
+
+// Variant Pricing Refresh
+export const REFRESH_VARIANT_PRICING = "/v1/tyltraveltourgroupvariant/variant/:variantId/refresh-pricing";

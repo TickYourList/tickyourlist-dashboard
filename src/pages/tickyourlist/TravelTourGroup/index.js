@@ -34,6 +34,7 @@ import DeleteModal from "components/Common/DeleteModal"
 
 import ViewTourGroup from "./ViewTourGroup"
 import ConnectCategoriesModal from "./ConnectCategoriesModal"
+import VariantsPricingModal from "./VariantsPricingModal"
 import { showToastSuccess } from "helpers/toastBuilder"
 import { usePermissions, MODULES, ACTIONS } from "helpers/permissions"
 import { getCitiesList } from "helpers/location_management_helper"
@@ -57,6 +58,8 @@ function TourGroupTable() {
   const [isSearchMode, setIsSearchMode] = useState(false)
   const [connectModal, setConnectModal] = useState(false)
   const [selectedTourGroupForConnection, setSelectedTourGroupForConnection] = useState(null)
+  const [variantsPricingModal, setVariantsPricingModal] = useState(false)
+  const [selectedTourGroupForPricing, setSelectedTourGroupForPricing] = useState(null)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { can, getTourGroupPermissions, isPermissionsReady, loading: permissionsLoading } = usePermissions()
@@ -239,6 +242,11 @@ function TourGroupTable() {
         })
       )
     }
+  }
+
+  const handleViewVariantsPricing = (tourGroup) => {
+    setSelectedTourGroupForPricing(tourGroup)
+    setVariantsPricingModal(true)
   }
 
   // Calculate which data to display - client-side pagination from Redux data
@@ -428,6 +436,15 @@ function TourGroupTable() {
                 onClick={() => handleConnectCategories(row.original)}
               >
                 <i className="fas fa-link font-size-18 text-info"></i>
+              </button>
+            )}
+            {canEditTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
+                title="View Variants & Refresh Pricing"
+                onClick={() => handleViewVariantsPricing(row.original)}
+              >
+                <i className="fas fa-dollar-sign font-size-18 text-warning"></i>
               </button>
             )}
             {canDeleteTourGroup && (
@@ -634,6 +651,17 @@ function TourGroupTable() {
                     }}
                     tourGroup={selectedTourGroupForConnection}
                     onSuccess={handleConnectionSuccess}
+                  />
+                  
+                  {/* Variants Pricing Modal */}
+                  <VariantsPricingModal
+                    isOpen={variantsPricingModal}
+                    toggle={() => {
+                      setVariantsPricingModal(false)
+                      setSelectedTourGroupForPricing(null)
+                    }}
+                    tourGroupId={selectedTourGroupForPricing?._id}
+                    tourGroupName={selectedTourGroupForPricing?.name}
                   />
                 </CardBody>
               </Card>
