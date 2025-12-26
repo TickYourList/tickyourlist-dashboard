@@ -29,6 +29,7 @@ import {
 import RuleBasedPricingBuilder from "./RuleBasedPricingBuilder"
 import NormalPricingForm from "./NormalPricingForm"
 import CalendarAvailabilityManager from "./CalendarAvailabilityManager"
+import BulkDateRangePricing from "./BulkDateRangePricing"
 
 import { showToastSuccess, showToastError } from "helpers/toastBuilder"
 import axios from "axios"
@@ -179,7 +180,8 @@ const PricingForm = ({ variantId, variantName, onClose }) => {
                     items={[
                       { label: "Normal Pricing (Update Listing Price)", key: "normal" },
                       { label: "Rule-Based Pricing", key: "rule-based" },
-                      { label: "Calendar & Availability", key: "calendar-availability" }
+                      { label: "Calendar & Availability", key: "calendar-availability" },
+                      { label: "Bulk Date Range Pricing", key: "bulk-date-range" }
                     ]}
                   />
                 </FormGroup>
@@ -226,6 +228,18 @@ const PricingForm = ({ variantId, variantName, onClose }) => {
             <CalendarAvailabilityManager
               variantId={variantId}
               variantName={variantName}
+            />
+          )}
+
+          {/* Bulk Date Range Pricing */}
+          {pricingMethod === "bulk-date-range" && !editMode && (
+            <BulkDateRangePricing
+              variantId={variantId}
+              variantName={variantName}
+              onSuccess={() => {
+                // Refresh pricing rules and date pricing after bulk update
+                dispatch(fetchPricingRulesRequest(variantId))
+              }}
             />
           )}
 

@@ -47,6 +47,9 @@ import {
   SAVE_DATE_PRICING_REQUEST,
   SAVE_DATE_PRICING_SUCCESS,
   SAVE_DATE_PRICING_FAILURE,
+  BULK_DATE_PRICING_REQUEST,
+  BULK_DATE_PRICING_SUCCESS,
+  BULK_DATE_PRICING_FAILURE,
   FETCH_VARIANT_DETAIL_REQUEST,
   FETCH_VARIANT_DETAIL_SUCCESS,
   FETCH_VARIANT_DETAIL_FAILURE,
@@ -307,6 +310,22 @@ export const saveDatePricingSuccess = (datePricing) => ({
 
 export const saveDatePricingFailure = error => ({
   type: SAVE_DATE_PRICING_FAILURE,
+  payload: error,
+})
+
+// Bulk date pricing (for date ranges)
+export const bulkDatePricingRequest = (variantId, dateRange, pricingData, operation = 'create') => ({
+  type: BULK_DATE_PRICING_REQUEST,
+  payload: { variantId, dateRange, pricingData, operation },
+})
+
+export const bulkDatePricingSuccess = (result) => ({
+  type: BULK_DATE_PRICING_SUCCESS,
+  payload: result,
+})
+
+export const bulkDatePricingFailure = error => ({
+  type: BULK_DATE_PRICING_FAILURE,
   payload: error,
 })
 

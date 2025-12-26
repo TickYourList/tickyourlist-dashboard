@@ -134,6 +134,15 @@ const saveDatePricing = (variantId, date, pricingData) => {
   });
 }
 
+//BULK DATE PRICING (for date ranges)
+const bulkDatePricing = (variantId, dateRange, pricingData, operation = 'create') => {
+  return post(`${url.BULK_DATE_PRICING}/${variantId}/bulk`, {
+    operation,
+    dateRange,
+    pricingData
+  });
+}
+
 const getTourBookingDetails = id =>
   get(`${url.FETCH_TOUR_GROUP_BY_ID}${id}/bookings`)
 
@@ -536,6 +545,7 @@ export {
   getPricingRule,
   fetchDatePricing,
   saveDatePricing,
+  bulkDatePricing,
   getTourById,
   addNewTourGroup,
   updateTourGroupHelper,

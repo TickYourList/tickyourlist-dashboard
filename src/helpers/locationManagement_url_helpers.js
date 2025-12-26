@@ -41,6 +41,7 @@ export const DELETE_PRICING_RULE = "/v1/variant-calendar-pricing/pricing-rule"
 export const GET_PRICING_RULE = "/v1/variant-calendar-pricing/pricing-rule"
 export const FETCH_DATE_PRICING = "/v1/variant-calendar-pricing/date-pricing"
 export const SAVE_DATE_PRICING = "/v1/variant-calendar-pricing/date-pricing"
+export const BULK_DATE_PRICING = "/v1/variant-calendar-pricing/date-pricing"
 export const FETCH_CITY_CODE_LIST =
   "/v1/tyltravelcity/get/travelcity/submitted/all"
 export const ADD_TOUR_GROUP = "/v1/tyltraveltourgroup/add/travel-tour-group"

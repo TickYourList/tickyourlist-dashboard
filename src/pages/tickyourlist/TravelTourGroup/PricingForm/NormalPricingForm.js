@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Formik, Form, Field } from "formik"
 import * as Yup from "yup"
 import {
@@ -19,6 +19,17 @@ import { showToastSuccess, showToastError } from "helpers/toastBuilder"
 import { fetchVariantDetailRequest, updateVariantPricesRequest } from "store/tickyourlist/travelTourGroup/action"
 import { useDispatch, useSelector } from "react-redux"
 
+const allPricingTypes = [
+  { key: "adult", label: "Adult", defaultMinAge: 18, defaultMaxAge: 99 },
+  { key: "child", label: "Child", defaultMinAge: 3, defaultMaxAge: 17 },
+  { key: "guest", label: "Guest", defaultMinAge: 18, defaultMaxAge: 99 },
+  { key: "youth", label: "Youth", defaultMinAge: 13, defaultMaxAge: 17 },
+  { key: "infant", label: "Infant", defaultMinAge: 0, defaultMaxAge: 2 },
+  { key: "senior", label: "Senior", defaultMinAge: 60, defaultMaxAge: 99 },
+  { key: "family", label: "Family", defaultMinAge: null, defaultMaxAge: null },
+  { key: "couple", label: "Couple", defaultMinAge: null, defaultMaxAge: null },
+]
+
 /**
  * Normal Pricing Form Component
  * Updates variant's listingPrice using /update-prices/:variantId endpoint
@@ -34,13 +45,64 @@ const NormalPricingForm = ({ variantId, onSave }) => {
 
   useEffect(() => {
     if (variantId) {
+      console.log('🚀 Fetching variant detail for variantId:', variantId)
+      setLoading(true)
       dispatch(fetchVariantDetailRequest(variantId))
-      setLoading(false)
     }
   }, [variantId, dispatch])
 
-  const listingPrice = variantDetail?.listingPrice || {}
-  const prices = listingPrice?.prices || []
+  // Update loading state when variantDetail is loaded
+  useEffect(() => {
+    console.log('📥 variantDetail updated:', variantDetail)
+    if (variantDetail) {
+      console.log('✅ variantDetail loaded, listingPrice:', variantDetail.listingPrice)
+      setLoading(false)
+    }
+  }, [variantDetail])
+
+  // Compute initial values based on variantDetail - useMemo to recompute when data loads
+  const initialValues = useMemo(() => {
+    console.log('🔄 Computing initialValues, variantDetail:', variantDetail)
+    console.log('📦 variantDetail?.listingPrice:', variantDetail?.listingPrice)
+    
+    const listingPrice = variantDetail?.listingPrice || {}
+    const prices = listingPrice?.prices || []
+    
+    console.log('💰 Prices array:', prices)
+    console.log('💰 Prices length:', prices.length)
+
+    const getPrice = (type) => {
+      const found = prices.find(p => p.type?.toLowerCase() === type.toLowerCase()) || {}
+      console.log(`🔍 Getting price for ${type}:`, found)
+      return found
+    }
+
+    const getAgeRange = (type) => {
+      const price = getPrice(type)
+      return price?.ageRange || { min: null, max: null }
+    }
+
+    const values = {}
+
+    allPricingTypes.forEach(({ key, defaultMinAge, defaultMaxAge }) => {
+      const price = getPrice(key)
+      const ageRange = getAgeRange(key)
+
+      values[`${key}OriginalPrice`] = price?.originalPrice || 0
+      values[`${key}FinalPrice`] = price?.finalPrice || 0
+      values[`${key}MinimumPayable`] = price?.minimumPayablePrice || 0
+      values[`${key}BestDiscount`] = price?.bestDiscount || 0
+      values[`${key}MinAge`] = ageRange?.min ?? defaultMinAge
+      values[`${key}MaxAge`] = ageRange?.max ?? defaultMaxAge
+      values[`${key}MinHeight`] = price?.minHeight || ""
+      values[`${key}Description`] = price?.description || ""
+    })
+
+    values.groupSize = listingPrice?.groupSize || 1
+
+    console.log('✅ Computed initialValues:', values)
+    return values
+  }, [variantDetail])
 
   // Initialize selected types based on existing data
   useEffect(() => {
@@ -59,44 +121,6 @@ const NormalPricingForm = ({ variantId, onSave }) => {
       setSelectedPricingTypes(["adult"])
     }
   }, [variantDetail?.listingPrice?.prices])
-
-  const getPrice = (type) => {
-    return prices.find(p => p.type?.toLowerCase() === type.toLowerCase()) || {}
-  }
-
-  const getAgeRange = (type) => {
-    const price = getPrice(type)
-    return price?.ageRange || { min: null, max: null }
-  }
-
-  const allPricingTypes = [
-    { key: "adult", label: "Adult", defaultMinAge: 18, defaultMaxAge: 99 },
-    { key: "child", label: "Child", defaultMinAge: 3, defaultMaxAge: 17 },
-    { key: "guest", label: "Guest", defaultMinAge: 18, defaultMaxAge: 99 },
-    { key: "youth", label: "Youth", defaultMinAge: 13, defaultMaxAge: 17 },
-    { key: "infant", label: "Infant", defaultMinAge: 0, defaultMaxAge: 2 },
-    { key: "senior", label: "Senior", defaultMinAge: 60, defaultMaxAge: 99 },
-    { key: "family", label: "Family", defaultMinAge: null, defaultMaxAge: null },
-    { key: "couple", label: "Couple", defaultMinAge: null, defaultMaxAge: null },
-  ]
-
-  const initialValues = {}
-
-  allPricingTypes.forEach(({ key, defaultMinAge, defaultMaxAge }) => {
-    const price = getPrice(key)
-    const ageRange = getAgeRange(key)
-
-    initialValues[`${key}OriginalPrice`] = price?.originalPrice || 0
-    initialValues[`${key}FinalPrice`] = price?.finalPrice || 0
-    initialValues[`${key}MinimumPayable`] = price?.minimumPayablePrice || 0
-    initialValues[`${key}BestDiscount`] = price?.bestDiscount || 0
-    initialValues[`${key}MinAge`] = ageRange?.min ?? defaultMinAge
-    initialValues[`${key}MaxAge`] = ageRange?.max ?? defaultMaxAge
-    initialValues[`${key}MinHeight`] = price?.minHeight || ""
-    initialValues[`${key}Description`] = price?.description || ""
-  })
-
-  initialValues.groupSize = listingPrice?.groupSize || 1
 
   // Dynamic validation - at least one of adult or guest must be selected and have price > 0
   const validationSchema = Yup.object({

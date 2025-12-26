@@ -16,6 +16,7 @@ import OnBulkUpdate from './onBulkUpdate';
 import PricingForm from '../tickyourlist/TravelTourGroup/PricingForm';
 import DateEditorModal from './DateEditorModal';
 import HolidayManagerModal from './HolidayManagerModal';
+import BulkDateRangeModal from './BulkDateRangeModal';
 import { addDefaultPricing } from 'store/CalendarPricingAndAvailability/actions';
 import { getCities } from 'store/travelCity/action';
 import {
@@ -43,6 +44,7 @@ const CalendarPricingAndAvailability = () => {
   const [pricingModal, setPricingModal] = useState(false);
   const [holidayModal, setHolidayModal] = useState(false);
   const [dateEditorModal, setDateEditorModal] = useState(false);
+  const [bulkDateRangeModal, setBulkDateRangeModal] = useState(false);
   const [selectedDateForEdit, setSelectedDateForEdit] = useState(null);
   const [events, setEvents] = useState([]);
   const [selectedCity, setSelectedCity] = useState('');
@@ -488,6 +490,37 @@ const CalendarPricingAndAvailability = () => {
           variantName={variants.find(v => (v._id || v.id) === selectedVariant)?.name}
         />
 
+        {/* Bulk Date Range Modal */}
+        {selectedVariant && (
+          <BulkDateRangeModal
+            isOpen={bulkDateRangeModal}
+            toggle={() => {
+              setBulkDateRangeModal(false)
+              // Refresh date pricing after modal closes
+              if (selectedVariant) {
+                const today = new Date();
+                dispatch(fetchDatePricingRequest({
+                  variantId: selectedVariant,
+                  date: today.toISOString().split('T')[0]
+                }))
+              }
+            }}
+            variantId={selectedVariant}
+            variantName={variants.find(v => (v._id || v.id) === selectedVariant)?.name}
+            onSuccess={() => {
+              // Refresh pricing rules and date pricing
+              if (selectedVariant) {
+                dispatch(fetchPricingRulesRequest(selectedVariant))
+                const today = new Date();
+                dispatch(fetchDatePricingRequest({
+                  variantId: selectedVariant,
+                  date: today.toISOString().split('T')[0]
+                }))
+              }
+            }}
+          />
+        )}
+
         <Container fluid={true}>
           <Breadcrumbs title="Calendar Pricing & Availability" />
 
@@ -692,6 +725,16 @@ const CalendarPricingAndAvailability = () => {
                       >
                         <i className="bx bx-dollar-circle me-1"></i>
                         Manage Pricing Rules
+                      </Button>
+
+                      <Button
+                        color="info"
+                        outline
+                        className="w-100 mb-2"
+                        onClick={() => setBulkDateRangeModal(true)}
+                      >
+                        <i className="bx bx-calendar me-1"></i>
+                        Add Date Range Pricing
                       </Button>
 
                       <Button

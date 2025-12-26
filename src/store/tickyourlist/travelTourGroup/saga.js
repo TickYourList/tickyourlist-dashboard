@@ -15,6 +15,7 @@ import {
   DELETE_PRICING_RULE_REQUEST,
   FETCH_DATE_PRICING_REQUEST,
   SAVE_DATE_PRICING_REQUEST,
+  BULK_DATE_PRICING_REQUEST,
   FETCH_VARIANT_DETAIL_REQUEST,
   UPDATE_VARIANT_PRICES_REQUEST,
 } from "./actionTypes"
@@ -49,6 +50,8 @@ import {
   fetchDatePricingFailure,
   saveDatePricingSuccess,
   saveDatePricingFailure,
+  bulkDatePricingSuccess,
+  bulkDatePricingFailure,
   fetchVariantDetailSuccess,
   fetchVariantDetailFailure,
   updateVariantPricesSuccess,
@@ -71,6 +74,7 @@ import {
   getPricingRule,
   fetchDatePricing,
   saveDatePricing,
+  bulkDatePricing,
   getTourBookingDetails,
   getTourById,
   updateTourGroupHelper,
@@ -365,6 +369,28 @@ function* saveDatePricingSaga(action) {
   }
 }
 
+// 16. Bulk Date Pricing (for date ranges)
+function* bulkDatePricingSaga(action) {
+  try {
+    const { variantId, dateRange, pricingData, operation } = action.payload
+    console.log('🔵 Saga: Bulk date pricing for range:', dateRange, 'variant:', variantId)
+    const response = yield call(bulkDatePricing, variantId, dateRange, pricingData, operation)
+    console.log('🟢 Saga: Bulk date pricing response:', response)
+    const result = response.data?.data || response.data || response
+    yield put(bulkDatePricingSuccess(result))
+    showToastSuccess(`Bulk ${operation} completed successfully for ${result.processedDates || 0} dates`)
+    // Refresh date pricing for the calendar
+    if (variantId && dateRange) {
+      yield put({ type: FETCH_DATE_PRICING_REQUEST, payload: { variantId, date: dateRange.startDate } })
+    }
+  } catch (error) {
+    console.error('🔴 Saga Error in bulk date pricing:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to process bulk date pricing'
+    yield put(bulkDatePricingFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
 // Watcher
 export default function* tourGroupSaga() {
   yield takeEvery(FETCH_TOUR_GROUP_REQUEST, fetchTourGroup)
@@ -382,6 +408,7 @@ export default function* tourGroupSaga() {
   yield takeEvery(DELETE_PRICING_RULE_REQUEST, deletePricingRuleSaga)
   yield takeEvery(FETCH_DATE_PRICING_REQUEST, fetchDatePricingSaga)
   yield takeEvery(SAVE_DATE_PRICING_REQUEST, saveDatePricingSaga)
+  yield takeEvery(BULK_DATE_PRICING_REQUEST, bulkDatePricingSaga)
   yield takeEvery(FETCH_VARIANT_DETAIL_REQUEST, fetchVariantDetailSaga)
   yield takeEvery(UPDATE_VARIANT_PRICES_REQUEST, updateVariantPricesSaga)
 }
@@ -390,11 +417,27 @@ export default function* tourGroupSaga() {
 function* fetchVariantDetailSaga(action) {
   try {
     const variantId = action.payload
+    console.log('🔵 Saga: Fetching variant detail for variantId:', variantId)
     const response = yield call(getTourGroupVariantDetailAPI, variantId)
-    const variant = response?.data?.data || response?.data || response
+    console.log('🟢 Saga: Variant detail response:', response)
+    console.log('📦 Response data:', response?.data)
+    console.log('📦 Response data.data:', response?.data?.data)
+    
+    // Backend returns: { variant: {...}, tourGroup: {...}, analytics: {...} }
+    const responseData = response?.data?.data || response?.data || response
+    console.log('📦 ResponseData structure:', responseData)
+    console.log('📦 ResponseData.variant:', responseData?.variant)
+    
+    // Extract variant from the nested structure
+    const variant = responseData?.variant || responseData
+    console.log('✅ Extracted variant:', variant)
+    console.log('💰 Variant listingPrice:', variant?.listingPrice)
+    console.log('💰 Variant listingPrice.prices:', variant?.listingPrice?.prices)
+    
     yield put(fetchVariantDetailSuccess(variant))
   } catch (error) {
-    console.error('Error fetching variant details:', error)
+    console.error('🔴 Error fetching variant details:', error)
+    console.error('🔴 Error response:', error.response)
     yield put(fetchVariantDetailFailure(error.message))
   }
 }

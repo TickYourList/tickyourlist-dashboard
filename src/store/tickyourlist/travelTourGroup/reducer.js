@@ -46,6 +46,9 @@ import {
   SAVE_DATE_PRICING_REQUEST,
   SAVE_DATE_PRICING_SUCCESS,
   SAVE_DATE_PRICING_FAILURE,
+  BULK_DATE_PRICING_REQUEST,
+  BULK_DATE_PRICING_SUCCESS,
+  BULK_DATE_PRICING_FAILURE,
   FETCH_VARIANT_DETAIL_REQUEST,
   FETCH_VARIANT_DETAIL_SUCCESS,
   FETCH_VARIANT_DETAIL_FAILURE,
@@ -406,6 +409,24 @@ export default function tourGroupReducer(state = initialState, action) {
         error: null,
       }
     case SAVE_DATE_PRICING_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      }
+    case BULK_DATE_PRICING_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+    case BULK_DATE_PRICING_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        error: null,
+      }
+    case BULK_DATE_PRICING_FAILURE:
       return {
         ...state,
         loading: false,
