@@ -25,9 +25,9 @@ import {
   GET_TOUR_GROUP_VARIANT_BY_ID_FAIL,
 } from "./actionType";
 
-export const getTourGroupVariants = (page = 1, limit = 10) => ({
+export const getTourGroupVariants = (page = 1, limit = 10, cityCode = null, tourGroupId = null, variantId = null) => ({
   type: GET_TOUR_GROUP_VARIANTS,
-  payload: { page, limit },
+  payload: { page, limit, cityCode, tourGroupId, variantId },
 });
 
 export const getTourGroupVariantsSuccess = data => ({

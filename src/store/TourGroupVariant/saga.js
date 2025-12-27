@@ -42,8 +42,8 @@ import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 
 function* onGetTourGroupVariants({ payload }) {
   try {
-    const { page, limit } = payload || {};
-    const response = yield call(getTourGroupVariantsAPI, { page, limit });
+    const { page, limit, cityCode, tourGroupId, variantId } = payload || {};
+    const response = yield call(getTourGroupVariantsAPI, { page, limit, cityCode, tourGroupId, variantId });
 
     yield put(
       getTourGroupVariantsSuccess({
@@ -66,15 +66,44 @@ function* onGetTourGroupVariants({ payload }) {
 
 function* onGetTourGroupVariantById({ payload }) {
   try {
-    const response = yield call(getTourGroupVariantByIdAPI, payload);
-    const variant = response?.data?.variant;
-
+    // Use getTourGroupVariantDetailAPI which returns { variant, tourGroup, analytics }
+    const response = yield call(getTourGroupVariantDetailAPI, payload);
+    console.log('🔵 Saga: getTourGroupVariantById response:', response);
+    
+    // Extract variant from the nested structure - detail API returns { variant, tourGroup, analytics }
+    const responseData = response?.data?.data || response?.data || response;
+    const variant = responseData?.variant || responseData;
+    const tourGroup = responseData?.tourGroup;
+    
+    console.log('🔵 Saga: Extracted variant:', variant);
+    console.log('🔵 Saga: Extracted tourGroup:', tourGroup);
+    
+    // Enrich variant with productId and cityCode from tourGroup if not present
     if (variant && variant._id) {
+      if (!variant.productId && tourGroup?._id) {
+        variant.productId = tourGroup._id;
+        console.log('✅ Added productId from tourGroup:', variant.productId);
+      }
+      if (!variant.cityCode && tourGroup?.cityCode) {
+        variant.cityCode = tourGroup.cityCode;
+        console.log('✅ Added cityCode from tourGroup:', variant.cityCode);
+      }
+      if (!variant.product && tourGroup) {
+        variant.product = {
+          _id: tourGroup._id,
+          name: tourGroup.name,
+          cityCode: tourGroup.cityCode
+        };
+        console.log('✅ Added product object from tourGroup');
+      }
+      
       yield put(getTourGroupVariantByIdSuccess(variant));
     } else {
+      console.error('❌ Variant not found in response:', response);
       throw new Error("Variant not found");
     }
   } catch (error) {
+    console.error('🔴 Error in onGetTourGroupVariantById:', error);
     yield put(
       getTourGroupVariantByIdFail(error.message || "Failed to fetch variant")
     );

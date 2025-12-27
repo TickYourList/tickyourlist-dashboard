@@ -13,7 +13,6 @@ import {
   FormGroup,
   Alert,
 } from "reactstrap"
-import { Checkbox } from "antd"
 import axios from "axios"
 import { showToastSuccess, showToastError } from "helpers/toastBuilder"
 import { fetchVariantDetailRequest, updateVariantPricesRequest } from "store/tickyourlist/travelTourGroup/action"
@@ -265,7 +264,7 @@ const NormalPricingForm = ({ variantId, onSave }) => {
                 <h6 className="mb-0">Select Pricing Types *</h6>
               </CardHeader>
               <CardBody>
-                <div className="d-flex flex-wrap gap-3">
+                <div className="d-flex flex-wrap gap-2">
                   {allPricingTypes.map(({ key, label }) => {
                     const isChecked = selectedPricingTypes.includes(key)
                     const canRemove = selectedPricingTypes.length > 1
@@ -273,6 +272,7 @@ const NormalPricingForm = ({ variantId, onSave }) => {
                     return (
                       <Button
                         key={key}
+                        type="button"
                         color={isChecked ? "primary" : "outline-secondary"}
                         size="sm"
                         className="rounded-pill px-3"
@@ -293,15 +293,19 @@ const NormalPricingForm = ({ variantId, onSave }) => {
                             }
                           }
                         }}
+                        style={{
+                          cursor: (!canRemove && isChecked) ? 'not-allowed' : 'pointer',
+                          opacity: (!canRemove && isChecked) ? 0.7 : 1
+                        }}
                       >
+                        {isChecked && <i className="bx bx-check me-1"></i>}
                         {label}
-                        {isChecked && <i className="bx bx-check ms-1"></i>}
                       </Button>
                     )
                   })}
                 </div>
                 <small className="text-muted d-block mt-2">
-                  Select at least one pricing type.
+                  Select at least one pricing type. Click buttons to enable/disable pricing types.
                 </small>
               </CardBody>
             </Card>

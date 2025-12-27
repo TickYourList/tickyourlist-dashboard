@@ -246,8 +246,13 @@ const getTourGroupVariants = () => get(url.GET_TOUR_GROUP_VARIANTS);
 // export const getTourGroupVariantsAPI = () =>
 //   get(url.GET_TOUR_GROUP_VARIANTS_API);
 
-const getTourGroupVariantsAPI = ({ page = 1, limit = 10 }) =>
-  get(url.GET_TOUR_GROUP_VARIANTS_API, { params: { page, limit } });
+const getTourGroupVariantsAPI = ({ page = 1, limit = 10, cityCode = null, tourGroupId = null, variantId = null }) => {
+  const params = { page, limit }
+  if (cityCode) params.cityCode = cityCode
+  if (tourGroupId) params.tourGroupId = tourGroupId
+  if (variantId) params.variantId = variantId
+  return get(url.GET_TOUR_GROUP_VARIANTS_API, { params })
+}
 
 const getTravelTourGroupAPI = () => get(url.GET_TRAVEL_TOUR_GROUPS_API);
 // export const addTourGroupVariantAPI = () =>

@@ -1,9 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react"
-import { Button, Container, Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap"
+import { Button, Container, Modal, ModalHeader, ModalBody, ModalFooter, Row, Col, Label, Input, Card, CardBody } from "reactstrap"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
+import Select from "react-select"
 
 import { getTourGroupVariants, getTourGroupVariantDetail } from "../../store/TourGroupVariant/action"
+import { getCities } from "store/travelCity/action"
+import {
+  fetchTourGroupsByCityRequest,
+  fetchVariantsByTourRequest,
+  searchTourGroupsRequest,
+} from "store/tickyourlist/travelTourGroup/action"
 import Breadcrumbs from "components/Common/Breadcrumb"
 import TableContainerWithServerSidePagination from "components/Common/TableContainerWithServerSidePagination"
 import DeleteModal from "components/Common/DeleteModal"
@@ -41,12 +48,75 @@ const TourGroupVariantsTable = () => {
     () => Number(localStorage.getItem("variantLimit")) || 10
   )
 
+  // Filter states - using same pattern as calendar page
+  const [selectedCity, setSelectedCity] = useState('')
+  const [selectedTour, setSelectedTour] = useState('')
+  const [selectedVariant, setSelectedVariant] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+
+  // Redux selectors - same as calendar page
+  const cities = useSelector(state => state.travelCity?.cities || [])
+  const tourGroupsByCity = useSelector(state => state.tourGroup?.tourGroupsByCity || [])
+  const searchedTourGroups = useSelector(state => state.tourGroup?.searchedTourGroups || [])
+  const variants = useSelector(state => state.tourGroup?.variantsByTour || [])
+  const loadingFilters = useSelector(state => state.tourGroup?.loading || false)
+
   const total = totalRecords || 0
 
-
+  // Fetch cities on mount using Redux (same as calendar page)
   useEffect(() => {
-    dispatch(getTourGroupVariants(page, limit))
-  }, [dispatch, page, limit])
+    dispatch(getCities())
+  }, [dispatch])
+
+  // Fetch tours when city is selected (same as calendar page)
+  useEffect(() => {
+    if (selectedCity) {
+      dispatch(fetchTourGroupsByCityRequest(selectedCity))
+      setSelectedTour('')
+      setSelectedVariant('')
+    } else {
+      setSelectedTour('')
+      setSelectedVariant('')
+    }
+  }, [selectedCity, dispatch])
+
+  // Fetch variants when tour is selected (same as calendar page)
+  useEffect(() => {
+    if (selectedTour) {
+      dispatch(fetchVariantsByTourRequest(selectedTour))
+      setSelectedVariant('')
+    } else {
+      setSelectedVariant('')
+    }
+  }, [selectedTour, dispatch])
+
+  // Handle search functionality
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      setIsSearching(true)
+      dispatch(searchTourGroupsRequest(searchQuery, selectedCity || null))
+    }
+  }
+
+  // Use searched results if searching, otherwise use city-filtered tours
+  const availableTourGroups = isSearching && searchQuery ? searchedTourGroups : tourGroupsByCity
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (selectedCity || selectedTour) {
+      setPage(1)
+    }
+  }, [selectedCity, selectedTour])
+
+  // Fetch variants when page, limit, or filters change
+  // When tour group is selected, show only variants for that tour group
+  // When filters are cleared, show all variants
+  useEffect(() => {
+    const cityCode = selectedCity || null
+    const tourGroupId = selectedTour || null
+    dispatch(getTourGroupVariants(page, limit, cityCode, tourGroupId, null))
+  }, [dispatch, page, limit, selectedCity, selectedTour])
 
   useEffect(() => {
     localStorage.setItem("variantPage", page)
@@ -297,6 +367,155 @@ const TourGroupVariantsTable = () => {
     <div className="page-content">
       <Container fluid>
         <Breadcrumbs title="Tour Groups" breadcrumbItem="Group Variants" />
+        
+        {/* Filters - Same as Calendar Pricing & Availability */}
+        <Card className="mb-3">
+          <CardBody>
+            <Row className="mb-3">
+              <Col md={3}>
+                <Label>City</Label>
+                <Select
+                  id="city-select"
+                  isClearable
+                  isSearchable
+                  placeholder="Search and select a city..."
+                  options={cities.map(city => ({
+                    value: city.cityCode,
+                    label: `${city.cityName} (${city.cityCode})`
+                  }))}
+                  value={selectedCity ? cities.find(c => c.cityCode === selectedCity) ? {
+                    value: selectedCity,
+                    label: `${cities.find(c => c.cityCode === selectedCity)?.cityName} (${selectedCity})`
+                  } : null : null}
+                  onChange={(option) => setSelectedCity(option?.value || '')}
+                  isDisabled={cities.length === 0}
+                />
+              </Col>
+              <Col md={3}>
+                <Label>Tour Group</Label>
+                <Select
+                  id="tour-select"
+                  isClearable
+                  isSearchable
+                  placeholder={selectedCity ? "Search and select a tour..." : "Select city first"}
+                  options={availableTourGroups.map(tour => ({
+                    value: tour._id || tour.id,
+                    label: tour.name || tour.title
+                  }))}
+                  value={selectedTour ? availableTourGroups.find(t => (t._id || t.id) === selectedTour) ? {
+                    value: selectedTour,
+                    label: availableTourGroups.find(t => (t._id || t.id) === selectedTour)?.name || availableTourGroups.find(t => (t._id || t.id) === selectedTour)?.title
+                  } : null : null}
+                  onChange={(option) => setSelectedTour(option?.value || '')}
+                  isDisabled={loadingFilters || !selectedCity}
+                  isLoading={loadingFilters && selectedCity}
+                />
+              </Col>
+              <Col md={3}>
+                <Label>Variant (Reference)</Label>
+                <Select
+                  id="variant-select"
+                  isClearable
+                  isSearchable
+                  placeholder={selectedTour ? "View variants for this tour..." : "Select tour first"}
+                  options={Array.isArray(variants) ? variants.map(variant => ({
+                    value: variant._id || variant.id,
+                    label: variant.name
+                  })) : []}
+                  value={selectedVariant ? (Array.isArray(variants) && variants.find(v => (v._id || v.id) === selectedVariant)) ? {
+                    value: selectedVariant,
+                    label: variants.find(v => (v._id || v.id) === selectedVariant)?.name
+                  } : null : null}
+                  onChange={(option) => setSelectedVariant(option?.value || '')}
+                  isDisabled={loadingFilters || !selectedTour}
+                  isLoading={loadingFilters && selectedTour}
+                />
+                <small className="text-muted d-block mt-1">
+                  All variants for selected tour are shown in table below
+                </small>
+              </Col>
+              <Col md={3} className="d-flex align-items-end">
+                <Button
+                  color="secondary"
+                  onClick={() => {
+                    setSelectedCity('')
+                    setSelectedTour('')
+                    setSelectedVariant('')
+                    setSearchQuery('')
+                    setIsSearching(false)
+                    setPage(1)
+                  }}
+                  disabled={!selectedCity && !selectedTour}
+                  className="w-100"
+                >
+                  Clear Filters
+                </Button>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6}>
+                <Label>Search Tour Groups</Label>
+                <div className="d-flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Enter tour group name to search..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value)
+                      if (!e.target.value.trim()) {
+                        setIsSearching(false)
+                      }
+                    }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        handleSearch()
+                      }
+                    }}
+                    disabled={loadingFilters}
+                  />
+                  <Button
+                    color="primary"
+                    onClick={handleSearch}
+                    disabled={!searchQuery.trim() || loadingFilters}
+                  >
+                    <i className="bx bx-search"></i>
+                  </Button>
+                </div>
+                {isSearching && (
+                  <small className="text-info mt-2 d-block">
+                    <i className="bx bx-loader-alt bx-spin me-1"></i>
+                    Searching...
+                  </small>
+                )}
+                {searchedTourGroups.length > 0 && isSearching && (
+                  <div className="mt-2">
+                    <small className="text-success d-block mb-2">
+                      Found {searchedTourGroups.length} tour group(s)
+                    </small>
+                    <Select
+                      isClearable
+                      placeholder="Select from search results..."
+                      options={searchedTourGroups.map(tour => ({
+                        value: tour._id || tour.id,
+                        label: tour.name
+                      }))}
+                      onChange={(selectedOption) => {
+                        if (selectedOption) {
+                          setSelectedTour(selectedOption.value)
+                          setSearchQuery('')
+                          setIsSearching(false)
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+                <small className="text-muted d-block mt-1">
+                  Search across all tour groups or filter by city first
+                </small>
+              </Col>
+            </Row>
+          </CardBody>
+        </Card>
         
         <div className="variant-list-page">
           <TableContainerWithServerSidePagination

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import Select from "react-select";
+import Switch from "react-switch";
 import {
   Card,
   CardBody,
@@ -11,8 +12,9 @@ import {
   Input,
   Label,
   Row,
+  Table,
 } from "reactstrap";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 import EditorReact from "./Editor";
 
@@ -23,6 +25,10 @@ import {
   getTourGroupVariantById,
   updateTourGroupVariant,
 } from "../../store/TourGroupVariant/action";
+import { getCities } from "store/travelCity/action";
+import {
+  fetchTourGroupsByCityRequest,
+} from "store/tickyourlist/travelTourGroup/action";
 
 const optionGroup2 = [
   {
@@ -46,17 +52,57 @@ const optionGroup3 = [
   },
 ];
 
+// Days of week for operating hours
+const DAYS_OF_WEEK = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
+
+// Default operating hours template (all days, 9 AM - 6 PM)
+const getDefaultOperatingHours = () => 
+  DAYS_OF_WEEK.map(day => ({
+    dayOfWeek: day.value,
+    openTime: "09:00",
+    closeTime: "18:00",
+    enabled: true,
+  }));
+
 const AddTourGroupVariants = () => {
   document.title = "Variant Page | Scrollit";
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { variantId } = useParams();
+  const [searchParams] = useSearchParams();
   const isEdit = Boolean(variantId);
+  
+  // Get productId from URL params when adding new variant
+  const urlProductId = searchParams.get('productId');
+  const urlCityCode = searchParams.get('cityCode');
 
   const { selectedVariant, travelTourGroups, tourGroupVariants, loading } =
     useSelector(state => state.TourGroupVariant || {});
+  
+  // Debug log for edit mode
+  useEffect(() => {
+    if (isEdit) {
+      console.log('🔍 Edit mode active, variantId:', variantId);
+      console.log('🔍 selectedVariant from Redux:', selectedVariant);
+    }
+  }, [isEdit, variantId, selectedVariant]);
 
+  // City and Tour Group filters
+  const cities = useSelector(state => state.travelCity?.cities || []);
+  const tourGroupsByCity = useSelector(state => state.tourGroup?.tourGroupsByCity || []);
+  const loadingFilters = useSelector(state => state.tourGroup?.loading || false);
+
+  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedTourGroup, setSelectedTourGroup] = useState('');
   const [selectedMulti2, setselectedMulti2] = useState(null);
   const [selectedOpenDated, setSelectedOpenDated] = useState(null);
 
@@ -67,56 +113,157 @@ const AddTourGroupVariants = () => {
     variantInfo: "",
   });
 
+  // Operating Hours state
+  const [operatingHours, setOperatingHours] = useState(getDefaultOperatingHours());
+  const [showOperatingHours, setShowOperatingHours] = useState(false);
+
   // Fetch initial data
   // useEffect(() => {
   //   dispatch(getTravelTourGroups())
   //   dispatch(getTourGroupVariants())
   // }, [dispatch])
 
+  // Fetch cities on mount
   useEffect(() => {
-    if (isEdit) {
+    dispatch(getCities());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (isEdit && variantId) {
       dispatch(getTourGroupVariantById(variantId));
+      dispatch(getTravelTourGroups());
+    } else if (!isEdit) {
       dispatch(getTravelTourGroups());
     }
   }, [dispatch, isEdit, variantId]);
 
+  // Fetch tour groups when city is selected
   useEffect(() => {
-    if (
-      isEdit &&
-      tourGroupVariants?.length > 0 &&
-      travelTourGroups?.length > 0
-    ) {
-      const variant = tourGroupVariants.find(v => v._id === variantId);
-      if (variant) {
-        setFormData({
-          name: variant.name || "",
-          ticketDeliveryInfo: variant.ticketDeliveryInfo || "",
-          confirmedTicketInfo: variant.confirmedTicketInfo || "",
-          variantInfo: variant.variantInfo || "",
-          boosterTags: Array.isArray(variant.boosterTags)
-            ? variant.boosterTags.join(", ")
-            : variant.boosterTags || "",
+    if (selectedCity) {
+      dispatch(fetchTourGroupsByCityRequest(selectedCity));
+    }
+  }, [selectedCity, dispatch]);
+
+  // When tour group is selected, set the Product ID
+  useEffect(() => {
+    if (selectedTourGroup) {
+      // First try to find in tourGroupsByCity (from city filter)
+      let matchedProduct = tourGroupsByCity.find(
+        tg => (tg._id || tg.id) === selectedTourGroup || (tg._id || tg.id)?.toString() === selectedTourGroup?.toString()
+      );
+      
+      // If not found, try travelTourGroups (all tour groups)
+      if (!matchedProduct && travelTourGroups?.length > 0) {
+        matchedProduct = travelTourGroups.find(
+          group => group._id === selectedTourGroup || group._id?.toString() === selectedTourGroup?.toString()
+        );
+      }
+      
+      if (matchedProduct) {
+        setselectedMulti2({ 
+          label: matchedProduct.name || matchedProduct.title, 
+          value: matchedProduct._id || matchedProduct.id 
         });
+      }
+    }
+  }, [selectedTourGroup, tourGroupsByCity, travelTourGroups]);
 
-        const matchedProduct = travelTourGroups.find(
-          group => group._id === variant.productId
+  useEffect(() => {
+    if (isEdit && selectedVariant) {
+      const variant = selectedVariant;
+      console.log('🟢 Pre-populating form with variant:', variant);
+      console.log('🟢 Variant cityCode:', variant.cityCode);
+      console.log('🟢 Variant productId:', variant.productId);
+      console.log('🟢 Variant product:', variant.product);
+      
+      // Pre-populate form data
+      setFormData({
+        name: variant.name || "",
+        ticketDeliveryInfo: variant.ticketDeliveryInfo || "",
+        confirmedTicketInfo: variant.confirmedTicketInfo || "",
+        variantInfo: variant.variantInfo || "",
+        boosterTags: Array.isArray(variant.boosterTags)
+          ? variant.boosterTags.join(", ")
+          : variant.boosterTags || "",
+      });
+
+      // Pre-populate City - check multiple possible locations
+      const cityCode = variant.cityCode || variant.city?.cityCode || variant.city?.code || (variant.productId && variant.productId.cityCode);
+      if (cityCode) {
+        console.log('🏙️ Setting city:', cityCode);
+        setSelectedCity(cityCode);
+        // Fetch tour groups for this city
+        dispatch(fetchTourGroupsByCityRequest(cityCode));
+      } else {
+        console.warn('⚠️ No cityCode found in variant:', variant);
+      }
+
+      // Pre-populate Tour Group (productId) - handle both ObjectId object and string
+      let productId = variant.productId;
+      if (!productId && variant.product) {
+        productId = variant.product._id || variant.product.id || variant.product;
+      }
+      
+      // Convert to string if it's an ObjectId object
+      if (productId) {
+        const productIdStr = typeof productId === 'object' && productId._id 
+          ? productId._id.toString() 
+          : (typeof productId === 'object' && productId.toString 
+            ? productId.toString() 
+            : String(productId));
+        console.log('📦 Setting tour group (productId):', productId, 'as string:', productIdStr);
+        setSelectedTourGroup(productIdStr);
+      } else {
+        console.warn('⚠️ No productId found in variant:', variant);
+      }
+
+      setSelectedOpenDated(
+        variant.openDated === true
+          ? { label: "Available", value: "True" }
+          : { label: "Not Available", value: "False" }
+      );
+
+      // Load operating hours if they exist
+      if (variant.operatingHours && variant.operatingHours.length > 0) {
+        setShowOperatingHours(true);
+        // Merge existing hours with default template
+        const hoursMap = new Map(
+          variant.operatingHours.map(h => [h.dayOfWeek, h])
         );
-
-        setselectedMulti2(
-          matchedProduct
-            ? { label: matchedProduct.name, value: matchedProduct._id }
-            : null
-        );
-
-        setSelectedOpenDated(
-          variant.openDated === true
-            ? { label: "Available", value: "True" }
-            : { label: "Not Available", value: "False" }
+        setOperatingHours(
+          DAYS_OF_WEEK.map(day => {
+            const existing = hoursMap.get(day.value);
+            return existing
+              ? { ...existing, enabled: true }
+              : { dayOfWeek: day.value, openTime: "09:00", closeTime: "18:00", enabled: false };
+          })
         );
       }
     }
-    // }, [isEdit, variantId, tourGroupVariants, travelTourGroups])
-  }, [isEdit, selectedVariant, travelTourGroups]);
+  }, [isEdit, selectedVariant, dispatch]);
+
+  // When tour groups are loaded in edit mode, ensure tour group is set correctly
+  useEffect(() => {
+    if (isEdit && selectedVariant && selectedCity && tourGroupsByCity?.length > 0 && selectedTourGroup) {
+      let productId = selectedVariant.productId;
+      if (!productId && selectedVariant.product) {
+        productId = selectedVariant.product._id || selectedVariant.product.id || selectedVariant.product;
+      }
+      const productIdStr = typeof productId === 'object' && productId._id 
+        ? productId._id.toString() 
+        : (typeof productId === 'object' && productId.toString 
+          ? productId.toString() 
+          : String(productId || ''));
+      
+      const matchedTourGroup = tourGroupsByCity.find(
+        tg => (tg._id || tg.id)?.toString() === productIdStr || (tg._id || tg.id)?.toString() === selectedTourGroup?.toString()
+      );
+      if (matchedTourGroup && (matchedTourGroup._id || matchedTourGroup.id)?.toString() !== selectedTourGroup?.toString()) {
+        console.log('🔄 Updating selected tour group to match:', matchedTourGroup);
+        setSelectedTourGroup((matchedTourGroup._id || matchedTourGroup.id).toString());
+      }
+    }
+  }, [isEdit, selectedVariant, selectedCity, tourGroupsByCity, selectedTourGroup]);
 
   const productOptions = useMemo(() => {
     if (!Array.isArray(travelTourGroups)) return [];
@@ -132,21 +279,35 @@ const AddTourGroupVariants = () => {
   const handleInputChange = e =>
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const createPayload = () => ({
-    productId: selectedMulti2?.value,
-    boosterTags: formData.boosterTags,
-    openDated: selectedOpenDated?.value === "True",
-    name: formData.name,
-    ticketDeliveryInfo: formData.ticketDeliveryInfo,
-    confirmedTicketInfo: formData.confirmedTicketInfo,
-    variantInfo: formData.variantInfo,
-    boosterTags: formData.boosterTags
-      ? formData.boosterTags
-          .split(",")
-          .map(tag => tag.trim())
-          .filter(Boolean)
-      : [],
-  });
+  const createPayload = () => {
+    // Filter operating hours to only include enabled days
+    const enabledOperatingHours = showOperatingHours
+      ? operatingHours
+          .filter(h => h.enabled)
+          .map(({ dayOfWeek, openTime, closeTime }) => ({
+            dayOfWeek,
+            openTime,
+            closeTime,
+          }))
+      : [];
+
+    return {
+      productId: selectedMulti2?.value || selectedTourGroup,
+      cityCode: selectedCity || (isEdit && selectedVariant?.cityCode),
+      openDated: selectedOpenDated?.value === "True",
+      name: formData.name,
+      ticketDeliveryInfo: formData.ticketDeliveryInfo,
+      confirmedTicketInfo: formData.confirmedTicketInfo,
+      variantInfo: formData.variantInfo,
+      boosterTags: formData.boosterTags
+        ? formData.boosterTags
+            .split(",")
+            .map(tag => tag.trim())
+            .filter(Boolean)
+        : [],
+      operatingHours: enabledOperatingHours,
+    };
+  };
 
   const handleSubmitClick = e => {
     e.preventDefault();
@@ -180,6 +341,64 @@ const AddTourGroupVariants = () => {
                 <Form onSubmit={isEdit ? handleUpdateClick : handleSubmitClick}>
                   <Row>
                     <Col lg="6">
+                      <Label>City *</Label>
+                      <Select
+                        isClearable
+                        isSearchable
+                        placeholder="Select City"
+                        options={cities.map(city => ({
+                          value: city.cityCode,
+                          label: `${city.cityName} (${city.cityCode})`
+                        }))}
+                        value={selectedCity ? cities.find(c => c.cityCode === selectedCity) ? {
+                          value: selectedCity,
+                          label: `${cities.find(c => c.cityCode === selectedCity)?.cityName} (${selectedCity})`
+                        } : null : null}
+                        onChange={(option) => {
+                          setSelectedCity(option?.value || '');
+                          setSelectedTourGroup('');
+                          setselectedMulti2(null);
+                        }}
+                        isDisabled={cities.length === 0 || isEdit}
+                        isLoading={loadingFilters && !isEdit}
+                      />
+                      {isEdit && selectedVariant?.cityCode && (
+                        <small className="text-muted d-block mt-1">
+                          City Code: {selectedVariant.cityCode}
+                        </small>
+                      )}
+                    </Col>
+
+                    <Col lg="6">
+                      <Label>Tour Group *</Label>
+                      <Select
+                        isClearable
+                        isSearchable
+                        placeholder={selectedCity || (isEdit && selectedCity) ? "Select Tour Group" : "Select City first"}
+                        options={tourGroupsByCity.map(tg => ({
+                          value: (tg._id || tg.id)?.toString(),
+                          label: tg.name || tg.title
+                        }))}
+                        value={selectedTourGroup ? (() => {
+                          const found = tourGroupsByCity.find(tg => 
+                            (tg._id || tg.id)?.toString() === selectedTourGroup?.toString()
+                          );
+                          return found ? {
+                            value: selectedTourGroup,
+                            label: found.name || found.title
+                          } : null;
+                        })() : null}
+                        onChange={(option) => {
+                          setSelectedTourGroup(option?.value || '');
+                        }}
+                        isDisabled={!selectedCity && !isEdit || loadingFilters}
+                        isLoading={loadingFilters && (selectedCity || isEdit)}
+                      />
+                    </Col>
+                  </Row>
+
+                  <Row className="mt-3">
+                    <Col lg="6">
                       <Label>Name</Label>
                       <Input
                         type="text"
@@ -191,14 +410,20 @@ const AddTourGroupVariants = () => {
                     </Col>
 
                     <Col lg="6">
-                      <Label>Product Id</Label>
+                      <Label>Product Id (Auto-filled from Tour Group)</Label>
                       <Select
                         value={selectedMulti2}
                         onChange={setselectedMulti2}
                         options={productOptions}
                         isLoading={loading}
-                        placeholder="Select Product"
+                        placeholder={selectedMulti2 ? selectedMulti2.label : "Will be auto-filled when Tour Group is selected"}
+                        isDisabled={true}
                       />
+                      {isEdit && selectedVariant && (
+                        <small className="text-info d-block mt-1">
+                          Product ID: {selectedVariant.productId || selectedMulti2?.value || 'N/A'}
+                        </small>
+                      )}
                     </Col>
                   </Row>
 
@@ -258,6 +483,156 @@ const AddTourGroupVariants = () => {
                         onChange={setSelectedOpenDated}
                         options={optionGroup3}
                       />
+                    </Col>
+                  </Row>
+
+                  {/* Operating Hours Section */}
+                  <Row className="mt-4">
+                    <Col lg="12">
+                      <Card className="border">
+                        <CardBody>
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h5 className="mb-0">
+                              <i className="mdi mdi-clock-outline me-2"></i>
+                              Operating Hours
+                            </h5>
+                            <div className="d-flex align-items-center gap-2">
+                              <Switch
+                                checked={showOperatingHours}
+                                onChange={(checked) => setShowOperatingHours(checked)}
+                                onColor="#86d3ff"
+                                onHandleColor="#2693e6"
+                                handleDiameter={20}
+                                uncheckedIcon={false}
+                                checkedIcon={false}
+                                boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                height={24}
+                                width={48}
+                                id="enableOperatingHours"
+                              />
+                              <Label
+                                htmlFor="enableOperatingHours"
+                                className="mb-0"
+                                style={{ cursor: "pointer", userSelect: "none" }}
+                              >
+                                Enable Operating Hours
+                              </Label>
+                            </div>
+                          </div>
+
+                          {showOperatingHours && (
+                            <>
+                              <p className="text-muted small mb-3">
+                                Set the opening and closing times for each day. These times will be displayed as "Closes at X:XX" on the booking page.
+                              </p>
+                              <Table responsive className="table-bordered">
+                                <thead className="table-light">
+                                  <tr>
+                                    <th style={{ width: "50px" }}>Active</th>
+                                    <th style={{ width: "120px" }}>Day</th>
+                                    <th>Open Time</th>
+                                    <th>Close Time</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {operatingHours.map((hour, index) => (
+                                    <tr key={hour.dayOfWeek}>
+                                      <td className="text-center">
+                                        <Input
+                                          type="checkbox"
+                                          checked={hour.enabled}
+                                          onChange={e => {
+                                            const updated = [...operatingHours];
+                                            updated[index].enabled = e.target.checked;
+                                            setOperatingHours(updated);
+                                          }}
+                                        />
+                                      </td>
+                                      <td>
+                                        <strong>{DAYS_OF_WEEK[index].label}</strong>
+                                      </td>
+                                      <td>
+                                        <Input
+                                          type="time"
+                                          value={hour.openTime}
+                                          disabled={!hour.enabled}
+                                          onChange={e => {
+                                            const updated = [...operatingHours];
+                                            updated[index].openTime = e.target.value;
+                                            setOperatingHours(updated);
+                                          }}
+                                        />
+                                      </td>
+                                      <td>
+                                        <Input
+                                          type="time"
+                                          value={hour.closeTime}
+                                          disabled={!hour.enabled}
+                                          onChange={e => {
+                                            const updated = [...operatingHours];
+                                            updated[index].closeTime = e.target.value;
+                                            setOperatingHours(updated);
+                                          }}
+                                        />
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </Table>
+
+                              {/* Quick Actions */}
+                              <div className="d-flex gap-2 mt-2">
+                                <Button
+                                  color="outline-primary"
+                                  size="sm"
+                                  onClick={() => {
+                                    setOperatingHours(
+                                      operatingHours.map(h => ({ ...h, enabled: true }))
+                                    );
+                                  }}
+                                >
+                                  Enable All Days
+                                </Button>
+                                <Button
+                                  color="outline-secondary"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Enable weekdays only (Mon-Fri)
+                                    setOperatingHours(
+                                      operatingHours.map(h => ({
+                                        ...h,
+                                        enabled: h.dayOfWeek >= 1 && h.dayOfWeek <= 5,
+                                      }))
+                                    );
+                                  }}
+                                >
+                                  Weekdays Only
+                                </Button>
+                                <Button
+                                  color="outline-info"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Set all to same time as first enabled
+                                    const first = operatingHours.find(h => h.enabled);
+                                    if (first) {
+                                      setOperatingHours(
+                                        operatingHours.map(h => ({
+                                          ...h,
+                                          openTime: first.openTime,
+                                          closeTime: first.closeTime,
+                                        }))
+                                      );
+                                    }
+                                  }}
+                                >
+                                  Apply First Time to All
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                        </CardBody>
+                      </Card>
                     </Col>
                   </Row>
 
