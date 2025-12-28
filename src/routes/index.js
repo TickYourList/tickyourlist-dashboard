@@ -189,6 +189,22 @@ import FaqsList from "pages/Content-marketing/Faqs";
 import FaqsForm from "pages/Content-marketing/FaqsForm";
 import PricingManagement from "../pages/tickyourlist/PricingManagement";
 
+// Email Templates
+import EmailTemplates from "../pages/EmailTemplates/index";
+import CreateEditTemplate from "../pages/EmailTemplates/CreateEditTemplate";
+import AIGenerateTemplate from "../pages/EmailTemplates/AIGenerateTemplate";
+import EmailLogs from "../pages/EmailTemplates/EmailLogs";
+// Email Campaigns
+import Campaigns from "../pages/EmailTemplates/Campaigns";
+import CreateCampaign from "../pages/EmailTemplates/CreateCampaign";
+// Email Builder
+import EmailBuilder from "../pages/EmailTemplates/EmailBuilder";
+// Email Workflows/Automations
+import Workflows from "../pages/EmailTemplates/Workflows";
+import WorkflowEditor from "../pages/EmailTemplates/WorkflowEditor";
+// Customer Segments
+import Segments from "../pages/EmailTemplates/Segments";
+
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <AutomobileDashboard /> },
@@ -403,6 +419,30 @@ const authProtectedRoutes = [
   // Pricing Management
   { path: "/pricing-management/:variantId", component: <PricingManagement /> },
   { path: "/pricing-management", component: <PricingManagement /> },
+  
+  // Email Templates
+  { path: "/email-templates", component: <EmailTemplates /> },
+  { path: "/email-templates/create", component: <CreateEditTemplate /> },
+  { path: "/email-templates/edit/:id", component: <CreateEditTemplate /> },
+  { path: "/email-templates/ai-generate", component: <AIGenerateTemplate /> },
+  { path: "/email-templates/logs", component: <EmailLogs /> },
+  
+  // Email Campaigns
+  { path: "/email-campaigns", component: <Campaigns /> },
+  { path: "/email-campaigns/create", component: <CreateCampaign /> },
+  { path: "/email-campaigns/:id/edit", component: <CreateCampaign /> },
+  
+  // Email Builder
+  { path: "/email-builder", component: <EmailBuilder /> },
+  
+  // Email Workflows/Automations
+  { path: "/email-workflows", component: <Workflows /> },
+  { path: "/email-workflows/create", component: <WorkflowEditor /> },
+  { path: "/email-workflows/:id/edit", component: <WorkflowEditor /> },
+  
+  // Customer Segments
+  { path: "/email-segments", component: <Segments /> },
+  
   {
     path: "/",
     exact: true,

@@ -1,5 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Container, Modal, ModalHeader, ModalBody, ModalFooter, Spinner, Alert, UncontrolledTooltip } from "reactstrap";
+import { 
+  Button, 
+  Container, 
+  Modal, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
+  Spinner, 
+  Alert, 
+  UncontrolledTooltip,
+  UncontrolledDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
+  Badge
+} from "reactstrap";
 import { useDispatch, useSelector } from "react-redux";
 
 import { getCustomerList } from "../../store/customers/actions";
@@ -12,6 +27,8 @@ import {
   getBookingDetailsAPI,
   confirmBookingAPI,
   sendInvoiceAPI,
+  updateBookingStatusAPI,
+  updateTicketDeliveryAPI,
 } from "../../helpers/location_management_helper";
 
 import "./CustomersList.scss";
@@ -51,6 +68,28 @@ const CustomersList = () => {
   const [confirmBookingModal, setConfirmBookingModal] = useState(false);
   const [bookingToConfirm, setBookingToConfirm] = useState(null);
   const [sendInvoice, setSendInvoice] = useState(true); // Default to true
+  
+  // Status Update Modal States
+  const [statusUpdateModal, setStatusUpdateModal] = useState(false);
+  const [bookingToUpdate, setBookingToUpdate] = useState(null);
+  const [newStatus, setNewStatus] = useState("");
+  const [refundDetails, setRefundDetails] = useState({
+    refundAmount: "",
+    refundReason: "",
+    refundMethod: "original_payment",
+    refundReference: "",
+    refundNotes: ""
+  });
+  
+  // Ticket Delivery Modal States
+  const [ticketDeliveryModal, setTicketDeliveryModal] = useState(false);
+  const [ticketDeliveryData, setTicketDeliveryData] = useState({
+    deliveredViaOtherMeans: false,
+    deliveryMethod: "email",
+    isDelivered: true,
+    failureReason: "",
+    failureNotes: ""
+  });
 
   useEffect(() => {
     dispatch(getCustomerList(page, limit, dateType, startDate, endDate));
@@ -273,6 +312,116 @@ const CustomersList = () => {
       setSendingEmail(false);
     }
   };
+  
+  // Handle status update modal open
+  const handleStatusUpdateClick = (booking) => {
+    setBookingToUpdate(booking);
+    setNewStatus(booking.status);
+    setRefundDetails({
+      refundAmount: booking.amount || "",
+      refundReason: "",
+      refundMethod: "original_payment",
+      refundReference: "",
+      refundNotes: ""
+    });
+    setStatusUpdateModal(true);
+  };
+  
+  // Handle status update submit
+  const handleStatusUpdate = async () => {
+    if (!bookingToUpdate || !newStatus) return;
+    
+    setSendingEmail(true);
+    setEmailAlert({ show: false, message: "", color: "" });
+    
+    try {
+      const refundData = newStatus === "REFUNDED" ? refundDetails : null;
+      const response = await updateBookingStatusAPI(bookingToUpdate._id, newStatus, refundData);
+      
+      if (response.statusCode === "10000") {
+        setEmailAlert({
+          show: true,
+          message: `Booking status updated to ${newStatus} successfully!`,
+          color: "success"
+        });
+        setStatusUpdateModal(false);
+        setBookingToUpdate(null);
+        dispatch(getCustomerList(page, limit, dateType, startDate, endDate));
+        setTimeout(() => {
+          setEmailAlert({ show: false, message: "", color: "" });
+        }, 3000);
+      } else {
+        setEmailAlert({
+          show: true,
+          message: response.message || "Failed to update status",
+          color: "danger"
+        });
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      setEmailAlert({
+        show: true,
+        message: "Failed to update status. Please try again.",
+        color: "danger"
+      });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+  
+  // Handle ticket delivery modal open
+  const handleTicketDeliveryClick = (booking) => {
+    setBookingToUpdate(booking);
+    setTicketDeliveryData({
+      deliveredViaOtherMeans: booking.ticketDelivery?.deliveredViaOtherMeans || false,
+      deliveryMethod: booking.ticketDelivery?.deliveryMethod || "email",
+      isDelivered: booking.ticketDelivery?.isDelivered || true,
+      failureReason: booking.ticketDelivery?.failureReason || "",
+      failureNotes: booking.ticketDelivery?.failureNotes || ""
+    });
+    setTicketDeliveryModal(true);
+  };
+  
+  // Handle ticket delivery update submit
+  const handleTicketDeliveryUpdate = async () => {
+    if (!bookingToUpdate) return;
+    
+    setSendingEmail(true);
+    setEmailAlert({ show: false, message: "", color: "" });
+    
+    try {
+      const response = await updateTicketDeliveryAPI(bookingToUpdate._id, ticketDeliveryData);
+      
+      if (response.statusCode === "10000") {
+        setEmailAlert({
+          show: true,
+          message: "Ticket delivery information updated successfully!",
+          color: "success"
+        });
+        setTicketDeliveryModal(false);
+        setBookingToUpdate(null);
+        dispatch(getCustomerList(page, limit, dateType, startDate, endDate));
+        setTimeout(() => {
+          setEmailAlert({ show: false, message: "", color: "" });
+        }, 3000);
+      } else {
+        setEmailAlert({
+          show: true,
+          message: response.message || "Failed to update ticket delivery",
+          color: "danger"
+        });
+      }
+    } catch (error) {
+      console.error("Error updating ticket delivery:", error);
+      setEmailAlert({
+        show: true,
+        message: "Failed to update ticket delivery. Please try again.",
+        color: "danger"
+      });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   // Handle view booking
   const handleViewBooking = async (booking) => {
@@ -321,6 +470,11 @@ const CustomersList = () => {
           guestsCount: totalGuests,
           bookingDate: row.bookingDate || "-",
           status: row.status || "-",
+          ticketDeliveryStatus: row.ticketDelivery?.isDelivered 
+            ? "Delivered" 
+            : row.ticketDelivery?.failureReason 
+              ? row.ticketDelivery.failureReason.replace(/_/g, " ")
+              : "Not Set",
         };
       })
     : [];
@@ -388,14 +542,61 @@ const CustomersList = () => {
         accessor: "status",
         filterable: true,
         Cell: ({ value }) => {
-          const color =
+          const badgeColor =
             value === "CONFIRMED"
-              ? "#34c38f"
+              ? "success"
               : value === "PENDING"
-              ? "#f1b44c"
-              : "#f46a6a";
+              ? "warning"
+              : value === "REFUNDED"
+              ? "info"
+              : value === "CANCELLED"
+              ? "secondary"
+              : "danger";
 
-          return <span style={{ fontWeight: "bold", color }}>{value}</span>;
+          return (
+            <Badge color={badgeColor} className="font-size-12" pill>
+              {value}
+            </Badge>
+          );
+        },
+      },
+      {
+        Header: "Ticket Status",
+        accessor: "ticketDeliveryStatus",
+        filterable: true,
+        Cell: ({ row }) => {
+          const ticketDelivery = row.original.ticketDelivery;
+          const isDelivered = ticketDelivery?.isDelivered;
+          const failureReason = ticketDelivery?.failureReason;
+          
+          let badgeColor = "secondary"; // default gray
+          let text = "Not Set";
+          let icon = "bx-question-mark";
+          
+          if (isDelivered) {
+            badgeColor = "success";
+            icon = "bx-check";
+            text = ticketDelivery?.deliveredViaOtherMeans 
+              ? `${ticketDelivery?.deliveryMethod || 'Other'}` 
+              : "Delivered";
+          } else if (failureReason) {
+            badgeColor = "danger";
+            icon = "bx-x";
+            text = failureReason.replace(/_/g, " ");
+          }
+
+          return (
+            <Badge 
+              color={badgeColor} 
+              className="font-size-11"
+              style={{ cursor: "pointer" }}
+              onClick={() => handleTicketDeliveryClick(row.original)}
+              title="Click to update ticket delivery"
+            >
+              <i className={`bx ${icon} me-1`}></i>
+              {text}
+            </Badge>
+          );
         },
       },
       {
@@ -420,54 +621,97 @@ const CustomersList = () => {
         Cell: ({ row }) => {
           const status = row.original.status;
           return (
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              {status === "PENDING" && (
-                <button
-                  style={{ border: "none", background: "transparent", padding: 0 }}
-                  title="Preview & Send Pending Email"
-                  onClick={() => handlePreviewPendingEmail(row.original)}
-                >
-                  <i
-                    className="bx bx-mail-send"
-                    style={{ fontSize: "20px", color: "#f1b44c" }}
-                  />
-                </button>
-              )}
-              {status === "CONFIRMED" && (
-                <button
-                  style={{ border: "none", background: "transparent", padding: 0 }}
-                  title="Resend Confirmation Email"
-                  onClick={() => handleResendConfirmationEmail(row.original)}
-                >
-                  <i
-                    className="bx bx-refresh"
-                    style={{ fontSize: "20px", color: "#34c38f" }}
-                  />
-                </button>
-              )}
-            <button
-              style={{ border: "none", background: "transparent", padding: 0 }}
-              onClick={() => {
-                console.log("Edit booking", row.original._id);
-              }}
-            >
-              <i
-                className="bx bxs-pencil"
-                style={{ fontSize: "20px", color: "#34c38f" }}
-              />
-            </button>
-            <button
-              style={{ border: "none", background: "transparent", padding: 0 }}
-              onClick={() => {
-                console.log("Delete booking", row.original._id);
-              }}
-            >
-              <i
-                className="mdi mdi-delete"
-                style={{ fontSize: "20px", color: "#f46a6a" }}
-              />
-            </button>
-          </div>
+            <UncontrolledDropdown>
+              <DropdownToggle 
+                tag="button" 
+                className="btn btn-soft-primary btn-sm"
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "4px",
+                  border: "none",
+                  borderRadius: "4px",
+                  padding: "6px 12px"
+                }}
+              >
+                <i className="bx bx-dots-vertical-rounded"></i>
+                Actions
+              </DropdownToggle>
+              <DropdownMenu className="dropdown-menu-end">
+                <DropdownItem header>
+                  <strong>Booking Actions</strong>
+                </DropdownItem>
+                <DropdownItem divider />
+                
+                {/* Email Actions */}
+                {status === "PENDING" && (
+                  <DropdownItem onClick={() => handlePreviewPendingEmail(row.original)}>
+                    <i className="bx bx-mail-send text-warning me-2"></i>
+                    Send Pending Email
+                  </DropdownItem>
+                )}
+                {status === "PENDING" && (
+                  <DropdownItem onClick={() => handleConfirmBookingClick(row.original)}>
+                    <i className="bx bx-check-circle text-success me-2"></i>
+                    Confirm Booking
+                  </DropdownItem>
+                )}
+                {status === "CONFIRMED" && (
+                  <DropdownItem onClick={() => handleResendConfirmationEmailClick(row.original)}>
+                    <i className="bx bx-refresh text-success me-2"></i>
+                    Resend Confirmation Email
+                  </DropdownItem>
+                )}
+                {status === "CONFIRMED" && row.original.invoice?.s3Url && (
+                  <DropdownItem onClick={() => handleSendInvoice(row.original)}>
+                    <i className="bx bx-file text-info me-2"></i>
+                    Send Invoice
+                  </DropdownItem>
+                )}
+                
+                <DropdownItem divider />
+                <DropdownItem header>
+                  <strong>Status & Delivery</strong>
+                </DropdownItem>
+                
+                {/* Status Change */}
+                <DropdownItem onClick={() => handleStatusUpdateClick(row.original)}>
+                  <i className="bx bx-transfer text-primary me-2"></i>
+                  Change Status
+                </DropdownItem>
+                
+                {/* Ticket Delivery */}
+                <DropdownItem onClick={() => handleTicketDeliveryClick(row.original)}>
+                  <i className="bx bx-package text-warning me-2"></i>
+                  Update Ticket Delivery
+                </DropdownItem>
+                
+                {/* Quick Refund (only for confirmed) */}
+                {status === "CONFIRMED" && (
+                  <>
+                    <DropdownItem divider />
+                    <DropdownItem 
+                      onClick={() => {
+                        setBookingToUpdate(row.original);
+                        setNewStatus("REFUNDED");
+                        setRefundDetails({
+                          refundAmount: row.original.amount?.toString().replace(/[^\d.]/g, '') || "",
+                          refundReason: "",
+                          refundMethod: "original_payment",
+                          refundReference: "",
+                          refundNotes: ""
+                        });
+                        setStatusUpdateModal(true);
+                      }}
+                      className="text-danger"
+                    >
+                      <i className="bx bx-money text-danger me-2"></i>
+                      Process Refund
+                    </DropdownItem>
+                  </>
+                )}
+              </DropdownMenu>
+            </UncontrolledDropdown>
           );
         },
       },
@@ -1001,6 +1245,293 @@ const CustomersList = () => {
                 <>
                   <i className="bx bx-check-circle me-1"></i>
                   Yes, Confirm Booking
+                </>
+              )}
+            </Button>
+          </ModalFooter>
+        </Modal>
+
+        {/* Status Update Modal */}
+        <Modal
+          isOpen={statusUpdateModal}
+          toggle={() => {
+            setStatusUpdateModal(false);
+            setBookingToUpdate(null);
+          }}
+          size="lg"
+        >
+          <ModalHeader toggle={() => {
+            setStatusUpdateModal(false);
+            setBookingToUpdate(null);
+          }}>
+            Update Booking Status
+          </ModalHeader>
+          <ModalBody>
+            {bookingToUpdate && (
+              <div>
+                <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#f8f9fa", borderRadius: "5px" }}>
+                  <p><strong>Customer:</strong> {bookingToUpdate.customerName || "N/A"}</p>
+                  <p><strong>Email:</strong> {bookingToUpdate.customerEmail || "N/A"}</p>
+                  <p><strong>Booking ID:</strong> {bookingToUpdate._id}</p>
+                  <p><strong>Current Status:</strong> <span style={{ fontWeight: "bold", color: bookingToUpdate.status === "CONFIRMED" ? "#34c38f" : bookingToUpdate.status === "PENDING" ? "#f1b44c" : "#f46a6a" }}>{bookingToUpdate.status}</span></p>
+                </div>
+                
+                <div style={{ marginBottom: "20px" }}>
+                  <label style={{ fontWeight: "500", marginBottom: "8px", display: "block" }}>New Status:</label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "1px solid #ddd" }}
+                  >
+                    <option value="PENDING">PENDING</option>
+                    <option value="CONFIRMED">CONFIRMED</option>
+                    <option value="REFUNDED">REFUNDED</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                  </select>
+                </div>
+                
+                {newStatus === "REFUNDED" && (
+                  <div style={{ padding: "20px", backgroundColor: "#fff3e0", borderRadius: "5px", border: "1px solid #ff9800" }}>
+                    <h6 style={{ marginBottom: "15px", color: "#e65100" }}>
+                      <i className="bx bx-money me-1"></i>
+                      Refund Details
+                    </h6>
+                    
+                    <div style={{ marginBottom: "15px" }}>
+                      <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Refund Amount:</label>
+                      <input
+                        type="number"
+                        value={refundDetails.refundAmount}
+                        onChange={(e) => setRefundDetails({ ...refundDetails, refundAmount: e.target.value })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
+                        placeholder="Enter refund amount"
+                      />
+                    </div>
+                    
+                    <div style={{ marginBottom: "15px" }}>
+                      <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Refund Method:</label>
+                      <select
+                        value={refundDetails.refundMethod}
+                        onChange={(e) => setRefundDetails({ ...refundDetails, refundMethod: e.target.value })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
+                      >
+                        <option value="original_payment">Original Payment Method</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="wallet">Wallet/TylCash</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    
+                    <div style={{ marginBottom: "15px" }}>
+                      <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Refund Reason:</label>
+                      <input
+                        type="text"
+                        value={refundDetails.refundReason}
+                        onChange={(e) => setRefundDetails({ ...refundDetails, refundReason: e.target.value })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
+                        placeholder="e.g., Customer requested cancellation"
+                      />
+                    </div>
+                    
+                    <div style={{ marginBottom: "15px" }}>
+                      <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Reference Number (optional):</label>
+                      <input
+                        type="text"
+                        value={refundDetails.refundReference}
+                        onChange={(e) => setRefundDetails({ ...refundDetails, refundReference: e.target.value })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
+                        placeholder="e.g., Transaction ID"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Notes (optional):</label>
+                      <textarea
+                        value={refundDetails.refundNotes}
+                        onChange={(e) => setRefundDetails({ ...refundDetails, refundNotes: e.target.value })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ddd", minHeight: "80px" }}
+                        placeholder="Any additional notes about the refund"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              color="secondary"
+              onClick={() => {
+                setStatusUpdateModal(false);
+                setBookingToUpdate(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              onClick={handleStatusUpdate}
+              disabled={sendingEmail || !newStatus}
+            >
+              {sendingEmail ? (
+                <>
+                  <Spinner size="sm" className="me-2" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <i className="bx bx-check me-1"></i>
+                  Update Status
+                </>
+              )}
+            </Button>
+          </ModalFooter>
+        </Modal>
+
+        {/* Ticket Delivery Modal */}
+        <Modal
+          isOpen={ticketDeliveryModal}
+          toggle={() => {
+            setTicketDeliveryModal(false);
+            setBookingToUpdate(null);
+          }}
+          size="lg"
+        >
+          <ModalHeader toggle={() => {
+            setTicketDeliveryModal(false);
+            setBookingToUpdate(null);
+          }}>
+            Update Ticket Delivery Status
+          </ModalHeader>
+          <ModalBody>
+            {bookingToUpdate && (
+              <div>
+                <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#f8f9fa", borderRadius: "5px" }}>
+                  <p><strong>Customer:</strong> {bookingToUpdate.customerName || "N/A"}</p>
+                  <p><strong>Booking ID:</strong> {bookingToUpdate._id}</p>
+                  <p><strong>Tour:</strong> {bookingToUpdate.tourGroupId?.name || "N/A"}</p>
+                </div>
+                
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}>
+                    <input
+                      type="checkbox"
+                      id="deliveredViaOtherMeans"
+                      checked={ticketDeliveryData.deliveredViaOtherMeans}
+                      onChange={(e) => setTicketDeliveryData({ ...ticketDeliveryData, deliveredViaOtherMeans: e.target.checked })}
+                      style={{ marginRight: "10px", width: "18px", height: "18px" }}
+                    />
+                    <label htmlFor="deliveredViaOtherMeans" style={{ fontWeight: "500", cursor: "pointer" }}>
+                      Ticket sent through other means (WhatsApp, SMS, etc.)
+                    </label>
+                  </div>
+                </div>
+                
+                {ticketDeliveryData.deliveredViaOtherMeans && (
+                  <div style={{ marginBottom: "20px" }}>
+                    <label style={{ fontWeight: "500", marginBottom: "8px", display: "block" }}>Delivery Method:</label>
+                    <select
+                      value={ticketDeliveryData.deliveryMethod}
+                      onChange={(e) => setTicketDeliveryData({ ...ticketDeliveryData, deliveryMethod: e.target.value })}
+                      style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "1px solid #ddd" }}
+                    >
+                      <option value="email">Email</option>
+                      <option value="whatsapp">WhatsApp</option>
+                      <option value="sms">SMS</option>
+                      <option value="manual">Manual/In-person</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                )}
+                
+                <div style={{ marginBottom: "20px" }}>
+                  <label style={{ fontWeight: "500", marginBottom: "8px", display: "block" }}>Delivery Status:</label>
+                  <div style={{ display: "flex", gap: "20px" }}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        type="radio"
+                        id="delivered"
+                        name="deliveryStatus"
+                        checked={ticketDeliveryData.isDelivered}
+                        onChange={() => setTicketDeliveryData({ ...ticketDeliveryData, isDelivered: true, failureReason: "" })}
+                        style={{ marginRight: "8px" }}
+                      />
+                      <label htmlFor="delivered" style={{ cursor: "pointer", color: "#34c38f" }}>Delivered</label>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        type="radio"
+                        id="notDelivered"
+                        name="deliveryStatus"
+                        checked={!ticketDeliveryData.isDelivered}
+                        onChange={() => setTicketDeliveryData({ ...ticketDeliveryData, isDelivered: false })}
+                        style={{ marginRight: "8px" }}
+                      />
+                      <label htmlFor="notDelivered" style={{ cursor: "pointer", color: "#f46a6a" }}>Not Delivered</label>
+                    </div>
+                  </div>
+                </div>
+                
+                {!ticketDeliveryData.isDelivered && (
+                  <div style={{ padding: "20px", backgroundColor: "#ffebee", borderRadius: "5px", border: "1px solid #f44336" }}>
+                    <h6 style={{ marginBottom: "15px", color: "#c62828" }}>
+                      <i className="bx bx-error me-1"></i>
+                      Reason for Non-Delivery
+                    </h6>
+                    
+                    <div style={{ marginBottom: "15px" }}>
+                      <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Reason:</label>
+                      <select
+                        value={ticketDeliveryData.failureReason}
+                        onChange={(e) => setTicketDeliveryData({ ...ticketDeliveryData, failureReason: e.target.value })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
+                      >
+                        <option value="">Select a reason</option>
+                        <option value="OUT_OF_STOCK">Out of Stock</option>
+                        <option value="DATE_NOT_AVAILABLE">Date Not Available</option>
+                        <option value="SUPPLIER_ISSUE">Supplier Issue</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label style={{ fontWeight: "500", marginBottom: "5px", display: "block" }}>Additional Notes:</label>
+                      <textarea
+                        value={ticketDeliveryData.failureNotes}
+                        onChange={(e) => setTicketDeliveryData({ ...ticketDeliveryData, failureNotes: e.target.value })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ddd", minHeight: "80px" }}
+                        placeholder="Explain why the ticket could not be delivered"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              color="secondary"
+              onClick={() => {
+                setTicketDeliveryModal(false);
+                setBookingToUpdate(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              onClick={handleTicketDeliveryUpdate}
+              disabled={sendingEmail}
+            >
+              {sendingEmail ? (
+                <>
+                  <Spinner size="sm" className="me-2" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <i className="bx bx-check me-1"></i>
+                  Update Ticket Delivery
                 </>
               )}
             </Button>

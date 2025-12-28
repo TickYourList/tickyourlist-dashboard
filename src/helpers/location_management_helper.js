@@ -224,6 +224,14 @@ const confirmBookingAPI = (bookingId, sendInvoice = true) => post(`/v1/tyltourcu
 // SEND INVOICE (Send invoice email separately)
 const sendInvoiceAPI = (bookingId) => post(`/v1/tyltourcustomerbooking/booking/${bookingId}/send-invoice`, {});
 
+// UPDATE BOOKING STATUS (PENDING, CONFIRMED, REFUNDED, CANCELLED)
+const updateBookingStatusAPI = (bookingId, status, refundDetails = null) => 
+  put(`/v1/tyltourcustomerbooking/booking/${bookingId}/update-status`, { status, refundDetails });
+
+// UPDATE TICKET DELIVERY
+const updateTicketDeliveryAPI = (bookingId, ticketDeliveryData) => 
+  put(`/v1/tyltourcustomerbooking/booking/${bookingId}/ticket-delivery`, ticketDeliveryData);
+
 //----------------------------------------Product Management Collections--------------------------------------------------
 const getPMCollections = () => get(url.GET_PM_COLLECTIONS)
 
@@ -572,6 +580,8 @@ export {
   getBookingDetailsAPI,
   confirmBookingAPI,
   sendInvoiceAPI,
+  updateBookingStatusAPI,
+  updateTicketDeliveryAPI,
   getPMCollectionById,
   getPMCollections,
   addPMCollection,

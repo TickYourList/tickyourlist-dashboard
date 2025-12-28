@@ -304,6 +304,38 @@ const SidebarContent = props => {
                 <li>
                   <Link to="/faqs-list">{props.t("Faqs")}</Link>
                 </li>
+                <li>
+                  <Link to="/email-templates">
+                    <i className="bx bx-mail-send me-1"></i>
+                    {props.t("Email Templates")}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/email-campaigns">
+                    <i className="bx bx-rocket me-1"></i>
+                    {props.t("Email Campaigns")}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/email-builder">
+                    <i className="bx bx-paint me-1"></i>
+                    {props.t("Email Builder")}
+                    <span className="badge rounded-pill bg-info float-end">New</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/email-workflows">
+                    <i className="bx bx-git-branch me-1"></i>
+                    {props.t("Automations")}
+                    <span className="badge rounded-pill bg-success float-end">New</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/email-segments">
+                    <i className="bx bx-filter-alt me-1"></i>
+                    {props.t("Segments")}
+                  </Link>
+                </li>
               </ul>
             </li>
 

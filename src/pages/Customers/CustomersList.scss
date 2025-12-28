@@ -4,3 +4,91 @@
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
+
+// Action Dropdown Styles
+.dropdown-menu {
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 0;
+  
+  .dropdown-header {
+    color: #495057;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 16px 4px;
+  }
+  
+  .dropdown-item {
+    padding: 10px 16px;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: #f8f9fa;
+    }
+    
+    i {
+      font-size: 16px;
+      vertical-align: middle;
+    }
+  }
+  
+  .dropdown-divider {
+    margin: 6px 0;
+  }
+}
+
+// Badge Styles for Status
+.badge {
+  font-weight: 500;
+  padding: 6px 10px;
+  
+  &.badge-pill {
+    border-radius: 20px;
+  }
+}
+
+// Clickable Ticket Status Badge
+.badge[style*="cursor: pointer"] {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Soft Button Style
+.btn-soft-primary {
+  background-color: rgba(85, 110, 230, 0.1);
+  color: #556ee6;
+  
+  &:hover {
+    background-color: rgba(85, 110, 230, 0.2);
+    color: #556ee6;
+  }
+}
+
+// Modal Improvements
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 20px;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  border-top: 1px solid #f0f0f0;
+  padding: 16px 20px;
+}

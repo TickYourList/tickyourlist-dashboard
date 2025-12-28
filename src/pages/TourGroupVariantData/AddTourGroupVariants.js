@@ -111,6 +111,15 @@ const AddTourGroupVariants = () => {
     ticketDeliveryInfo: "",
     confirmedTicketInfo: "",
     variantInfo: "",
+    boosterTags: "",
+    externalVariantId: "",
+    status: true,
+    isPrivate: false,
+    isHotelPickup: false,
+    hasTimeSlots: false,
+    slotDurationMinutes: "",
+    notAvailable: false,
+    whatsappOnly: false,
   });
 
   // Operating Hours state
@@ -185,6 +194,14 @@ const AddTourGroupVariants = () => {
         boosterTags: Array.isArray(variant.boosterTags)
           ? variant.boosterTags.join(", ")
           : variant.boosterTags || "",
+        externalVariantId: variant.externalVariantId || "",
+        status: variant.status !== undefined ? variant.status : true,
+        isPrivate: variant.isPrivate || false,
+        isHotelPickup: variant.isHotelPickup || false,
+        hasTimeSlots: variant.hasTimeSlots || false,
+        slotDurationMinutes: variant.slotDurationMinutes || "",
+        notAvailable: variant.notAvailable || false,
+        whatsappOnly: variant.whatsappOnly || false,
       });
 
       // Pre-populate City - check multiple possible locations
@@ -239,6 +256,11 @@ const AddTourGroupVariants = () => {
           })
         );
       }
+
+      // Set hasTimeSlots toggle if operating hours exist
+      if (variant.hasTimeSlots !== undefined) {
+        setFormData(prev => ({ ...prev, hasTimeSlots: variant.hasTimeSlots }));
+      }
     }
   }, [isEdit, selectedVariant, dispatch]);
 
@@ -276,8 +298,13 @@ const AddTourGroupVariants = () => {
       }));
   }, [travelTourGroups]);
 
-  const handleInputChange = e =>
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleInputChange = e => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
 
   const createPayload = () => {
     // Filter operating hours to only include enabled days
@@ -306,6 +333,14 @@ const AddTourGroupVariants = () => {
             .filter(Boolean)
         : [],
       operatingHours: enabledOperatingHours,
+      status: formData.status,
+      isPrivate: formData.isPrivate,
+      isHotelPickup: formData.isHotelPickup,
+      hasTimeSlots: formData.hasTimeSlots || showOperatingHours,
+      slotDurationMinutes: formData.slotDurationMinutes ? Number(formData.slotDurationMinutes) : undefined,
+      notAvailable: formData.notAvailable,
+      whatsappOnly: formData.whatsappOnly,
+      externalVariantId: formData.externalVariantId ? Number(formData.externalVariantId) : undefined,
     };
   };
 
@@ -484,6 +519,206 @@ const AddTourGroupVariants = () => {
                         options={optionGroup3}
                       />
                     </Col>
+                    <Col lg="6">
+                      <Label>External Variant ID</Label>
+                      <Input
+                        type="number"
+                        name="externalVariantId"
+                        value={formData.externalVariantId}
+                        onChange={handleInputChange}
+                        placeholder="External source variant ID for syncing pricing"
+                      />
+                    </Col>
+                  </Row>
+
+                  {/* Status and Availability Section */}
+                  <Row className="mt-3">
+                    <Col lg="12">
+                      <Card className="border">
+                        <CardBody>
+                          <h5 className="mb-3">Status & Availability Settings</h5>
+                          <Row>
+                            <Col lg="6" className="mb-3">
+                              <div className="d-flex align-items-center gap-2">
+                                <Switch
+                                  checked={formData.status}
+                                  onChange={(checked) =>
+                                    setFormData(prev => ({ ...prev, status: checked }))
+                                  }
+                                  onColor="#86d3ff"
+                                  onHandleColor="#2693e6"
+                                  handleDiameter={20}
+                                  uncheckedIcon={false}
+                                  checkedIcon={false}
+                                  boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                  activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                  height={24}
+                                  width={48}
+                                  id="statusSwitch"
+                                />
+                                <Label htmlFor="statusSwitch" className="mb-0" style={{ cursor: "pointer", userSelect: "none" }}>
+                                  Status (Active/Inactive)
+                                </Label>
+                              </div>
+                            </Col>
+                            <Col lg="6" className="mb-3">
+                              <div className="d-flex align-items-center gap-2">
+                                <Switch
+                                  checked={formData.notAvailable}
+                                  onChange={(checked) =>
+                                    setFormData(prev => ({ ...prev, notAvailable: checked }))
+                                  }
+                                  onColor="#86d3ff"
+                                  onHandleColor="#2693e6"
+                                  handleDiameter={20}
+                                  uncheckedIcon={false}
+                                  checkedIcon={false}
+                                  boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                  activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                  height={24}
+                                  width={48}
+                                  id="notAvailableSwitch"
+                                />
+                                <Label htmlFor="notAvailableSwitch" className="mb-0" style={{ cursor: "pointer", userSelect: "none" }}>
+                                  Not Available
+                                </Label>
+                              </div>
+                            </Col>
+                            <Col lg="6" className="mb-3">
+                              <div className="d-flex align-items-center gap-2">
+                                <Switch
+                                  checked={formData.isPrivate}
+                                  onChange={(checked) =>
+                                    setFormData(prev => ({ ...prev, isPrivate: checked }))
+                                  }
+                                  onColor="#86d3ff"
+                                  onHandleColor="#2693e6"
+                                  handleDiameter={20}
+                                  uncheckedIcon={false}
+                                  checkedIcon={false}
+                                  boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                  activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                  height={24}
+                                  width={48}
+                                  id="isPrivateSwitch"
+                                />
+                                <Label htmlFor="isPrivateSwitch" className="mb-0" style={{ cursor: "pointer", userSelect: "none" }}>
+                                  Is Private
+                                </Label>
+                              </div>
+                            </Col>
+                            <Col lg="6" className="mb-3">
+                              <div className="d-flex align-items-center gap-2">
+                                <Switch
+                                  checked={formData.isHotelPickup}
+                                  onChange={(checked) =>
+                                    setFormData(prev => ({ ...prev, isHotelPickup: checked }))
+                                  }
+                                  onColor="#86d3ff"
+                                  onHandleColor="#2693e6"
+                                  handleDiameter={20}
+                                  uncheckedIcon={false}
+                                  checkedIcon={false}
+                                  boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                  activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                  height={24}
+                                  width={48}
+                                  id="isHotelPickupSwitch"
+                                />
+                                <Label htmlFor="isHotelPickupSwitch" className="mb-0" style={{ cursor: "pointer", userSelect: "none" }}>
+                                  Is Hotel Pickup
+                                </Label>
+                              </div>
+                            </Col>
+                            <Col lg="6" className="mb-3">
+                              <div className="d-flex align-items-center gap-2">
+                                <Switch
+                                  checked={formData.whatsappOnly}
+                                  onChange={(checked) =>
+                                    setFormData(prev => ({ ...prev, whatsappOnly: checked }))
+                                  }
+                                  onColor="#86d3ff"
+                                  onHandleColor="#2693e6"
+                                  handleDiameter={20}
+                                  uncheckedIcon={false}
+                                  checkedIcon={false}
+                                  boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                  activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                  height={24}
+                                  width={48}
+                                  id="whatsappOnlySwitch"
+                                />
+                                <Label htmlFor="whatsappOnlySwitch" className="mb-0" style={{ cursor: "pointer", userSelect: "none" }}>
+                                  WhatsApp Only Booking
+                                </Label>
+                              </div>
+                            </Col>
+                          </Row>
+                        </CardBody>
+                      </Card>
+                    </Col>
+                  </Row>
+
+                  {/* Time Slots Section */}
+                  <Row className="mt-3">
+                    <Col lg="12">
+                      <Card className="border">
+                        <CardBody>
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h5 className="mb-0">
+                              <i className="mdi mdi-clock-time-four-outline me-2"></i>
+                              Time Slots Configuration
+                            </h5>
+                            <div className="d-flex align-items-center gap-2">
+                              <Switch
+                                checked={formData.hasTimeSlots}
+                                onChange={(checked) => {
+                                  setFormData(prev => ({ ...prev, hasTimeSlots: checked }));
+                                  if (checked) {
+                                    setShowOperatingHours(true);
+                                  }
+                                }}
+                                onColor="#86d3ff"
+                                onHandleColor="#2693e6"
+                                handleDiameter={20}
+                                uncheckedIcon={false}
+                                checkedIcon={false}
+                                boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                height={24}
+                                width={48}
+                                id="hasTimeSlotsSwitch"
+                              />
+                              <Label
+                                htmlFor="hasTimeSlotsSwitch"
+                                className="mb-0"
+                                style={{ cursor: "pointer", userSelect: "none" }}
+                              >
+                                Has Time Slots
+                              </Label>
+                            </div>
+                          </div>
+                          {formData.hasTimeSlots && (
+                            <Row>
+                              <Col lg="6">
+                                <Label>Slot Duration (Minutes)</Label>
+                                <Input
+                                  type="number"
+                                  name="slotDurationMinutes"
+                                  value={formData.slotDurationMinutes}
+                                  onChange={handleInputChange}
+                                  placeholder="e.g., 30, 60, 90"
+                                  min="1"
+                                />
+                                <small className="text-muted d-block mt-1">
+                                  Duration of each time slot in minutes
+                                </small>
+                              </Col>
+                            </Row>
+                          )}
+                        </CardBody>
+                      </Card>
+                    </Col>
                   </Row>
 
                   {/* Operating Hours Section */}
@@ -499,7 +734,12 @@ const AddTourGroupVariants = () => {
                             <div className="d-flex align-items-center gap-2">
                               <Switch
                                 checked={showOperatingHours}
-                                onChange={(checked) => setShowOperatingHours(checked)}
+                                onChange={(checked) => {
+                                  setShowOperatingHours(checked);
+                                  if (checked) {
+                                    setFormData(prev => ({ ...prev, hasTimeSlots: true }));
+                                  }
+                                }}
                                 onColor="#86d3ff"
                                 onHandleColor="#2693e6"
                                 handleDiameter={20}
@@ -510,13 +750,14 @@ const AddTourGroupVariants = () => {
                                 height={24}
                                 width={48}
                                 id="enableOperatingHours"
+                                disabled={!formData.hasTimeSlots}
                               />
                               <Label
                                 htmlFor="enableOperatingHours"
                                 className="mb-0"
-                                style={{ cursor: "pointer", userSelect: "none" }}
+                                style={{ cursor: formData.hasTimeSlots ? "pointer" : "not-allowed", userSelect: "none" }}
                               >
-                                Enable Operating Hours
+                                Enable Operating Hours {!formData.hasTimeSlots && "(Enable 'Has Time Slots' first)"}
                               </Label>
                             </div>
                           </div>

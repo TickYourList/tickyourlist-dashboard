@@ -98,6 +98,7 @@ import UserPermissionsReducer from "./user-permissions/reducer";
 import CalendarPricing from "./CalendarPricingAndAvailability/reducers";
 import faqsReducer from "./faqs/reducer";
 import continents from "./continents/reducer";
+import emailWorkflows from "./emailWorkflows/reducer";
 
 const rootReducer = combineReducers({
   // public
@@ -154,7 +155,8 @@ const rootReducer = combineReducers({
   UserPermissionsReducer,
   CalendarPricing,
   faqsReducer,
-  continents
+  continents,
+  emailWorkflows,
 });
 
 export default rootReducer;
