@@ -425,10 +425,10 @@ function* bulkDatePricingSaga(action) {
 // Fetch Klook Live Pricing
 function* fetchKlookLivePricingSaga(action) {
   try {
-    const { tourGroupId, startDate, endDate, variantId } = action.payload
-    console.log('🔵 Saga: Fetching Klook live pricing for tourGroup:', tourGroupId, { startDate, endDate, variantId })
+    const { tourGroupId, startDate, endDate, variantId, currency } = action.payload
+    console.log('🔵 Saga: Fetching Klook live pricing for tourGroup:', tourGroupId, { startDate, endDate, variantId, currency })
 
-    const response = yield call(getKlookLivePricing, tourGroupId, startDate, endDate, variantId)
+    const response = yield call(getKlookLivePricing, tourGroupId, startDate, endDate, variantId, currency)
     console.log('🟢 Saga: Klook live pricing response:', response)
 
     // Backend returns: { success: true, data: { tourGroupId, dateRange, variants, fetchedAt } }

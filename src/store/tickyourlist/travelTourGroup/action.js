@@ -441,9 +441,9 @@ export const bulkLinkKlookMappingsFailure = error => ({
 })
 
 // Fetch Klook Live Pricing
-export const fetchKlookLivePricingRequest = (tourGroupId, startDate, endDate, variantId) => ({
+export const fetchKlookLivePricingRequest = (tourGroupId, startDate, endDate, variantId, currency) => ({
   type: FETCH_KLOOK_LIVE_PRICING_REQUEST,
-  payload: { tourGroupId, startDate, endDate, variantId },
+  payload: { tourGroupId, startDate, endDate, variantId, currency },
 })
 
 export const fetchKlookLivePricingSuccess = (tourGroupId, pricingData) => ({

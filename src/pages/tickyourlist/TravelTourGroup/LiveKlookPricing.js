@@ -57,6 +57,9 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
     // Selected date for filtering (when calendar date is clicked)
     const [selectedDate, setSelectedDate] = useState(null);
 
+    // Currency selection
+    const [selectedCurrency, setSelectedCurrency] = useState('USD');
+
     const pricingData = klookLivePricing[tourGroupId];
 
     // Extract all timeslots and group by date for calendar
@@ -543,17 +546,18 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
         if (tourGroupId) {
             fetchPricing();
         }
-    }, [tourGroupId, startDate, endDate, variantId]);
+    }, [tourGroupId, startDate, endDate, variantId, selectedCurrency]);
 
     const fetchPricing = () => {
-        dispatch(fetchKlookLivePricingRequest(tourGroupId, startDate, endDate, variantId));
+        dispatch(fetchKlookLivePricingRequest(tourGroupId, startDate, endDate, variantId, selectedCurrency));
     };
 
-    const formatPrice = (price, currency = 'USD') => {
+    const formatPrice = (price, currency = null) => {
         if (!price) return '—';
+        const currencyToUse = currency || selectedCurrency || 'USD';
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: currency || 'USD',
+            currency: currencyToUse,
         }).format(price);
     };
 
@@ -661,7 +665,7 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                                         size="sm"
                                     />
                                 </Col>
-                                <Col md={4}>
+                                <Col md={3}>
                                     <Label className="small">End Date</Label>
                                     <Input
                                         type="date"
@@ -673,6 +677,34 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                                         size="sm"
                                     />
                                 </Col>
+                                <Col md={3}>
+                                    <Label className="small">Currency</Label>
+                                    <Input
+                                        type="select"
+                                        value={selectedCurrency}
+                                        onChange={(e) => {
+                                            setSelectedCurrency(e.target.value);
+                                        }}
+                                        size="sm"
+                                    >
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="INR">INR (₹)</option>
+                                        <option value="SGD">SGD (S$)</option>
+                                        <option value="AUD">AUD (A$)</option>
+                                        <option value="CAD">CAD (C$)</option>
+                                        <option value="JPY">JPY (¥)</option>
+                                        <option value="AED">AED (د.إ)</option>
+                                        <option value="SAR">SAR (﷼)</option>
+                                        <option value="THB">THB (฿)</option>
+                                        <option value="MYR">MYR (RM)</option>
+                                        <option value="IDR">IDR (Rp)</option>
+                                        <option value="PHP">PHP (₱)</option>
+                                        <option value="CNY">CNY (¥)</option>
+                                        <option value="HKD">HKD (HK$)</option>
+                                    </Input>
+                                </Col>
                                 <Col md={2}>
                                     <Label className="small d-block">&nbsp;</Label>
                                     <Button
@@ -681,7 +713,7 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                                         onClick={fetchPricing}
                                         className="w-100"
                                     >
-                                        <i className="mdi mdi-refresh"></i>
+                                        <i className="mdi mdi-refresh"></i> Refresh
                                     </Button>
                                 </Col>
                                 <Col md={2}>

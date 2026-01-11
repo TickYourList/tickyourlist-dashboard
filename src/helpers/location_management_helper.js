@@ -535,11 +535,12 @@ const bulkLinkKlookMappings = (mappings) => {
   return post(`/v1/klook/mapping/bulk-link`, { mappings });
 };
 
-const getKlookLivePricing = (tourGroupId, startDate, endDate, variantId) => {
+const getKlookLivePricing = (tourGroupId, startDate, endDate, variantId, currency) => {
   const params = {};
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
   if (variantId) params.variantId = variantId;
+  if (currency) params.currency = currency; // Add currency parameter
 
   return get(`/v1/klook/pricing/live/${tourGroupId}`, { params });
 };
