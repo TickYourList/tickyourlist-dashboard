@@ -160,7 +160,10 @@ export default function tourGroupReducer(state = initialState, action) {
       /* console.log(action.payload) */
       return {
         ...state,
-        tourGroupById: action.payload.tourGroupById,
+        tourGroupById: {
+          ...state.tourGroupById,
+          [action.payload.id]: action.payload.tourGroupById
+        },
         id: action.payload.id,
         loading: false,
         error: null,

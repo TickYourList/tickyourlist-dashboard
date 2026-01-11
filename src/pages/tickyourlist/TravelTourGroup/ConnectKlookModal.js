@@ -27,6 +27,7 @@ import {
     createVariantFromKlookRequest,
 } from "store/tickyourlist/travelTourGroup/action";
 import { get } from "helpers/api_helper";
+import { getTourGroupVariantsAPI } from "helpers/location_management_helper";
 import EditKlookMappingModal from "./EditKlookMappingModal";
 import LiveKlookPricing from "./LiveKlookPricing";
 
@@ -67,13 +68,47 @@ const ConnectKlookModal = ({
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [selectedMapping, setSelectedMapping] = useState(null);
 
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setVariants([]);
+            setVariantMappings({});
+            setKlookActivityId("");
+            setSearchQuery("");
+            setExistingMappings([]);
+            setEditModalOpen(false);
+            setSelectedMapping(null);
+        }
+    }, [isOpen]);
+
     // Fetch tour group variants and existing mappings when modal opens
     useEffect(() => {
         if (isOpen && tourGroup?._id) {
             const fetchData = async () => {
                 setLoadingTourGroup(true);
                 try {
-                    // Fetch tour group with variants using Redux
+                    // Always fetch fresh data - clear old state first
+                    setVariants([]);
+
+                    // Fetch variants directly using the variants API (more reliable)
+                    try {
+                        const variantsResponse = await getTourGroupVariantsAPI({
+                            tourGroupId: tourGroup._id,
+                            page: 1,
+                            limit: 100, // Get all variants
+                        });
+                        const fetchedVariants = variantsResponse?.data?.variants || [];
+                        if (fetchedVariants.length > 0) {
+                            setVariants(fetchedVariants);
+                            console.log('✅ Variants fetched directly:', fetchedVariants.length, fetchedVariants.map(v => ({ id: v._id, name: v.name })));
+                        }
+                    } catch (variantError) {
+                        console.error("Error fetching variants:", variantError);
+                        // Fallback to Redux fetch
+                        dispatch(fetchTourGroupByIdRequest(tourGroup._id));
+                    }
+
+                    // Fetch tour group data using Redux (for other data)
                     dispatch(fetchTourGroupByIdRequest(tourGroup._id));
 
                     // Fetch existing mappings using Redux
@@ -88,12 +123,12 @@ const ConnectKlookModal = ({
 
             fetchData();
         }
-    }, [isOpen, tourGroup, dispatch]);
+    }, [isOpen, tourGroup?._id, dispatch]);
 
-    // Update variants from Redux state or directly from tourGroup prop
+    // Update variants from Redux state as fallback (if direct fetch didn't work)
     useEffect(() => {
-        if (tourGroup?._id) {
-            // Try to get variants from Redux state first
+        if (isOpen && tourGroup?._id && variants.length === 0 && !loadingTourGroup) {
+            // Only use Redux as fallback if we don't have variants yet
             const tourGroupData = tourGroupById[tourGroup._id];
 
             // Check multiple possible locations for variants
@@ -109,19 +144,12 @@ const ConnectKlookModal = ({
                 foundVariants = tourGroup.data.variants;
             }
 
-            if (foundVariants) {
+            if (foundVariants && foundVariants.length > 0) {
                 setVariants(foundVariants);
-                console.log('✅ Variants loaded:', foundVariants.length, foundVariants);
-            } else {
-                console.warn('⚠️ No variants found for tour group:', {
-                    tourGroupId: tourGroup._id,
-                    tourGroupById: tourGroupData,
-                    tourGroupProp: tourGroup
-                });
-                setVariants([]);
+                console.log('✅ Variants loaded from fallback source:', foundVariants.length, foundVariants.map(v => ({ id: v._id, name: v.name })));
             }
         }
-    }, [tourGroupById, tourGroup]);
+    }, [isOpen, tourGroupById, tourGroup, variants.length, loadingTourGroup]);
 
     // Update existing mappings from Redux state
     useEffect(() => {

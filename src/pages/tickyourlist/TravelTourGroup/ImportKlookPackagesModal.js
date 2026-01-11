@@ -186,6 +186,7 @@ const ImportKlookPackagesModal = ({
         if (!activityId || !klookActivity) return {};
 
         const packages = klookActivity?.package_list || (klookActivity?.data?.activity?.package_list) || [];
+        const activity = klookActivity?.data?.activity || klookActivity;
         const preview = {};
 
         selectedPackages.forEach((packageId) => {
@@ -193,36 +194,50 @@ const ImportKlookPackagesModal = ({
             const action = packageActions[packageId];
             
             if (pkg && action) {
+                // Extract description from activity or SKU titles
+                const activityDescription = activity?.what_we_love || activity?.subtitle || '';
+                const skuTitles = pkg.sku_list?.map(sku => sku.title).filter(Boolean).join(', ') || '';
+                const variantDescription = activityDescription || skuTitles || '';
+
                 // Map Klook package to TYL variant format for preview
+                // Note: Pricing is not available in package data - it will be synced from schedules API
                 preview[packageId] = {
                     packageId: packageId,
                     packageName: pkg.package_name || 'Untitled Package',
                     action: action.action,
-                    // Variant preview data
+                    // Variant preview data - aligned with TylTourGroupVariant schema
                     name: pkg.package_name || 'Untitled Variant',
-                    variantInfo: pkg.description || '',
-                    ticketDeliveryInfo: pkg.ticket_delivery_info || '',
-                    confirmedTicketInfo: pkg.confirmed_ticket_info || '',
-                    minPax: pkg.min_pax || 1,
-                    maxPax: pkg.max_pax || 999,
+                    variantInfo: variantDescription, // From activity what_we_love or SKU titles
+                    ticketDeliveryInfo: pkg.voucher_usage_multilang || '', // Voucher usage info
+                    confirmedTicketInfo: pkg.cancellation_type_multilang || '', // Cancellation info
+                    minPax: pkg.package_min_pax || 1,
+                    maxPax: pkg.package_max_pax || 999,
                     openDated: pkg.is_open_date || false,
-                    hasTimeSlots: pkg.is_instant || false,
-                    isPrivate: false,
-                    isHotelPickup: false,
-                    listingPrice: {
-                        prices: pkg.sku_list?.map(sku => ({
-                            type: sku.sku_type || 'ADULT',
-                            originalPrice: sku.price?.original_price || 0,
-                            finalPrice: sku.price?.final_price || sku.price?.original_price || 0,
-                            minimumPayablePrice: sku.price?.minimum_payable_price || 0,
-                            bestDiscount: sku.price?.discount || 0,
-                            ageRange: {
-                                min: sku.age_min || 0,
-                                max: sku.age_max || 999
-                            }
-                        })) || []
-                    },
-                    skuCount: pkg.sku_list?.length || 0
+                    hasTimeSlots: pkg.timeslot_type === 1 || false, // timeslot_type: 1 = has time slots
+                    isInstant: pkg.instant === 1 || false,
+                    isPrivate: false, // Not available from Klook
+                    isHotelPickup: false, // Not available from Klook
+                    // SKU information (pricing will be synced later from schedules API)
+                    skuList: pkg.sku_list?.map(sku => ({
+                        skuId: sku.sku_id,
+                        title: sku.title || '',
+                        skuType: sku.sku_type || 'GENERAL',
+                        minAge: sku.min_age || 0,
+                        maxAge: sku.max_age || 999,
+                        required: sku.required === 1,
+                        // Note: Pricing not available here - will be synced from schedules
+                        priceNote: 'Pricing will be synced from provider schedules'
+                    })) || [],
+                    skuCount: pkg.sku_list?.length || 0,
+                    // Additional Klook package metadata
+                    cancellationType: pkg.cancellation_type_multilang || '',
+                    voucherUsage: pkg.voucher_usage_multilang || '',
+                    ticketType: pkg.ticket_type || 0,
+                    timeZone: pkg.time_zone || activity?.time_zone || '+00:00',
+                    // Activity-level info
+                    activityTitle: activity?.title || '',
+                    activityDescription: activity?.what_we_love || activity?.subtitle || '',
+                    currency: activity?.currency || 'USD'
                 };
             }
         });
@@ -465,73 +480,101 @@ const ImportKlookPackagesModal = ({
                                                         )}
                                                     </div>
 
-                                                    {/* Pricing Preview */}
-                                                    {preview.listingPrice?.prices?.length > 0 && (
+                                                    {/* SKU Information (Pricing will be synced from schedules) */}
+                                                    {preview.skuList && preview.skuList.length > 0 && (
                                                         <div className="mb-3">
-                                                            <Label className="small text-muted">Pricing:</Label>
+                                                            <Label className="small text-muted d-flex align-items-center">
+                                                                <i className="mdi mdi-ticket me-1"></i>
+                                                                Ticket Types ({preview.skuList.length}):
+                                                            </Label>
                                                             <div className="d-flex flex-wrap gap-2">
-                                                                {preview.listingPrice.prices.map((price, idx) => (
+                                                                {preview.skuList.map((sku, idx) => (
                                                                     <div key={idx} className="border rounded p-2 bg-white">
                                                                         <div className="small">
-                                                                            <strong>{price.type}</strong>
-                                                                            {price.ageRange && (
-                                                                                <span className="text-muted ms-1">
-                                                                                    ({price.ageRange.min}-{price.ageRange.max} years)
+                                                                            <strong>{sku.skuType}</strong>
+                                                                            {sku.title && (
+                                                                                <span className="text-muted ms-1" style={{ fontSize: "0.75rem" }}>
+                                                                                    - {sku.title}
                                                                                 </span>
                                                                             )}
                                                                         </div>
                                                                         <div className="mt-1">
-                                                                            {price.originalPrice > price.finalPrice && (
-                                                                                <span className="text-muted text-decoration-line-through me-2" style={{ fontSize: "0.75rem" }}>
-                                                                                    ${price.originalPrice}
+                                                                            {sku.minAge > 0 || sku.maxAge < 999 ? (
+                                                                                <span className="text-muted small">
+                                                                                    Age: {sku.minAge}-{sku.maxAge} years
                                                                                 </span>
+                                                                            ) : (
+                                                                                <span className="text-muted small">All ages</span>
                                                                             )}
-                                                                            <span className="fw-bold" style={{ fontSize: "1rem" }}>
-                                                                                ${price.finalPrice}
-                                                                            </span>
-                                                                            {price.bestDiscount > 0 && (
-                                                                                <Badge color="success" className="ms-2" style={{ fontSize: "0.7rem" }}>
-                                                                                    {price.bestDiscount}% OFF
-                                                                                </Badge>
-                                                                            )}
+                                                                        </div>
+                                                                        <div className="mt-1">
+                                                                            <Badge color="info" style={{ fontSize: "0.7rem" }}>
+                                                                                Pricing will be synced
+                                                                            </Badge>
                                                                         </div>
                                                                     </div>
                                                                 ))}
                                                             </div>
+                                                            <Alert color="info" className="mt-2 mb-0" style={{ fontSize: "0.75rem", padding: "0.5rem" }}>
+                                                                <i className="mdi mdi-information me-1"></i>
+                                                                Pricing will be automatically synced from provider schedules after import.
+                                                            </Alert>
                                                         </div>
                                                     )}
 
                                                     {/* Variant Details */}
-                                                    <div className="row small text-muted">
+                                                    <div className="row small text-muted mb-3">
                                                         <div className="col-6 mb-2">
                                                             <i className="mdi mdi-account-group me-1"></i>
-                                                            Pax: {preview.minPax} - {preview.maxPax}
+                                                            <strong>Pax:</strong> {preview.minPax} - {preview.maxPax}
                                                         </div>
                                                         <div className="col-6 mb-2">
                                                             <i className="mdi mdi-calendar me-1"></i>
-                                                            {preview.openDated ? 'Open Date' : 'Fixed Date'}
+                                                            <strong>Date Type:</strong> {preview.openDated ? 'Open Date' : 'Fixed Date'}
                                                         </div>
                                                         <div className="col-6 mb-2">
                                                             <i className="mdi mdi-clock me-1"></i>
-                                                            {preview.hasTimeSlots ? 'Time Slots' : 'No Time Slots'}
+                                                            <strong>Time Slots:</strong> {preview.hasTimeSlots ? 'Yes' : 'No'}
                                                         </div>
                                                         <div className="col-6 mb-2">
-                                                            <i className="mdi mdi-ticket me-1"></i>
-                                                            {preview.skuCount} SKU(s)
+                                                            <i className="mdi mdi-lightning-bolt me-1"></i>
+                                                            <strong>Instant:</strong> {preview.isInstant ? 'Yes' : 'No'}
                                                         </div>
+                                                        {preview.cancellationType && (
+                                                            <div className="col-12 mb-2">
+                                                                <i className="mdi mdi-cancel me-1"></i>
+                                                                <strong>Cancellation:</strong> {preview.cancellationType}
+                                                            </div>
+                                                        )}
+                                                        {preview.voucherUsage && (
+                                                            <div className="col-12 mb-2">
+                                                                <i className="mdi mdi-ticket-confirmation me-1"></i>
+                                                                <strong>Voucher Usage:</strong> {preview.voucherUsage}
+                                                            </div>
+                                                        )}
                                                     </div>
+
+                                                    {/* Activity Info */}
+                                                    {preview.activityDescription && (
+                                                        <div className="mt-3 pt-3 border-top">
+                                                            <div className="small">
+                                                                <strong><i className="mdi mdi-information me-1"></i>Activity Description:</strong>
+                                                                <p className="mt-1 mb-0">{preview.activityDescription}</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
 
                                                     {/* Ticket Info */}
                                                     {(preview.ticketDeliveryInfo || preview.confirmedTicketInfo) && (
                                                         <div className="mt-3 pt-3 border-top">
                                                             {preview.ticketDeliveryInfo && (
                                                                 <div className="small mb-2">
-                                                                    <strong>Delivery:</strong> {preview.ticketDeliveryInfo}
+                                                                    <strong><i className="mdi mdi-ticket-delivery me-1"></i>Voucher Usage:</strong> {preview.ticketDeliveryInfo}
                                                                 </div>
                                                             )}
                                                             {preview.confirmedTicketInfo && (
                                                                 <div className="small">
-                                                                    <strong>Confirmation:</strong> {preview.confirmedTicketInfo}
+                                                                    <strong><i className="mdi mdi-check-circle me-1"></i>Cancellation Policy:</strong> {preview.confirmedTicketInfo}
                                                                 </div>
                                                             )}
                                                         </div>
