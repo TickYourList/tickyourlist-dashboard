@@ -535,6 +535,15 @@ const bulkLinkKlookMappings = (mappings) => {
   return post(`/v1/klook/mapping/bulk-link`, { mappings });
 };
 
+const getKlookLivePricing = (tourGroupId, startDate, endDate, variantId) => {
+  const params = {};
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  if (variantId) params.variantId = variantId;
+  
+  return get(`/v1/klook/pricing/live/${tourGroupId}`, { params });
+};
+
 const connectTourGroupToCategories = (tourGroupId, categoryIds, subcategoryIds) => {
   // Convert to array of IDs (strings) as expected by the API
   const categoryConnections = Array.isArray(categoryIds) ? categoryIds : [];
@@ -684,6 +693,7 @@ export {
   getKlookMappings,
   searchKlookActivities,
   getKlookActivity,
-  bulkLinkKlookMappings
+  bulkLinkKlookMappings,
+  getKlookLivePricing
 
 };

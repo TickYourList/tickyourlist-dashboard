@@ -27,6 +27,7 @@ import {
 } from "store/tickyourlist/travelTourGroup/action";
 import { get } from "helpers/api_helper";
 import EditKlookMappingModal from "./EditKlookMappingModal";
+import LiveKlookPricing from "./LiveKlookPricing";
 
 const ConnectKlookModal = ({
     isOpen,
@@ -459,6 +460,15 @@ const ConnectKlookModal = ({
                                     </CardBody>
                                 </Card>
                             )
+                        )}
+
+                        {/* Live Pricing */}
+                        {existingMappings.length > 0 && tourGroup?._id && (
+                            <Card className="mt-3">
+                                <CardBody>
+                                    <LiveKlookPricing tourGroupId={tourGroup._id} />
+                                </CardBody>
+                            </Card>
                         )}
 
                         {/* Existing Mappings */}

@@ -67,6 +67,9 @@ import {
   BULK_LINK_KLOOK_MAPPINGS_REQUEST,
   BULK_LINK_KLOOK_MAPPINGS_SUCCESS,
   BULK_LINK_KLOOK_MAPPINGS_FAILURE,
+  FETCH_KLOOK_LIVE_PRICING_REQUEST,
+  FETCH_KLOOK_LIVE_PRICING_SUCCESS,
+  FETCH_KLOOK_LIVE_PRICING_FAILURE,
 } from "./actionTypes"
 
 //initial state for fetching tourgroups
@@ -92,6 +95,10 @@ const initialState = {
   klookMappingsLoading: false,
   klookSearching: false,
   klookActivityLoading: false,
+  klookBulkLinking: false,
+  // Klook Live Pricing state
+  klookLivePricing: {}, // { tourGroupId: pricingData }
+  klookLivePricingLoading: false,
 }
 
 //creating the reducer to sync when to call the api request
@@ -572,6 +579,30 @@ export default function tourGroupReducer(state = initialState, action) {
       return {
         ...state,
         loading: false,
+        error: action.payload,
+      }
+
+    case FETCH_KLOOK_LIVE_PRICING_REQUEST:
+      return {
+        ...state,
+        klookLivePricingLoading: true,
+      }
+
+    case FETCH_KLOOK_LIVE_PRICING_SUCCESS:
+      return {
+        ...state,
+        klookLivePricingLoading: false,
+        klookLivePricing: {
+          ...state.klookLivePricing,
+          [action.payload.tourGroupId]: action.payload.pricingData,
+        },
+        klookLivePricingLoading: false,
+      }
+
+    case FETCH_KLOOK_LIVE_PRICING_FAILURE:
+      return {
+        ...state,
+        klookLivePricingLoading: false,
         error: action.payload,
       }
 

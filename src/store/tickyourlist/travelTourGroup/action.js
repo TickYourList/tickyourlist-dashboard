@@ -68,6 +68,9 @@ import {
   BULK_LINK_KLOOK_MAPPINGS_REQUEST,
   BULK_LINK_KLOOK_MAPPINGS_SUCCESS,
   BULK_LINK_KLOOK_MAPPINGS_FAILURE,
+  FETCH_KLOOK_LIVE_PRICING_REQUEST,
+  FETCH_KLOOK_LIVE_PRICING_SUCCESS,
+  FETCH_KLOOK_LIVE_PRICING_FAILURE,
 } from "./actionTypes"
 
 // Fetch All Tour Groups
@@ -434,5 +437,21 @@ export const bulkLinkKlookMappingsSuccess = result => ({
 
 export const bulkLinkKlookMappingsFailure = error => ({
   type: BULK_LINK_KLOOK_MAPPINGS_FAILURE,
+  payload: error,
+})
+
+// Fetch Klook Live Pricing
+export const fetchKlookLivePricingRequest = (tourGroupId, startDate, endDate, variantId) => ({
+  type: FETCH_KLOOK_LIVE_PRICING_REQUEST,
+  payload: { tourGroupId, startDate, endDate, variantId },
+})
+
+export const fetchKlookLivePricingSuccess = (tourGroupId, pricingData) => ({
+  type: FETCH_KLOOK_LIVE_PRICING_SUCCESS,
+  payload: { tourGroupId, pricingData },
+})
+
+export const fetchKlookLivePricingFailure = error => ({
+  type: FETCH_KLOOK_LIVE_PRICING_FAILURE,
   payload: error,
 })

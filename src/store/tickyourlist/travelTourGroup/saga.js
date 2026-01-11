@@ -22,6 +22,7 @@ import {
   SEARCH_KLOOK_ACTIVITIES_REQUEST,
   FETCH_KLOOK_ACTIVITY_REQUEST,
   BULK_LINK_KLOOK_MAPPINGS_REQUEST,
+  FETCH_KLOOK_LIVE_PRICING_REQUEST,
 } from "./actionTypes"
 import {
   fetchTourGroupsSuccess,
@@ -69,6 +70,8 @@ import {
   fetchKlookActivityFailure,
   bulkLinkKlookMappingsSuccess,
   bulkLinkKlookMappingsFailure,
+  fetchKlookLivePricingSuccess,
+  fetchKlookLivePricingFailure,
 } from "./action"
 
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
@@ -96,6 +99,7 @@ import {
   searchKlookActivities,
   getKlookActivity,
   bulkLinkKlookMappings,
+  getKlookLivePricing,
 } from "helpers/location_management_helper"
 
 // 1. Fetch All Tour Groups
@@ -407,6 +411,29 @@ function* bulkDatePricingSaga(action) {
   }
 }
 
+// Fetch Klook Live Pricing
+function* fetchKlookLivePricingSaga(action) {
+  try {
+    const { tourGroupId, startDate, endDate, variantId } = action.payload
+    console.log('🔵 Saga: Fetching Klook live pricing for tourGroup:', tourGroupId, { startDate, endDate, variantId })
+
+    const response = yield call(getKlookLivePricing, tourGroupId, startDate, endDate, variantId)
+    console.log('🟢 Saga: Klook live pricing response:', response)
+
+    // Backend returns: { success: true, data: { tourGroupId, dateRange, variants, fetchedAt } }
+    const responseData = response?.data || response
+    const pricingData = responseData?.data || responseData
+    console.log('📦 Pricing data:', pricingData)
+
+    yield put(fetchKlookLivePricingSuccess(tourGroupId, pricingData))
+  } catch (error) {
+    console.error('🔴 Error fetching Klook live pricing:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch live Klook pricing'
+    yield put(fetchKlookLivePricingFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
 // Watcher
 export default function* tourGroupSaga() {
   yield takeEvery(FETCH_TOUR_GROUP_REQUEST, fetchTourGroup)
@@ -431,6 +458,7 @@ export default function* tourGroupSaga() {
   yield takeEvery(SEARCH_KLOOK_ACTIVITIES_REQUEST, searchKlookActivitiesSaga)
   yield takeEvery(FETCH_KLOOK_ACTIVITY_REQUEST, fetchKlookActivitySaga)
   yield takeEvery(BULK_LINK_KLOOK_MAPPINGS_REQUEST, bulkLinkKlookMappingsSaga)
+  yield takeEvery(FETCH_KLOOK_LIVE_PRICING_REQUEST, fetchKlookLivePricingSaga)
 }
 
 // Fetch variant details
@@ -442,18 +470,18 @@ function* fetchVariantDetailSaga(action) {
     console.log('🟢 Saga: Variant detail response:', response)
     console.log('📦 Response data:', response?.data)
     console.log('📦 Response data.data:', response?.data?.data)
-    
+
     // Backend returns: { variant: {...}, tourGroup: {...}, analytics: {...} }
     const responseData = response?.data?.data || response?.data || response
     console.log('📦 ResponseData structure:', responseData)
     console.log('📦 ResponseData.variant:', responseData?.variant)
-    
+
     // Extract variant from the nested structure
     const variant = responseData?.variant || responseData
     console.log('✅ Extracted variant:', variant)
     console.log('💰 Variant listingPrice:', variant?.listingPrice)
     console.log('💰 Variant listingPrice.prices:', variant?.listingPrice?.prices)
-    
+
     yield put(fetchVariantDetailSuccess(variant))
   } catch (error) {
     console.error('🔴 Error fetching variant details:', error)
@@ -505,11 +533,11 @@ function* searchKlookActivitiesSaga(action) {
   try {
     const searchQuery = action.payload
     const response = yield call(searchKlookActivities, searchQuery)
-    
+
     let activities = []
     if (response?.data?.activity?.activity_list) {
       activities = response.data.activity.activity_list
-      
+
       // Filter by search query if provided (client-side filtering)
       if (searchQuery && searchQuery.trim()) {
         const queryLower = searchQuery.toLowerCase().trim()
@@ -519,7 +547,7 @@ function* searchKlookActivitiesSaga(action) {
         ).slice(0, 20) // Limit to 20 results
       }
     }
-    
+
     yield put(searchKlookActivitiesSuccess(activities))
   } catch (error) {
     console.error('Error searching Klook activities:', error)
@@ -551,11 +579,11 @@ function* bulkLinkKlookMappingsSaga(action) {
   try {
     const mappings = action.payload
     const response = yield call(bulkLinkKlookMappings, mappings)
-    
+
     // Handle different response structures
     const responseData = response?.data || response
     console.log('Bulk link response:', responseData)
-    
+
     if (responseData?.success) {
       const resultData = responseData.data || responseData
       const createdCount = resultData?.created || resultData?.results?.length || mappings.length

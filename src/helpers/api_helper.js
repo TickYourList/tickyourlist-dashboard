@@ -16,7 +16,23 @@ export const axiosApi = axios.create({
 axiosApi.defaults.headers.common["x-api-key"] = apiKeys;
 
 function authUserItem() {
-  axiosApi.defaults.headers.common["Authorization"] = `Bearer ${JSON.parse(localStorage.getItem('authUser'))?.data?.tokens?.accessToken}`;
+  try {
+    const authUser = localStorage.getItem('authUser');
+    if (authUser) {
+      const parsed = JSON.parse(authUser);
+      const token = parsed?.data?.tokens?.accessToken || parsed?.tokens?.accessToken || parsed?.accessToken;
+      if (token) {
+        axiosApi.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      } else {
+        delete axiosApi.defaults.headers.common["Authorization"];
+      }
+    } else {
+      delete axiosApi.defaults.headers.common["Authorization"];
+    }
+  } catch (error) {
+    // If there's an error parsing, clear the auth header
+    delete axiosApi.defaults.headers.common["Authorization"];
+  }
 }
 
 // function authUserItem() {
