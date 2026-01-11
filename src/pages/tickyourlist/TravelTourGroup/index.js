@@ -37,6 +37,7 @@ import ViewTourGroup from "./ViewTourGroup"
 import ConnectCategoriesModal from "./ConnectCategoriesModal"
 import ConnectKlookModal from "./ConnectKlookModal"
 import VariantsPricingModal from "./VariantsPricingModal"
+import VariantManagementModal from "./VariantManagementModal"
 import { showToastSuccess } from "helpers/toastBuilder"
 import { usePermissions, MODULES, ACTIONS } from "helpers/permissions"
 import { getCitiesList } from "helpers/location_management_helper"
@@ -64,6 +65,8 @@ function TourGroupTable() {
   const [selectedTourGroupForKlook, setSelectedTourGroupForKlook] = useState(null)
   const [variantsPricingModal, setVariantsPricingModal] = useState(false)
   const [selectedTourGroupForPricing, setSelectedTourGroupForPricing] = useState(null)
+  const [variantManagementModal, setVariantManagementModal] = useState(false)
+  const [selectedTourGroupForVariantManagement, setSelectedTourGroupForVariantManagement] = useState(null)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { can, getTourGroupPermissions, isPermissionsReady, loading: permissionsLoading } = usePermissions()
@@ -88,7 +91,7 @@ function TourGroupTable() {
   }
   const role = JSON.parse(localStorage.getItem("authUser"))?.data?.user
     ?.roles[0]?.code
-  
+
   // Fetch cities list on mount
   useEffect(() => {
     const fetchCities = async () => {
@@ -115,7 +118,7 @@ function TourGroupTable() {
     if (isPermissionsReady && canViewTourGroup) {
       const itemsNeeded = currentPage * pageSize
       const fetchLimit = selectedCity ? 20 : pageSize
-      
+
       // Only fetch if we don't have enough data in Redux (or initial load)
       if (tourGroup.length < itemsNeeded && (tourGroup.length === 0 || tourGroup.length < totalCount)) {
         const apiPage = Math.ceil(tourGroup.length / fetchLimit) + 1
@@ -138,10 +141,10 @@ function TourGroupTable() {
     setSelectedCity(selectedOption)
     // Reset pagination when city changes
     setCurrentPage(1)
-    
+
     // Clear Redux tour group state to prevent old data from showing
     dispatch(clearTourGroupList())
-    
+
     // Exit search mode when city changes
     if (isSearchMode) {
       setIsSearchMode(false)
@@ -264,7 +267,7 @@ function TourGroupTable() {
         })
       )
     }
-    
+
     // Refresh Klook mappings for displayed items
     if (displayData.length > 0) {
       displayData.forEach((tg) => {
@@ -278,16 +281,21 @@ function TourGroupTable() {
     setVariantsPricingModal(true)
   }
 
+  const handleManageVariants = (tourGroup) => {
+    setSelectedTourGroupForVariantManagement(tourGroup)
+    setVariantManagementModal(true)
+  }
+
   // Calculate which data to display - client-side pagination from Redux data
   const displayData = useMemo(() => {
     // Use search results if in search mode, otherwise use regular tour groups
     const dataSource = isSearchMode ? (searchedTourGroups || []) : tourGroup
-    
+
     if (dataSource.length === 0) return []
-    
+
     const startIndex = (currentPage - 1) * pageSize
     const endIndex = startIndex + pageSize
-    
+
     return dataSource.slice(startIndex, endIndex)
   }, [tourGroup, searchedTourGroups, currentPage, pageSize, isSearchMode])
 
@@ -299,7 +307,7 @@ function TourGroupTable() {
   // Fetch Klook mappings for displayed tour groups (must be after displayData is defined)
   useEffect(() => {
     if (displayData.length === 0) return;
-    
+
     // Fetch mappings for each displayed tour group
     displayData.forEach((tg) => {
       // Only fetch if not already in Redux state
@@ -392,9 +400,8 @@ function TourGroupTable() {
         accessor: "status",
         Cell: ({ value }) => (
           <span
-            className={`badge rounded-pill ${
-              value === true ? "bg-success" : "bg-danger"
-            }`}
+            className={`badge rounded-pill ${value === true ? "bg-success" : "bg-danger"
+              }`}
           >
             {value === true ? "Active" : "Inactive"}
           </span>
@@ -475,7 +482,7 @@ function TourGroupTable() {
                   window.open(`https://www.tickyourlist.com${cleanSlug}`, '_blank', 'noopener,noreferrer');
                 }
               }}
-              style={{ 
+              style={{
                 opacity: row.original?.urlSlugs?.EN ? 1 : 0.3,
                 cursor: row.original?.urlSlugs?.EN ? 'pointer' : 'not-allowed'
               }}
@@ -503,6 +510,15 @@ function TourGroupTable() {
             {canEditTourGroup && (
               <button
                 className="btn p-0 border-0 bg-transparent"
+                title="Manage Variants (Create/Edit/Import)"
+                onClick={() => handleManageVariants(row.original)}
+              >
+                <i className="fas fa-layer-group font-size-18 text-purple"></i>
+              </button>
+            )}
+            {canEditTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
                 title="View Variants & Refresh Pricing"
                 onClick={() => handleViewVariantsPricing(row.original)}
               >
@@ -521,14 +537,14 @@ function TourGroupTable() {
           </div>
         ),
       },
-     ],
-     [
-       navigate,
-       canEditTourGroup,
-       canDeleteTourGroup,
-       canViewTourGroup,
-       role,
-     ]
+    ],
+    [
+      navigate,
+      canEditTourGroup,
+      canDeleteTourGroup,
+      canViewTourGroup,
+      role,
+    ]
   )
 
   document.title = "Tour Groups | TickYourList"
@@ -654,14 +670,14 @@ function TourGroupTable() {
                       </div>
                       {isSearchMode && searchedTourGroups && (
                         <small className="text-muted mt-1 d-block">
-                          {searchedTourGroups.length > 0 
+                          {searchedTourGroups.length > 0
                             ? `Found ${searchedTourGroups.length} tour group(s)`
                             : 'No tour groups found matching your search'}
                         </small>
                       )}
                     </Col>
                   </Row>
-                  
+
                   {/* This is the pagination component with search support */}
                   <TableContainerWithServerSidePagination
                     columns={columns}
@@ -681,9 +697,8 @@ function TourGroupTable() {
                     <ModalHeader toggle={toggle} tag="h4">
                       {isViewing
                         ? `${tourGroupByIdName}`
-                        : `${
-                            isEdit ? "Update Tour Group" : "Add New Tour Group"
-                          }`}
+                        : `${isEdit ? "Update Tour Group" : "Add New Tour Group"
+                        }`}
                     </ModalHeader>
                     <ModalBody>
                       {isViewing ? (
@@ -703,7 +718,7 @@ function TourGroupTable() {
                       )}
                     </ModalBody>
                   </Modal>
-                  
+
                   {/* Connect Categories Modal */}
                   <ConnectCategoriesModal
                     isOpen={connectModal}
@@ -714,7 +729,7 @@ function TourGroupTable() {
                     tourGroup={selectedTourGroupForConnection}
                     onSuccess={handleConnectionSuccess}
                   />
-                  
+
                   {/* Connect Klook Modal */}
                   <ConnectKlookModal
                     isOpen={connectKlookModal}
@@ -725,7 +740,7 @@ function TourGroupTable() {
                     tourGroup={selectedTourGroupForKlook}
                     onSuccess={handleKlookConnectionSuccess}
                   />
-                  
+
                   {/* Variants Pricing Modal */}
                   <VariantsPricingModal
                     isOpen={variantsPricingModal}
@@ -735,6 +750,19 @@ function TourGroupTable() {
                     }}
                     tourGroupId={selectedTourGroupForPricing?._id}
                     tourGroupName={selectedTourGroupForPricing?.name}
+                  />
+
+                  {/* Variant Management Modal */}
+                  <VariantManagementModal
+                    isOpen={variantManagementModal}
+                    toggle={() => {
+                      setVariantManagementModal(false)
+                      setSelectedTourGroupForVariantManagement(null)
+                    }}
+                    tourGroup={selectedTourGroupForVariantManagement}
+                    onSuccess={() => {
+                      // Refresh tour groups if needed
+                    }}
                   />
                 </CardBody>
               </Card>

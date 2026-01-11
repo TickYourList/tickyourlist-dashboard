@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
     Card,
@@ -13,9 +13,23 @@ import {
     Alert,
     Input,
     Label,
+    UncontrolledTooltip,
+    Modal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    Nav,
+    NavItem,
+    NavLink,
 } from "reactstrap";
+import classnames from "classnames";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import BootstrapTheme from "@fullcalendar/bootstrap";
 import { fetchKlookLivePricingRequest } from "store/tickyourlist/travelTourGroup/action";
-import { format } from "date-fns";
+import { format, parseISO, isSameDay, startOfDay } from "date-fns";
+import "@fullcalendar/bootstrap/main.css";
 
 const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
     const dispatch = useDispatch();
@@ -34,7 +48,418 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
         return future.toISOString().split('T')[0];
     });
 
+    // Filter by pricing type (SKU type) - per variant
+    const [selectedSkuTypes, setSelectedSkuTypes] = useState({}); // { variantId: 'ALL' or SKU ID }
+
+    // View mode: 'calendar' or 'table'
+    const [viewMode, setViewMode] = useState('table');
+
+    // Selected date for filtering (when calendar date is clicked)
+    const [selectedDate, setSelectedDate] = useState(null);
+
     const pricingData = klookLivePricing[tourGroupId];
+
+    // Extract all timeslots and group by date for calendar
+    const calendarEvents = useMemo(() => {
+        if (!pricingData || !pricingData.variants) return [];
+
+        const datePriceMap = new Map(); // { dateString: { minPrice, maxPrice, currency, count, variants } }
+
+        pricingData.variants.forEach(variant => {
+            if (!variant.schedules || variant.error) return;
+
+            variant.schedules.forEach(schedule => {
+                if (!schedule.calendars) return;
+
+                schedule.calendars.forEach(monthData => {
+                    if (!monthData.timeslots) return;
+
+                    monthData.timeslots.forEach(slot => {
+                        if (!slot.startTime || !slot.sellingPrice) return;
+
+                        try {
+                            const slotDate = parseISO(slot.startTime);
+                            const dateStr = slotDate.toISOString().split('T')[0]; // YYYY-MM-DD
+
+                            if (!datePriceMap.has(dateStr)) {
+                                datePriceMap.set(dateStr, {
+                                    minPrice: slot.sellingPrice,
+                                    maxPrice: slot.sellingPrice,
+                                    currency: schedule.currency || variant.currency || 'USD',
+                                    count: 0,
+                                    variants: new Set(),
+                                    available: slot.available && slot.inventory > 0,
+                                });
+                            }
+
+                            const dateData = datePriceMap.get(dateStr);
+                            dateData.minPrice = Math.min(dateData.minPrice, slot.sellingPrice);
+                            dateData.maxPrice = Math.max(dateData.maxPrice, slot.sellingPrice);
+                            dateData.count += 1;
+                            dateData.variants.add(variant.variantId);
+                            if (slot.available && slot.inventory > 0) {
+                                dateData.available = true;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing date:', slot.startTime, e);
+                        }
+                    });
+                });
+            });
+        });
+
+        // Convert to FullCalendar events format
+        return Array.from(datePriceMap.entries()).map(([dateStr, data]) => {
+            const formatPriceValue = (price, currency) => {
+                if (!price) return '—';
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: currency || 'USD',
+                }).format(price);
+            };
+
+            return {
+                title: formatPriceValue(data.minPrice, data.currency),
+                date: dateStr,
+                extendedProps: {
+                    minPrice: data.minPrice,
+                    maxPrice: data.maxPrice,
+                    currency: data.currency,
+                    count: data.count,
+                    variantCount: data.variants.size,
+                    available: data.available,
+                },
+                backgroundColor: data.available ? '#28a745' : '#6c757d',
+                borderColor: data.available ? '#28a745' : '#6c757d',
+                textColor: '#fff',
+            };
+        });
+    }, [pricingData]);
+
+    // Filter timeslots by selected date
+    const filterTimeslotsByDate = (variant, selectedDate) => {
+        if (!selectedDate || !variant.schedules) return variant.schedules;
+
+        const selectedDateStart = startOfDay(selectedDate);
+
+        return variant.schedules.map(schedule => {
+            const filteredCalendars = schedule.calendars.map(monthData => {
+                const filteredTimeslots = monthData.timeslots.filter(slot => {
+                    if (!slot.startTime) return false;
+                    try {
+                        const slotDate = parseISO(slot.startTime);
+                        return isSameDay(slotDate, selectedDateStart);
+                    } catch {
+                        return false;
+                    }
+                });
+
+                return {
+                    ...monthData,
+                    timeslots: filteredTimeslots,
+                };
+            }).filter(monthData => monthData.timeslots.length > 0);
+
+            return {
+                ...schedule,
+                calendars: filteredCalendars,
+            };
+        }).filter(schedule => schedule.calendars.length > 0);
+    };
+
+    // Handle calendar date click
+    const handleDateClick = (arg) => {
+        const clickedDate = parseISO(arg.dateStr);
+        setSelectedDate(clickedDate);
+        setViewMode('table'); // Switch to table view to show filtered results
+    };
+
+    // Clear date filter
+    const clearDateFilter = () => {
+        setSelectedDate(null);
+    };
+
+    // Render schedules for a variant (with date filtering)
+    const renderVariantSchedules = (variant, variantId, availableSkuTypes, selectedSkuType) => {
+        // Filter schedules by selected date if applicable
+        const filteredSchedules = selectedDate
+            ? filterTimeslotsByDate(variant, selectedDate)
+            : variant.schedules;
+
+        if (!filteredSchedules || filteredSchedules.length === 0) {
+            return (
+                <Alert color="info">
+                    {selectedDate
+                        ? `No pricing available for ${format(selectedDate, 'MMM dd, yyyy')}`
+                        : 'No pricing schedule available'}
+                </Alert>
+            );
+        }
+
+        // Map SKU type to badge color
+        const getSkuTypeBadgeColor = (type) => {
+            switch (type) {
+                case 'ADULT': return 'primary';
+                case 'CHILD': return 'warning';
+                case 'INFANT': return 'info';
+                case 'SENIOR': return 'success';
+                default: return 'secondary';
+            }
+        };
+
+        return (
+            <div>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6 className="mb-0">
+                        Pricing Schedule
+                        {selectedDate && (
+                            <Badge color="info" className="ms-2">
+                                {format(selectedDate, 'MMM dd, yyyy')}
+                            </Badge>
+                        )}
+                    </h6>
+                    <div className="d-flex align-items-center gap-3">
+                        {/* Filter by SKU Type Dropdown */}
+                        {availableSkuTypes.length > 1 && (
+                            <div className="d-flex align-items-center">
+                                <Label className="me-2 small mb-0" style={{ whiteSpace: 'nowrap' }}>Filter by Type:</Label>
+                                <Input
+                                    type="select"
+                                    value={selectedSkuType}
+                                    onChange={(e) => handleSkuTypeFilterChange(variantId, e.target.value)}
+                                    style={{ width: '220px', minWidth: '220px' }}
+                                    bsSize="sm"
+                                >
+                                    <option value="ALL">All Types</option>
+                                    {availableSkuTypes.map(skuType => (
+                                        <option key={skuType.skuId} value={skuType.skuId}>
+                                            {skuType.title} ({skuType.skuType})
+                                        </option>
+                                    ))}
+                                </Input>
+                            </div>
+                        )}
+                        <div className="small text-muted">
+                            <i className="mdi mdi-information me-1" id={`blockout-time-info-${variantId}`}></i>
+                            <span>Blockout time: Last time to book</span>
+                            <UncontrolledTooltip placement="top" target={`blockout-time-info-${variantId}`}>
+                                Blockout time is the cutoff time before the activity starts when bookings close.
+                                After this time, no new bookings can be made for that timeslot.
+                            </UncontrolledTooltip>
+                        </div>
+                    </div>
+                </div>
+                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    {filteredSchedules
+                        .filter(schedule => selectedSkuType === 'ALL' || schedule.skuId === parseInt(selectedSkuType))
+                        .map((schedule, schedIdx) => {
+                            // Find SKU details from variant.skus array
+                            const skuInfo = variant.skus?.find(sku => sku.skuId === schedule.skuId) || null;
+                            const skuTypeLabel = skuInfo ? skuInfo.title : `SKU ${schedule.skuId}`;
+                            const skuTypeBadge = skuInfo?.skuType || 'UNKNOWN';
+
+                            return (
+                                <div key={schedIdx} className="mb-3">
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <strong>{skuTypeLabel}</strong>
+                                            <Badge color={getSkuTypeBadgeColor(skuTypeBadge)} className="ms-2">
+                                                {skuTypeBadge}
+                                            </Badge>
+                                            <span className="text-muted ms-2 small">
+                                                (SKU ID: {schedule.skuId})
+                                            </span>
+                                        </div>
+                                        <Badge color="secondary">
+                                            {schedule.currency}
+                                        </Badge>
+                                    </div>
+                                    {schedule.calendars && schedule.calendars.length > 0 ? (
+                                        schedule.calendars.map((monthData, monthIdx) => (
+                                            <div key={monthIdx} className="mb-2">
+                                                <div className="small text-muted mb-1">
+                                                    {monthData.month}
+                                                </div>
+                                                <Table size="sm" bordered responsive striped>
+                                                    <thead className="table-dark">
+                                                        <tr>
+                                                            <th style={{ minWidth: '180px' }}>
+                                                                <i className="mdi mdi-calendar-clock me-1"></i>
+                                                                Date & Time
+                                                            </th>
+                                                            <th style={{ minWidth: '120px' }}>
+                                                                <i className="mdi mdi-tag me-1"></i>
+                                                                Pricing Type
+                                                            </th>
+                                                            <th style={{ minWidth: '100px' }}>
+                                                                <i className="mdi mdi-currency-usd me-1"></i>
+                                                                Price
+                                                            </th>
+                                                            <th style={{ minWidth: '90px' }}>
+                                                                <i className="mdi mdi-package-variant me-1"></i>
+                                                                Inventory
+                                                            </th>
+                                                            <th style={{ minWidth: '150px' }}>
+                                                                <i className="mdi mdi-alarm me-1"></i>
+                                                                Block Out Time
+                                                                <i className="mdi mdi-information ms-1" id={`blockout-${schedIdx}-${monthIdx}-${variantId}`} style={{ cursor: 'help' }}></i>
+                                                                <UncontrolledTooltip placement="top" target={`blockout-${schedIdx}-${monthIdx}-${variantId}`}>
+                                                                    Last time to make a booking for this timeslot.
+                                                                    After this time, bookings are closed.
+                                                                </UncontrolledTooltip>
+                                                            </th>
+                                                            <th style={{ minWidth: '120px' }}>
+                                                                <i className="mdi mdi-check-circle me-1"></i>
+                                                                Status
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {monthData.timeslots && monthData.timeslots.length > 0 ? (() => {
+                                                            // Group timeslots by date for better organization
+                                                            const slotsByDate = {};
+                                                            monthData.timeslots.forEach((slot, idx) => {
+                                                                if (slot.startTime) {
+                                                                    try {
+                                                                        const date = new Date(slot.startTime);
+                                                                        const dateKey = date.toDateString();
+                                                                        if (!slotsByDate[dateKey]) {
+                                                                            slotsByDate[dateKey] = { date, slots: [] };
+                                                                        }
+                                                                        slotsByDate[dateKey].slots.push({ ...slot, originalIdx: idx });
+                                                                    } catch (e) {
+                                                                        console.error('Error parsing date:', slot.startTime, e);
+                                                                    }
+                                                                }
+                                                            });
+
+                                                            // Sort dates
+                                                            const sortedDates = Object.keys(slotsByDate).sort((a, b) => {
+                                                                return slotsByDate[a].date - slotsByDate[b].date;
+                                                            });
+
+                                                            return sortedDates.map((dateKey, dateGroupIdx) => {
+                                                                const { date, slots } = slotsByDate[dateKey];
+                                                                // Sort slots within each date by time
+                                                                const sortedSlots = slots.sort((a, b) => {
+                                                                    const timeA = new Date(a.startTime).getTime();
+                                                                    const timeB = new Date(b.startTime).getTime();
+                                                                    return timeA - timeB;
+                                                                });
+
+                                                                return sortedSlots.map((slot, slotIdx) => {
+                                                                    const isFirstSlotOfDay = slotIdx === 0;
+
+                                                                    return (
+                                                                        <tr
+                                                                            key={`${dateGroupIdx}-${slot.originalIdx}`}
+                                                                            style={{
+                                                                                borderTop: isFirstSlotOfDay ? '2px solid #0d6efd' : '1px solid #dee2e6',
+                                                                                backgroundColor: slotIdx % 2 === 0 ? '#ffffff' : '#f8f9fa'
+                                                                            }}
+                                                                        >
+                                                                            <td>
+                                                                                {isFirstSlotOfDay && (
+                                                                                    <div className="mb-1" style={{
+                                                                                        fontWeight: 'bold',
+                                                                                        color: '#0d6efd',
+                                                                                        fontSize: '12px',
+                                                                                        borderBottom: '1px solid #e0e0e0',
+                                                                                        paddingBottom: '4px',
+                                                                                        marginBottom: '6px'
+                                                                                    }}>
+                                                                                        <i className="mdi mdi-calendar me-1"></i>
+                                                                                        {format(date, 'EEEE, MMM dd, yyyy')}
+                                                                                    </div>
+                                                                                )}
+                                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                                    <i className="mdi mdi-clock-outline text-primary" style={{ fontSize: '14px' }}></i>
+                                                                                    <strong style={{ fontSize: '14px' }}>{formatTime12Hour(slot.startTime)}</strong>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <Badge color={getSkuTypeBadgeColor(skuTypeBadge)} style={{ fontSize: '11px' }}>
+                                                                                    {skuTypeLabel}
+                                                                                </Badge>
+                                                                            </td>
+                                                                            <td>
+                                                                                <strong className="text-success" style={{ fontSize: '14px' }}>
+                                                                                    {formatPrice(slot.sellingPrice, schedule.currency)}
+                                                                                </strong>
+                                                                            </td>
+                                                                            <td>
+                                                                                <span style={{
+                                                                                    fontWeight: 'bold',
+                                                                                    fontSize: '14px',
+                                                                                    color: slot.inventory > 10 ? '#28a745' : slot.inventory > 0 ? '#ffc107' : '#dc3545'
+                                                                                }}>
+                                                                                    {slot.inventory || 0}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td className="small">
+                                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                                                                                    <i className="mdi mdi-alarm text-warning" style={{ fontSize: '12px' }}></i>
+                                                                                    {formatTime12Hour(slot.blockOutTimeUtc)}
+                                                                                </div>
+                                                                            </td>
+                                                                            <td>
+                                                                                {getAvailabilityBadge(slot.available, slot.inventory)}
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                });
+                                                            }).flat();
+                                                        })() : (
+                                                            <tr>
+                                                                <td colSpan="6" className="text-center text-muted">
+                                                                    No timeslots available
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </Table>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <Alert color="info" className="mb-0">
+                                            No calendar data available
+                                        </Alert>
+                                    )}
+                                </div>
+                            );
+                        })}
+                </div>
+            </div>
+        );
+    };
+
+    // Get available SKU types for a specific variant
+    const getAvailableSkuTypesForVariant = (variant) => {
+        if (!variant || !variant.skus || variant.skus.length === 0) return [];
+
+        return variant.skus.map(sku => ({
+            skuId: sku.skuId,
+            title: sku.title,
+            skuType: sku.skuType,
+        }));
+    };
+
+    // Handle filter change for a specific variant
+    const handleSkuTypeFilterChange = (variantId, value) => {
+        setSelectedSkuTypes(prev => ({
+            ...prev,
+            [variantId]: value
+        }));
+    };
+
+    // Get selected filter for a variant (defaults to 'ALL')
+    const getSelectedSkuTypeForVariant = (variantId) => {
+        return selectedSkuTypes[variantId] || 'ALL';
+    };
+
+    // JSON Preview state
+    const [jsonPreviewOpen, setJsonPreviewOpen] = useState(false);
+    const [jsonPreviewData, setJsonPreviewData] = useState(null);
 
     useEffect(() => {
         if (tourGroupId) {
@@ -59,6 +484,39 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
         try {
             const date = new Date(dateTimeStr);
             return format(date, 'MMM dd, yyyy HH:mm');
+        } catch {
+            return dateTimeStr;
+        }
+    };
+
+    // Format date and time in 12-hour format with AM/PM
+    const formatDateTime12Hour = (dateTimeStr) => {
+        if (!dateTimeStr) return '—';
+        try {
+            const date = new Date(dateTimeStr);
+            const dateStr = format(date, 'MMM dd, yyyy');
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const hours12 = hours % 12 || 12;
+            const minutesStr = minutes.toString().padStart(2, '0');
+            return `${dateStr} ${hours12}:${minutesStr} ${ampm}`;
+        } catch {
+            return dateTimeStr;
+        }
+    };
+
+    // Format time only in 12-hour format
+    const formatTime12Hour = (dateTimeStr) => {
+        if (!dateTimeStr) return '—';
+        try {
+            const date = new Date(dateTimeStr);
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const hours12 = hours % 12 || 12;
+            const minutesStr = minutes.toString().padStart(2, '0');
+            return `${hours12}:${minutesStr} ${ampm}`;
         } catch {
             return dateTimeStr;
         }
@@ -113,21 +571,27 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                         </Col>
                         <Col md={6}>
                             <Row>
-                                <Col md={5}>
+                                <Col md={4}>
                                     <Label className="small">Start Date</Label>
                                     <Input
                                         type="date"
                                         value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
+                                        onChange={(e) => {
+                                            setStartDate(e.target.value);
+                                            setSelectedDate(null); // Clear date filter when range changes
+                                        }}
                                         size="sm"
                                     />
                                 </Col>
-                                <Col md={5}>
+                                <Col md={4}>
                                     <Label className="small">End Date</Label>
                                     <Input
                                         type="date"
                                         value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
+                                        onChange={(e) => {
+                                            setEndDate(e.target.value);
+                                            setSelectedDate(null); // Clear date filter when range changes
+                                        }}
                                         size="sm"
                                     />
                                 </Col>
@@ -142,214 +606,326 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                                         <i className="mdi mdi-refresh"></i>
                                     </Button>
                                 </Col>
+                                <Col md={2}>
+                                    <Label className="small d-block">&nbsp;</Label>
+                                    <Button
+                                        color="secondary"
+                                        size="sm"
+                                        onClick={() => {
+                                            setViewMode(viewMode === 'calendar' ? 'table' : 'calendar');
+                                            setSelectedDate(null);
+                                        }}
+                                        className="w-100"
+                                    >
+                                        <i className={`mdi mdi-${viewMode === 'calendar' ? 'table' : 'calendar'}`}></i>
+                                    </Button>
+                                </Col>
                             </Row>
                         </Col>
                     </Row>
+                    {/* View Mode Tabs */}
+                    <Row className="mt-3">
+                        <Col>
+                            <Nav tabs>
+                                <NavItem>
+                                    <NavLink
+                                        style={{ cursor: "pointer" }}
+                                        className={classnames({ active: viewMode === 'calendar' })}
+                                        onClick={() => {
+                                            setViewMode('calendar');
+                                            setSelectedDate(null);
+                                        }}
+                                    >
+                                        <i className="mdi mdi-calendar me-1"></i>
+                                        Calendar View
+                                    </NavLink>
+                                </NavItem>
+                                <NavItem>
+                                    <NavLink
+                                        style={{ cursor: "pointer" }}
+                                        className={classnames({ active: viewMode === 'table' })}
+                                        onClick={() => setViewMode('table')}
+                                    >
+                                        <i className="mdi mdi-table me-1"></i>
+                                        Table View
+                                    </NavLink>
+                                </NavItem>
+                            </Nav>
+                        </Col>
+                    </Row>
+                    {/* Selected Date Filter Indicator */}
+                    {selectedDate && (
+                        <Row className="mt-2">
+                            <Col>
+                                <Alert color="info" className="mb-0 py-2">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i className="mdi mdi-filter me-2"></i>
+                                            Showing prices for: <strong>{format(selectedDate, 'MMM dd, yyyy')}</strong>
+                                        </span>
+                                        <Button
+                                            color="link"
+                                            size="sm"
+                                            onClick={clearDateFilter}
+                                            className="p-0"
+                                        >
+                                            <i className="mdi mdi-close me-1"></i>
+                                            Clear Filter
+                                        </Button>
+                                    </div>
+                                </Alert>
+                            </Col>
+                        </Row>
+                    )}
                 </CardHeader>
                 <CardBody>
-                    <div className="mb-3">
-                        <small className="text-muted">
-                            Date Range: {formatDateTime(startDate)} - {formatDateTime(endDate)}
-                            {pricingData.fetchedAt && (
-                                <span className="ms-2">
-                                    (Fetched: {formatDateTime(pricingData.fetchedAt)})
-                                </span>
-                            )}
-                        </small>
-                    </div>
-
-                    {pricingData.variants.map((variant, idx) => (
-                        <Card key={idx} className="mb-3 border">
-                            <CardHeader className="bg-light">
-                                <Row className="align-items-center">
-                                    <Col>
-                                        <h6 className="mb-0">
-                                            {variant.variantName || `Variant ${idx + 1}`}
-                                        </h6>
-                                        <small className="text-muted">
-                                            Activity: {variant.activityTitle} (ID: {variant.activityId})
-                                            {variant.packageName && ` • Package: ${variant.packageName}`}
-                                        </small>
-                                    </Col>
-                                    {variant.priceSummary && (
-                                        <Col md="auto">
-                                            <div className="text-end">
-                                                <div className="h5 mb-0 text-primary">
-                                                    {formatPrice(variant.priceSummary.minPrice, variant.currency)}
-                                                    {variant.priceSummary.maxPrice !== variant.priceSummary.minPrice && (
-                                                        <span className="text-muted small">
-                                                            {' - '}
-                                                            {formatPrice(variant.priceSummary.maxPrice, variant.currency)}
-                                                        </span>
-                                                    )}
+                    {viewMode === 'calendar' ? (
+                        <div>
+                            <Alert color="info" className="mb-3">
+                                <i className="mdi mdi-information me-2"></i>
+                                Click on any date to view detailed pricing for that day. Prices shown are minimum prices across all variants.
+                            </Alert>
+                            <FullCalendar
+                                plugins={[BootstrapTheme, dayGridPlugin, interactionPlugin]}
+                                themeSystem="bootstrap"
+                                headerToolbar={{
+                                    left: 'prev,today',
+                                    center: 'title',
+                                    right: 'next',
+                                }}
+                                initialView="dayGridMonth"
+                                selectable={true}
+                                dateClick={handleDateClick}
+                                events={calendarEvents}
+                                eventContent={(arg) => {
+                                    const { title, event } = arg;
+                                    const { minPrice, maxPrice, currency, count, variantCount, available } = event.extendedProps;
+                                    return (
+                                        <div style={{
+                                            padding: '2px 4px',
+                                            fontSize: '11px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                        }}>
+                                            <div style={{ fontWeight: 'bold' }}>{title}</div>
+                                            {minPrice !== maxPrice && (
+                                                <div style={{ fontSize: '9px', opacity: 0.9 }}>
+                                                    - {formatPrice(maxPrice, currency)}
                                                 </div>
-                                                <small className="text-muted">
-                                                    {variant.priceSummary.totalAvailableSlots} available slots
-                                                </small>
-                                            </div>
-                                        </Col>
+                                            )}
+                                            {variantCount > 1 && (
+                                                <div style={{ fontSize: '9px', opacity: 0.8 }}>
+                                                    {variantCount} variants
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }}
+                                height="auto"
+                                dayMaxEvents={3}
+                            />
+                        </div>
+                    ) : (
+                        <>
+                            <div className="mb-3">
+                                <small className="text-muted">
+                                    Date Range: {formatDateTime(startDate)} - {formatDateTime(endDate)}
+                                    {pricingData.fetchedAt && (
+                                        <span className="ms-2">
+                                            (Fetched: {formatDateTime(pricingData.fetchedAt)})
+                                        </span>
                                     )}
-                                </Row>
-                            </CardHeader>
-                            <CardBody>
-                                {variant.error ? (
-                                    <Alert color="danger">
-                                        <i className="mdi mdi-alert-circle me-2"></i>
-                                        {variant.error}
-                                    </Alert>
-                                ) : (
-                                    <>
-                                        {/* Price Summary */}
-                                        {variant.priceSummary && (
-                                            <Row className="mb-3">
-                                                <Col md={3}>
-                                                    <div className="text-center p-2 bg-light rounded">
-                                                        <div className="small text-muted">Min Price</div>
-                                                        <div className="h6 mb-0">
-                                                            {formatPrice(variant.priceSummary.minPrice, variant.currency)}
-                                                        </div>
-                                                    </div>
-                                                </Col>
-                                                <Col md={3}>
-                                                    <div className="text-center p-2 bg-light rounded">
-                                                        <div className="small text-muted">Max Price</div>
-                                                        <div className="h6 mb-0">
-                                                            {formatPrice(variant.priceSummary.maxPrice, variant.currency)}
-                                                        </div>
-                                                    </div>
-                                                </Col>
-                                                <Col md={3}>
-                                                    <div className="text-center p-2 bg-light rounded">
-                                                        <div className="small text-muted">Avg Price</div>
-                                                        <div className="h6 mb-0">
-                                                            {formatPrice(variant.priceSummary.avgPrice, variant.currency)}
-                                                        </div>
-                                                    </div>
-                                                </Col>
-                                                <Col md={3}>
-                                                    <div className="text-center p-2 bg-light rounded">
-                                                        <div className="small text-muted">Available Slots</div>
-                                                        <div className="h6 mb-0 text-success">
-                                                            {variant.priceSummary.totalAvailableSlots}
-                                                        </div>
-                                                    </div>
-                                                </Col>
-                                            </Row>
-                                        )}
+                                    {selectedDate && (
+                                        <span className="ms-2">
+                                            • Filtered: {format(selectedDate, 'MMM dd, yyyy')}
+                                        </span>
+                                    )}
+                                </small>
+                            </div>
 
-                                        {/* SKUs */}
-                                        {variant.skus && variant.skus.length > 0 && (
-                                            <div className="mb-3">
-                                                <h6 className="mb-2">SKUs</h6>
-                                                <Table size="sm" responsive>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>SKU ID</th>
-                                                            <th>Title</th>
-                                                            <th>Type</th>
-                                                            <th>Age Range</th>
-                                                            <th>Pax Range</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {variant.skus.map((sku, skuIdx) => (
-                                                            <tr key={skuIdx}>
-                                                                <td>{sku.skuId}</td>
-                                                                <td>{sku.title}</td>
-                                                                <td>
-                                                                    <Badge color="info">{sku.skuType}</Badge>
-                                                                </td>
-                                                                <td>
-                                                                    {sku.minAge === 0 && sku.maxAge === 0
-                                                                        ? 'Any'
-                                                                        : `${sku.minAge || 0}-${sku.maxAge || '∞'}`}
-                                                                </td>
-                                                                <td>
-                                                                    {sku.minPax || 0} - {sku.maxPax || '∞'}
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </Table>
-                                            </div>
-                                        )}
+                            {pricingData.variants.map((variant, idx) => {
+                                const variantId = variant.variantId || `variant-${idx}`;
+                                const availableSkuTypes = getAvailableSkuTypesForVariant(variant);
+                                const selectedSkuType = getSelectedSkuTypeForVariant(variantId);
 
-                                        {/* Schedules */}
-                                        {variant.schedules && variant.schedules.length > 0 && (
-                                            <div>
-                                                <h6 className="mb-2">Pricing Schedule</h6>
-                                                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                                                    {variant.schedules.map((schedule, schedIdx) => (
-                                                        <div key={schedIdx} className="mb-3">
-                                                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                                                <strong>SKU {schedule.skuId}</strong>
-                                                                <Badge color="secondary">
-                                                                    {schedule.currency}
-                                                                </Badge>
+                                return (
+                                    <Card key={idx} className="mb-3 border">
+                                        <CardHeader className="bg-light">
+                                            <Row className="align-items-center">
+                                                <Col>
+                                                    <h6 className="mb-0">
+                                                        {variant.variantName || `Variant ${idx + 1}`}
+                                                    </h6>
+                                                    <small className="text-muted">
+                                                        Activity: {variant.activityTitle} (ID: {variant.activityId})
+                                                        {variant.packageName && ` • Package: ${variant.packageName}`}
+                                                    </small>
+                                                </Col>
+                                                <Col md="auto">
+                                                    <Button
+                                                        color="secondary"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setJsonPreviewData(variant);
+                                                            setJsonPreviewOpen(true);
+                                                        }}
+                                                    >
+                                                        <i className="mdi mdi-code-json me-1"></i>
+                                                        View JSON
+                                                    </Button>
+                                                </Col>
+                                                {variant.priceSummary && (
+                                                    <Col md="auto">
+                                                        <div className="text-end">
+                                                            <div className="h5 mb-0 text-primary">
+                                                                {formatPrice(variant.priceSummary.minPrice, variant.currency)}
+                                                                {variant.priceSummary.maxPrice !== variant.priceSummary.minPrice && (
+                                                                    <span className="text-muted small">
+                                                                        {' - '}
+                                                                        {formatPrice(variant.priceSummary.maxPrice, variant.currency)}
+                                                                    </span>
+                                                                )}
                                                             </div>
-                                                            {schedule.calendars && schedule.calendars.length > 0 ? (
-                                                                schedule.calendars.map((monthData, monthIdx) => (
-                                                                    <div key={monthIdx} className="mb-2">
-                                                                        <div className="small text-muted mb-1">
-                                                                            {monthData.month}
-                                                                        </div>
-                                                                        <Table size="sm" bordered responsive>
-                                                                            <thead>
-                                                                                <tr>
-                                                                                    <th>Date & Time</th>
-                                                                                    <th>Price</th>
-                                                                                    <th>Inventory</th>
-                                                                                    <th>Block Out Time</th>
-                                                                                    <th>Status</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                {monthData.timeslots && monthData.timeslots.length > 0 ? (
-                                                                                    monthData.timeslots.map((slot, slotIdx) => (
-                                                                                        <tr key={slotIdx}>
-                                                                                            <td>{formatDateTime(slot.startTime)}</td>
-                                                                                            <td>
-                                                                                                <strong>
-                                                                                                    {formatPrice(slot.sellingPrice, schedule.currency)}
-                                                                                                </strong>
-                                                                                            </td>
-                                                                                            <td>{slot.inventory || 0}</td>
-                                                                                            <td className="small">
-                                                                                                {formatDateTime(slot.blockOutTimeUtc)}
-                                                                                            </td>
-                                                                                            <td>
-                                                                                                {getAvailabilityBadge(slot.available, slot.inventory)}
-                                                                                            </td>
-                                                                                        </tr>
-                                                                                    ))
-                                                                                ) : (
-                                                                                    <tr>
-                                                                                        <td colSpan="5" className="text-center text-muted">
-                                                                                            No timeslots available
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                )}
-                                                                            </tbody>
-                                                                        </Table>
-                                                                    </div>
-                                                                ))
-                                                            ) : (
-                                                                <Alert color="info" className="mb-0">
-                                                                    No calendar data available
-                                                                </Alert>
-                                                            )}
+                                                            <small className="text-muted">
+                                                                {variant.priceSummary.totalAvailableSlots} available slots
+                                                            </small>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                            </CardBody>
-                        </Card>
-                    ))}
+                                                    </Col>
+                                                )}
+                                            </Row>
+                                        </CardHeader>
+                                        <CardBody>
+                                            {variant.error ? (
+                                                <Alert color="danger">
+                                                    <i className="mdi mdi-alert-circle me-2"></i>
+                                                    {variant.error}
+                                                </Alert>
+                                            ) : (
+                                                <>
+                                                    {/* Price Summary */}
+                                                    {variant.priceSummary && (
+                                                        <Row className="mb-3">
+                                                            <Col md={3}>
+                                                                <div className="text-center p-2 bg-light rounded">
+                                                                    <div className="small text-muted">Min Price</div>
+                                                                    <div className="h6 mb-0">
+                                                                        {formatPrice(variant.priceSummary.minPrice, variant.currency)}
+                                                                    </div>
+                                                                </div>
+                                                            </Col>
+                                                            <Col md={3}>
+                                                                <div className="text-center p-2 bg-light rounded">
+                                                                    <div className="small text-muted">Max Price</div>
+                                                                    <div className="h6 mb-0">
+                                                                        {formatPrice(variant.priceSummary.maxPrice, variant.currency)}
+                                                                    </div>
+                                                                </div>
+                                                            </Col>
+                                                            <Col md={3}>
+                                                                <div className="text-center p-2 bg-light rounded">
+                                                                    <div className="small text-muted">Avg Price</div>
+                                                                    <div className="h6 mb-0">
+                                                                        {formatPrice(variant.priceSummary.avgPrice, variant.currency)}
+                                                                    </div>
+                                                                </div>
+                                                            </Col>
+                                                            <Col md={3}>
+                                                                <div className="text-center p-2 bg-light rounded">
+                                                                    <div className="small text-muted">Available Slots</div>
+                                                                    <div className="h6 mb-0 text-success">
+                                                                        {variant.priceSummary.totalAvailableSlots}
+                                                                    </div>
+                                                                </div>
+                                                            </Col>
+                                                        </Row>
+                                                    )}
+
+                                                    {/* SKUs */}
+                                                    {variant.skus && variant.skus.length > 0 && (
+                                                        <div className="mb-3">
+                                                            <h6 className="mb-2">SKUs</h6>
+                                                            <Table size="sm" responsive>
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>SKU ID</th>
+                                                                        <th>Title</th>
+                                                                        <th>Type</th>
+                                                                        <th>Age Range</th>
+                                                                        <th>Pax Range</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {variant.skus.map((sku, skuIdx) => (
+                                                                        <tr key={skuIdx}>
+                                                                            <td>{sku.skuId}</td>
+                                                                            <td>{sku.title}</td>
+                                                                            <td>
+                                                                                <Badge color="info">{sku.skuType}</Badge>
+                                                                            </td>
+                                                                            <td>
+                                                                                {sku.minAge === 0 && sku.maxAge === 0
+                                                                                    ? 'Any'
+                                                                                    : `${sku.minAge || 0}-${sku.maxAge || '∞'}`}
+                                                                            </td>
+                                                                            <td>
+                                                                                {sku.minPax || 0} - {sku.maxPax || '∞'}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </Table>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Schedules */}
+                                                    {renderVariantSchedules(variant, variantId, availableSkuTypes, selectedSkuType)}
+                                                </>
+                                            )}
+                                        </CardBody>
+                                    </Card>
+                                );
+                            })}
+                        </>
+                    )}
                 </CardBody>
             </Card>
+
+            {/* JSON Preview Modal */}
+            <Modal isOpen={jsonPreviewOpen} toggle={() => setJsonPreviewOpen(false)} size="xl">
+                <ModalHeader toggle={() => setJsonPreviewOpen(false)}>
+                    JSON Response Preview
+                </ModalHeader>
+                <ModalBody>
+                    <div style={{
+                        maxHeight: '70vh',
+                        overflow: 'auto',
+                        backgroundColor: '#f8f9fa',
+                        padding: '1rem',
+                        borderRadius: '0.25rem',
+                        fontFamily: 'monospace',
+                        fontSize: '0.875rem'
+                    }}>
+                        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                            {JSON.stringify(jsonPreviewData, null, 2)}
+                        </pre>
+                    </div>
+                </ModalBody>
+                <ModalFooter>
+                    <Button color="secondary" onClick={() => {
+                        if (jsonPreviewData) {
+                            navigator.clipboard.writeText(JSON.stringify(jsonPreviewData, null, 2));
+                            alert('JSON copied to clipboard!');
+                        }
+                    }}>
+                        <i className="mdi mdi-content-copy me-1"></i>
+                        Copy to Clipboard
+                    </Button>
+                    <Button color="primary" onClick={() => setJsonPreviewOpen(false)}>
+                        Close
+                    </Button>
+                </ModalFooter>
+            </Modal>
         </div>
     );
 };
