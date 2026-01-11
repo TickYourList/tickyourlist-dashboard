@@ -750,9 +750,15 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                                                 ...base,
                                                 fontSize: '14px',
                                             }),
+                                            menuPortal: (base) => ({
+                                                ...base,
+                                                zIndex: 9999,
+                                            }),
                                             menu: (base) => ({
                                                 ...base,
                                                 zIndex: 9999,
+                                                backgroundColor: '#fff',
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                                             }),
                                         }}
                                         menuPortalTarget={document.body}
