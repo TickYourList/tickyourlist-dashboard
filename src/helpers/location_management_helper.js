@@ -225,11 +225,11 @@ const confirmBookingAPI = (bookingId, sendInvoice = true) => post(`/v1/tyltourcu
 const sendInvoiceAPI = (bookingId) => post(`/v1/tyltourcustomerbooking/booking/${bookingId}/send-invoice`, {});
 
 // UPDATE BOOKING STATUS (PENDING, CONFIRMED, REFUNDED, CANCELLED)
-const updateBookingStatusAPI = (bookingId, status, refundDetails = null) => 
+const updateBookingStatusAPI = (bookingId, status, refundDetails = null) =>
   put(`/v1/tyltourcustomerbooking/booking/${bookingId}/update-status`, { status, refundDetails });
 
 // UPDATE TICKET DELIVERY
-const updateTicketDeliveryAPI = (bookingId, ticketDeliveryData) => 
+const updateTicketDeliveryAPI = (bookingId, ticketDeliveryData) =>
   put(`/v1/tyltourcustomerbooking/booking/${bookingId}/ticket-delivery`, ticketDeliveryData);
 
 //----------------------------------------Product Management Collections--------------------------------------------------
@@ -505,11 +505,41 @@ const addFaqs = faqData => post(url.ADD_NEW_FAQS, faqData);
 const updateFaqs = (id, faqData) => put(url.UPDATE_FAQS + id, faqData);
 
 // Tour Group Connections
+// Klook Mapping APIs
+const getKlookMappings = (tourGroupId) => {
+  return get(`/v1/klook/mapping/product/${tourGroupId}`);
+};
+
+const searchKlookActivities = (query = "") => {
+  // Fetch activities and filter client-side if needed
+  const params = query ? { limit: 50, page: 1 } : { limit: 20, page: 1 };
+  // Klook API requires Accept-Language in format like 'en_US' (not browser format)
+  return get(`/v1/klook/api/activities`, {
+    params,
+    headers: {
+      'Accept-Language': 'en_US' // Klook expects format: en_US, zh_CN, etc.
+    }
+  });
+};
+
+const getKlookActivity = (activityId) => {
+  // Klook API requires Accept-Language in format like 'en_US' (not browser format)
+  return get(`/v1/klook/api/activities/${activityId}`, {
+    headers: {
+      'Accept-Language': 'en_US' // Klook expects format: en_US, zh_CN, etc.
+    }
+  });
+};
+
+const bulkLinkKlookMappings = (mappings) => {
+  return post(`/v1/klook/mapping/bulk-link`, { mappings });
+};
+
 const connectTourGroupToCategories = (tourGroupId, categoryIds, subcategoryIds) => {
   // Convert to array of IDs (strings) as expected by the API
   const categoryConnections = Array.isArray(categoryIds) ? categoryIds : [];
   const subcategoryConnections = Array.isArray(subcategoryIds) ? subcategoryIds : [];
-  
+
   return put(`${url.CONNECT_TOUR_GROUP}/${tourGroupId}/connections`, {
     categoryConnections,
     subcategoryConnections
@@ -650,6 +680,10 @@ export {
   updateFaqs,
   connectTourGroupToCategories,
   bulkConnectToursToCategory,
-  bulkConnectToursToSubcategory
+  bulkConnectToursToSubcategory,
+  getKlookMappings,
+  searchKlookActivities,
+  getKlookActivity,
+  bulkLinkKlookMappings
 
 };

@@ -30,7 +30,8 @@ axiosApi.interceptors.response.use(
 
 export async function get(url, config = {}) {
   authUserItem();
-  return await axiosApi.get(url, { ...config }).then(response => response.data);
+  // Ensure params are properly passed to axios
+  return await axiosApi.get(url, config).then(response => response.data);
 }
 
 export async function post(url, data, config = {}) {
@@ -43,15 +44,15 @@ export async function post(url, data, config = {}) {
 export async function postFormData(url, data, config = {}) {
   authUserItem();
   return axiosApi
-  
-    .post(url, data , { ...config })
+
+    .post(url, data, { ...config })
     .then(response => response.data);
 }
 
 export async function putFormData(url, data, config = {}) {
   authUserItem();
   return axiosApi
-    .put(url, data , { ...config })
+    .put(url, data, { ...config })
     .then(response => response.data);
 }
 

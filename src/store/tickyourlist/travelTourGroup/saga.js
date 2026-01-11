@@ -18,6 +18,10 @@ import {
   BULK_DATE_PRICING_REQUEST,
   FETCH_VARIANT_DETAIL_REQUEST,
   UPDATE_VARIANT_PRICES_REQUEST,
+  FETCH_KLOOK_MAPPINGS_REQUEST,
+  SEARCH_KLOOK_ACTIVITIES_REQUEST,
+  FETCH_KLOOK_ACTIVITY_REQUEST,
+  BULK_LINK_KLOOK_MAPPINGS_REQUEST,
 } from "./actionTypes"
 import {
   fetchTourGroupsSuccess,
@@ -57,6 +61,14 @@ import {
   updateVariantPricesSuccess,
   updateVariantPricesFailure,
   fetchVariantDetailRequest,
+  fetchKlookMappingsSuccess,
+  fetchKlookMappingsFailure,
+  searchKlookActivitiesSuccess,
+  searchKlookActivitiesFailure,
+  fetchKlookActivitySuccess,
+  fetchKlookActivityFailure,
+  bulkLinkKlookMappingsSuccess,
+  bulkLinkKlookMappingsFailure,
 } from "./action"
 
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
@@ -80,6 +92,10 @@ import {
   updateTourGroupHelper,
   getTourGroupVariantDetailAPI,
   updateVariantPrices,
+  getKlookMappings,
+  searchKlookActivities,
+  getKlookActivity,
+  bulkLinkKlookMappings,
 } from "helpers/location_management_helper"
 
 // 1. Fetch All Tour Groups
@@ -411,6 +427,10 @@ export default function* tourGroupSaga() {
   yield takeEvery(BULK_DATE_PRICING_REQUEST, bulkDatePricingSaga)
   yield takeEvery(FETCH_VARIANT_DETAIL_REQUEST, fetchVariantDetailSaga)
   yield takeEvery(UPDATE_VARIANT_PRICES_REQUEST, updateVariantPricesSaga)
+  yield takeEvery(FETCH_KLOOK_MAPPINGS_REQUEST, fetchKlookMappingsSaga)
+  yield takeEvery(SEARCH_KLOOK_ACTIVITIES_REQUEST, searchKlookActivitiesSaga)
+  yield takeEvery(FETCH_KLOOK_ACTIVITY_REQUEST, fetchKlookActivitySaga)
+  yield takeEvery(BULK_LINK_KLOOK_MAPPINGS_REQUEST, bulkLinkKlookMappingsSaga)
 }
 
 // Fetch variant details
@@ -463,6 +483,97 @@ function* updateVariantPricesSaga(action) {
     console.error('🔴 Saga Error updating variant prices:', error)
     const errorMessage = error.response?.data?.message || error.message || 'Failed to update listing price'
     yield put(updateVariantPricesFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
+// Fetch Klook Mappings
+function* fetchKlookMappingsSaga(action) {
+  try {
+    const tourGroupId = action.payload
+    const response = yield call(getKlookMappings, tourGroupId)
+    const mappings = response?.data?.mappings || []
+    yield put(fetchKlookMappingsSuccess(tourGroupId, mappings))
+  } catch (error) {
+    console.error('Error fetching Klook mappings:', error)
+    yield put(fetchKlookMappingsFailure(error.message))
+  }
+}
+
+// Search Klook Activities
+function* searchKlookActivitiesSaga(action) {
+  try {
+    const searchQuery = action.payload
+    const response = yield call(searchKlookActivities, searchQuery)
+    
+    let activities = []
+    if (response?.data?.activity?.activity_list) {
+      activities = response.data.activity.activity_list
+      
+      // Filter by search query if provided (client-side filtering)
+      if (searchQuery && searchQuery.trim()) {
+        const queryLower = searchQuery.toLowerCase().trim()
+        activities = activities.filter((activity) =>
+          activity.title?.toLowerCase().includes(queryLower) ||
+          activity.activity_id?.toString().includes(queryLower)
+        ).slice(0, 20) // Limit to 20 results
+      }
+    }
+    
+    yield put(searchKlookActivitiesSuccess(activities))
+  } catch (error) {
+    console.error('Error searching Klook activities:', error)
+    yield put(searchKlookActivitiesFailure(error.message))
+    showToastError('Failed to search Klook activities')
+  }
+}
+
+// Fetch Klook Activity Details
+function* fetchKlookActivitySaga(action) {
+  try {
+    const activityId = action.payload
+    const response = yield call(getKlookActivity, activityId)
+    const activity = response?.data?.activity
+    if (activity) {
+      yield put(fetchKlookActivitySuccess(activity))
+    } else {
+      throw new Error('Activity not found')
+    }
+  } catch (error) {
+    console.error('Error fetching Klook activity:', error)
+    yield put(fetchKlookActivityFailure(error.message))
+    showToastError('Failed to fetch Klook activity details')
+  }
+}
+
+// Bulk Link Klook Mappings
+function* bulkLinkKlookMappingsSaga(action) {
+  try {
+    const mappings = action.payload
+    const response = yield call(bulkLinkKlookMappings, mappings)
+    
+    // Handle different response structures
+    const responseData = response?.data || response
+    console.log('Bulk link response:', responseData)
+    
+    if (responseData?.success) {
+      const resultData = responseData.data || responseData
+      const createdCount = resultData?.created || resultData?.results?.length || mappings.length
+      yield put(bulkLinkKlookMappingsSuccess(resultData))
+      showToastSuccess(`Successfully connected ${createdCount} mapping(s)`)
+    } else {
+      // Even if success is false, check if we have results
+      if (responseData?.data?.results && responseData.data.results.length > 0) {
+        yield put(bulkLinkKlookMappingsSuccess(responseData.data))
+        showToastSuccess(`Connected ${responseData.data.results.length} mapping(s)`)
+      } else {
+        throw new Error(responseData?.message || 'Failed to connect mappings')
+      }
+    }
+  } catch (error) {
+    console.error('Error bulk linking Klook mappings:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to connect with Klook'
+    yield put(bulkLinkKlookMappingsFailure(errorMessage))
     showToastError(errorMessage)
   }
 }

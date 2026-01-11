@@ -55,6 +55,18 @@ import {
   UPDATE_VARIANT_PRICES_REQUEST,
   UPDATE_VARIANT_PRICES_SUCCESS,
   UPDATE_VARIANT_PRICES_FAILURE,
+  FETCH_KLOOK_MAPPINGS_REQUEST,
+  FETCH_KLOOK_MAPPINGS_SUCCESS,
+  FETCH_KLOOK_MAPPINGS_FAILURE,
+  SEARCH_KLOOK_ACTIVITIES_REQUEST,
+  SEARCH_KLOOK_ACTIVITIES_SUCCESS,
+  SEARCH_KLOOK_ACTIVITIES_FAILURE,
+  FETCH_KLOOK_ACTIVITY_REQUEST,
+  FETCH_KLOOK_ACTIVITY_SUCCESS,
+  FETCH_KLOOK_ACTIVITY_FAILURE,
+  BULK_LINK_KLOOK_MAPPINGS_REQUEST,
+  BULK_LINK_KLOOK_MAPPINGS_SUCCESS,
+  BULK_LINK_KLOOK_MAPPINGS_FAILURE,
 } from "./actionTypes"
 
 //initial state for fetching tourgroups
@@ -73,6 +85,13 @@ const initialState = {
   totalCount: 0,
   loading: false,
   error: null,
+  // Klook Mapping state
+  klookMappings: {}, // { tourGroupId: mappings[] }
+  klookActivities: [], // Search results
+  klookActivity: null, // Selected activity details
+  klookMappingsLoading: false,
+  klookSearching: false,
+  klookActivityLoading: false,
 }
 
 //creating the reducer to sync when to call the api request
@@ -470,6 +489,92 @@ export default function tourGroupReducer(state = initialState, action) {
         loading: false,
         error: action.payload,
       }
+
+    // Klook Mappings
+    case FETCH_KLOOK_MAPPINGS_REQUEST:
+      return {
+        ...state,
+        klookMappingsLoading: true,
+      }
+
+    case FETCH_KLOOK_MAPPINGS_SUCCESS:
+      return {
+        ...state,
+        klookMappings: {
+          ...state.klookMappings,
+          [action.payload.tourGroupId]: action.payload.mappings,
+        },
+        klookMappingsLoading: false,
+      }
+
+    case FETCH_KLOOK_MAPPINGS_FAILURE:
+      return {
+        ...state,
+        klookMappingsLoading: false,
+        error: action.payload,
+      }
+
+    case SEARCH_KLOOK_ACTIVITIES_REQUEST:
+      return {
+        ...state,
+        klookSearching: true,
+      }
+
+    case SEARCH_KLOOK_ACTIVITIES_SUCCESS:
+      return {
+        ...state,
+        klookActivities: action.payload,
+        klookSearching: false,
+      }
+
+    case SEARCH_KLOOK_ACTIVITIES_FAILURE:
+      return {
+        ...state,
+        klookSearching: false,
+        error: action.payload,
+      }
+
+    case FETCH_KLOOK_ACTIVITY_REQUEST:
+      return {
+        ...state,
+        klookActivityLoading: true,
+      }
+
+    case FETCH_KLOOK_ACTIVITY_SUCCESS:
+      return {
+        ...state,
+        klookActivity: action.payload,
+        klookActivityLoading: false,
+      }
+
+    case FETCH_KLOOK_ACTIVITY_FAILURE:
+      return {
+        ...state,
+        klookActivityLoading: false,
+        error: action.payload,
+      }
+
+    case BULK_LINK_KLOOK_MAPPINGS_REQUEST:
+      return {
+        ...state,
+        loading: true,
+      }
+
+    case BULK_LINK_KLOOK_MAPPINGS_SUCCESS:
+      // Clear the mappings cache so they will be refetched
+      // The component will handle refetching after success
+      return {
+        ...state,
+        loading: false,
+      }
+
+    case BULK_LINK_KLOOK_MAPPINGS_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      }
+
     default:
       return state
   }

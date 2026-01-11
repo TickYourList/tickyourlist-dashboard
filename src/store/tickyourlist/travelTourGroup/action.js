@@ -56,6 +56,18 @@ import {
   UPDATE_VARIANT_PRICES_REQUEST,
   UPDATE_VARIANT_PRICES_SUCCESS,
   UPDATE_VARIANT_PRICES_FAILURE,
+  FETCH_KLOOK_MAPPINGS_REQUEST,
+  FETCH_KLOOK_MAPPINGS_SUCCESS,
+  FETCH_KLOOK_MAPPINGS_FAILURE,
+  SEARCH_KLOOK_ACTIVITIES_REQUEST,
+  SEARCH_KLOOK_ACTIVITIES_SUCCESS,
+  SEARCH_KLOOK_ACTIVITIES_FAILURE,
+  FETCH_KLOOK_ACTIVITY_REQUEST,
+  FETCH_KLOOK_ACTIVITY_SUCCESS,
+  FETCH_KLOOK_ACTIVITY_FAILURE,
+  BULK_LINK_KLOOK_MAPPINGS_REQUEST,
+  BULK_LINK_KLOOK_MAPPINGS_SUCCESS,
+  BULK_LINK_KLOOK_MAPPINGS_FAILURE,
 } from "./actionTypes"
 
 // Fetch All Tour Groups
@@ -361,3 +373,66 @@ export const updateVariantPricesFailure = error => ({
   payload: error,
 })
 
+// Fetch Klook Mappings
+export const fetchKlookMappingsRequest = tourGroupId => ({
+  type: FETCH_KLOOK_MAPPINGS_REQUEST,
+  payload: tourGroupId,
+})
+
+export const fetchKlookMappingsSuccess = (tourGroupId, mappings) => ({
+  type: FETCH_KLOOK_MAPPINGS_SUCCESS,
+  payload: { tourGroupId, mappings },
+})
+
+export const fetchKlookMappingsFailure = error => ({
+  type: FETCH_KLOOK_MAPPINGS_FAILURE,
+  payload: error,
+})
+
+// Search Klook Activities
+export const searchKlookActivitiesRequest = searchQuery => ({
+  type: SEARCH_KLOOK_ACTIVITIES_REQUEST,
+  payload: searchQuery,
+})
+
+export const searchKlookActivitiesSuccess = activities => ({
+  type: SEARCH_KLOOK_ACTIVITIES_SUCCESS,
+  payload: activities,
+})
+
+export const searchKlookActivitiesFailure = error => ({
+  type: SEARCH_KLOOK_ACTIVITIES_FAILURE,
+  payload: error,
+})
+
+// Fetch Klook Activity Details
+export const fetchKlookActivityRequest = activityId => ({
+  type: FETCH_KLOOK_ACTIVITY_REQUEST,
+  payload: activityId,
+})
+
+export const fetchKlookActivitySuccess = activity => ({
+  type: FETCH_KLOOK_ACTIVITY_SUCCESS,
+  payload: activity,
+})
+
+export const fetchKlookActivityFailure = error => ({
+  type: FETCH_KLOOK_ACTIVITY_FAILURE,
+  payload: error,
+})
+
+// Bulk Link Klook Mappings
+export const bulkLinkKlookMappingsRequest = mappings => ({
+  type: BULK_LINK_KLOOK_MAPPINGS_REQUEST,
+  payload: mappings,
+})
+
+export const bulkLinkKlookMappingsSuccess = result => ({
+  type: BULK_LINK_KLOOK_MAPPINGS_SUCCESS,
+  payload: result,
+})
+
+export const bulkLinkKlookMappingsFailure = error => ({
+  type: BULK_LINK_KLOOK_MAPPINGS_FAILURE,
+  payload: error,
+})

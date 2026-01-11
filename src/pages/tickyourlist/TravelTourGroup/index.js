@@ -29,11 +29,13 @@ import {
   removeTourGroupWithId,
   clearTourGroupList,
   searchTourGroupsRequest,
+  fetchKlookMappingsRequest,
 } from "store/tickyourlist/travelTourGroup/action"
 import DeleteModal from "components/Common/DeleteModal"
 
 import ViewTourGroup from "./ViewTourGroup"
 import ConnectCategoriesModal from "./ConnectCategoriesModal"
+import ConnectKlookModal from "./ConnectKlookModal"
 import VariantsPricingModal from "./VariantsPricingModal"
 import { showToastSuccess } from "helpers/toastBuilder"
 import { usePermissions, MODULES, ACTIONS } from "helpers/permissions"
@@ -58,6 +60,8 @@ function TourGroupTable() {
   const [isSearchMode, setIsSearchMode] = useState(false)
   const [connectModal, setConnectModal] = useState(false)
   const [selectedTourGroupForConnection, setSelectedTourGroupForConnection] = useState(null)
+  const [connectKlookModal, setConnectKlookModal] = useState(false)
+  const [selectedTourGroupForKlook, setSelectedTourGroupForKlook] = useState(null)
   const [variantsPricingModal, setVariantsPricingModal] = useState(false)
   const [selectedTourGroupForPricing, setSelectedTourGroupForPricing] = useState(null)
   const dispatch = useDispatch()
@@ -71,7 +75,7 @@ function TourGroupTable() {
   const canDeleteTourGroup = can(ACTIONS.CAN_DELETE, MODULES.TOUR_GROUP_PERMS)
 
   /* destructuring the tour group state */
-  const { tourGroup, currPage, totalCount, error, searchedTourGroups, loading } = useSelector(
+  const { tourGroup, currPage, totalCount, error, searchedTourGroups, loading, klookMappings: reduxKlookMappings } = useSelector(
     state => state.tourGroup
   )
 
@@ -244,6 +248,31 @@ function TourGroupTable() {
     }
   }
 
+  const handleConnectKlook = (tourGroup) => {
+    setSelectedTourGroupForKlook(tourGroup)
+    setConnectKlookModal(true)
+  }
+
+  const handleKlookConnectionSuccess = () => {
+    // Refresh the tour group data
+    if (isPermissionsReady && canViewTourGroup) {
+      dispatch(
+        fetchTourGroupsRequest({
+          page: currentPage,
+          limit: pageSize,
+          cityCode: selectedCity?.value || null,
+        })
+      )
+    }
+    
+    // Refresh Klook mappings for displayed items
+    if (displayData.length > 0) {
+      displayData.forEach((tg) => {
+        dispatch(fetchKlookMappingsRequest(tg._id));
+      });
+    }
+  }
+
   const handleViewVariantsPricing = (tourGroup) => {
     setSelectedTourGroupForPricing(tourGroup)
     setVariantsPricingModal(true)
@@ -266,6 +295,19 @@ function TourGroupTable() {
   const displayTotalCount = useMemo(() => {
     return isSearchMode ? (searchedTourGroups?.length || 0) : totalCount
   }, [isSearchMode, searchedTourGroups, totalCount])
+
+  // Fetch Klook mappings for displayed tour groups (must be after displayData is defined)
+  useEffect(() => {
+    if (displayData.length === 0) return;
+    
+    // Fetch mappings for each displayed tour group
+    displayData.forEach((tg) => {
+      // Only fetch if not already in Redux state
+      if (!reduxKlookMappings || !reduxKlookMappings[tg._id]) {
+        dispatch(fetchKlookMappingsRequest(tg._id));
+      }
+    });
+  }, [displayData, reduxKlookMappings, dispatch])
 
   // Show loading while permissions are being fetched
   if (permissionsLoading || !isPermissionsReady) {
@@ -306,12 +348,23 @@ function TourGroupTable() {
         accessor: "name",
 
         Cell: ({ row }) => (
-          <Link
-            to={`${row.original.urlSlugs?.EN || "#"}`}
-            className="text-black fw-bold"
-          >
-            {row.original.name}
-          </Link>
+          <div className="d-flex align-items-center gap-2">
+            <Link
+              to={`${row.original.urlSlugs?.EN || "#"}`}
+              className="text-black fw-bold"
+            >
+              {row.original.name}
+            </Link>
+            {reduxKlookMappings && reduxKlookMappings[row.original._id] && reduxKlookMappings[row.original._id].length > 0 && (
+              <span
+                className="badge bg-success"
+                title="Connected to Klook"
+              >
+                <i className="fas fa-plug me-1"></i>
+                Klook
+              </span>
+            )}
+          </div>
         ),
 
         filterable: true,
@@ -436,6 +489,15 @@ function TourGroupTable() {
                 onClick={() => handleConnectCategories(row.original)}
               >
                 <i className="fas fa-link font-size-18 text-info"></i>
+              </button>
+            )}
+            {canEditTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
+                title="Connect with Klook"
+                onClick={() => handleConnectKlook(row.original)}
+              >
+                <i className="fas fa-plug font-size-18 text-success"></i>
               </button>
             )}
             {canEditTourGroup && (
@@ -651,6 +713,17 @@ function TourGroupTable() {
                     }}
                     tourGroup={selectedTourGroupForConnection}
                     onSuccess={handleConnectionSuccess}
+                  />
+                  
+                  {/* Connect Klook Modal */}
+                  <ConnectKlookModal
+                    isOpen={connectKlookModal}
+                    toggle={() => {
+                      setConnectKlookModal(false)
+                      setSelectedTourGroupForKlook(null)
+                    }}
+                    tourGroup={selectedTourGroupForKlook}
+                    onSuccess={handleKlookConnectionSuccess}
                   />
                   
                   {/* Variants Pricing Modal */}
