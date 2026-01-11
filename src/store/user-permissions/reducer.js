@@ -72,6 +72,7 @@ const UserPermissionsReducer = (state = INIT_STATE, action) => {
         ...state,
         loading: false,
         error: action.payload,
+        // Don't clear permissions on failure - keep existing ones if available
       }
     default:
       return state

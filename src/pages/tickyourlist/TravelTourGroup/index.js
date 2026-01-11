@@ -318,6 +318,7 @@ function TourGroupTable() {
   }, [displayData, reduxKlookMappings, dispatch])
 
   // Show loading while permissions are being fetched
+  // Also show loading if permissions are missing (will auto-retry)
   if (permissionsLoading || !isPermissionsReady) {
     return (
       <div className="page-content">
@@ -326,7 +327,15 @@ function TourGroupTable() {
             <div className="spinner-border" role="status">
               <span className="sr-only">Loading...</span>
             </div>
-            <p className="mt-2">Loading page data...</p>
+            <p className="mt-2">
+              {permissionsLoading ? 'Loading permissions...' : 'Loading page data...'}
+            </p>
+            {!permissionsLoading && !isPermissionsReady && (
+              <p className="text-muted small mt-2">
+                <i className="mdi mdi-information me-1"></i>
+                If this takes too long, permissions are being refreshed automatically...
+              </p>
+            )}
           </div>
         </div>
       </div>

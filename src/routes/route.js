@@ -35,12 +35,21 @@ const Authmiddleware = (props) => {
             currentUserRef.current = userId;
           }
           
-          if (!permissionsLoadedRef.current && !loading) {
-            // Mark as loaded to prevent multiple calls
-            permissionsLoadedRef.current = true;
+          // Check if permissions are missing after loading completes
+          const permissionsMissing = !loading && permissions.length === 0;
+          
+          if ((!permissionsLoadedRef.current && !loading) || permissionsMissing) {
+            // Mark as loaded to prevent multiple calls (but allow retry if missing)
+            if (!permissionsMissing) {
+              permissionsLoadedRef.current = true;
+            }
             
-            // Always load permissions on app initialization, regardless of cache
-            console.log("App initialization - Loading permissions for user:", userId);
+            // Always load permissions on app initialization or if missing
+            if (permissionsMissing) {
+              console.warn("⚠️ Permissions missing after load. Re-fetching permissions for user:", userId);
+            } else {
+              console.log("App initialization - Loading permissions for user:", userId);
+            }
             dispatch(getUserPermissions(userId));
           }
         } else {
@@ -53,7 +62,7 @@ const Authmiddleware = (props) => {
         window.location.reload();
       }
     }
-  }, [authUser, loading, dispatch]); // Run when authUser changes or loading state changes
+  }, [authUser, loading, permissions, dispatch]); // Run when authUser, loading, or permissions change
 
   return (
     <React.Fragment>
