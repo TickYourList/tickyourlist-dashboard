@@ -70,6 +70,9 @@ import {
   FETCH_KLOOK_LIVE_PRICING_REQUEST,
   FETCH_KLOOK_LIVE_PRICING_SUCCESS,
   FETCH_KLOOK_LIVE_PRICING_FAILURE,
+  CREATE_VARIANT_FROM_KLOOK_REQUEST,
+  CREATE_VARIANT_FROM_KLOOK_SUCCESS,
+  CREATE_VARIANT_FROM_KLOOK_FAILURE,
 } from "./actionTypes"
 
 //initial state for fetching tourgroups
@@ -99,6 +102,8 @@ const initialState = {
   // Klook Live Pricing state
   klookLivePricing: {}, // { tourGroupId: pricingData }
   klookLivePricingLoading: false,
+  // Create Variant from Klook state
+  creatingVariantFromKlook: false,
 }
 
 //creating the reducer to sync when to call the api request
@@ -603,6 +608,27 @@ export default function tourGroupReducer(state = initialState, action) {
       return {
         ...state,
         klookLivePricingLoading: false,
+        error: action.payload,
+      }
+
+    case CREATE_VARIANT_FROM_KLOOK_REQUEST:
+      return {
+        ...state,
+        creatingVariantFromKlook: true,
+        error: null,
+      }
+
+    case CREATE_VARIANT_FROM_KLOOK_SUCCESS:
+      return {
+        ...state,
+        creatingVariantFromKlook: false,
+        // Tour group will be refreshed by saga
+      }
+
+    case CREATE_VARIANT_FROM_KLOOK_FAILURE:
+      return {
+        ...state,
+        creatingVariantFromKlook: false,
         error: action.payload,
       }
 

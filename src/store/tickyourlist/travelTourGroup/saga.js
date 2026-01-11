@@ -23,6 +23,7 @@ import {
   FETCH_KLOOK_ACTIVITY_REQUEST,
   BULK_LINK_KLOOK_MAPPINGS_REQUEST,
   FETCH_KLOOK_LIVE_PRICING_REQUEST,
+  CREATE_VARIANT_FROM_KLOOK_REQUEST,
 } from "./actionTypes"
 import {
   fetchTourGroupsSuccess,
@@ -72,6 +73,9 @@ import {
   bulkLinkKlookMappingsFailure,
   fetchKlookLivePricingSuccess,
   fetchKlookLivePricingFailure,
+  createVariantFromKlookSuccess,
+  createVariantFromKlookFailure,
+  fetchTourGroupByIdRequest,
 } from "./action"
 
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
@@ -100,6 +104,7 @@ import {
   getKlookActivity,
   bulkLinkKlookMappings,
   getKlookLivePricing,
+  createVariantFromKlookPackage,
 } from "helpers/location_management_helper"
 
 // 1. Fetch All Tour Groups
@@ -459,6 +464,33 @@ export default function* tourGroupSaga() {
   yield takeEvery(FETCH_KLOOK_ACTIVITY_REQUEST, fetchKlookActivitySaga)
   yield takeEvery(BULK_LINK_KLOOK_MAPPINGS_REQUEST, bulkLinkKlookMappingsSaga)
   yield takeEvery(FETCH_KLOOK_LIVE_PRICING_REQUEST, fetchKlookLivePricingSaga)
+  yield takeEvery(CREATE_VARIANT_FROM_KLOOK_REQUEST, createVariantFromKlookSaga)
+}
+
+// Create Variant from Klook Package
+function* createVariantFromKlookSaga(action) {
+  try {
+    const { tourGroupId, klookActivityId, klookPackageId } = action.payload
+    console.log('🔵 Saga: Creating variant from Klook package:', { tourGroupId, klookActivityId, klookPackageId })
+
+    const response = yield call(createVariantFromKlookPackage, tourGroupId, klookActivityId, klookPackageId)
+    console.log('🟢 Saga: Variant created response:', response)
+
+    const variantData = response?.data || response
+    console.log('📦 Variant data:', variantData)
+
+    yield put(createVariantFromKlookSuccess(tourGroupId, variantData))
+
+    // Refresh tour group to get updated variants
+    yield put(fetchTourGroupByIdRequest(tourGroupId))
+
+    showToastSuccess(`Variant "${variantData.variant?.name}" created successfully!`)
+  } catch (error) {
+    console.error('🔴 Error creating variant from Klook:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to create variant from Klook'
+    yield put(createVariantFromKlookFailure(errorMessage))
+    showToastError(errorMessage)
+  }
 }
 
 // Fetch variant details

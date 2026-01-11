@@ -540,7 +540,7 @@ const getKlookLivePricing = (tourGroupId, startDate, endDate, variantId) => {
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
   if (variantId) params.variantId = variantId;
-  
+
   return get(`/v1/klook/pricing/live/${tourGroupId}`, { params });
 };
 
@@ -561,6 +561,14 @@ const bulkConnectToursToCategory = (categoryId, tourGroupIds) => {
 
 const bulkConnectToursToSubcategory = (subcategoryId, tourGroupIds) => {
   return put(`${url.BULK_CONNECT_TOURS_TO_SUBCATEGORY}/${subcategoryId}`, { tourGroupIds });
+};
+
+const createVariantFromKlookPackage = (tourGroupId, klookActivityId, klookPackageId) => {
+  return post(`/v1/klook/sync/create-variant`, {
+    tourGroupId,
+    klookActivityId,
+    klookPackageId,
+  });
 };
 
 export {
@@ -694,6 +702,7 @@ export {
   searchKlookActivities,
   getKlookActivity,
   bulkLinkKlookMappings,
-  getKlookLivePricing
+  getKlookLivePricing,
+  createVariantFromKlookPackage,
 
 };

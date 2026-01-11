@@ -455,3 +455,19 @@ export const fetchKlookLivePricingFailure = error => ({
   type: FETCH_KLOOK_LIVE_PRICING_FAILURE,
   payload: error,
 })
+
+// Create Variant from Klook Package
+export const createVariantFromKlookRequest = (tourGroupId, klookActivityId, klookPackageId) => ({
+  type: CREATE_VARIANT_FROM_KLOOK_REQUEST,
+  payload: { tourGroupId, klookActivityId, klookPackageId },
+})
+
+export const createVariantFromKlookSuccess = (tourGroupId, variantData) => ({
+  type: CREATE_VARIANT_FROM_KLOOK_SUCCESS,
+  payload: { tourGroupId, variantData },
+})
+
+export const createVariantFromKlookFailure = error => ({
+  type: CREATE_VARIANT_FROM_KLOOK_FAILURE,
+  payload: error,
+})
