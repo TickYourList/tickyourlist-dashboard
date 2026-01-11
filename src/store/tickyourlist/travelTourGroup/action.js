@@ -471,3 +471,19 @@ export const createVariantFromKlookFailure = error => ({
   type: CREATE_VARIANT_FROM_KLOOK_FAILURE,
   payload: error,
 })
+
+// Delete Klook Mapping
+export const deleteKlookMappingRequest = (mappingId, tourGroupId) => ({
+  type: DELETE_KLOOK_MAPPING_REQUEST,
+  payload: { mappingId, tourGroupId },
+})
+
+export const deleteKlookMappingSuccess = (mappingId, tourGroupId) => ({
+  type: DELETE_KLOOK_MAPPING_SUCCESS,
+  payload: { mappingId, tourGroupId },
+})
+
+export const deleteKlookMappingFailure = error => ({
+  type: DELETE_KLOOK_MAPPING_FAILURE,
+  payload: error,
+})

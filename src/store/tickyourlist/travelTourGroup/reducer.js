@@ -73,6 +73,9 @@ import {
   CREATE_VARIANT_FROM_KLOOK_REQUEST,
   CREATE_VARIANT_FROM_KLOOK_SUCCESS,
   CREATE_VARIANT_FROM_KLOOK_FAILURE,
+  DELETE_KLOOK_MAPPING_REQUEST,
+  DELETE_KLOOK_MAPPING_SUCCESS,
+  DELETE_KLOOK_MAPPING_FAILURE,
 } from "./actionTypes"
 
 //initial state for fetching tourgroups
@@ -629,6 +632,35 @@ export default function tourGroupReducer(state = initialState, action) {
       return {
         ...state,
         creatingVariantFromKlook: false,
+        error: action.payload,
+      }
+
+    case DELETE_KLOOK_MAPPING_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      }
+
+    case DELETE_KLOOK_MAPPING_SUCCESS:
+      const { mappingId, tourGroupId } = action.payload
+      // Remove mapping from state
+      const updatedMappings = { ...state.klookMappings }
+      if (updatedMappings[tourGroupId]) {
+        updatedMappings[tourGroupId] = updatedMappings[tourGroupId].filter(
+          m => m.mappingId !== mappingId
+        )
+      }
+      return {
+        ...state,
+        loading: false,
+        klookMappings: updatedMappings,
+      }
+
+    case DELETE_KLOOK_MAPPING_FAILURE:
+      return {
+        ...state,
+        loading: false,
         error: action.payload,
       }
 

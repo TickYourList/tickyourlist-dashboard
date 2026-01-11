@@ -24,6 +24,7 @@ import {
   BULK_LINK_KLOOK_MAPPINGS_REQUEST,
   FETCH_KLOOK_LIVE_PRICING_REQUEST,
   CREATE_VARIANT_FROM_KLOOK_REQUEST,
+  DELETE_KLOOK_MAPPING_REQUEST,
 } from "./actionTypes"
 import {
   fetchTourGroupsSuccess,
@@ -76,6 +77,10 @@ import {
   createVariantFromKlookSuccess,
   createVariantFromKlookFailure,
   fetchTourGroupByIdRequest,
+  deleteKlookMappingRequest,
+  deleteKlookMappingSuccess,
+  deleteKlookMappingFailure,
+  fetchKlookMappingsRequest,
 } from "./action"
 
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
@@ -105,6 +110,7 @@ import {
   bulkLinkKlookMappings,
   getKlookLivePricing,
   createVariantFromKlookPackage,
+  deleteKlookMapping,
 } from "helpers/location_management_helper"
 
 // 1. Fetch All Tour Groups
@@ -465,6 +471,32 @@ export default function* tourGroupSaga() {
   yield takeEvery(BULK_LINK_KLOOK_MAPPINGS_REQUEST, bulkLinkKlookMappingsSaga)
   yield takeEvery(FETCH_KLOOK_LIVE_PRICING_REQUEST, fetchKlookLivePricingSaga)
   yield takeEvery(CREATE_VARIANT_FROM_KLOOK_REQUEST, createVariantFromKlookSaga)
+  yield takeEvery(DELETE_KLOOK_MAPPING_REQUEST, deleteKlookMappingSaga)
+}
+
+// Delete Klook Mapping
+function* deleteKlookMappingSaga(action) {
+  try {
+    const { mappingId, tourGroupId } = action.payload
+    console.log('🔵 Saga: Deleting Klook mapping:', { mappingId, tourGroupId })
+
+    const response = yield call(deleteKlookMapping, mappingId)
+    console.log('🟢 Saga: Mapping deleted response:', response)
+
+    yield put(deleteKlookMappingSuccess(mappingId, tourGroupId))
+
+    // Refresh mappings to update UI
+    if (tourGroupId) {
+      yield put(fetchKlookMappingsRequest(tourGroupId))
+    }
+
+    showToastSuccess('Mapping disconnected successfully!')
+  } catch (error) {
+    console.error('🔴 Error deleting Klook mapping:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to disconnect mapping'
+    yield put(deleteKlookMappingFailure(errorMessage))
+    showToastError(errorMessage)
+  }
 }
 
 // Create Variant from Klook Package

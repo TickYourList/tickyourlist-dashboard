@@ -571,6 +571,10 @@ const createVariantFromKlookPackage = (tourGroupId, klookActivityId, klookPackag
   });
 };
 
+const deleteKlookMapping = (mappingId) => {
+  return del(`/v1/klook/mapping/${mappingId}`);
+};
+
 export {
   getCountriesList,
   getCurrencyList,
@@ -704,5 +708,6 @@ export {
   bulkLinkKlookMappings,
   getKlookLivePricing,
   createVariantFromKlookPackage,
+  deleteKlookMapping,
 
 };

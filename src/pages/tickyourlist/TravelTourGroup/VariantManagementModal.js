@@ -181,7 +181,7 @@ const VariantManagementModal = ({
                 <div className="d-flex gap-2">
                     <Button color="primary" size="sm" onClick={handleCreateFromKlook}>
                         <i className="mdi mdi-import me-1"></i>
-                        Import from Klook
+                        Import from Provider
                     </Button>
                     <Button color="success" size="sm" onClick={handleCreateManual}>
                         <i className="mdi mdi-plus-circle me-1"></i>

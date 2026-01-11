@@ -260,9 +260,11 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
 
         // Map SKU type to badge color
         const getSkuTypeBadgeColor = (type) => {
-            switch (type) {
+            const upperType = (type || '').toUpperCase();
+            switch (upperType) {
                 case 'ADULT': return 'primary';
                 case 'CHILD': return 'warning';
+                case 'YOUTH': return 'info';
                 case 'INFANT': return 'info';
                 case 'SENIOR': return 'success';
                 default: return 'secondary';
@@ -293,11 +295,15 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                                     bsSize="sm"
                                 >
                                     <option value="ALL">All Types</option>
-                                    {availableSkuTypes.map(skuType => (
-                                        <option key={skuType.skuId} value={skuType.skuId}>
-                                            {skuType.title} ({skuType.skuType})
-                                        </option>
-                                    ))}
+                                    {availableSkuTypes.map(skuType => {
+                                        // Ensure skuId is converted to string for option value
+                                        const skuIdValue = String(skuType.skuId);
+                                        return (
+                                            <option key={skuIdValue} value={skuIdValue}>
+                                                {skuType.title} ({skuType.skuType})
+                                            </option>
+                                        );
+                                    })}
                                 </Input>
                             </div>
                         )}
@@ -313,10 +319,20 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                 </div>
                 <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                     {filteredSchedules
-                        .filter(schedule => selectedSkuType === 'ALL' || schedule.skuId === parseInt(selectedSkuType))
+                        .filter(schedule => {
+                            if (selectedSkuType === 'ALL') return true;
+                            // Convert both to numbers for comparison
+                            const scheduleSkuId = typeof schedule.skuId === 'number' ? schedule.skuId : parseInt(schedule.skuId);
+                            const selectedSkuId = typeof selectedSkuType === 'number' ? selectedSkuType : parseInt(selectedSkuType);
+                            return scheduleSkuId === selectedSkuId;
+                        })
                         .map((schedule, schedIdx) => {
                             // Find SKU details from variant.skus array
-                            const skuInfo = variant.skus?.find(sku => sku.skuId === schedule.skuId) || null;
+                            const skuInfo = variant.skus?.find(sku => {
+                                const skuId = typeof sku.skuId === 'number' ? sku.skuId : parseInt(sku.skuId);
+                                const scheduleSkuId = typeof schedule.skuId === 'number' ? schedule.skuId : parseInt(schedule.skuId);
+                                return skuId === scheduleSkuId;
+                            }) || null;
                             const skuTypeLabel = skuInfo ? skuInfo.title : `SKU ${schedule.skuId}`;
                             const skuTypeBadge = skuInfo?.skuType || 'UNKNOWN';
 
@@ -601,7 +617,7 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
             <Card>
                 <CardBody className="text-center py-5">
                     <Spinner color="primary" className="me-2" />
-                    <span>Loading live pricing from Klook...</span>
+                    <span>Loading live pricing from provider...</span>
                 </CardBody>
             </Card>
         );
@@ -613,7 +629,7 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                 <CardBody>
                     <Alert color="info">
                         <i className="mdi mdi-information me-2"></i>
-                        No live pricing data available. Make sure the tour group is connected to Klook.
+                        No live pricing data available. Make sure the tour group is connected to provider.
                     </Alert>
                 </CardBody>
             </Card>
@@ -628,7 +644,7 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                         <Col md={6}>
                             <h5 className="mb-0">
                                 <i className="mdi mdi-currency-usd me-2"></i>
-                                Live Klook Pricing
+                                Live Provider Pricing
                             </h5>
                         </Col>
                         <Col md={6}>
@@ -1041,6 +1057,114 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                                     </Card>
                                 );
                             })}
+
+                            {/* Unmapped Klook Packages */}
+                            {pricingData.unmappedPackages && pricingData.unmappedPackages.length > 0 && (
+                                <Card className="mt-4 border-info">
+                                    <CardHeader className="bg-info text-white">
+                                        <div className="d-flex align-items-center">
+                                            <i className="mdi mdi-package-variant-closed me-2"></i>
+                                            <h6 className="mb-0">
+                                                Additional Provider Packages Available
+                                            </h6>
+                                            <Badge color="light" className="ms-2 text-info">
+                                                {pricingData.unmappedPackages.reduce((sum, act) => sum + act.packages.length, 0)} package{pricingData.unmappedPackages.reduce((sum, act) => sum + act.packages.length, 0) !== 1 ? 's' : ''}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardBody>
+                                        <Alert color="info" className="mb-3">
+                                            <i className="mdi mdi-information me-2"></i>
+                                            The following packages are available from the provider but are not yet mapped to TYL variants. You can add them using the "Import from Provider" feature.
+                                        </Alert>
+                                        {pricingData.unmappedPackages.map((activityData, actIdx) => (
+                                            <div key={actIdx} className="mb-4">
+                                                <div className="d-flex align-items-center mb-2">
+                                                    <h6 className="mb-0">
+                                                        <i className="mdi mdi-map-marker me-2 text-primary"></i>
+                                                        {activityData.activityTitle}
+                                                    </h6>
+                                                    <Badge color="secondary" className="ms-2">
+                                                        Activity ID: {activityData.activityId}
+                                                    </Badge>
+                                                    <Badge color="info" className="ms-2">
+                                                        {activityData.packages.length} package{activityData.packages.length !== 1 ? 's' : ''}
+                                                    </Badge>
+                                                </div>
+                                                <Table size="sm" bordered responsive striped>
+                                                    <thead className="table-light">
+                                                        <tr>
+                                                            <th style={{ width: '80px' }}>Package ID</th>
+                                                            <th>Package Name</th>
+                                                            <th style={{ width: '100px' }}>SKUs</th>
+                                                            <th style={{ width: '120px' }}>Pax Range</th>
+                                                            <th style={{ width: '100px' }}>Type</th>
+                                                            <th style={{ width: '120px' }}>Features</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {activityData.packages.map((pkg, pkgIdx) => (
+                                                            <tr key={pkgIdx}>
+                                                                <td>
+                                                                    <strong>{pkg.packageId}</strong>
+                                                                </td>
+                                                                <td>
+                                                                    <div style={{ fontWeight: '500' }}>
+                                                                        {pkg.packageName}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="text-center">
+                                                                    <Badge color="info">
+                                                                        {pkg.skuCount} SKU{pkg.skuCount !== 1 ? 's' : ''}
+                                                                    </Badge>
+                                                                </td>
+                                                                <td className="text-center">
+                                                                    {pkg.minPax || 0} - {pkg.maxPax || '∞'}
+                                                                </td>
+                                                                <td>
+                                                                    <div className="d-flex flex-column gap-1">
+                                                                        {pkg.isOpenDate && (
+                                                                            <Badge color="success" style={{ fontSize: '10px' }}>
+                                                                                Open Date
+                                                                            </Badge>
+                                                                        )}
+                                                                        {pkg.instant && (
+                                                                            <Badge color="warning" style={{ fontSize: '10px' }}>
+                                                                                Instant
+                                                                            </Badge>
+                                                                        )}
+                                                                        {pkg.ticketType && (
+                                                                            <Badge color="secondary" style={{ fontSize: '10px' }}>
+                                                                                Type: {pkg.ticketType}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="small">
+                                                                        {pkg.voucherUsage && (
+                                                                            <div>
+                                                                                <i className="mdi mdi-ticket me-1"></i>
+                                                                                {pkg.voucherUsage}
+                                                                            </div>
+                                                                        )}
+                                                                        {pkg.cancellationType && (
+                                                                            <div>
+                                                                                <i className="mdi mdi-cancel me-1"></i>
+                                                                                {pkg.cancellationType}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </Table>
+                                            </div>
+                                        ))}
+                                    </CardBody>
+                                </Card>
+                            )}
                         </>
                     )}
                 </CardBody>

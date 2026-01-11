@@ -222,7 +222,7 @@ const ConnectKlookModal = ({
     // Handle connect
     const handleConnect = () => {
         if (!klookActivityId || !klookActivity) {
-            showToastError("Please select a Klook activity first");
+            showToastError("Please select a provider activity first");
             return;
         }
 
@@ -276,7 +276,7 @@ const ConnectKlookModal = ({
 
     return (
         <Modal isOpen={isOpen} toggle={toggle} size="xl">
-            <ModalHeader toggle={toggle}>Connect with Klook</ModalHeader>
+            <ModalHeader toggle={toggle}>Connect with External Provider</ModalHeader>
             <ModalBody>
                 {loadingTourGroup ? (
                     <div className="text-center py-4">
@@ -288,7 +288,7 @@ const ConnectKlookModal = ({
                         {/* Search/Select Activity */}
                         <Card className="mb-3">
                             <CardBody>
-                                <h5 className="mb-3">Step 1: Select Klook Activity</h5>
+                                <h5 className="mb-3">Step 1: Select Provider Activity</h5>
                                 <Row>
                                     <Col md={8}>
                                         <Label>Search or Enter Activity ID</Label>
@@ -399,7 +399,7 @@ const ConnectKlookModal = ({
                                             <thead>
                                                 <tr>
                                                     <th>TYL Variant</th>
-                                                    <th>Klook Package</th>
+                                                    <th>Provider Package</th>
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
@@ -456,7 +456,7 @@ const ConnectKlookModal = ({
                                         <Alert color="warning">
                                             <strong>No variants found</strong>
                                             <br />
-                                            <small>This tour group doesn't have any variants. Please add variants before connecting to Klook.</small>
+                                            <small>This tour group doesn't have any variants. Please add variants before connecting to provider.</small>
                                         </Alert>
                                     </CardBody>
                                 </Card>
@@ -556,7 +556,7 @@ const ConnectKlookModal = ({
                                 klookActivityLoading ? "Loading activity details..." :
                                     !klookActivityId ? "Please enter an activity ID" :
                                         connecting || loading ? "Connecting..." :
-                                            "Connect with Klook"
+                                            "Connect with External Provider"
                     }
                 >
                     {connecting || loading ? (
@@ -565,7 +565,7 @@ const ConnectKlookModal = ({
                             Connecting...
                         </>
                     ) : (
-                        "Connect with Klook"
+                        "Connect with External Provider"
                     )}
                 </Button>
             </ModalFooter>

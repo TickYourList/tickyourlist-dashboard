@@ -366,10 +366,10 @@ function TourGroupTable() {
             {reduxKlookMappings && reduxKlookMappings[row.original._id] && reduxKlookMappings[row.original._id].length > 0 && (
               <span
                 className="badge bg-success"
-                title="Connected to Klook"
+                title="Connected to External Provider"
               >
                 <i className="fas fa-plug me-1"></i>
-                Klook
+                Provider
               </span>
             )}
           </div>
@@ -501,7 +501,7 @@ function TourGroupTable() {
             {canEditTourGroup && (
               <button
                 className="btn p-0 border-0 bg-transparent"
-                title="Connect with Klook"
+                title="Connect with External Provider"
                 onClick={() => handleConnectKlook(row.original)}
               >
                 <i className="fas fa-plug font-size-18 text-success"></i>
