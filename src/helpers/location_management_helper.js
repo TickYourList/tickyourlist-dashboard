@@ -545,6 +545,10 @@ const getKlookLivePricing = (tourGroupId, startDate, endDate, variantId, currenc
   return get(`/v1/klook/pricing/live/${tourGroupId}`, { params });
 };
 
+const getSupportedCurrencies = () => {
+  return get(`/v1/klook/pricing/currencies`);
+};
+
 const connectTourGroupToCategories = (tourGroupId, categoryIds, subcategoryIds) => {
   // Convert to array of IDs (strings) as expected by the API
   const categoryConnections = Array.isArray(categoryIds) ? categoryIds : [];
@@ -710,5 +714,6 @@ export {
   getKlookLivePricing,
   createVariantFromKlookPackage,
   deleteKlookMapping,
+  getSupportedCurrencies,
 
 };

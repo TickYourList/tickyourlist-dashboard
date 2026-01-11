@@ -27,8 +27,10 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import BootstrapTheme from "@fullcalendar/bootstrap";
+import Select from "react-select";
 import { fetchKlookLivePricingRequest } from "store/tickyourlist/travelTourGroup/action";
 import { format, parseISO, isSameDay, startOfDay } from "date-fns";
+import { getSupportedCurrencies } from "helpers/location_management_helper";
 import "@fullcalendar/bootstrap/main.css";
 
 const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
@@ -59,8 +61,43 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
 
     // Currency selection
     const [selectedCurrency, setSelectedCurrency] = useState('USD');
+    const [availableCurrencies, setAvailableCurrencies] = useState([]);
+    const [loadingCurrencies, setLoadingCurrencies] = useState(false);
 
     const pricingData = klookLivePricing[tourGroupId];
+
+    // Fetch supported currencies on mount
+    useEffect(() => {
+        const fetchCurrencies = async () => {
+            setLoadingCurrencies(true);
+            try {
+                const response = await getSupportedCurrencies();
+                // Handle both response formats: { data: { currencies } } or { currencies }
+                const currencies = response?.data?.currencies || response?.data?.data?.currencies || response?.currencies || [];
+
+                if (currencies.length > 0) {
+                    setAvailableCurrencies(currencies);
+                    console.log(`✅ Loaded ${currencies.length} currencies`);
+                } else {
+                    throw new Error('No currencies returned');
+                }
+            } catch (error) {
+                console.error('Error fetching currencies:', error);
+                // Fallback to common currencies
+                setAvailableCurrencies([
+                    { code: 'USD', symbol: '$', label: 'USD ($)' },
+                    { code: 'EUR', symbol: '€', label: 'EUR (€)' },
+                    { code: 'GBP', symbol: '£', label: 'GBP (£)' },
+                    { code: 'INR', symbol: '₹', label: 'INR (₹)' },
+                    { code: 'SGD', symbol: 'S$', label: 'SGD (S$)' },
+                    { code: 'AUD', symbol: 'A$', label: 'AUD (A$)' },
+                ]);
+            } finally {
+                setLoadingCurrencies(false);
+            }
+        };
+        fetchCurrencies();
+    }, []);
 
     // Extract all timeslots and group by date for calendar
     const calendarEvents = useMemo(() => {
@@ -679,31 +716,55 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                                 </Col>
                                 <Col md={3}>
                                     <Label className="small">Currency</Label>
-                                    <Input
-                                        type="select"
-                                        value={selectedCurrency}
-                                        onChange={(e) => {
-                                            setSelectedCurrency(e.target.value);
+                                    <Select
+                                        value={availableCurrencies.find(c => c.code === selectedCurrency) ? {
+                                            value: selectedCurrency,
+                                            label: availableCurrencies.find(c => c.code === selectedCurrency)?.label || `${selectedCurrency} (${availableCurrencies.find(c => c.code === selectedCurrency)?.symbol || selectedCurrency})`
+                                        } : null}
+                                        onChange={(option) => {
+                                            if (option) {
+                                                setSelectedCurrency(option.value);
+                                            }
                                         }}
-                                        size="sm"
-                                    >
-                                        <option value="USD">USD ($)</option>
-                                        <option value="EUR">EUR (€)</option>
-                                        <option value="GBP">GBP (£)</option>
-                                        <option value="INR">INR (₹)</option>
-                                        <option value="SGD">SGD (S$)</option>
-                                        <option value="AUD">AUD (A$)</option>
-                                        <option value="CAD">CAD (C$)</option>
-                                        <option value="JPY">JPY (¥)</option>
-                                        <option value="AED">AED (د.إ)</option>
-                                        <option value="SAR">SAR (﷼)</option>
-                                        <option value="THB">THB (฿)</option>
-                                        <option value="MYR">MYR (RM)</option>
-                                        <option value="IDR">IDR (Rp)</option>
-                                        <option value="PHP">PHP (₱)</option>
-                                        <option value="CNY">CNY (¥)</option>
-                                        <option value="HKD">HKD (HK$)</option>
-                                    </Input>
+                                        options={availableCurrencies.map(c => ({
+                                            value: c.code,
+                                            label: c.label || `${c.code} (${c.symbol || c.code})`,
+                                        }))}
+                                        isSearchable
+                                        isClearable={false}
+                                        placeholder={loadingCurrencies ? "Loading currencies..." : "Search currency..."}
+                                        isLoading={loadingCurrencies}
+                                        className="react-select-container"
+                                        classNamePrefix="react-select"
+                                        styles={{
+                                            control: (base) => ({
+                                                ...base,
+                                                minHeight: '31px',
+                                                fontSize: '14px',
+                                            }),
+                                            option: (base) => ({
+                                                ...base,
+                                                fontSize: '14px',
+                                            }),
+                                            singleValue: (base) => ({
+                                                ...base,
+                                                fontSize: '14px',
+                                            }),
+                                            menu: (base) => ({
+                                                ...base,
+                                                zIndex: 9999,
+                                            }),
+                                        }}
+                                        menuPortalTarget={document.body}
+                                        menuPosition="fixed"
+                                        filterOption={(option, searchText) => {
+                                            const label = option.label || '';
+                                            const value = option.value || '';
+                                            const search = searchText.toLowerCase();
+                                            return label.toLowerCase().includes(search) ||
+                                                value.toLowerCase().includes(search);
+                                        }}
+                                    />
                                 </Col>
                                 <Col md={2}>
                                     <Label className="small d-block">&nbsp;</Label>
