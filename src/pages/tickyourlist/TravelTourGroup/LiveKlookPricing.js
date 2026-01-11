@@ -652,8 +652,8 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                             </h5>
                         </Col>
                         <Col md={6}>
-                            <Row>
-                                <Col md={4}>
+                            <Row className="g-2">
+                                <Col md={3}>
                                     <Label className="small">Start Date</Label>
                                     <Input
                                         type="date"
