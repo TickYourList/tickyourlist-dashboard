@@ -136,6 +136,68 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
         });
     }, [pricingData]);
 
+    // Get all dates in a range
+    const getAllDatesInRange = (start, end) => {
+        const dates = [];
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const currentDate = new Date(startDate);
+
+        while (currentDate <= endDate) {
+            dates.push(new Date(currentDate));
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return dates;
+    };
+
+    // Get available dates from variant schedules
+    const getAvailableDatesFromVariant = (variant) => {
+        const availableDates = new Set();
+
+        if (!variant.schedules) return availableDates;
+
+        variant.schedules.forEach(schedule => {
+            if (!schedule.calendars) return;
+
+            schedule.calendars.forEach(monthData => {
+                if (!monthData.timeslots) return;
+
+                monthData.timeslots.forEach(slot => {
+                    if (slot.startTime) {
+                        try {
+                            const slotDate = new Date(slot.startTime);
+                            const dateStr = slotDate.toISOString().split('T')[0]; // YYYY-MM-DD
+                            availableDates.add(dateStr);
+                        } catch (e) {
+                            console.error('Error parsing date:', slot.startTime, e);
+                        }
+                    }
+                });
+            });
+        });
+
+        return availableDates;
+    };
+
+    // Get unavailable dates for a variant within the date range
+    const getUnavailableDates = (variant) => {
+        if (!variant || !startDate || !endDate) return [];
+
+        const allDates = getAllDatesInRange(startDate, endDate);
+        const availableDates = getAvailableDatesFromVariant(variant);
+
+        const unavailableDates = allDates
+            .map(date => {
+                const dateStr = date.toISOString().split('T')[0];
+                return { date, dateStr };
+            })
+            .filter(({ dateStr }) => !availableDates.has(dateStr))
+            .map(({ date }) => date);
+
+        return unavailableDates;
+    };
+
     // Filter timeslots by selected date
     const filterTimeslotsByDate = (variant, selectedDate) => {
         if (!selectedDate || !variant.schedules) return variant.schedules;
@@ -880,6 +942,99 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
 
                                                     {/* Schedules */}
                                                     {renderVariantSchedules(variant, variantId, availableSkuTypes, selectedSkuType)}
+
+                                                    {/* Unavailable Dates */}
+                                                    {(() => {
+                                                        const unavailableDates = getUnavailableDates(variant);
+                                                        if (unavailableDates.length === 0) return null;
+
+                                                        // Group consecutive dates for better readability
+                                                        const groupedDates = [];
+                                                        let currentGroup = null;
+
+                                                        unavailableDates.forEach((date, idx) => {
+                                                            if (!currentGroup) {
+                                                                currentGroup = { start: date, end: date, count: 1 };
+                                                            } else {
+                                                                const prevDate = unavailableDates[idx - 1];
+                                                                const daysDiff = Math.floor((date - prevDate) / (1000 * 60 * 60 * 24));
+
+                                                                if (daysDiff === 1) {
+                                                                    // Consecutive date
+                                                                    currentGroup.end = date;
+                                                                    currentGroup.count++;
+                                                                } else {
+                                                                    // Gap found, save current group and start new one
+                                                                    groupedDates.push(currentGroup);
+                                                                    currentGroup = { start: date, end: date, count: 1 };
+                                                                }
+                                                            }
+                                                        });
+
+                                                        if (currentGroup) {
+                                                            groupedDates.push(currentGroup);
+                                                        }
+
+                                                        return (
+                                                            <div className="mt-4 pt-3 border-top">
+                                                                <Alert color="warning" className="mb-3">
+                                                                    <div className="d-flex align-items-center mb-2">
+                                                                        <i className="mdi mdi-calendar-remove me-2"></i>
+                                                                        <strong>
+                                                                            Unavailable Dates ({unavailableDates.length} date{unavailableDates.length !== 1 ? 's' : ''})
+                                                                        </strong>
+                                                                    </div>
+                                                                    <small className="text-muted">
+                                                                        The following dates within the selected range ({format(new Date(startDate), 'MMM dd, yyyy')} - {format(new Date(endDate), 'MMM dd, yyyy')}) do not have any pricing or availability:
+                                                                    </small>
+                                                                </Alert>
+                                                                <div style={{
+                                                                    display: 'flex',
+                                                                    flexWrap: 'wrap',
+                                                                    gap: '8px',
+                                                                    maxHeight: '200px',
+                                                                    overflowY: 'auto',
+                                                                    padding: '10px',
+                                                                    backgroundColor: '#f8f9fa',
+                                                                    borderRadius: '4px',
+                                                                    border: '1px solid #dee2e6'
+                                                                }}>
+                                                                    {groupedDates.map((group, groupIdx) => (
+                                                                        <Badge
+                                                                            key={groupIdx}
+                                                                            color="secondary"
+                                                                            style={{
+                                                                                padding: '6px 10px',
+                                                                                fontSize: '12px',
+                                                                                display: 'inline-flex',
+                                                                                alignItems: 'center',
+                                                                                gap: '4px'
+                                                                            }}
+                                                                        >
+                                                                            {group.count === 1 ? (
+                                                                                <>
+                                                                                    <i className="mdi mdi-calendar-blank"></i>
+                                                                                    {format(group.start, 'MMM dd, yyyy')}
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <i className="mdi mdi-calendar-range"></i>
+                                                                                    {format(group.start, 'MMM dd')} - {format(group.end, 'MMM dd, yyyy')}
+                                                                                    <span className="ms-1">({group.count} days)</span>
+                                                                                </>
+                                                                            )}
+                                                                        </Badge>
+                                                                    ))}
+                                                                </div>
+                                                                {groupedDates.length > 10 && (
+                                                                    <small className="text-muted mt-2 d-block">
+                                                                        <i className="mdi mdi-information me-1"></i>
+                                                                        Showing {groupedDates.length} date range{groupedDates.length !== 1 ? 's' : ''}. Scroll to see all.
+                                                                    </small>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </>
                                             )}
                                         </CardBody>
