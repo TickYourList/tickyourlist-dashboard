@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import * as Yup from "yup";
 import { useFormik } from "formik";
+import Select from "react-select";
 import {
     Card,
     CardBody,
@@ -29,6 +30,7 @@ import {
     deleteSubcategory,
     resetCategoryStatus,
 } from "store/actions";
+import { getCities } from "store/actions";
 import { usePermissions, MODULES, ACTIONS } from '../../../helpers/permissions';
 
 // Component imports
@@ -45,6 +47,8 @@ const SubCategory = () => {
         error,
         deleteSuccess,
     } = useSelector((state) => state.travelSubCategoryReducer);
+    
+    const cities = useSelector((state) => state.travelCity?.cities || []);
     
     const { can, loading: permissionLoading, isPermissionsReady } = usePermissions();
 
@@ -69,12 +73,17 @@ const SubCategory = () => {
     const canEdit = can(ACTIONS.CAN_EDIT, MODULES.SUBCATEGORY_PERMS);
     const canDelete = can(ACTIONS.CAN_DELETE, MODULES.SUBCATEGORY_PERMS);
 
+    // Fetch cities on mount
+    useEffect(() => {
+        dispatch(getCities());
+    }, [dispatch]);
+
     // Fetch subcategories if user has view permission
     useEffect(() => {
         if (isPermissionsReady && canView) {
-            dispatch(getSubcategories());
+            dispatch(getSubcategories(filterCityCode || null));
         }
-    }, [dispatch, canView, isPermissionsReady]);
+    }, [dispatch, canView, isPermissionsReady, filterCityCode]);
     
     // Manage "No Subcategories Found" message delay
     useEffect(() => {
@@ -163,17 +172,9 @@ const SubCategory = () => {
         }
     };
 
-    const handleApplyCityCodeFilter = () => {
-        if (canView) {
-            dispatch(getSubcategories());
-        }
-    };
-
-    const handleClearFilter = () => {
-        setFilterCityCode("");
-        if (canView) {
-            dispatch(getSubcategories());
-        }
+    const handleCityChange = (selectedOption) => {
+        const cityCode = selectedOption?.value || "";
+        setFilterCityCode(cityCode);
     };
 
     const handleReloadData = () => {
@@ -347,30 +348,31 @@ const SubCategory = () => {
         if (canView) {
             return (
                 <>
-                    <Row className="mb-3">
-                        <Col md={4}>
-                            <Label htmlFor="cityCodeFilterInput" className="form-label">
-                                Filter by City Code (e.g., PNQ, DEL)
-                            </Label>
-                            <Input
-                                id="cityCodeFilterInput"
-                                type="text"
-                                value={filterCityCode}
-                                onChange={(e) => setFilterCityCode(e.target.value.toUpperCase())}
-                                placeholder="Enter City Code"
-                            />
-                        </Col>
-                        <Col md={2} className="d-flex align-items-end">
-                            <button className="btn btn-primary" onClick={handleApplyCityCodeFilter}>
-                                Apply Filter
-                            </button>
-                            {filterCityCode && (
-                                <button className="btn btn-secondary ms-2" onClick={handleClearFilter}>
-                                    Clear Filter
-                                </button>
-                            )}
-                        </Col>
-                    </Row>
+                    <Card className="mb-3">
+                        <CardBody>
+                            <Row>
+                                <Col md={4}>
+                                    <Label>City</Label>
+                                    <Select
+                                        id="city-select"
+                                        isClearable
+                                        isSearchable
+                                        placeholder="Search and select a city..."
+                                        options={cities.map(city => ({
+                                            value: city.cityCode,
+                                            label: `${city.cityName || city.city} (${city.cityCode})`
+                                        }))}
+                                        value={filterCityCode ? cities.find(c => c.cityCode === filterCityCode) ? {
+                                            value: filterCityCode,
+                                            label: `${cities.find(c => c.cityCode === filterCityCode)?.cityName || cities.find(c => c.cityCode === filterCityCode)?.city} (${filterCityCode})`
+                                        } : null : null}
+                                        onChange={handleCityChange}
+                                        isDisabled={cities.length === 0}
+                                    />
+                                </Col>
+                            </Row>
+                        </CardBody>
+                    </Card>
                     <Row>
                         <Col xs="12">
                             <Card>

@@ -27,6 +27,7 @@ getSubCategoryDetailsForViewSuccess,
 
 import { 
 getSubcategoriesList,
+getSubcategoriesForCity,
 getTravelCategoriesList,
 addTravelSubcategoryApi,
 getExistingSubcategory,
@@ -43,12 +44,23 @@ import { showToastError, showToastSuccess } from "helpers/toastBuilder"
 import { get, take } from "lodash";
 // import { GET_EXISTING_SUBCATEGORY_FOR_EDIT } from "helpers/locationManagement_url_helpers";
 
-function* fetchSubcategories() {
+function* fetchSubcategories(action) {
   try {
-    const response = yield call(getSubcategoriesList)
-    yield put(getSubcategoriesSuccess(response.data))
+    const cityCode = action.payload || null;
+    let response;
+    if (cityCode) {
+      // Use city-specific endpoint
+      response = yield call(getSubcategoriesForCity, cityCode);
+      // Extract subcategories from the response structure
+      const subcategories = response?.data?.subcategories || response?.data || [];
+      yield put(getSubcategoriesSuccess(subcategories));
+    } else {
+      // Use general endpoint
+      response = yield call(getSubcategoriesList);
+      yield put(getSubcategoriesSuccess(response.data));
+    }
   } catch (error) {
-    yield put(getSubcategoriesFail(error))
+    yield put(getSubcategoriesFail(error));
   }
 }
 

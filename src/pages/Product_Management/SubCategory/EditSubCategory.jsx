@@ -191,6 +191,13 @@ const EditSubCategory = () => {
         }
     }, [formik.values.cityCode, dispatch, canEdit]);
 
+    // 5. Fetch categories when subcategory details are loaded and cityCode is available
+    useEffect(() => {
+        if (canEdit && travelSubcategoryDetails && travelSubcategoryDetails.cityCode) {
+            dispatch(getTravelCategories(travelSubcategoryDetails.cityCode));
+        }
+    }, [travelSubcategoryDetails, canEdit, dispatch]);
+
     useEffect(() => {
         if (success) {
             dispatch(resetUpdateSubcategoryStatus());
