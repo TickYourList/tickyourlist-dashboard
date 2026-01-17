@@ -78,7 +78,7 @@ function TourGroupTable() {
   const canDeleteTourGroup = can(ACTIONS.CAN_DELETE, MODULES.TOUR_GROUP_PERMS)
 
   /* destructuring the tour group state */
-  const { tourGroup, currPage, totalCount, error, searchedTourGroups, loading, klookMappings: reduxKlookMappings } = useSelector(
+  const { tourGroup, currPage, totalCount, error, searchedTourGroups, loading, klookMappings: providerMappings } = useSelector(
     state => state.tourGroup
   )
 
@@ -311,11 +311,11 @@ function TourGroupTable() {
     // Fetch mappings for each displayed tour group
     displayData.forEach((tg) => {
       // Only fetch if not already in Redux state
-      if (!reduxKlookMappings || !reduxKlookMappings[tg._id]) {
+      if (!providerMappings || !providerMappings[tg._id]) {
         dispatch(fetchKlookMappingsRequest(tg._id));
       }
     });
-  }, [displayData, reduxKlookMappings, dispatch])
+  }, [displayData, providerMappings, dispatch])
 
   // Show loading while permissions are being fetched
   // Also show loading if permissions are missing (will auto-retry)
@@ -372,7 +372,7 @@ function TourGroupTable() {
             >
               {row.original.name}
             </Link>
-            {reduxKlookMappings && reduxKlookMappings[row.original._id] && reduxKlookMappings[row.original._id].length > 0 && (
+            {providerMappings && providerMappings[row.original._id] && providerMappings[row.original._id].length > 0 && (
               <span
                 className="badge bg-success"
                 title="Connected to External Provider"
