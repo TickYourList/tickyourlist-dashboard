@@ -71,6 +71,24 @@ import {
   FETCH_KLOOK_LIVE_PRICING_REQUEST,
   FETCH_KLOOK_LIVE_PRICING_SUCCESS,
   FETCH_KLOOK_LIVE_PRICING_FAILURE,
+  CREATE_VARIANT_FROM_KLOOK_REQUEST,
+  CREATE_VARIANT_FROM_KLOOK_SUCCESS,
+  CREATE_VARIANT_FROM_KLOOK_FAILURE,
+  DELETE_KLOOK_MAPPING_REQUEST,
+  DELETE_KLOOK_MAPPING_SUCCESS,
+  DELETE_KLOOK_MAPPING_FAILURE,
+  FETCH_MARKUP_CONFIGS_REQUEST,
+  FETCH_MARKUP_CONFIGS_SUCCESS,
+  FETCH_MARKUP_CONFIGS_FAILURE,
+  UPSERT_MARKUP_CONFIG_REQUEST,
+  UPSERT_MARKUP_CONFIG_SUCCESS,
+  UPSERT_MARKUP_CONFIG_FAILURE,
+  UPDATE_MARKUP_CONFIG_REQUEST,
+  UPDATE_MARKUP_CONFIG_SUCCESS,
+  UPDATE_MARKUP_CONFIG_FAILURE,
+  DELETE_MARKUP_CONFIG_REQUEST,
+  DELETE_MARKUP_CONFIG_SUCCESS,
+  DELETE_MARKUP_CONFIG_FAILURE,
 } from "./actionTypes"
 
 // Fetch All Tour Groups
@@ -485,5 +503,66 @@ export const deleteKlookMappingSuccess = (mappingId, tourGroupId) => ({
 
 export const deleteKlookMappingFailure = error => ({
   type: DELETE_KLOOK_MAPPING_FAILURE,
+  payload: error,
+})
+
+// Provider Markup Configuration Actions
+export const fetchMarkupConfigsRequest = (provider, level, tourGroupId, variantId, isActive) => ({
+  type: FETCH_MARKUP_CONFIGS_REQUEST,
+  payload: { provider, level, tourGroupId, variantId, isActive },
+})
+
+export const fetchMarkupConfigsSuccess = configs => ({
+  type: FETCH_MARKUP_CONFIGS_SUCCESS,
+  payload: configs,
+})
+
+export const fetchMarkupConfigsFailure = error => ({
+  type: FETCH_MARKUP_CONFIGS_FAILURE,
+  payload: error,
+})
+
+export const upsertMarkupConfigRequest = configData => ({
+  type: UPSERT_MARKUP_CONFIG_REQUEST,
+  payload: configData,
+})
+
+export const upsertMarkupConfigSuccess = config => ({
+  type: UPSERT_MARKUP_CONFIG_SUCCESS,
+  payload: config,
+})
+
+export const upsertMarkupConfigFailure = error => ({
+  type: UPSERT_MARKUP_CONFIG_FAILURE,
+  payload: error,
+})
+
+export const updateMarkupConfigRequest = (configId, updateData) => ({
+  type: UPDATE_MARKUP_CONFIG_REQUEST,
+  payload: { configId, updateData },
+})
+
+export const updateMarkupConfigSuccess = config => ({
+  type: UPDATE_MARKUP_CONFIG_SUCCESS,
+  payload: config,
+})
+
+export const updateMarkupConfigFailure = error => ({
+  type: UPDATE_MARKUP_CONFIG_FAILURE,
+  payload: error,
+})
+
+export const deleteMarkupConfigRequest = configId => ({
+  type: DELETE_MARKUP_CONFIG_REQUEST,
+  payload: configId,
+})
+
+export const deleteMarkupConfigSuccess = configId => ({
+  type: DELETE_MARKUP_CONFIG_SUCCESS,
+  payload: configId,
+})
+
+export const deleteMarkupConfigFailure = error => ({
+  type: DELETE_MARKUP_CONFIG_FAILURE,
   payload: error,
 })

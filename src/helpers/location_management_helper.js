@@ -272,6 +272,9 @@ const addTourGroupVariantAPI = data =>
 const updateTourGroupVariantAPI = (variantId, data) =>
   put(`${url.PUT_UPDATE_TOUR_GROUP_VARIANT_API}/${variantId}`, data);
 
+const deleteTourGroupVariantAPI = variantId =>
+  del(`${url.DELETE_TOUR_GROUP_VARIANT_API}${variantId}`);
+
 // GET SUB CATEGORIES
 const getSubcategoriesList = () => {
   console.log("The url for getsubcategories ", url.GET_SUBCATEGORIES)
@@ -549,6 +552,29 @@ const getSupportedCurrencies = () => {
   return get(`/v1/klook/pricing/currencies`);
 };
 
+// Provider Markup Configuration APIs
+const getMarkupConfigs = (provider, level, tourGroupId, variantId, isActive) => {
+  const params = {};
+  if (provider) params.provider = provider;
+  if (level) params.level = level;
+  if (tourGroupId) params.tourGroupId = tourGroupId;
+  if (variantId) params.variantId = variantId;
+  if (isActive !== undefined) params.isActive = isActive;
+  return get(`/v1/provider/markup`, { params });
+};
+
+const upsertMarkupConfig = (configData) => {
+  return post(`/v1/provider/markup`, configData);
+};
+
+const updateMarkupConfig = (configId, updateData) => {
+  return put(`/v1/provider/markup/${configId}`, updateData);
+};
+
+const deleteMarkupConfig = (configId) => {
+  return del(`/v1/provider/markup/${configId}`);
+};
+
 const connectTourGroupToCategories = (tourGroupId, categoryIds, subcategoryIds) => {
   // Convert to array of IDs (strings) as expected by the API
   const categoryConnections = Array.isArray(categoryIds) ? categoryIds : [];
@@ -649,6 +675,7 @@ export {
   getTravelTourGroupAPI,
   addTourGroupVariantAPI,
   updateTourGroupVariantAPI,
+  deleteTourGroupVariantAPI,
   updateVariantPrices,
   getSubcategoriesList,
   getExistingSubcategory,

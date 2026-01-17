@@ -96,6 +96,8 @@ export const GET_TRAVEL_TOUR_GROUPS_API =
   "v1/tyltraveltourgroup/get/all/travel-tour-groups-list?page=1&limit=20";
 export const POST_ADD_TOUR_GROUP_VARIANT_API =
   "v1/tyltraveltourgroupvariant/add/travel-tour-group-variant";
+export const DELETE_TOUR_GROUP_VARIANT_API = "/v1/tyltraveltourgroupvariant/tour-group-variants-data/";
+
 export const PUT_UPDATE_TOUR_GROUP_VARIANT_API =
   "v1/tyltraveltourgroupvariant/update";
 

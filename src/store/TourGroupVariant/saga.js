@@ -8,6 +8,7 @@ import {
   GET_TOUR_GROUP_VARIANT_DETAIL,
   GET_PRICING_LIST,
   GET_BOOKING_LIST,
+  DELETE_TOUR_GROUP_VARIANT,
 } from "./actionType";
 
 import {
@@ -27,6 +28,8 @@ import {
   getPricingListFail,
   getBookingListSuccess,
   getBookingListFail,
+  deleteTourGroupVariantSuccess,
+  deleteTourGroupVariantFail,
 } from "./action";
 
 import { getTourGroupVariants,
@@ -37,6 +40,7 @@ import { getTourGroupVariants,
   getTourGroupVariantDetailAPI,
   getPricingListAPI,
   getBookingListAPI,
+  deleteTourGroupVariantAPI,
  } from "../../helpers/location_management_helper";
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 
@@ -218,6 +222,18 @@ function* onGetBookingList({ payload: variantId }) {
   }
 }
 
+function* onDeleteTourGroupVariant({ payload }) {
+  const { id, name } = payload;
+  try {
+    yield call(deleteTourGroupVariantAPI, id);
+    yield put(deleteTourGroupVariantSuccess(id));
+    showToastSuccess(`Successfully deleted tour group variant: ${name || id}`, "Success");
+  } catch (error) {
+    yield put(deleteTourGroupVariantFail(error));
+    showToastError(error.message || "Failed to delete tour group variant", "Error");
+  }
+}
+
 function* tourGroupVariantSaga() {
   yield takeEvery(GET_TOUR_GROUP_VARIANTS, onGetTourGroupVariants);
   yield takeEvery(GET_TOUR_GROUP_VARIANT_BY_ID, onGetTourGroupVariantById);
@@ -227,6 +243,7 @@ function* tourGroupVariantSaga() {
   yield takeLatest(GET_TOUR_GROUP_VARIANT_DETAIL, onGetTourGroupVariantDetail);
   yield takeLatest(GET_PRICING_LIST, onGetPricingList);
   yield takeLatest(GET_BOOKING_LIST, onGetBookingList);
+  yield takeEvery(DELETE_TOUR_GROUP_VARIANT, onDeleteTourGroupVariant);
 }
 
 export default tourGroupVariantSaga;

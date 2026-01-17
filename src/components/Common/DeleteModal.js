@@ -16,8 +16,20 @@ const DeleteModal = ({ show, onDeleteClick, onCloseClick }) => {
           <p className="text-muted font-size-16 mb-4">Are you sure you want to permanently erase the job.</p>
 
           <div className="hstack gap-2 justify-content-center mb-0">
-            <button type="button" className="btn btn-danger" onClick={onDeleteClick}>Delete Now</button>
-            <button type="button" className="btn btn-secondary" onClick={onCloseClick}>Close</button>
+            <button 
+              type="button" 
+              className="btn btn-danger" 
+              onClick={onDeleteClick}
+            >
+              Delete Now
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={onCloseClick}
+            >
+              Close
+            </button>
           </div>
         </ModalBody>
       </div>

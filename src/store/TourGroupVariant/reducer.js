@@ -22,6 +22,9 @@ import {
   GET_BOOKING_LIST,
   GET_BOOKING_LIST_SUCCESS,
   GET_BOOKING_LIST_FAIL,
+  DELETE_TOUR_GROUP_VARIANT,
+  DELETE_TOUR_GROUP_VARIANT_SUCCESS,
+  DELETE_TOUR_GROUP_VARIANT_FAIL,
 } from "./actionType";
 
 const INIT_STATE = {
@@ -223,6 +226,30 @@ const tourGroupVariantReducer = (state = INIT_STATE, action) => {
         ...state,
         bookingLoading: false,
         bookingError: action.payload,
+      };
+
+    case DELETE_TOUR_GROUP_VARIANT:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETE_TOUR_GROUP_VARIANT_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        tourGroupVariants: state.tourGroupVariants.filter(
+          variant => variant._id !== action.payload
+        ),
+        totalRecords: state.totalRecords - 1,
+      };
+
+    case DELETE_TOUR_GROUP_VARIANT_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
       };
 
     default:

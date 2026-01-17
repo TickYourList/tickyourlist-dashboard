@@ -23,6 +23,9 @@ import {
   GET_TOUR_GROUP_VARIANT_BY_ID,
   GET_TOUR_GROUP_VARIANT_BY_ID_SUCCESS,
   GET_TOUR_GROUP_VARIANT_BY_ID_FAIL,
+  DELETE_TOUR_GROUP_VARIANT,
+  DELETE_TOUR_GROUP_VARIANT_SUCCESS,
+  DELETE_TOUR_GROUP_VARIANT_FAIL,
 } from "./actionType";
 
 export const getTourGroupVariants = (page = 1, limit = 10, cityCode = null, tourGroupId = null, variantId = null) => ({
@@ -141,5 +144,20 @@ export const getTourGroupVariantByIdSuccess = data => ({
 
 export const getTourGroupVariantByIdFail = error => ({
   type: GET_TOUR_GROUP_VARIANT_BY_ID_FAIL,
+  payload: error,
+});
+
+export const deleteTourGroupVariant = (variantId, variantName) => ({
+  type: DELETE_TOUR_GROUP_VARIANT,
+  payload: { id: variantId, name: variantName },
+});
+
+export const deleteTourGroupVariantSuccess = variantId => ({
+  type: DELETE_TOUR_GROUP_VARIANT_SUCCESS,
+  payload: variantId,
+});
+
+export const deleteTourGroupVariantFail = error => ({
+  type: DELETE_TOUR_GROUP_VARIANT_FAIL,
   payload: error,
 });

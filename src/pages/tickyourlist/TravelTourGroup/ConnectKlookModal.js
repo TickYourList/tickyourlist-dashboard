@@ -30,6 +30,7 @@ import { get } from "helpers/api_helper";
 import { getTourGroupVariantsAPI } from "helpers/location_management_helper";
 import EditKlookMappingModal from "./EditKlookMappingModal";
 import LiveKlookPricing from "./LiveKlookPricing";
+import MarkupConfigModal from "./MarkupConfigModal";
 
 const ConnectKlookModal = ({
     isOpen,
@@ -67,6 +68,9 @@ const ConnectKlookModal = ({
     const [searchQuery, setSearchQuery] = useState("");
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [selectedMapping, setSelectedMapping] = useState(null);
+    const [markupConfigModalOpen, setMarkupConfigModalOpen] = useState(false);
+    const [markupConfigLevel, setMarkupConfigLevel] = useState("PROVIDER"); // PROVIDER or VARIANT
+    const [selectedVariantForMarkup, setSelectedVariantForMarkup] = useState(null);
 
     // Reset state when modal closes
     useEffect(() => {
@@ -78,6 +82,9 @@ const ConnectKlookModal = ({
             setExistingMappings([]);
             setEditModalOpen(false);
             setSelectedMapping(null);
+            setMarkupConfigModalOpen(false);
+            setMarkupConfigLevel("PROVIDER");
+            setSelectedVariantForMarkup(null);
         }
     }, [isOpen]);
 
@@ -491,6 +498,32 @@ const ConnectKlookModal = ({
                             )
                         )}
 
+                        {/* Markup Configuration */}
+                        {existingMappings.length > 0 && (
+                            <Card className="mt-3">
+                                <CardBody>
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 className="mb-0">Markup Configuration</h5>
+                                        <Button
+                                            color="primary"
+                                            size="sm"
+                                            onClick={() => {
+                                                setMarkupConfigLevel("PROVIDER");
+                                                setSelectedVariantForMarkup(null);
+                                                setMarkupConfigModalOpen(true);
+                                            }}
+                                        >
+                                            <i className="mdi mdi-cog me-1"></i>
+                                            Configure Provider Markup
+                                        </Button>
+                                    </div>
+                                    <Alert color="info" className="mb-0">
+                                        Configure B2B to B2C markup rules. Provider-level markup applies to all variants. You can also configure variant-specific markup (higher priority) using the "Markup" button in the Existing Mappings table below.
+                                    </Alert>
+                                </CardBody>
+                            </Card>
+                        )}
+
                         {/* Live Pricing */}
                         {existingMappings.length > 0 && tourGroup?._id && (
                             <Card className="mt-3">
@@ -540,17 +573,37 @@ const ConnectKlookModal = ({
                                                             </Badge>
                                                         </td>
                                                         <td>
-                                                            <Button
-                                                                size="sm"
-                                                                color="info"
-                                                                onClick={() => {
-                                                                    setSelectedMapping(mapping);
-                                                                    setEditModalOpen(true);
-                                                                }}
-                                                            >
-                                                                <i className="mdi mdi-pencil me-1"></i>
-                                                                Edit & Compare
-                                                            </Button>
+                                                            <div className="d-flex gap-2">
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="info"
+                                                                    onClick={() => {
+                                                                        setSelectedMapping(mapping);
+                                                                        setEditModalOpen(true);
+                                                                    }}
+                                                                    title="Edit & Compare Mapping"
+                                                                >
+                                                                    <i className="mdi mdi-pencil me-1"></i>
+                                                                    Edit
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="warning"
+                                                                    onClick={() => {
+                                                                        // Extract variant ID from mapping
+                                                                        const variantId = typeof mapping.variantId === 'object'
+                                                                            ? (mapping.variantId?._id || mapping.variantId?.id)
+                                                                            : mapping.variantId;
+                                                                        setSelectedVariantForMarkup(variantId);
+                                                                        setMarkupConfigLevel("VARIANT");
+                                                                        setMarkupConfigModalOpen(true);
+                                                                    }}
+                                                                    title="Configure Markup for this Variant"
+                                                                >
+                                                                    <i className="mdi mdi-cog me-1"></i>
+                                                                    Markup
+                                                                </Button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 );
@@ -614,6 +667,19 @@ const ConnectKlookModal = ({
                         dispatch(fetchTourGroupByIdRequest(tourGroup._id));
                     }
                 }}
+            />
+
+            {/* Markup Configuration Modal */}
+            <MarkupConfigModal
+                isOpen={markupConfigModalOpen}
+                toggle={() => {
+                    setMarkupConfigModalOpen(false);
+                    setSelectedVariantForMarkup(null);
+                }}
+                provider="KLOOK_AGENT"
+                tourGroupId={tourGroup?._id}
+                variantId={markupConfigLevel === "VARIANT" ? selectedVariantForMarkup : null}
+                level={markupConfigLevel}
             />
         </Modal>
     );

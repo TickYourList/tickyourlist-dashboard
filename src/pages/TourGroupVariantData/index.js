@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState, useCallback } from "react"
 import { Button, Container, Modal, ModalHeader, ModalBody, ModalFooter, Row, Col, Label, Input, Card, CardBody } from "reactstrap"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import Select from "react-select"
 
-import { getTourGroupVariants, getTourGroupVariantDetail } from "../../store/TourGroupVariant/action"
+import { getTourGroupVariants, getTourGroupVariantDetail, deleteTourGroupVariant } from "../../store/TourGroupVariant/action"
 import { getCities } from "store/travelCity/action"
 import {
   fetchTourGroupsByCityRequest,
@@ -179,14 +179,13 @@ const TourGroupVariantsTable = () => {
 
   const handleDeleteVariant = () => {
     if (variantToDelete && variantToDelete._id) {
-      // TODO: Implement actual delete API call here
-      // dispatch(deleteTourGroupVariant(variantToDelete._id))
-      
-      // For now, show a message that this needs to be implemented
-      showToastError("Delete functionality is not yet implemented for Tour Group Variants. Please contact your administrator.", "Not Implemented")
-      
+      console.log("Deleting variant:", variantToDelete);
+      dispatch(deleteTourGroupVariant(variantToDelete._id, variantToDelete.name || variantToDelete._id))
       setDeleteModal(false)
       setVariantToDelete(null)
+    } else {
+      console.error("No variant to delete or variant ID missing:", variantToDelete);
+      showToastError("Unable to delete: Variant information is missing", "Error");
     }
   }
 

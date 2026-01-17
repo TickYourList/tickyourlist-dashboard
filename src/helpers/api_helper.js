@@ -6,8 +6,8 @@ import apiKey from "./jwt-token-access/apiKey";
 // const token = accessToken;
 const apiKeys = apiKey;
 //apply base url for axios
-const API_URL = "https://api.univolenitsolutions.com";
-// const API_URL = "http://localhost:3005";
+// const API_URL = "https://api.univolenitsolutions.com";
+const API_URL = "http://localhost:3005";
 
 // const API_URL = "https://dummy.com";
 export const axiosApi = axios.create({
@@ -60,7 +60,6 @@ export async function post(url, data, config = {}) {
 export async function postFormData(url, data, config = {}) {
   authUserItem();
   return axiosApi
-
     .post(url, data, { ...config })
     .then(response => response.data);
 }

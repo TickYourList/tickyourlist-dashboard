@@ -25,6 +25,10 @@ import {
   FETCH_KLOOK_LIVE_PRICING_REQUEST,
   CREATE_VARIANT_FROM_KLOOK_REQUEST,
   DELETE_KLOOK_MAPPING_REQUEST,
+  FETCH_MARKUP_CONFIGS_REQUEST,
+  UPSERT_MARKUP_CONFIG_REQUEST,
+  UPDATE_MARKUP_CONFIG_REQUEST,
+  DELETE_MARKUP_CONFIG_REQUEST,
 } from "./actionTypes"
 import {
   fetchTourGroupsSuccess,
@@ -472,6 +476,96 @@ export default function* tourGroupSaga() {
   yield takeEvery(FETCH_KLOOK_LIVE_PRICING_REQUEST, fetchKlookLivePricingSaga)
   yield takeEvery(CREATE_VARIANT_FROM_KLOOK_REQUEST, createVariantFromKlookSaga)
   yield takeEvery(DELETE_KLOOK_MAPPING_REQUEST, deleteKlookMappingSaga)
+  yield takeEvery(FETCH_MARKUP_CONFIGS_REQUEST, fetchMarkupConfigsSaga)
+  yield takeEvery(UPSERT_MARKUP_CONFIG_REQUEST, upsertMarkupConfigSaga)
+  yield takeEvery(UPDATE_MARKUP_CONFIG_REQUEST, updateMarkupConfigSaga)
+  yield takeEvery(DELETE_MARKUP_CONFIG_REQUEST, deleteMarkupConfigSaga)
+}
+
+// Provider Markup Configuration Sagas
+function* fetchMarkupConfigsSaga(action) {
+  try {
+    const { provider, level, tourGroupId, variantId, isActive } = action.payload
+    console.log('🔵 Saga: Fetching markup configs:', { provider, level, tourGroupId, variantId, isActive })
+
+    const response = yield call(getMarkupConfigs, provider, level, tourGroupId, variantId, isActive)
+    console.log('🟢 Saga: Markup configs response:', response)
+
+    const configs = response?.data?.configs || response?.configs || []
+    yield put(fetchMarkupConfigsSuccess(configs))
+  } catch (error) {
+    console.error('🔴 Error fetching markup configs:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch markup configurations'
+    yield put(fetchMarkupConfigsFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
+function* upsertMarkupConfigSaga(action) {
+  try {
+    const configData = action.payload
+    console.log('🔵 Saga: Upserting markup config:', configData)
+
+    const response = yield call(upsertMarkupConfig, configData)
+    console.log('🟢 Saga: Markup config upserted response:', response)
+
+    const config = response?.data?.config || response?.data || response
+    yield put(upsertMarkupConfigSuccess(config))
+    showToastSuccess('Markup configuration saved successfully!')
+
+    // Refresh configs if provider/level is specified
+    if (configData.provider && configData.level) {
+      yield put(fetchMarkupConfigsRequest(
+        configData.provider,
+        configData.level,
+        configData.tourGroupId,
+        configData.variantId,
+        true
+      ))
+    }
+  } catch (error) {
+    console.error('🔴 Error upserting markup config:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to save markup configuration'
+    yield put(upsertMarkupConfigFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
+function* updateMarkupConfigSaga(action) {
+  try {
+    const { configId, updateData } = action.payload
+    console.log('🔵 Saga: Updating markup config:', { configId, updateData })
+
+    const response = yield call(updateMarkupConfig, configId, updateData)
+    console.log('🟢 Saga: Markup config updated response:', response)
+
+    const config = response?.data?.config || response?.data || response
+    yield put(updateMarkupConfigSuccess(config))
+    showToastSuccess('Markup configuration updated successfully!')
+  } catch (error) {
+    console.error('🔴 Error updating markup config:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to update markup configuration'
+    yield put(updateMarkupConfigFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
+function* deleteMarkupConfigSaga(action) {
+  try {
+    const configId = action.payload
+    console.log('🔵 Saga: Deleting markup config:', configId)
+
+    yield call(deleteMarkupConfig, configId)
+    console.log('🟢 Saga: Markup config deleted')
+
+    yield put(deleteMarkupConfigSuccess(configId))
+    showToastSuccess('Markup configuration deleted successfully!')
+  } catch (error) {
+    console.error('🔴 Error deleting markup config:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to delete markup configuration'
+    yield put(deleteMarkupConfigFailure(errorMessage))
+    showToastError(errorMessage)
+  }
 }
 
 // Delete Klook Mapping
