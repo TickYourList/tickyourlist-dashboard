@@ -1157,7 +1157,7 @@ const LiveKlookPricing = ({ tourGroupId, variantId = null }) => {
                                 );
                             })}
 
-                            {/* Unmapped Klook Packages */}
+                            {/* Unmapped Packages */}
                             {pricingData.unmappedPackages && pricingData.unmappedPackages.length > 0 && (
                                 <Card className="mt-4 border-info">
                                     <CardHeader className="bg-info text-white">

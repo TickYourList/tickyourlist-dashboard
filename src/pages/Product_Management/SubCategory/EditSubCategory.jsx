@@ -152,18 +152,17 @@ const EditSubCategory = () => {
 
     // 3. This effect populates the form once data is available.
     useEffect(() => {
-        if (travelSubcategoryDetails && canEdit) {
-            formik.setValues({
-                ...formik.values,
-                categoryName: travelSubcategoryDetails.displayName || "",
-                displayName: travelSubcategoryDetails.displayName || "",
-                categoryId: travelSubcategoryDetails.category || "",
+        if (travelSubcategoryDetails && canEdit && Object.keys(travelSubcategoryDetails).length > 0) {
+            const formValues = {
+                categoryName: travelSubcategoryDetails.displayName || travelSubcategoryDetails.name || "",
+                displayName: travelSubcategoryDetails.displayName || travelSubcategoryDetails.name || "",
+                categoryId: travelSubcategoryDetails.category?._id || travelSubcategoryDetails.category || "",
                 heading: travelSubcategoryDetails.heading || "",
                 metaTitle: travelSubcategoryDetails.metaTitle || "",
                 metaDescription: travelSubcategoryDetails.metaDescription || "",
                 indexing: travelSubcategoryDetails.noIndex ? "not allowed" : "allowed",
                 canonicalUrl: travelSubcategoryDetails.canonicalUrl || "",
-                urlSlugs: { ...initialUrlSlugs, ...travelSubcategoryDetails.urlSlugs },
+                urlSlugs: { ...initialUrlSlugs, ...(travelSubcategoryDetails.urlSlugs || {}) },
                 descriptors: travelSubcategoryDetails.microBrandInfo?.descriptors || "",
                 highlights: travelSubcategoryDetails.microBrandInfo?.highlights || "",
                 microBrandMetaTitle: travelSubcategoryDetails.microBrandInfo?.metaTitle || "",
@@ -172,14 +171,16 @@ const EditSubCategory = () => {
                 averageRating: travelSubcategoryDetails.ratingsInfo?.averageRating || 0,
                 displayRating: travelSubcategoryDetails.ratingsInfo?.showRatings ? "yes" : "no",
                 cityCode: travelSubcategoryDetails.cityCode || "",
-                city: travelSubcategoryDetails.city || ""
-            });
-            if (travelSubcategoryDetails.microBrandInfo?.supportedLanguages) {
+                city: travelSubcategoryDetails.city?._id || travelSubcategoryDetails.city || ""
+            };
+            formik.setValues(formValues);
+            
+            if (travelSubcategoryDetails.microBrandInfo?.supportedLanguages && Array.isArray(travelSubcategoryDetails.microBrandInfo.supportedLanguages)) {
                 const preselectedLangs = travelSubcategoryDetails.microBrandInfo.supportedLanguages.map(lang => ({ label: lang, value: lang }));
                 setSelectedLanguages(preselectedLangs);
             }
         }
-    }, [travelSubcategoryDetails, canEdit, formik.setValues]);
+    }, [travelSubcategoryDetails, canEdit]);
 
     // 4. This effect fetches categories when the city code changes.
     useEffect(() => {

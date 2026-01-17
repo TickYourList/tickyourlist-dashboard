@@ -304,18 +304,19 @@ function TourGroupTable() {
     return isSearchMode ? (searchedTourGroups?.length || 0) : totalCount
   }, [isSearchMode, searchedTourGroups, totalCount])
 
-  // Fetch Klook mappings for displayed tour groups (must be after displayData is defined)
+  // Fetch provider mappings for all tour groups (not just displayed page)
   useEffect(() => {
-    if (displayData.length === 0) return;
+    const dataSource = isSearchMode ? (searchedTourGroups || []) : tourGroup;
+    if (dataSource.length === 0) return;
 
-    // Fetch mappings for each displayed tour group
-    displayData.forEach((tg) => {
+    // Fetch mappings for all tour groups to ensure provider icon shows correctly
+    dataSource.forEach((tg) => {
       // Only fetch if not already in Redux state
-      if (!providerMappings || !providerMappings[tg._id]) {
+      if (tg._id && (!providerMappings || !providerMappings[tg._id])) {
         dispatch(fetchKlookMappingsRequest(tg._id));
       }
     });
-  }, [displayData, providerMappings, dispatch])
+  }, [tourGroup, searchedTourGroups, isSearchMode, providerMappings, dispatch])
 
   // Show loading while permissions are being fetched
   // Also show loading if permissions are missing (will auto-retry)
@@ -372,15 +373,19 @@ function TourGroupTable() {
             >
               {row.original.name}
             </Link>
-            {providerMappings && providerMappings[row.original._id] && providerMappings[row.original._id].length > 0 && (
-              <span
-                className="badge bg-success"
-                title="Connected to External Provider"
-              >
-                <i className="fas fa-plug me-1"></i>
-                Provider
-              </span>
-            )}
+            {(() => {
+              const mappings = providerMappings?.[row.original._id];
+              const hasProvider = mappings && Array.isArray(mappings) && mappings.length > 0;
+              return hasProvider ? (
+                <span
+                  className="badge bg-success"
+                  title="Connected to External Provider"
+                >
+                  <i className="fas fa-plug me-1"></i>
+                  Provider
+                </span>
+              ) : null;
+            })()}
           </div>
         ),
 

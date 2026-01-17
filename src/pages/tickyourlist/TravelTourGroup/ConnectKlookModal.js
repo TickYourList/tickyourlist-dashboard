@@ -429,7 +429,7 @@ const ConnectKlookModal = ({
                             variants.length > 0 ? (
                                 <Card>
                                     <CardBody>
-                                        <h5 className="mb-3">Step 2: Map Variants to Klook Packages</h5>
+                                        <h5 className="mb-3">Step 2: Map Variants to Packages</h5>
                                         <Table responsive>
                                             <thead>
                                                 <tr>

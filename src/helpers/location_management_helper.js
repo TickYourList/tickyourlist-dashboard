@@ -679,6 +679,7 @@ export {
   updateVariantPrices,
   getSubcategoriesList,
   getExistingSubcategory,
+  getExistingSubcategoryForEdit,
   addTravelSubcategoryApi,
   updateSubcategory,
   deleteSubcategoryApi,

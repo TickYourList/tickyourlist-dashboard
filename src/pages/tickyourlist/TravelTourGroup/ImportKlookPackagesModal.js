@@ -1,6 +1,6 @@
 /**
  * ========================================
- * IMPORT KLOOK PACKAGES MODAL
+ * IMPORT PACKAGES MODAL
  * ========================================
  * 
  * Allows user to:
@@ -98,9 +98,9 @@ const ImportKlookPackagesModal = ({
     // Update klookActivityId when activity is loaded (for search results)
     useEffect(() => {
         if (klookActivity && !klookActivityId) {
-            const activityId = klookActivity.activity_id || 
-                              klookActivity.data?.activity?.activity_id ||
-                              klookActivity.id;
+            const activityId = klookActivity.activity_id ||
+                klookActivity.data?.activity?.activity_id ||
+                klookActivity.id;
             if (activityId) {
                 setKlookActivityId(activityId.toString());
             }
@@ -192,7 +192,7 @@ const ImportKlookPackagesModal = ({
         selectedPackages.forEach((packageId) => {
             const pkg = packages.find(p => p.package_id === packageId);
             const action = packageActions[packageId];
-            
+
             if (pkg && action) {
                 // Extract description from activity or SKU titles
                 const activityDescription = activity?.what_we_love || activity?.subtitle || '';
@@ -248,7 +248,7 @@ const ImportKlookPackagesModal = ({
     // Handle preview button click
     const handlePreview = () => {
         const activityId = getActivityId();
-        
+
         if (!activityId || !klookActivity) {
             showToastError("Please select a provider activity first");
             return;
@@ -268,16 +268,16 @@ const ImportKlookPackagesModal = ({
     // Handle final import after preview
     const handleFinalImport = () => {
         const activityId = getActivityId();
-        
+
         // Import each selected package
         selectedPackages.forEach((packageId) => {
             const action = packageActions[packageId];
-            
+
             if (!action) {
                 showToastError(`No action specified for package ${packageId}`);
                 return;
             }
-            
+
             if (action.action === "add") {
                 // Create new variant - saga will handle success/error toasts
                 dispatch(
@@ -331,7 +331,7 @@ const ImportKlookPackagesModal = ({
         const mapping = mappings.find(
             (m) => m.externalVariantId === packageId && m.isActive
         );
-        
+
         if (mapping) {
             return {
                 exists: true,
@@ -345,9 +345,9 @@ const ImportKlookPackagesModal = ({
         const existingVariant = existingVariants.find(
             (v) => v.externalVariantId === packageId
         );
-        
-        return existingVariant 
-            ? { exists: true, connected: false, variant: existingVariant } 
+
+        return existingVariant
+            ? { exists: true, connected: false, variant: existingVariant }
             : { exists: false, connected: false };
     };
 
@@ -389,7 +389,7 @@ const ImportKlookPackagesModal = ({
                         {Object.keys(previewData).map((packageId) => {
                             const preview = previewData[packageId];
                             const isEditing = editingPackageId === packageId;
-                            
+
                             return (
                                 <Card key={packageId} className="mb-3 border-primary">
                                     <CardBody>
@@ -398,9 +398,9 @@ const ImportKlookPackagesModal = ({
                                             <div>
                                                 <div className="d-flex justify-content-between align-items-center mb-3">
                                                     <h6>Edit Variant Details</h6>
-                                                    <Button 
-                                                        color="success" 
-                                                        size="sm" 
+                                                    <Button
+                                                        color="success"
+                                                        size="sm"
                                                         onClick={() => setEditingPackageId(null)}
                                                     >
                                                         <i className="mdi mdi-check me-1"></i>
@@ -457,9 +457,9 @@ const ImportKlookPackagesModal = ({
                                                         <h6 className="mb-1">{preview.name}</h6>
                                                         <Badge color="primary">{preview.action === 'add' ? 'New Variant' : preview.action}</Badge>
                                                     </div>
-                                                    <Button 
-                                                        color="primary" 
-                                                        size="sm" 
+                                                    <Button
+                                                        color="primary"
+                                                        size="sm"
                                                         onClick={() => setEditingPackageId(packageId)}
                                                     >
                                                         <i className="mdi mdi-pencil me-1"></i>
@@ -590,302 +590,302 @@ const ImportKlookPackagesModal = ({
                 ) : (
                     /* Package Selection Step */
                     <>
-                {/* Step 1: Search/Select Activity */}
-                <Card className="mb-3">
-                    <CardBody>
-                        <h5 className="mb-3">Step 1: Select Provider Activity</h5>
-                        <Row>
-                            <Col md={8}>
-                                <Label>Search or Enter Activity ID</Label>
-                                <Input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyPress={(e) => {
-                                        if (e.key === "Enter") {
-                                            handleSearchKlookActivities();
-                                        }
-                                    }}
-                                    placeholder="Enter activity ID or search term"
-                                />
-                            </Col>
-                            <Col md={4} className="d-flex align-items-end">
-                                <Button
-                                    color="primary"
-                                    onClick={handleSearchKlookActivities}
-                                    disabled={klookSearching || klookActivityLoading || !searchQuery.trim()}
-                                    className="w-100"
-                                >
-                                    {klookSearching || klookActivityLoading ? (
-                                        <>
-                                            <Spinner size="sm" className="me-2" />
-                                            {klookActivityLoading ? "Fetching..." : "Searching..."}
-                                        </>
-                                    ) : (
-                                        "Search / Fetch"
-                                    )}
-                                </Button>
-                            </Col>
-                        </Row>
+                        {/* Step 1: Search/Select Activity */}
+                        <Card className="mb-3">
+                            <CardBody>
+                                <h5 className="mb-3">Step 1: Select Provider Activity</h5>
+                                <Row>
+                                    <Col md={8}>
+                                        <Label>Search or Enter Activity ID</Label>
+                                        <Input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyPress={(e) => {
+                                                if (e.key === "Enter") {
+                                                    handleSearchKlookActivities();
+                                                }
+                                            }}
+                                            placeholder="Enter activity ID or search term"
+                                        />
+                                    </Col>
+                                    <Col md={4} className="d-flex align-items-end">
+                                        <Button
+                                            color="primary"
+                                            onClick={handleSearchKlookActivities}
+                                            disabled={klookSearching || klookActivityLoading || !searchQuery.trim()}
+                                            className="w-100"
+                                        >
+                                            {klookSearching || klookActivityLoading ? (
+                                                <>
+                                                    <Spinner size="sm" className="me-2" />
+                                                    {klookActivityLoading ? "Fetching..." : "Searching..."}
+                                                </>
+                                            ) : (
+                                                "Search / Fetch"
+                                            )}
+                                        </Button>
+                                    </Col>
+                                </Row>
 
-                        {/* Activity Details */}
-                        {klookActivity && (
-                            <div className="mt-3 p-3 bg-light rounded">
-                                <h6>{klookActivity.title || klookActivity.data?.activity?.title}</h6>
-                                <small className="text-muted">
-                                    Activity ID: {getActivityId() || 'N/A'}
-                                    {klookActivity.currency && ` • Currency: ${klookActivity.currency}`}
-                                </small>
-                            </div>
-                        )}
-                    </CardBody>
-                </Card>
-
-                {/* Step 2: Select Packages */}
-                {packages.length > 0 && (
-                    <>
-                        {/* Already Connected Packages */}
-                        {connectedPackages.length > 0 && (
-                            <Card className="mb-3 border-success">
-                                <CardBody>
-                                    <div className="d-flex align-items-center mb-3">
-                                        <h5 className="mb-0 me-2">
-                                            <i className="mdi mdi-check-circle text-success me-2"></i>
-                                            Already Connected Packages
-                                        </h5>
-                                        <Badge color="success">{connectedPackages.length}</Badge>
+                                {/* Activity Details */}
+                                {klookActivity && (
+                                    <div className="mt-3 p-3 bg-light rounded">
+                                        <h6>{klookActivity.title || klookActivity.data?.activity?.title}</h6>
+                                        <small className="text-muted">
+                                            Activity ID: {getActivityId() || 'N/A'}
+                                            {klookActivity.currency && ` • Currency: ${klookActivity.currency}`}
+                                        </small>
                                     </div>
-                                    <Alert color="info" className="mb-3">
-                                        <i className="mdi mdi-information me-2"></i>
-                                        These packages are already connected to TYL variants. You can manage, replace, or disconnect them.
-                                    </Alert>
-                                    <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                                        <Table responsive striped>
-                                            <thead>
-                                                <tr>
-                                                    <th>Package Name</th>
-                                                    <th>Package ID</th>
-                                                    <th>SKUs</th>
-                                                    <th>Connected Variant</th>
-                                                    <th>Status</th>
-                                                    <th style={{ width: "200px" }}>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {connectedPackages.map((pkg) => {
-                                                    const status = getPackageStatus(pkg.package_id);
-                                                    const variantName = status.mapping?.variantName || 
-                                                                       (status.variant?.name ? status.variant.name : 'N/A');
-                                                    const mappingId = status.mapping?.mappingId;
+                                )}
+                            </CardBody>
+                        </Card>
 
-                                                    const handleDisconnect = () => {
-                                                        if (window.confirm(`Are you sure you want to disconnect "${pkg.package_name}" from "${variantName}"?`)) {
-                                                            dispatch(deleteKlookMappingRequest(mappingId, tourGroup._id));
-                                                        }
-                                                    };
-
-                                                    const handleReplace = () => {
-                                                        // Disconnect first, then allow reconnection
-                                                        if (window.confirm(`This will disconnect "${pkg.package_name}" from "${variantName}". You can then reconnect it to a different variant. Continue?`)) {
-                                                            dispatch(deleteKlookMappingRequest(mappingId, tourGroup._id));
-                                                            // After disconnect, the package will appear in available packages
-                                                            showToastSuccess('Package disconnected. You can now reconnect it to a different variant.');
-                                                        }
-                                                    };
-
-                                                    return (
-                                                        <tr key={pkg.package_id}>
-                                                            <td>
-                                                                <strong>{pkg.package_name}</strong>
-                                                            </td>
-                                                            <td>
-                                                                <Badge color="secondary">{pkg.package_id}</Badge>
-                                                            </td>
-                                                            <td>
-                                                                <Badge color="info">
-                                                                    {pkg.sku_list?.length || 0} SKU(s)
-                                                                </Badge>
-                                                            </td>
-                                                            <td>
-                                                                <Badge color="success">
-                                                                    <i className="mdi mdi-link me-1"></i>
-                                                                    {variantName}
-                                                                </Badge>
-                                                            </td>
-                                                            <td>
-                                                                <Badge color="success">
-                                                                    <i className="mdi mdi-check-circle me-1"></i>
-                                                                    Connected
-                                                                </Badge>
-                                                            </td>
-                                                            <td>
-                                                                <div className="d-flex gap-1">
-                                                                    <Button
-                                                                        color="warning"
-                                                                        size="sm"
-                                                                        onClick={handleReplace}
-                                                                        title="Disconnect and reconnect to a different variant"
-                                                                    >
-                                                                        <i className="mdi mdi-swap-horizontal me-1"></i>
-                                                                        Replace
-                                                                    </Button>
-                                                                    <Button
-                                                                        color="danger"
-                                                                        size="sm"
-                                                                        onClick={handleDisconnect}
-                                                                        title="Disconnect this package from the variant"
-                                                                    >
-                                                                        <i className="mdi mdi-link-off me-1"></i>
-                                                                        Disconnect
-                                                                    </Button>
-                                                                </div>
-                                                            </td>
+                        {/* Step 2: Select Packages */}
+                        {packages.length > 0 && (
+                            <>
+                                {/* Already Connected Packages */}
+                                {connectedPackages.length > 0 && (
+                                    <Card className="mb-3 border-success">
+                                        <CardBody>
+                                            <div className="d-flex align-items-center mb-3">
+                                                <h5 className="mb-0 me-2">
+                                                    <i className="mdi mdi-check-circle text-success me-2"></i>
+                                                    Already Connected Packages
+                                                </h5>
+                                                <Badge color="success">{connectedPackages.length}</Badge>
+                                            </div>
+                                            <Alert color="info" className="mb-3">
+                                                <i className="mdi mdi-information me-2"></i>
+                                                These packages are already connected to TYL variants. You can manage, replace, or disconnect them.
+                                            </Alert>
+                                            <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+                                                <Table responsive striped>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Package Name</th>
+                                                            <th>Package ID</th>
+                                                            <th>SKUs</th>
+                                                            <th>Connected Variant</th>
+                                                            <th>Status</th>
+                                                            <th style={{ width: "200px" }}>Actions</th>
                                                         </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </Table>
-                                    </div>
-                                </CardBody>
-                            </Card>
-                        )}
+                                                    </thead>
+                                                    <tbody>
+                                                        {connectedPackages.map((pkg) => {
+                                                            const status = getPackageStatus(pkg.package_id);
+                                                            const variantName = status.mapping?.variantName ||
+                                                                (status.variant?.name ? status.variant.name : 'N/A');
+                                                            const mappingId = status.mapping?.mappingId;
 
-                        {/* Available Packages (Not Connected) */}
-                        {availablePackages.length > 0 && (
-                            <Card>
-                                <CardBody>
-                                    <div className="d-flex align-items-center mb-3">
-                                        <h5 className="mb-0 me-2">
-                                            Step 2: Select Packages to Import
-                                        </h5>
-                                        <Badge color="primary">{selectedPackages.length} selected</Badge>
-                                    </div>
-                                    <Alert color="info" className="mb-3">
-                                        <strong>Actions:</strong>
-                                        <ul className="mb-0 mt-2">
-                                            <li><strong>Add New:</strong> Create a new variant from this package</li>
-                                            <li><strong>Replace:</strong> Replace an existing variant with this package</li>
-                                            <li><strong>Connect:</strong> Link this package with an existing variant</li>
-                                        </ul>
-                                    </Alert>
+                                                            const handleDisconnect = () => {
+                                                                if (window.confirm(`Are you sure you want to disconnect "${pkg.package_name}" from "${variantName}"?`)) {
+                                                                    dispatch(deleteKlookMappingRequest(mappingId, tourGroup._id));
+                                                                }
+                                                            };
 
-                                    <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                                        <Table responsive striped>
-                                            <thead>
-                                                <tr>
-                                                    <th style={{ width: "80px" }}>Toggle</th>
-                                                    <th>Package Name</th>
-                                                    <th>Package ID</th>
-                                                    <th>SKUs</th>
-                                                    <th>Status</th>
-                                                    <th>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {availablePackages.map((pkg) => {
-                                                    const isSelected = selectedPackages.includes(pkg.package_id);
-                                                    const status = getPackageStatus(pkg.package_id);
-                                                    const action = packageActions[pkg.package_id];
+                                                            const handleReplace = () => {
+                                                                // Disconnect first, then allow reconnection
+                                                                if (window.confirm(`This will disconnect "${pkg.package_name}" from "${variantName}". You can then reconnect it to a different variant. Continue?`)) {
+                                                                    dispatch(deleteKlookMappingRequest(mappingId, tourGroup._id));
+                                                                    // After disconnect, the package will appear in available packages
+                                                                    showToastSuccess('Package disconnected. You can now reconnect it to a different variant.');
+                                                                }
+                                                            };
 
-                                                    return (
-                                                        <tr key={pkg.package_id}>
-                                                            <td>
-                                                                <Switch
-                                                                    checked={isSelected}
-                                                                    onChange={(checked) =>
-                                                                        handlePackageToggle(
-                                                                            pkg.package_id,
-                                                                            checked
-                                                                        )
-                                                                    }
-                                                                    onColor="#86d3ff"
-                                                                    onHandleColor="#2693e6"
-                                                                    handleDiameter={20}
-                                                                    uncheckedIcon={false}
-                                                                    checkedIcon={false}
-                                                                    boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
-                                                                    activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
-                                                                    height={24}
-                                                                    width={48}
-                                                                    id={`package-switch-${pkg.package_id}`}
-                                                                />
-                                                            </td>
-                                                            <td>
-                                                                <strong>{pkg.package_name}</strong>
-                                                            </td>
-                                                            <td>
-                                                                <Badge color="secondary">{pkg.package_id}</Badge>
-                                                            </td>
-                                                            <td>
-                                                                <Badge color="info">
-                                                                    {pkg.sku_list?.length || 0} SKU(s)
-                                                                </Badge>
-                                                            </td>
-                                                            <td>
-                                                                {status.exists ? (
-                                                                    <Badge color="warning">
-                                                                        Exists (Not Connected)
-                                                                    </Badge>
-                                                                ) : (
-                                                                    <Badge color="success">New</Badge>
-                                                                )}
-                                                            </td>
-                                                            <td>
-                                                                {isSelected && (
-                                                                    <Input
-                                                                        type="select"
-                                                                        bsSize="sm"
-                                                                        value={action?.action || "add"}
-                                                                        onChange={(e) => {
-                                                                            const newAction = e.target.value;
-                                                                            if (newAction === "connect" && status.exists) {
-                                                                                handleActionChange(
+                                                            return (
+                                                                <tr key={pkg.package_id}>
+                                                                    <td>
+                                                                        <strong>{pkg.package_name}</strong>
+                                                                    </td>
+                                                                    <td>
+                                                                        <Badge color="secondary">{pkg.package_id}</Badge>
+                                                                    </td>
+                                                                    <td>
+                                                                        <Badge color="info">
+                                                                            {pkg.sku_list?.length || 0} SKU(s)
+                                                                        </Badge>
+                                                                    </td>
+                                                                    <td>
+                                                                        <Badge color="success">
+                                                                            <i className="mdi mdi-link me-1"></i>
+                                                                            {variantName}
+                                                                        </Badge>
+                                                                    </td>
+                                                                    <td>
+                                                                        <Badge color="success">
+                                                                            <i className="mdi mdi-check-circle me-1"></i>
+                                                                            Connected
+                                                                        </Badge>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="d-flex gap-1">
+                                                                            <Button
+                                                                                color="warning"
+                                                                                size="sm"
+                                                                                onClick={handleReplace}
+                                                                                title="Disconnect and reconnect to a different variant"
+                                                                            >
+                                                                                <i className="mdi mdi-swap-horizontal me-1"></i>
+                                                                                Replace
+                                                                            </Button>
+                                                                            <Button
+                                                                                color="danger"
+                                                                                size="sm"
+                                                                                onClick={handleDisconnect}
+                                                                                title="Disconnect this package from the variant"
+                                                                            >
+                                                                                <i className="mdi mdi-link-off me-1"></i>
+                                                                                Disconnect
+                                                                            </Button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </Table>
+                                            </div>
+                                        </CardBody>
+                                    </Card>
+                                )}
+
+                                {/* Available Packages (Not Connected) */}
+                                {availablePackages.length > 0 && (
+                                    <Card>
+                                        <CardBody>
+                                            <div className="d-flex align-items-center mb-3">
+                                                <h5 className="mb-0 me-2">
+                                                    Step 2: Select Packages to Import
+                                                </h5>
+                                                <Badge color="primary">{selectedPackages.length} selected</Badge>
+                                            </div>
+                                            <Alert color="info" className="mb-3">
+                                                <strong>Actions:</strong>
+                                                <ul className="mb-0 mt-2">
+                                                    <li><strong>Add New:</strong> Create a new variant from this package</li>
+                                                    <li><strong>Replace:</strong> Replace an existing variant with this package</li>
+                                                    <li><strong>Connect:</strong> Link this package with an existing variant</li>
+                                                </ul>
+                                            </Alert>
+
+                                            <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+                                                <Table responsive striped>
+                                                    <thead>
+                                                        <tr>
+                                                            <th style={{ width: "80px" }}>Toggle</th>
+                                                            <th>Package Name</th>
+                                                            <th>Package ID</th>
+                                                            <th>SKUs</th>
+                                                            <th>Status</th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {availablePackages.map((pkg) => {
+                                                            const isSelected = selectedPackages.includes(pkg.package_id);
+                                                            const status = getPackageStatus(pkg.package_id);
+                                                            const action = packageActions[pkg.package_id];
+
+                                                            return (
+                                                                <tr key={pkg.package_id}>
+                                                                    <td>
+                                                                        <Switch
+                                                                            checked={isSelected}
+                                                                            onChange={(checked) =>
+                                                                                handlePackageToggle(
                                                                                     pkg.package_id,
-                                                                                    "connect",
-                                                                                    status.variant?._id || status.variant
-                                                                                );
-                                                                            } else {
-                                                                                handleActionChange(
-                                                                                    pkg.package_id,
-                                                                                    newAction
-                                                                                );
+                                                                                    checked
+                                                                                )
                                                                             }
-                                                                        }}
-                                                                    >
-                                                                        <option value="add">Add New</option>
-                                                                        {status.exists && (
-                                                                            <>
-                                                                                <option value="replace">Replace Existing</option>
-                                                                                <option value="connect">Connect with Existing</option>
-                                                                            </>
+                                                                            onColor="#86d3ff"
+                                                                            onHandleColor="#2693e6"
+                                                                            handleDiameter={20}
+                                                                            uncheckedIcon={false}
+                                                                            checkedIcon={false}
+                                                                            boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                                                            activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                                                            height={24}
+                                                                            width={48}
+                                                                            id={`package-switch-${pkg.package_id}`}
+                                                                        />
+                                                                    </td>
+                                                                    <td>
+                                                                        <strong>{pkg.package_name}</strong>
+                                                                    </td>
+                                                                    <td>
+                                                                        <Badge color="secondary">{pkg.package_id}</Badge>
+                                                                    </td>
+                                                                    <td>
+                                                                        <Badge color="info">
+                                                                            {pkg.sku_list?.length || 0} SKU(s)
+                                                                        </Badge>
+                                                                    </td>
+                                                                    <td>
+                                                                        {status.exists ? (
+                                                                            <Badge color="warning">
+                                                                                Exists (Not Connected)
+                                                                            </Badge>
+                                                                        ) : (
+                                                                            <Badge color="success">New</Badge>
                                                                         )}
-                                                                    </Input>
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </Table>
-                                    </div>
-                                </CardBody>
-                            </Card>
+                                                                    </td>
+                                                                    <td>
+                                                                        {isSelected && (
+                                                                            <Input
+                                                                                type="select"
+                                                                                bsSize="sm"
+                                                                                value={action?.action || "add"}
+                                                                                onChange={(e) => {
+                                                                                    const newAction = e.target.value;
+                                                                                    if (newAction === "connect" && status.exists) {
+                                                                                        handleActionChange(
+                                                                                            pkg.package_id,
+                                                                                            "connect",
+                                                                                            status.variant?._id || status.variant
+                                                                                        );
+                                                                                    } else {
+                                                                                        handleActionChange(
+                                                                                            pkg.package_id,
+                                                                                            newAction
+                                                                                        );
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <option value="add">Add New</option>
+                                                                                {status.exists && (
+                                                                                    <>
+                                                                                        <option value="replace">Replace Existing</option>
+                                                                                        <option value="connect">Connect with Existing</option>
+                                                                                    </>
+                                                                                )}
+                                                                            </Input>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </Table>
+                                            </div>
+                                        </CardBody>
+                                    </Card>
+                                )}
+
+                                {availablePackages.length === 0 && connectedPackages.length > 0 && (
+                                    <Alert color="info">
+                                        <i className="mdi mdi-information me-2"></i>
+                                        All packages from this activity are already connected. No packages available to import.
+                                    </Alert>
+                                )}
+                            </>
                         )}
 
-                        {availablePackages.length === 0 && connectedPackages.length > 0 && (
-                            <Alert color="info">
-                                <i className="mdi mdi-information me-2"></i>
-                                All packages from this activity are already connected. No packages available to import.
+                        {klookActivity && packages.length === 0 && (
+                            <Alert color="warning">
+                                No packages found for this activity.
                             </Alert>
                         )}
-                    </>
-                )}
-
-                {klookActivity && packages.length === 0 && (
-                    <Alert color="warning">
-                        No packages found for this activity.
-                    </Alert>
-                )}
                     </>
                 )}
             </ModalBody>
