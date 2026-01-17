@@ -508,34 +508,34 @@ const addFaqs = faqData => post(url.ADD_NEW_FAQS, faqData);
 const updateFaqs = (id, faqData) => put(url.UPDATE_FAQS + id, faqData);
 
 // Tour Group Connections
-// Klook Mapping APIs
+// Provider Mapping APIs
 const getKlookMappings = (tourGroupId) => {
-  return get(`/v1/klook/mapping/product/${tourGroupId}`);
+  return get(`/v1/provider/mapping/product/${tourGroupId}`);
 };
 
 const searchKlookActivities = (query = "") => {
   // Fetch activities and filter client-side if needed
   const params = query ? { limit: 50, page: 1 } : { limit: 20, page: 1 };
-  // Klook API requires Accept-Language in format like 'en_US' (not browser format)
-  return get(`/v1/klook/api/activities`, {
+  // Provider API requires Accept-Language in format like 'en_US' (not browser format)
+  return get(`/v1/provider/api/activities`, {
     params,
     headers: {
-      'Accept-Language': 'en_US' // Klook expects format: en_US, zh_CN, etc.
+      'Accept-Language': 'en_US' // Provider expects format: en_US, zh_CN, etc.
     }
   });
 };
 
 const getKlookActivity = (activityId) => {
-  // Klook API requires Accept-Language in format like 'en_US' (not browser format)
-  return get(`/v1/klook/api/activities/${activityId}`, {
+  // Provider API requires Accept-Language in format like 'en_US' (not browser format)
+  return get(`/v1/provider/api/activities/${activityId}`, {
     headers: {
-      'Accept-Language': 'en_US' // Klook expects format: en_US, zh_CN, etc.
+      'Accept-Language': 'en_US' // Provider expects format: en_US, zh_CN, etc.
     }
   });
 };
 
 const bulkLinkKlookMappings = (mappings) => {
-  return post(`/v1/klook/mapping/bulk-link`, { mappings });
+  return post(`/v1/provider/mapping/bulk-link`, { mappings });
 };
 
 const getKlookLivePricing = (tourGroupId, startDate, endDate, variantId, currency) => {
@@ -545,11 +545,11 @@ const getKlookLivePricing = (tourGroupId, startDate, endDate, variantId, currenc
   if (variantId) params.variantId = variantId;
   if (currency) params.currency = currency; // Add currency parameter
 
-  return get(`/v1/klook/pricing/live/${tourGroupId}`, { params });
+  return get(`/v1/provider/pricing/live/${tourGroupId}`, { params });
 };
 
 const getSupportedCurrencies = () => {
-  return get(`/v1/klook/pricing/currencies`);
+  return get(`/v1/provider/pricing/currencies`);
 };
 
 // Provider Markup Configuration APIs
@@ -595,7 +595,7 @@ const bulkConnectToursToSubcategory = (subcategoryId, tourGroupIds) => {
 };
 
 const createVariantFromKlookPackage = (tourGroupId, klookActivityId, klookPackageId) => {
-  return post(`/v1/klook/sync/create-variant`, {
+  return post(`/v1/provider/sync/create-variant`, {
     tourGroupId,
     klookActivityId,
     klookPackageId,
@@ -603,7 +603,7 @@ const createVariantFromKlookPackage = (tourGroupId, klookActivityId, klookPackag
 };
 
 const deleteKlookMapping = (mappingId) => {
-  return del(`/v1/klook/mapping/${mappingId}`);
+  return del(`/v1/provider/mapping/${mappingId}`);
 };
 
 export {

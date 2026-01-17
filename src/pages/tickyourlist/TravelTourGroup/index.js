@@ -558,6 +558,7 @@ function TourGroupTable() {
       canDeleteTourGroup,
       canViewTourGroup,
       role,
+      providerMappings,
     ]
   )
 
