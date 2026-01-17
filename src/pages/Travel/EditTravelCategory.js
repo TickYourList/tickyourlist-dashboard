@@ -247,7 +247,7 @@ const EditTravelCategory = () => {
   }, [data]);
 
   // Permission check - if no canEdit permission, show NoPermission component
-  if (!canEdit) {
+  if (!permissions.canEdit) {
     return <NoPermission />;
   }
 
