@@ -60,18 +60,18 @@ function* changeLayout({ payload: layout }) {
       yield put(changeTopbarThemeAction("light"))
     }
     yield call(changeBodyAttribute, "data-layout", layout)
-  } catch (error) {}
+  } catch (error) { }
 }
 
 /**
  * Changes the layout mode
  * @param {*} param0
  */
- function* changeLayoutMode({ payload: mode }) {
+function* changeLayoutMode({ payload: mode }) {
   try {
-      yield call(changeBodyAttribute, "data-layout-mode", mode);
+    yield call(changeBodyAttribute, "data-layout-mode", mode);
   } catch (error) {
-      // console.log(error);
+    // console.log(error);
   }
 }
 // હા, અમે હવે નીચેની લિંક આપી છે ઉદાહરણ તરીકે ગ્રીડ ડેટા ટેબલને સૉર્ટ કરવા.
@@ -93,7 +93,7 @@ function* changeLayoutWidth({ payload: width }) {
       yield call(changeBodyAttribute, "data-layout-size", width)
       yield call(changeBodyAttribute, "data-layout-scrollable", false)
     }
-  } catch (error) {}
+  } catch (error) { }
 }
 
 /**
@@ -103,17 +103,17 @@ function* changeLayoutWidth({ payload: width }) {
 function* changeLeftSidebarTheme({ payload: theme }) {
   try {
     yield call(changeBodyAttribute, "data-sidebar", theme)
-  } catch (error) {}
+  } catch (error) { }
 }
 
 /**
  * Changes the left sidebar theme Image
  * @param {*} param0
  */
- function* changeLeftSidebarThemeImage({ payload: theme }) {
+function* changeLeftSidebarThemeImage({ payload: theme }) {
   try {
     yield call(changeBodyAttribute, "data-sidebar-image", theme)
-  } catch (error) {}
+  } catch (error) { }
 }
 
 /**
@@ -123,7 +123,7 @@ function* changeLeftSidebarTheme({ payload: theme }) {
 function* changeTopbarTheme({ payload: theme }) {
   try {
     yield call(changeBodyAttribute, "data-topbar", theme)
-  } catch (error) {}
+  } catch (error) { }
 }
 
 /**
@@ -162,7 +162,7 @@ function* changeLeftSidebarType({ payload: { sidebarType, isMobile } }) {
           yield call(manageBodyClass, "vertical-collpsed", "remove")
         break
     }
-  } catch (error) {}
+  } catch (error) { }
 }
 
 /**
@@ -171,7 +171,7 @@ function* changeLeftSidebarType({ payload: { sidebarType, isMobile } }) {
 function* showRightSidebar() {
   try {
     yield call(manageBodyClass, "right-bar-enabled", "add")
-  } catch (error) {}
+  } catch (error) { }
 }
 
 /**

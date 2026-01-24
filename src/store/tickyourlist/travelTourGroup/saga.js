@@ -29,6 +29,8 @@ import {
   UPSERT_MARKUP_CONFIG_REQUEST,
   UPDATE_MARKUP_CONFIG_REQUEST,
   DELETE_MARKUP_CONFIG_REQUEST,
+  REORDER_MARKUP_CONFIGS_REQUEST,
+  FETCH_ALL_MARKUP_CONFIGS_FOR_VARIANT_REQUEST,
 } from "./actionTypes"
 import {
   fetchTourGroupsSuccess,
@@ -85,6 +87,12 @@ import {
   deleteKlookMappingSuccess,
   deleteKlookMappingFailure,
   fetchKlookMappingsRequest,
+  reorderMarkupConfigsSuccess,
+  reorderMarkupConfigsFailure,
+  fetchAllMarkupConfigsForVariantRequest,
+  fetchAllMarkupConfigsForVariantSuccess,
+  fetchAllMarkupConfigsForVariantFailure,
+  fetchMarkupConfigsRequest,
 } from "./action"
 
 import { showToastError, showToastSuccess } from "helpers/toastBuilder"
@@ -115,6 +123,12 @@ import {
   getKlookLivePricing,
   createVariantFromKlookPackage,
   deleteKlookMapping,
+  getMarkupConfigs,
+  upsertMarkupConfig,
+  updateMarkupConfig,
+  deleteMarkupConfig,
+  reorderMarkupConfigs,
+  getAllMarkupConfigsForVariant,
 } from "helpers/location_management_helper"
 
 // 1. Fetch All Tour Groups
@@ -449,6 +463,49 @@ function* fetchKlookLivePricingSaga(action) {
   }
 }
 
+function* reorderMarkupConfigsSaga(action) {
+  try {
+    const { configs, provider, level, tourGroupId, variantId } = action.payload
+    console.log('🔵 Saga: Reordering markup configs:', configs)
+
+    yield call(reorderMarkupConfigs, configs)
+    console.log('🟢 Saga: Markup configs reordered successfully')
+
+    yield put(reorderMarkupConfigsSuccess())
+    showToastSuccess('Markup configurations reordered successfully!')
+
+    // Refresh the list after reorder
+    if (level === "VARIANT" && variantId && tourGroupId) {
+      yield put(fetchAllMarkupConfigsForVariantRequest(variantId, tourGroupId))
+    } else {
+      yield put(fetchMarkupConfigsRequest(provider, level, tourGroupId, variantId, true))
+    }
+  } catch (error) {
+    console.error('🔴 Error reordering markup configs:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to reorder markup configurations'
+    yield put(reorderMarkupConfigsFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
+function* fetchAllMarkupConfigsForVariantSaga(action) {
+  try {
+    const { variantId, tourGroupId } = action.payload
+    console.log('🔵 Saga: Fetching all markup configs for variant:', { variantId, tourGroupId })
+
+    const response = yield call(getAllMarkupConfigsForVariant, variantId, tourGroupId)
+    console.log('🟢 Saga: All variant markup configs response:', response)
+
+    const configs = response?.data?.configs || response?.configs || []
+    yield put(fetchAllMarkupConfigsForVariantSuccess(configs))
+  } catch (error) {
+    console.error('🔴 Error fetching all variant markup configs:', error)
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch all variant markup configurations'
+    yield put(fetchAllMarkupConfigsForVariantFailure(errorMessage))
+    showToastError(errorMessage)
+  }
+}
+
 // Watcher
 export default function* tourGroupSaga() {
   yield takeEvery(FETCH_TOUR_GROUP_REQUEST, fetchTourGroup)
@@ -480,6 +537,8 @@ export default function* tourGroupSaga() {
   yield takeEvery(UPSERT_MARKUP_CONFIG_REQUEST, upsertMarkupConfigSaga)
   yield takeEvery(UPDATE_MARKUP_CONFIG_REQUEST, updateMarkupConfigSaga)
   yield takeEvery(DELETE_MARKUP_CONFIG_REQUEST, deleteMarkupConfigSaga)
+  yield takeEvery(REORDER_MARKUP_CONFIGS_REQUEST, reorderMarkupConfigsSaga)
+  yield takeEvery(FETCH_ALL_MARKUP_CONFIGS_FOR_VARIANT_REQUEST, fetchAllMarkupConfigsForVariantSaga)
 }
 
 // Provider Markup Configuration Sagas

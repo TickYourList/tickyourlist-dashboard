@@ -1,10 +1,15 @@
 /**
  * ========================================
- * MARKUP CONFIGURATION MODAL
+ * ENHANCED MARKUP CONFIGURATION MODAL
  * ========================================
  * 
- * Modal for managing provider markup configurations
- * Supports hierarchical configuration (GLOBAL → PROVIDER → PRODUCT → VARIANT)
+ * Production-level modal for managing provider markup configurations
+ * Features:
+ * - Multiple markup configs per variant
+ * - Support for all providers (Klook, Bokun, Ventrata, etc.)
+ * - Priority management with reordering (up/down buttons)
+ * - Hierarchical configuration (VARIANT → PRODUCT → PROVIDER → GLOBAL)
+ * - Rule-based conditions
  * 
  * ========================================
  */
@@ -33,6 +38,7 @@ import {
     NavLink,
     TabContent,
     TabPane,
+    UncontrolledTooltip,
 } from "reactstrap";
 import classnames from "classnames";
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
@@ -41,15 +47,29 @@ import {
     upsertMarkupConfigRequest,
     updateMarkupConfigRequest,
     deleteMarkupConfigRequest,
+    reorderMarkupConfigsRequest,
 } from "store/tickyourlist/travelTourGroup/action";
+import { getAllMarkupConfigsForVariant } from "helpers/location_management_helper";
+
+// All supported providers
+const PROVIDERS = [
+    { value: "KLOOK_AGENT", label: "Klook Agent" },
+    { value: "KLOOK_OCTO", label: "Klook Octo" },
+    { value: "BOKUN", label: "Bokun" },
+    { value: "BOKUN_OCTO", label: "Bokun Octo" },
+    { value: "VENTRATA", label: "Ventrata" },
+    { value: "REZDY", label: "Rezdy" },
+    { value: "REZDY_OCTO", label: "Rezdy Octo" },
+    { value: "OCTO_NATIVE", label: "Octo Native" },
+];
 
 const MarkupConfigModal = ({
     isOpen,
     toggle,
-    provider = "KLOOK_AGENT",
+    provider = null, // null = show all providers
     tourGroupId = null,
     variantId = null,
-    level = "PROVIDER", // GLOBAL, PROVIDER, PRODUCT, VARIANT
+    level = "VARIANT", // GLOBAL, PROVIDER, PRODUCT, VARIANT
 }) => {
     const dispatch = useDispatch();
     const {
@@ -68,9 +88,14 @@ const MarkupConfigModal = ({
 
     const [activeTab, setActiveTab] = useState("list");
     const [editingConfig, setEditingConfig] = useState(null);
+    const [selectedProvider, setSelectedProvider] = useState(provider || "KLOOK_AGENT");
+    const [allVariantConfigs, setAllVariantConfigs] = useState(null); // For variant level: all configs across providers
+    const [loadingAllConfigs, setLoadingAllConfigs] = useState(false);
+    const [reordering, setReordering] = useState(false);
+
     const [formData, setFormData] = useState({
         level: level,
-        provider: provider,
+        provider: selectedProvider,
         tourGroupId: tourGroupId,
         variantId: variantId,
         tag: "default",
@@ -82,6 +107,7 @@ const MarkupConfigModal = ({
             value: 20,
             priceSource: "B2B_PRICE",
             customPrice: undefined,
+            currency: "USD",
             roundingRule: "NONE",
             minPrice: undefined,
             maxPrice: undefined,
@@ -93,16 +119,47 @@ const MarkupConfigModal = ({
     // Fetch configurations when modal opens
     useEffect(() => {
         if (isOpen) {
-            dispatch(fetchMarkupConfigsRequest(provider, level, tourGroupId, variantId, true));
+            if (level === "VARIANT" && variantId) {
+                // Fetch all configs for variant (all providers)
+                fetchAllVariantConfigs();
+            } else {
+                // Fetch configs for specific provider/level
+                dispatch(fetchMarkupConfigsRequest(selectedProvider, level, tourGroupId, variantId, true));
+            }
         }
-    }, [isOpen, provider, level, tourGroupId, variantId, dispatch]);
+    }, [isOpen, selectedProvider, level, tourGroupId, variantId, dispatch]);
+
+    // Fetch all markup configs for a variant (across all providers)
+    const fetchAllVariantConfigs = async () => {
+        if (!variantId || !tourGroupId) return;
+
+        setLoadingAllConfigs(true);
+        try {
+            const response = await getAllMarkupConfigsForVariant(variantId, tourGroupId);
+            const data = response?.data?.data || response?.data || response;
+            setAllVariantConfigs(data);
+        } catch (error) {
+            console.error("Error fetching all variant configs:", error);
+            showToastError("Failed to fetch markup configurations");
+        } finally {
+            setLoadingAllConfigs(false);
+        }
+    };
+
+    // Update formData when selectedProvider changes
+    useEffect(() => {
+        setFormData(prev => ({
+            ...prev,
+            provider: selectedProvider,
+        }));
+    }, [selectedProvider]);
 
     // Reset form when editing config changes
     useEffect(() => {
         if (editingConfig) {
             setFormData({
                 level: editingConfig.level || level,
-                provider: editingConfig.provider || provider,
+                provider: editingConfig.provider || selectedProvider,
                 tourGroupId: editingConfig.tourGroupId || tourGroupId,
                 variantId: editingConfig.variantId || variantId,
                 tag: editingConfig.tag || "default",
@@ -123,7 +180,7 @@ const MarkupConfigModal = ({
             // Reset to defaults
             setFormData({
                 level: level,
-                provider: provider,
+                provider: selectedProvider,
                 tourGroupId: tourGroupId,
                 variantId: variantId,
                 tag: "default",
@@ -135,6 +192,7 @@ const MarkupConfigModal = ({
                     value: 20,
                     priceSource: "B2B_PRICE",
                     customPrice: undefined,
+                    currency: "USD",
                     roundingRule: "NONE",
                     minPrice: undefined,
                     maxPrice: undefined,
@@ -143,7 +201,7 @@ const MarkupConfigModal = ({
                 isDefault: false,
             });
         }
-    }, [editingConfig, level, provider, tourGroupId, variantId]);
+    }, [editingConfig, level, selectedProvider, tourGroupId, variantId]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -166,7 +224,7 @@ const MarkupConfigModal = ({
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
         // Validation
         if (!formData.tag || !formData.name) {
             showToastError("Tag and Name are required");
@@ -175,7 +233,6 @@ const MarkupConfigModal = ({
 
         // Validation based on markup type
         if (formData.markupConfig.type === "NO_MARKUP" || formData.markupConfig.type === "CUSTOM_PRICE") {
-            // NO_MARKUP doesn't need value, CUSTOM_PRICE needs customPrice
             if (formData.markupConfig.type === "CUSTOM_PRICE" && (!formData.markupConfig.customPrice || formData.markupConfig.customPrice <= 0)) {
                 showToastError("Custom price must be greater than 0");
                 return;
@@ -196,17 +253,30 @@ const MarkupConfigModal = ({
         setTimeout(() => {
             setEditingConfig(null);
             setActiveTab("list");
+            if (level === "VARIANT" && variantId) {
+                fetchAllVariantConfigs();
+            } else {
+                dispatch(fetchMarkupConfigsRequest(selectedProvider, level, tourGroupId, variantId, true));
+            }
         }, 1000);
     };
 
     const handleEdit = (config) => {
         setEditingConfig(config);
+        setSelectedProvider(config.provider || selectedProvider);
         setActiveTab("form");
     };
 
     const handleDelete = (configId) => {
         if (window.confirm("Are you sure you want to delete this markup configuration?")) {
             dispatch(deleteMarkupConfigRequest(configId));
+            setTimeout(() => {
+                if (level === "VARIANT" && variantId) {
+                    fetchAllVariantConfigs();
+                } else {
+                    dispatch(fetchMarkupConfigsRequest(selectedProvider, level, tourGroupId, variantId, true));
+                }
+            }, 500);
         }
     };
 
@@ -215,7 +285,7 @@ const MarkupConfigModal = ({
         setActiveTab("list");
         setFormData({
             level: level,
-            provider: provider,
+            provider: selectedProvider,
             tourGroupId: tourGroupId,
             variantId: variantId,
             tag: "default",
@@ -225,6 +295,8 @@ const MarkupConfigModal = ({
             markupConfig: {
                 type: "PERCENTAGE",
                 value: 20,
+                priceSource: "B2B_PRICE",
+                customPrice: undefined,
                 roundingRule: "NONE",
                 minPrice: undefined,
                 maxPrice: undefined,
@@ -232,6 +304,65 @@ const MarkupConfigModal = ({
             isActive: true,
             isDefault: false,
         });
+    };
+
+    // Handle priority reordering (move up/down)
+    const handlePriorityChange = async (configId, direction) => {
+        if (reordering) return;
+
+        setReordering(true);
+        try {
+            // Get current configs
+            const currentConfigs = level === "VARIANT" && allVariantConfigs
+                ? allVariantConfigs.variantConfigs || []
+                : markupConfigs;
+
+            // Sort by priority
+            const sorted = [...currentConfigs].sort((a, b) => (b.priority || 0) - (a.priority || 0));
+            const currentIndex = sorted.findIndex(c => c._id === configId);
+
+            if (currentIndex === -1) {
+                showToastError("Configuration not found");
+                return;
+            }
+
+            // Calculate new priority
+            let newPriority;
+            if (direction === "up" && currentIndex > 0) {
+                // Swap with previous (higher priority)
+                const prevPriority = sorted[currentIndex - 1].priority || 50;
+                const currentPriority = sorted[currentIndex].priority || 50;
+                newPriority = prevPriority + 1;
+            } else if (direction === "down" && currentIndex < sorted.length - 1) {
+                // Swap with next (lower priority)
+                const nextPriority = sorted[currentIndex + 1].priority || 50;
+                const currentPriority = sorted[currentIndex].priority || 50;
+                newPriority = Math.max(1, nextPriority - 1);
+            } else {
+                setReordering(false);
+                return; // Can't move further
+            }
+
+            // Update priority - format for backend API
+            const updates = sorted.map((config, idx) => ({
+                _id: config._id,
+                priority: config._id === configId ? newPriority : config.priority || 50,
+            }));
+
+            // Dispatch action through Redux to handle refresh automatically
+            dispatch(reorderMarkupConfigsRequest(
+                updates,
+                selectedProvider,
+                level,
+                tourGroupId,
+                variantId
+            ));
+        } catch (error) {
+            console.error("Error reordering priorities:", error);
+            showToastError("Failed to update priority");
+        } finally {
+            setReordering(false);
+        }
     };
 
     // Get level display name
@@ -251,64 +382,104 @@ const MarkupConfigModal = ({
             case "PERCENTAGE": return "Percentage";
             case "FIXED_AMOUNT": return "Fixed Amount";
             case "TIERED": return "Tiered";
-            case "NO_MARKUP": return "No Markup (Keep Original)";
+            case "NO_MARKUP": return "No Markup";
             case "DISCOUNT": return "Discount";
-            case "CUSTOM_PRICE": return "Custom Fixed Price";
+            case "CUSTOM_PRICE": return "Custom Price";
             default: return type;
         }
     };
 
-    // Get price source display name
-    const getPriceSourceDisplayName = (source) => {
-        switch (source) {
-            case "B2B_PRICE": return "B2B Price (Provider Wholesale)";
-            case "ORIGINAL_PRICE": return "Original Product Price";
-            case "LIVE_SELLING_PRICE": return "Live Selling Price (Klook API)";
-            case "CUSTOM": return "Custom Price";
-            default: return source || "B2B Price";
-        }
+    // Get provider display name
+    const getProviderDisplayName = (providerValue) => {
+        const provider = PROVIDERS.find(p => p.value === providerValue);
+        return provider ? provider.label : providerValue;
     };
 
-    // Calculate B2C price preview
-    const calculatePreview = (basePrice = 100) => {
-        const { type, value, customPrice } = formData.markupConfig;
-        if (type === "NO_MARKUP") {
-            return basePrice;
-        } else if (type === "CUSTOM_PRICE") {
-            return customPrice || basePrice;
-        } else if (type === "DISCOUNT") {
-            return basePrice * (1 - value / 100);
-        } else if (type === "PERCENTAGE") {
-            return basePrice * (1 + value / 100);
-        } else if (type === "FIXED_AMOUNT") {
-            return basePrice + value;
+    // Get configurations to display
+    const getDisplayConfigs = () => {
+        if (level === "VARIANT" && allVariantConfigs) {
+            return allVariantConfigs.variantConfigs || [];
         }
-        return basePrice;
+        return markupConfigs;
     };
 
-    // Get base price for preview based on priceSource
-    const getPreviewBasePrice = () => {
-        const { priceSource, customPrice } = formData.markupConfig;
-        switch (priceSource) {
-            case "ORIGINAL_PRICE":
-                return 120; // Example original price
-            case "LIVE_SELLING_PRICE":
-                return 150; // Example live selling price
-            case "CUSTOM":
-                return customPrice || 100;
-            case "B2B_PRICE":
-            default:
-                return 100; // B2B price
-        }
+    // Group configs by provider (for variant level)
+    const getConfigsByProvider = () => {
+        const configs = getDisplayConfigs();
+        const grouped = {};
+
+        configs.forEach(config => {
+            const prov = config.provider || "UNKNOWN";
+            if (!grouped[prov]) {
+                grouped[prov] = [];
+            }
+            grouped[prov].push(config);
+        });
+
+        // Sort each group by priority
+        Object.keys(grouped).forEach(prov => {
+            grouped[prov].sort((a, b) => (b.priority || 0) - (a.priority || 0));
+        });
+
+        return grouped;
     };
+
+    const displayConfigs = getDisplayConfigs();
+    const configsByProvider = level === "VARIANT" ? getConfigsByProvider() : {};
 
     return (
-        <Modal isOpen={isOpen} toggle={toggle} size="lg">
+        <Modal isOpen={isOpen} toggle={toggle} size="xl">
             <ModalHeader toggle={toggle}>
                 Markup Configuration - {getLevelDisplayName(level)}
-                {provider && ` (${provider})`}
+                {variantId && level === "VARIANT" && " (All Providers)"}
             </ModalHeader>
             <ModalBody>
+                {/* Provider Selection (for VARIANT level or when provider is null) */}
+                {(level === "VARIANT" || !provider) && (
+                    <Card className="mb-3">
+                        <CardBody>
+                            <Row>
+                                <Col md={6}>
+                                    <FormGroup>
+                                        <Label>Provider</Label>
+                                        <Input
+                                            type="select"
+                                            value={selectedProvider}
+                                            onChange={(e) => {
+                                                setSelectedProvider(e.target.value);
+                                                if (level !== "VARIANT") {
+                                                    dispatch(fetchMarkupConfigsRequest(e.target.value, level, tourGroupId, variantId, true));
+                                                }
+                                            }}
+                                        >
+                                            {PROVIDERS.map(prov => (
+                                                <option key={prov.value} value={prov.value}>
+                                                    {prov.label}
+                                                </option>
+                                            ))}
+                                        </Input>
+                                        <small className="text-muted">
+                                            {level === "VARIANT"
+                                                ? "Select provider to add new configuration"
+                                                : "Select provider to view configurations"}
+                                        </small>
+                                    </FormGroup>
+                                </Col>
+                                {level === "VARIANT" && allVariantConfigs && (
+                                    <Col md={6}>
+                                        <Alert color="info" className="mb-0">
+                                            <strong>Available Providers:</strong>{" "}
+                                            {allVariantConfigs.providers?.length > 0
+                                                ? allVariantConfigs.providers.map(p => getProviderDisplayName(p)).join(", ")
+                                                : "None"}
+                                        </Alert>
+                                    </Col>
+                                )}
+                            </Row>
+                        </CardBody>
+                    </Card>
+                )}
+
                 <Nav tabs className="nav-tabs-custom">
                     <NavItem>
                         <NavLink
@@ -320,7 +491,7 @@ const MarkupConfigModal = ({
                             style={{ cursor: "pointer" }}
                         >
                             <i className="mdi mdi-format-list-bulleted me-1"></i>
-                            Configurations ({markupConfigs.length})
+                            Configurations ({displayConfigs.length})
                         </NavLink>
                     </NavItem>
                     <NavItem>
@@ -337,33 +508,168 @@ const MarkupConfigModal = ({
 
                 <TabContent activeTab={activeTab} className="p-3">
                     <TabPane tabId="list">
-                        {markupConfigsLoading ? (
+                        {(loadingAllConfigs || markupConfigsLoading) ? (
                             <div className="text-center py-4">
                                 <Spinner color="primary" />
                                 <p className="mt-2">Loading configurations...</p>
                             </div>
-                        ) : markupConfigs.length === 0 ? (
+                        ) : displayConfigs.length === 0 ? (
                             <Alert color="info">
                                 No markup configurations found. Click "New Configuration" to create one.
                             </Alert>
+                        ) : level === "VARIANT" && Object.keys(configsByProvider).length > 0 ? (
+                            // Variant level: Show grouped by provider
+                            <div>
+                                {Object.keys(configsByProvider).map(providerKey => (
+                                    <Card key={providerKey} className="mb-3">
+                                        <CardBody>
+                                            <h6 className="mb-3">
+                                                <Badge color="primary">{getProviderDisplayName(providerKey)}</Badge>
+                                                <span className="ms-2 text-muted">
+                                                    ({configsByProvider[providerKey].length} configuration{configsByProvider[providerKey].length !== 1 ? 's' : ''})
+                                                </span>
+                                            </h6>
+                                            <Table responsive size="sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th style={{ width: '40px' }}>Priority</th>
+                                                        <th>Tag</th>
+                                                        <th>Name</th>
+                                                        <th>Type</th>
+                                                        <th>Value</th>
+                                                        <th>Priority #</th>
+                                                        <th>Status</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {configsByProvider[providerKey].map((config, idx) => (
+                                                        <tr key={config._id}>
+                                                            <td>
+                                                                <div className="d-flex flex-column gap-1">
+                                                                    <Button
+                                                                        color="link"
+                                                                        size="sm"
+                                                                        className="p-0"
+                                                                        onClick={() => handlePriorityChange(config._id, "up")}
+                                                                        disabled={reordering || idx === 0}
+                                                                        title="Move Up (Increase Priority)"
+                                                                    >
+                                                                        <i className="mdi mdi-arrow-up"></i>
+                                                                    </Button>
+                                                                    <Button
+                                                                        color="link"
+                                                                        size="sm"
+                                                                        className="p-0"
+                                                                        onClick={() => handlePriorityChange(config._id, "down")}
+                                                                        disabled={reordering || idx === configsByProvider[providerKey].length - 1}
+                                                                        title="Move Down (Decrease Priority)"
+                                                                    >
+                                                                        <i className="mdi mdi-arrow-down"></i>
+                                                                    </Button>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <Badge color="primary">{config.tag}</Badge>
+                                                                {config.isDefault && (
+                                                                    <Badge color="success" className="ms-1">Default</Badge>
+                                                                )}
+                                                            </td>
+                                                            <td>{config.name}</td>
+                                                            <td>{getMarkupTypeDisplayName(config.markupConfig?.type)}</td>
+                                                            <td>
+                                                                {config.markupConfig?.type === "PERCENTAGE" ? (
+                                                                    <>{config.markupConfig?.value}%</>
+                                                                ) : config.markupConfig?.type === "FIXED_AMOUNT" ? (
+                                                                    <>{config.markupConfig?.currency || "USD"} {config.markupConfig?.value?.toFixed(2) || "0.00"}</>
+                                                                ) : config.markupConfig?.type === "DISCOUNT" ? (
+                                                                    <>{config.markupConfig?.value}%</>
+                                                                ) : config.markupConfig?.type === "CUSTOM_PRICE" ? (
+                                                                    <>{config.markupConfig?.currency || "USD"} {config.markupConfig?.customPrice?.toFixed(2) || "0.00"}</>
+                                                                ) : (
+                                                                    <>{config.markupConfig?.value || "—"}</>
+                                                                )}
+                                                            </td>
+                                                            <td>
+                                                                <Badge color="info">{config.priority}</Badge>
+                                                            </td>
+                                                            <td>
+                                                                {config.isActive ? (
+                                                                    <Badge color="success">Active</Badge>
+                                                                ) : (
+                                                                    <Badge color="secondary">Inactive</Badge>
+                                                                )}
+                                                            </td>
+                                                            <td>
+                                                                <Button
+                                                                    color="primary"
+                                                                    size="sm"
+                                                                    className="me-1"
+                                                                    onClick={() => handleEdit(config)}
+                                                                >
+                                                                    <i className="mdi mdi-pencil"></i>
+                                                                </Button>
+                                                                <Button
+                                                                    color="danger"
+                                                                    size="sm"
+                                                                    onClick={() => handleDelete(config._id)}
+                                                                    disabled={deletingMarkupConfig}
+                                                                >
+                                                                    <i className="mdi mdi-delete"></i>
+                                                                </Button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </Table>
+                                        </CardBody>
+                                    </Card>
+                                ))}
+                            </div>
                         ) : (
+                            // Other levels: Show simple table
                             <Table responsive size="sm">
                                 <thead>
                                     <tr>
+                                        <th style={{ width: '40px' }}>Priority</th>
                                         <th>Tag</th>
                                         <th>Name</th>
                                         <th>Type</th>
                                         <th>Value</th>
-                                        <th>Priority</th>
+                                        <th>Priority #</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {markupConfigs
+                                    {displayConfigs
                                         .sort((a, b) => (b.priority || 0) - (a.priority || 0))
-                                        .map((config) => (
+                                        .map((config, idx) => (
                                             <tr key={config._id}>
+                                                <td>
+                                                    <div className="d-flex flex-column gap-1">
+                                                        <Button
+                                                            color="link"
+                                                            size="sm"
+                                                            className="p-0"
+                                                            onClick={() => handlePriorityChange(config._id, "up")}
+                                                            disabled={reordering || idx === 0}
+                                                            title="Move Up (Increase Priority)"
+                                                        >
+                                                            <i className="mdi mdi-arrow-up"></i>
+                                                        </Button>
+                                                        <Button
+                                                            color="link"
+                                                            size="sm"
+                                                            className="p-0"
+                                                            onClick={() => handlePriorityChange(config._id, "down")}
+                                                            disabled={reordering || idx === displayConfigs.length - 1}
+                                                            title="Move Down (Decrease Priority)"
+                                                        >
+                                                            <i className="mdi mdi-arrow-down"></i>
+                                                        </Button>
+                                                    </div>
+                                                </td>
                                                 <td>
                                                     <Badge color="primary">{config.tag}</Badge>
                                                     {config.isDefault && (
@@ -375,11 +681,19 @@ const MarkupConfigModal = ({
                                                 <td>
                                                     {config.markupConfig?.type === "PERCENTAGE" ? (
                                                         <>{config.markupConfig?.value}%</>
+                                                    ) : config.markupConfig?.type === "FIXED_AMOUNT" ? (
+                                                        <>{config.markupConfig?.currency || "USD"} {config.markupConfig?.value?.toFixed(2) || "0.00"}</>
+                                                    ) : config.markupConfig?.type === "DISCOUNT" ? (
+                                                        <>{config.markupConfig?.value}%</>
+                                                    ) : config.markupConfig?.type === "CUSTOM_PRICE" ? (
+                                                        <>{config.markupConfig?.currency || "USD"} {config.markupConfig?.customPrice?.toFixed(2) || "0.00"}</>
                                                     ) : (
-                                                        <>{config.markupConfig?.value}</>
+                                                        <>{config.markupConfig?.value || "—"}</>
                                                     )}
                                                 </td>
-                                                <td>{config.priority}</td>
+                                                <td>
+                                                    <Badge color="info">{config.priority}</Badge>
+                                                </td>
                                                 <td>
                                                     {config.isActive ? (
                                                         <Badge color="success">Active</Badge>
@@ -417,16 +731,53 @@ const MarkupConfigModal = ({
                             <Row>
                                 <Col md={6}>
                                     <FormGroup>
+                                        <Label>Provider {level !== "GLOBAL" && <span className="text-danger">*</span>}</Label>
+                                        <Input
+                                            type="select"
+                                            name="provider"
+                                            value={formData.provider}
+                                            onChange={handleInputChange}
+                                            required={level !== "GLOBAL"}
+                                            disabled={level === "GLOBAL"}
+                                        >
+                                            <option value="">Select Provider</option>
+                                            {PROVIDERS.map(prov => (
+                                                <option key={prov.value} value={prov.value}>
+                                                    {prov.label}
+                                                </option>
+                                            ))}
+                                        </Input>
+                                        <small className="text-muted">Select the provider for this markup configuration</small>
+                                    </FormGroup>
+                                </Col>
+                                <Col md={6}>
+                                    <FormGroup>
                                         <Label>Tag <span className="text-danger">*</span></Label>
                                         <Input
                                             type="text"
                                             name="tag"
                                             value={formData.tag}
                                             onChange={handleInputChange}
-                                            placeholder="e.g., default, winter_premium"
+                                            placeholder="e.g., default, winter_premium, summer_discount"
                                             required
                                         />
                                         <small className="text-muted">Unique identifier for this configuration</small>
+                                    </FormGroup>
+                                </Col>
+                            </Row>
+
+                            <Row>
+                                <Col md={6}>
+                                    <FormGroup>
+                                        <Label>Name <span className="text-danger">*</span></Label>
+                                        <Input
+                                            type="text"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleInputChange}
+                                            placeholder="e.g., Default Klook Markup"
+                                            required
+                                        />
                                     </FormGroup>
                                 </Col>
                                 <Col md={6}>
@@ -441,22 +792,12 @@ const MarkupConfigModal = ({
                                             max={100}
                                             required
                                         />
-                                        <small className="text-muted">Higher number = higher priority (1-100)</small>
+                                        <small className="text-muted">
+                                            Higher number = higher priority (1-100). Higher priority configs are evaluated first.
+                                        </small>
                                     </FormGroup>
                                 </Col>
                             </Row>
-
-                            <FormGroup>
-                                <Label>Name <span className="text-danger">*</span></Label>
-                                <Input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g., Default Klook Markup"
-                                    required
-                                />
-                            </FormGroup>
 
                             <FormGroup>
                                 <Label>Description</Label>
@@ -482,9 +823,9 @@ const MarkupConfigModal = ({
                                             required
                                         >
                                             <option value="B2B_PRICE">B2B Price (Provider Wholesale)</option>
-                                            <option value="ORIGINAL_PRICE">Original Product Price</option>
-                                            <option value="LIVE_SELLING_PRICE">Live Selling Price (Klook API)</option>
-                                            <option value="CUSTOM">Custom Price</option>
+                                            <option value="ORIGINAL_PRICE">Original Product Price (TYL Variant)</option>
+                                            <option value="LIVE_SELLING_PRICE">Live Selling Price (Provider API)</option>
+                                            <option value="CUSTOM">Custom Base Price</option>
                                         </Input>
                                         <small className="text-muted">Base price to apply markup on</small>
                                     </FormGroup>
@@ -558,7 +899,6 @@ const MarkupConfigModal = ({
                                                 onChange={handleInputChange}
                                                 min={0}
                                                 step={0.01}
-                                                placeholder="Enter final price"
                                                 required
                                             />
                                         </FormGroup>
@@ -567,6 +907,31 @@ const MarkupConfigModal = ({
                             </Row>
 
                             <Row>
+                                <Col md={6}>
+                                    <FormGroup>
+                                        <Label>Currency</Label>
+                                        <Input
+                                            type="select"
+                                            name="markupConfig.currency"
+                                            value={formData.markupConfig.currency || "USD"}
+                                            onChange={handleInputChange}
+                                        >
+                                            <option value="USD">USD - US Dollar</option>
+                                            <option value="EUR">EUR - Euro</option>
+                                            <option value="GBP">GBP - British Pound</option>
+                                            <option value="INR">INR - Indian Rupee</option>
+                                            <option value="SGD">SGD - Singapore Dollar</option>
+                                            <option value="AUD">AUD - Australian Dollar</option>
+                                            <option value="CAD">CAD - Canadian Dollar</option>
+                                            <option value="JPY">JPY - Japanese Yen</option>
+                                            <option value="AED">AED - UAE Dirham</option>
+                                            <option value="SAR">SAR - Saudi Riyal</option>
+                                        </Input>
+                                        <small className="text-muted">
+                                            Currency for fixed amount markup (important for FIXED_AMOUNT and CUSTOM_PRICE types)
+                                        </small>
+                                    </FormGroup>
+                                </Col>
                                 <Col md={6}>
                                     <FormGroup>
                                         <Label>Rounding Rule</Label>
@@ -579,13 +944,15 @@ const MarkupConfigModal = ({
                                             <option value="NONE">None</option>
                                             <option value="UP">Round Up</option>
                                             <option value="DOWN">Round Down</option>
-                                            <option value="NEAREST">Round Nearest</option>
+                                            <option value="NEAREST">Round to Nearest</option>
                                             <option value="NEAREST_5">Round to Nearest 5</option>
                                             <option value="NEAREST_10">Round to Nearest 10</option>
                                         </Input>
                                     </FormGroup>
                                 </Col>
-                                <Col md={3}>
+                            </Row>
+                            <Row>
+                                <Col md={6}>
                                     <FormGroup>
                                         <Label>Min Price (Optional)</Label>
                                         <Input
@@ -595,8 +962,9 @@ const MarkupConfigModal = ({
                                             onChange={handleInputChange}
                                             min={0}
                                             step={0.01}
-                                            placeholder="No minimum"
+                                            placeholder="Minimum price"
                                         />
+                                        <small className="text-muted">Enforce minimum price</small>
                                     </FormGroup>
                                 </Col>
                                 <Col md={3}>
@@ -609,8 +977,9 @@ const MarkupConfigModal = ({
                                             onChange={handleInputChange}
                                             min={0}
                                             step={0.01}
-                                            placeholder="No maximum"
+                                            placeholder="Maximum price"
                                         />
+                                        <small className="text-muted">Enforce maximum price</small>
                                     </FormGroup>
                                 </Col>
                             </Row>
@@ -640,37 +1009,76 @@ const MarkupConfigModal = ({
                                 </Col>
                             </Row>
 
-                            {/* Preview */}
+                            {/* Preview Section */}
                             <Card className="mt-3">
                                 <CardBody>
                                     <h6>Price Preview</h6>
                                     <p className="mb-1">
-                                        <strong>Base Price Source:</strong> {getPriceSourceDisplayName(formData.markupConfig.priceSource)}
+                                        <strong>Provider:</strong> {formData.provider ? getProviderDisplayName(formData.provider) : "—"}
                                     </p>
                                     <p className="mb-1">
-                                        <strong>Base Price:</strong> ${getPreviewBasePrice().toFixed(2)}
+                                        <strong>Base Price Source:</strong> {formData.markupConfig.priceSource || "B2B_PRICE"}
+                                    </p>
+                                    {formData.markupConfig.priceSource === "CUSTOM" && (
+                                        <p className="mb-1">
+                                            <strong>Custom Base Price:</strong> {formData.markupConfig.currency || "USD"} {formData.markupConfig.customPrice?.toFixed(2) || "0.00"}
+                                        </p>
+                                    )}
+                                    <p className="mb-1">
+                                        <strong>Example Base Price:</strong> {formData.markupConfig.currency || "USD"} 100.00
                                     </p>
                                     <p className="mb-1">
                                         <strong>Markup Type:</strong> {getMarkupTypeDisplayName(formData.markupConfig.type)}
                                     </p>
-                                    {formData.markupConfig.type !== "NO_MARKUP" && (
+                                    {formData.markupConfig.type !== "NO_MARKUP" && formData.markupConfig.type !== "CUSTOM_PRICE" && (
                                         <p className="mb-1">
-                                            <strong>
-                                                {formData.markupConfig.type === "DISCOUNT" ? "Discount" : 
-                                                 formData.markupConfig.type === "CUSTOM_PRICE" ? "Custom Price" : 
-                                                 "Markup"}:
-                                            </strong>{" "}
-                                            {formData.markupConfig.type === "CUSTOM_PRICE" ? (
-                                                <>${(formData.markupConfig.customPrice || 0).toFixed(2)}</>
-                                            ) : formData.markupConfig.type === "PERCENTAGE" || formData.markupConfig.type === "DISCOUNT" ? (
+                                            <strong>Markup Value:</strong>{" "}
+                                            {formData.markupConfig.type === "PERCENTAGE" || formData.markupConfig.type === "DISCOUNT" ? (
                                                 <>{formData.markupConfig.value || 0}%</>
+                                            ) : formData.markupConfig.type === "FIXED_AMOUNT" ? (
+                                                <>{formData.markupConfig.currency || "USD"} {formData.markupConfig.value?.toFixed(2) || "0.00"}</>
                                             ) : (
-                                                <>${formData.markupConfig.value || 0}</>
+                                                <>{formData.markupConfig.value || "—"}</>
                                             )}
                                         </p>
                                     )}
+                                    {formData.markupConfig.type === "CUSTOM_PRICE" && (
+                                        <p className="mb-1">
+                                            <strong>Custom Final Price:</strong> {formData.markupConfig.currency || "USD"} {formData.markupConfig.customPrice?.toFixed(2) || "0.00"}
+                                        </p>
+                                    )}
+                                    <p className="mb-1">
+                                        <strong>Calculated Final Price:</strong>{" "}
+                                        <span className="text-success fw-bold">
+                                            {(() => {
+                                                const basePrice = 100; // Example base price
+                                                let finalPrice = basePrice;
+
+                                                if (formData.markupConfig.type === "PERCENTAGE") {
+                                                    finalPrice = basePrice * (1 + (formData.markupConfig.value || 0) / 100);
+                                                } else if (formData.markupConfig.type === "FIXED_AMOUNT") {
+                                                    finalPrice = basePrice + (formData.markupConfig.value || 0);
+                                                } else if (formData.markupConfig.type === "DISCOUNT") {
+                                                    finalPrice = basePrice * (1 - (formData.markupConfig.value || 0) / 100);
+                                                } else if (formData.markupConfig.type === "CUSTOM_PRICE") {
+                                                    finalPrice = formData.markupConfig.customPrice || basePrice;
+                                                } else if (formData.markupConfig.type === "NO_MARKUP") {
+                                                    finalPrice = basePrice;
+                                                }
+
+                                                return `${formData.markupConfig.currency || "USD"} ${finalPrice.toFixed(2)}`;
+                                            })()}
+                                        </span>
+                                    </p>
+                                    {formData.markupConfig.type === "FIXED_AMOUNT" && (
+                                        <p className="mb-1 text-muted">
+                                            <small>
+                                                <i className="mdi mdi-information-outline"></i> Fixed amount ({formData.markupConfig.currency || "USD"} {formData.markupConfig.value?.toFixed(2) || "0.00"}) is added to the base price.
+                                            </small>
+                                        </p>
+                                    )}
                                     <p className="mb-0">
-                                        <strong>Final B2C Price:</strong> <span className="text-success">${calculatePreview(getPreviewBasePrice()).toFixed(2)}</span>
+                                        <strong>Priority:</strong> {formData.priority} (Higher = evaluated first)
                                     </p>
                                 </CardBody>
                             </Card>

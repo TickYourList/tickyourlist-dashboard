@@ -566,3 +566,34 @@ export const deleteMarkupConfigFailure = error => ({
   type: DELETE_MARKUP_CONFIG_FAILURE,
   payload: error,
 })
+
+// Reorder Markup Configs
+export const reorderMarkupConfigsRequest = (configs, provider = null, level = null, tourGroupId = null, variantId = null) => ({
+  type: REORDER_MARKUP_CONFIGS_REQUEST,
+  payload: { configs, provider, level, tourGroupId, variantId },
+})
+
+export const reorderMarkupConfigsSuccess = () => ({
+  type: REORDER_MARKUP_CONFIGS_SUCCESS,
+})
+
+export const reorderMarkupConfigsFailure = error => ({
+  type: REORDER_MARKUP_CONFIGS_FAILURE,
+  payload: error,
+})
+
+// Fetch All Markup Configs for Variant
+export const fetchAllMarkupConfigsForVariantRequest = (variantId, tourGroupId) => ({
+  type: FETCH_ALL_MARKUP_CONFIGS_FOR_VARIANT_REQUEST,
+  payload: { variantId, tourGroupId },
+})
+
+export const fetchAllMarkupConfigsForVariantSuccess = data => ({
+  type: FETCH_ALL_MARKUP_CONFIGS_FOR_VARIANT_SUCCESS,
+  payload: data,
+})
+
+export const fetchAllMarkupConfigsForVariantFailure = error => ({
+  type: FETCH_ALL_MARKUP_CONFIGS_FOR_VARIANT_FAILURE,
+  payload: error,
+})

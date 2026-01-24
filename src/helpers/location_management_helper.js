@@ -575,6 +575,16 @@ const deleteMarkupConfig = (configId) => {
   return del(`/v1/provider/markup/${configId}`);
 };
 
+const reorderMarkupConfigs = (configs) => {
+  return put(`/v1/provider/markup/reorder`, { configs });
+};
+
+const getAllMarkupConfigsForVariant = (variantId, tourGroupId) => {
+  const params = {};
+  if (tourGroupId) params.tourGroupId = tourGroupId;
+  return get(`/v1/provider/markup/variant/${variantId}/all`, { params });
+};
+
 const connectTourGroupToCategories = (tourGroupId, categoryIds, subcategoryIds) => {
   // Convert to array of IDs (strings) as expected by the API
   const categoryConnections = Array.isArray(categoryIds) ? categoryIds : [];
@@ -743,5 +753,10 @@ export {
   createVariantFromKlookPackage,
   deleteKlookMapping,
   getSupportedCurrencies,
-
+  getMarkupConfigs,
+  upsertMarkupConfig,
+  updateMarkupConfig,
+  deleteMarkupConfig,
+  reorderMarkupConfigs,
+  getAllMarkupConfigsForVariant,
 };

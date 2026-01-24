@@ -74,8 +74,6 @@ const Layout = props => {
   useEffect(() => {
     //init body click event fot toggle rightbar
     document.body.addEventListener("click", hideRightbar, true);
-
-
   }, []);
 
   useEffect(() => {
@@ -87,9 +85,9 @@ const Layout = props => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (leftSideBarTheme) {
-      dispatch(changeSidebarTheme(leftSideBarTheme));
-    }
+    // Set sidebar theme - use DARK as default if not set
+    const theme = leftSideBarTheme || "dark";
+    dispatch(changeSidebarTheme(theme));
   }, [leftSideBarTheme, dispatch]);
 
   useEffect(() => {
