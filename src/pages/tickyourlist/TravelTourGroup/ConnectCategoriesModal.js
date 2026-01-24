@@ -230,6 +230,47 @@ const ConnectCategoriesModal = ({
     return map;
   }, [categories]);
 
+  // Helper function to get display rank for a subcategory
+  const getSubcategoryDisplayRank = (subcategory) => {
+    // Get parent category's rank using categoryId
+    const parentCategoryRank = subcategory.categoryId
+      ? categoryRankMap.get(subcategory.categoryId)
+      : null;
+
+    // Also try to find by category _id if it exists
+    const categoryId = subcategory.category?._id || subcategory.category;
+    const parentCategoryRankById = categoryId
+      ? categoryRankMap.get(String(categoryId))
+      : null;
+
+    // Use the parent category's rank, fallback to subcategory's own sortOrder if not found
+    const displayRank = parentCategoryRank !== null && parentCategoryRank !== undefined
+      ? parentCategoryRank
+      : (parentCategoryRankById !== null && parentCategoryRankById !== undefined
+        ? parentCategoryRankById
+        : (subcategory.sortOrder !== undefined && subcategory.sortOrder !== null
+          ? subcategory.sortOrder
+          : Infinity)); // Use Infinity for items without rank so they appear at the end
+
+    return displayRank;
+  };
+
+  // Sort subcategories by their parent category's rank (1, 2, 3, etc.)
+  const sortedSubcategories = useMemo(() => {
+    return [...subcategories].sort((a, b) => {
+      const rankA = getSubcategoryDisplayRank(a);
+      const rankB = getSubcategoryDisplayRank(b);
+      // Sort by rank (ascending), then by name if ranks are equal
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      // If ranks are equal, sort alphabetically by name
+      const nameA = (a.name || a.displayName || '').toLowerCase();
+      const nameB = (b.name || b.displayName || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }, [subcategories, categoryRankMap]);
+
   return (
     <Modal isOpen={isOpen} toggle={toggle} size="lg">
       <ModalHeader toggle={toggle}>
@@ -345,34 +386,17 @@ const ConnectCategoriesModal = ({
                       </Badge>
                     </h5>
                     <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-                      {subcategories.length === 0 ? (
+                      {sortedSubcategories.length === 0 ? (
                         <p className="text-muted">No subcategories found</p>
                       ) : (
-                        subcategories.map((subcategory) => {
+                        sortedSubcategories.map((subcategory) => {
                           const subcategoryId = subcategory._id || subcategory.id;
                           const normalizedId = normalizeId(subcategoryId);
                           const normalizedSelected = selectedSubcategories.map(id => normalizeId(id));
                           const isSelected = normalizedSelected.includes(normalizedId);
 
-                          // Get parent category's rank using categoryId
-                          const parentCategoryRank = subcategory.categoryId
-                            ? categoryRankMap.get(subcategory.categoryId)
-                            : null;
-
-                          // Also try to find by category _id if it exists
-                          const categoryId = subcategory.category?._id || subcategory.category;
-                          const parentCategoryRankById = categoryId
-                            ? categoryRankMap.get(String(categoryId))
-                            : null;
-
-                          // Use the parent category's rank, fallback to subcategory's own sortOrder if not found
-                          const displayRank = parentCategoryRank !== null && parentCategoryRank !== undefined
-                            ? parentCategoryRank
-                            : (parentCategoryRankById !== null && parentCategoryRankById !== undefined
-                              ? parentCategoryRankById
-                              : (subcategory.sortOrder !== undefined && subcategory.sortOrder !== null
-                                ? subcategory.sortOrder
-                                : null));
+                          // Get display rank for this subcategory
+                          const displayRank = getSubcategoryDisplayRank(subcategory);
 
                           return (
                             <div
@@ -394,7 +418,7 @@ const ConnectCategoriesModal = ({
                                 style={{ cursor: 'pointer', userSelect: 'none' }}
                               >
                                 {subcategory.name || subcategory.displayName}
-                                {displayRank !== null && (
+                                {displayRank !== null && displayRank !== Infinity && (
                                   <Badge color="secondary" className="ms-2">
                                     Rank: {displayRank}
                                   </Badge>
