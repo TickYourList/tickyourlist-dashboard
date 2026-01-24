@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Modal,
   ModalHeader,
@@ -57,22 +57,22 @@ const ConnectCategoriesModal = ({
           if (response?.data) {
             const fetchedTourGroup = response.data;
             setTourGroupData(fetchedTourGroup);
-            
+
             const tourCityCode = fetchedTourGroup.cityCode || fetchedTourGroup.city?.cityCode;
             setCityCode(tourCityCode || "");
-            
+
             // Load existing connections - normalize IDs to strings
             const existingCategories = (fetchedTourGroup.categoryConnections || []).map(
               (conn) => normalizeId(conn.item?._id || conn.item)
             ).filter(id => id !== null);
-            
+
             const existingSubcategories = (fetchedTourGroup.subcategoryConnections || []).map(
               (conn) => normalizeId(conn.item?._id || conn.item)
             ).filter(id => id !== null);
-            
+
             setSelectedCategories(existingCategories);
             setSelectedSubcategories(existingSubcategories);
-            
+
             if (tourCityCode) {
               fetchCategoriesAndSubcategories(tourCityCode);
             }
@@ -83,18 +83,18 @@ const ConnectCategoriesModal = ({
           const tourCityCode = tourGroup.cityCode || tourGroup.city?.cityCode;
           setCityCode(tourCityCode || "");
           setTourGroupData(tourGroup);
-          
+
           const existingCategories = (tourGroup.categoryConnections || []).map(
             (conn) => normalizeId(conn.item?._id || conn.item)
           ).filter(id => id !== null);
-          
+
           const existingSubcategories = (tourGroup.subcategoryConnections || []).map(
             (conn) => normalizeId(conn.item?._id || conn.item)
           ).filter(id => id !== null);
-          
+
           setSelectedCategories(existingCategories);
           setSelectedSubcategories(existingSubcategories);
-          
+
           if (tourCityCode) {
             fetchCategoriesAndSubcategories(tourCityCode);
           }
@@ -102,25 +102,25 @@ const ConnectCategoriesModal = ({
           setLoadingTourGroup(false);
         }
       };
-      
+
       fetchTourGroupData();
     } else if (isOpen && tourGroup) {
       // Fallback if no _id
       const tourCityCode = tourGroup.cityCode || tourGroup.city?.cityCode;
       setCityCode(tourCityCode || "");
       setTourGroupData(tourGroup);
-      
+
       const existingCategories = (tourGroup.categoryConnections || []).map(
         (conn) => normalizeId(conn.item?._id || conn.item)
       ).filter(id => id !== null);
-      
+
       const existingSubcategories = (tourGroup.subcategoryConnections || []).map(
         (conn) => normalizeId(conn.item?._id || conn.item)
       ).filter(id => id !== null);
-      
+
       setSelectedCategories(existingCategories);
       setSelectedSubcategories(existingSubcategories);
-      
+
       if (tourCityCode) {
         fetchCategoriesAndSubcategories(tourCityCode);
       }
@@ -129,7 +129,7 @@ const ConnectCategoriesModal = ({
 
   const fetchCategoriesAndSubcategories = async (cityCodeValue) => {
     if (!cityCodeValue) return;
-    
+
     setFetching(true);
     try {
       const [categoriesRes, subcategoriesRes] = await Promise.all([
@@ -154,7 +154,7 @@ const ConnectCategoriesModal = ({
   const handleCategoryToggle = (categoryId) => {
     const normalizedId = normalizeId(categoryId);
     if (!normalizedId) return;
-    
+
     setSelectedCategories((prev) => {
       const normalizedPrev = prev.map(id => normalizeId(id));
       if (normalizedPrev.includes(normalizedId)) {
@@ -168,7 +168,7 @@ const ConnectCategoriesModal = ({
   const handleSubcategoryToggle = (subcategoryId) => {
     const normalizedId = normalizeId(subcategoryId);
     if (!normalizedId) return;
-    
+
     setSelectedSubcategories((prev) => {
       const normalizedPrev = prev.map(id => normalizeId(id));
       if (normalizedPrev.includes(normalizedId)) {
@@ -213,6 +213,23 @@ const ConnectCategoriesModal = ({
     }
   };
 
+  // Create a map of categoryId -> category.sortOrder for looking up parent category rank
+  const categoryRankMap = useMemo(() => {
+    const map = new Map();
+    categories.forEach((category) => {
+      // Map by both _id and id to handle different data structures
+      const categoryId = category._id || category.id;
+      if (categoryId && (category.sortOrder !== undefined && category.sortOrder !== null)) {
+        map.set(String(categoryId), category.sortOrder);
+        // Also map by numeric id if it exists
+        if (category.id) {
+          map.set(category.id, category.sortOrder);
+        }
+      }
+    });
+    return map;
+  }, [categories]);
+
   return (
     <Modal isOpen={isOpen} toggle={toggle} size="lg">
       <ModalHeader toggle={toggle}>
@@ -244,8 +261,8 @@ const ConnectCategoriesModal = ({
           <div className="text-center py-4">
             <Spinner color="primary" />
             <p className="mt-2">
-              {loadingTourGroup 
-                ? "Loading tour group connections..." 
+              {loadingTourGroup
+                ? "Loading tour group connections..."
                 : "Loading categories and subcategories..."}
             </p>
           </div>
@@ -272,7 +289,7 @@ const ConnectCategoriesModal = ({
                           const normalizedId = normalizeId(categoryId);
                           const normalizedSelected = selectedCategories.map(id => normalizeId(id));
                           const isSelected = normalizedSelected.includes(normalizedId);
-                          
+
                           return (
                             <div
                               key={normalizedId || categoryId}
@@ -288,12 +305,12 @@ const ConnectCategoriesModal = ({
                                 className="me-2"
                                 style={{ cursor: 'pointer' }}
                               />
-                              <Label 
+                              <Label
                                 className="mb-0 flex-grow-1"
                                 style={{ cursor: 'pointer', userSelect: 'none' }}
                               >
                                 {category.name || category.displayName}
-                                {category.sortOrder && (
+                                {(category.sortOrder !== undefined && category.sortOrder !== null) && (
                                   <Badge color="secondary" className="ms-2">
                                     Rank: {category.sortOrder}
                                   </Badge>
@@ -336,7 +353,27 @@ const ConnectCategoriesModal = ({
                           const normalizedId = normalizeId(subcategoryId);
                           const normalizedSelected = selectedSubcategories.map(id => normalizeId(id));
                           const isSelected = normalizedSelected.includes(normalizedId);
-                          
+
+                          // Get parent category's rank using categoryId
+                          const parentCategoryRank = subcategory.categoryId
+                            ? categoryRankMap.get(subcategory.categoryId)
+                            : null;
+
+                          // Also try to find by category _id if it exists
+                          const categoryId = subcategory.category?._id || subcategory.category;
+                          const parentCategoryRankById = categoryId
+                            ? categoryRankMap.get(String(categoryId))
+                            : null;
+
+                          // Use the parent category's rank, fallback to subcategory's own sortOrder if not found
+                          const displayRank = parentCategoryRank !== null && parentCategoryRank !== undefined
+                            ? parentCategoryRank
+                            : (parentCategoryRankById !== null && parentCategoryRankById !== undefined
+                              ? parentCategoryRankById
+                              : (subcategory.sortOrder !== undefined && subcategory.sortOrder !== null
+                                ? subcategory.sortOrder
+                                : null));
+
                           return (
                             <div
                               key={normalizedId || subcategoryId}
@@ -352,14 +389,14 @@ const ConnectCategoriesModal = ({
                                 className="me-2"
                                 style={{ cursor: 'pointer' }}
                               />
-                              <Label 
+                              <Label
                                 className="mb-0 flex-grow-1"
                                 style={{ cursor: 'pointer', userSelect: 'none' }}
                               >
                                 {subcategory.name || subcategory.displayName}
-                                {subcategory.sortOrder && (
+                                {displayRank !== null && (
                                   <Badge color="secondary" className="ms-2">
-                                    Rank: {subcategory.sortOrder}
+                                    Rank: {displayRank}
                                   </Badge>
                                 )}
                               </Label>

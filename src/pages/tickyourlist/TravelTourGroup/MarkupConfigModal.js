@@ -51,6 +51,7 @@ import {
     reorderMarkupConfigsRequest,
     fetchTourGroupsRequest,
     fetchVariantsByTourRequest,
+    fetchKlookLivePricingRequest,
 } from "store/tickyourlist/travelTourGroup/action";
 import { getAllMarkupConfigsForVariant } from "helpers/location_management_helper";
 
@@ -83,6 +84,8 @@ const MarkupConfigModal = ({
         deletingMarkupConfig,
         allTourGroups,
         variantsByTour,
+        klookLivePricing,
+        klookLivePricingLoading,
     } = useSelector((state) => ({
         markupConfigs: state.tourGroup?.markupConfigs || [],
         markupConfigsLoading: state.tourGroup?.markupConfigsLoading || false,
@@ -91,6 +94,8 @@ const MarkupConfigModal = ({
         deletingMarkupConfig: state.tourGroup?.deletingMarkupConfig || false,
         allTourGroups: state.tourGroup?.tourGroup || [],
         variantsByTour: state.tourGroup?.variantsByTour || [],
+        klookLivePricing: state.tourGroup?.klookLivePricing || {},
+        klookLivePricingLoading: state.tourGroup?.klookLivePricingLoading || false,
     }));
 
     const [activeTab, setActiveTab] = useState("list");
@@ -244,13 +249,35 @@ const MarkupConfigModal = ({
         }
     }, [selectedTourGroup, level]);
 
-    // Fetch actual pricing when variant is selected or when modal opens with variantId
+    // Fetch provider pricing via Redux when variant is selected (same flow as LiveKlookPricing)
     useEffect(() => {
         const variantToUse = selectedVariant || variantId;
         const tourGroupToUse = selectedTourGroup || tourGroupId;
 
         if (isOpen && variantToUse && tourGroupToUse && formData.provider) {
-            fetchActualPricing(variantToUse, tourGroupToUse);
+            const today = new Date().toISOString().split('T')[0];
+            // Use Redux action to fetch pricing (same as LiveKlookPricing component)
+            dispatch(fetchKlookLivePricingRequest(tourGroupToUse, today, today, variantToUse, 'USD'));
+        }
+    }, [selectedVariant, variantId, selectedTourGroup, tourGroupId, formData.provider, isOpen, dispatch]);
+
+    // Extract pricing from Redux store when it's available (same structure as LiveKlookPricing uses)
+    useEffect(() => {
+        const variantToUse = selectedVariant || variantId;
+        const tourGroupToUse = selectedTourGroup || tourGroupId;
+
+        if (isOpen && variantToUse && tourGroupToUse && formData.provider) {
+            if (klookLivePricingLoading) {
+                setActualPricing(prev => ({ ...prev, loading: true }));
+                return;
+            }
+
+            const pricingData = klookLivePricing[tourGroupToUse];
+
+            if (pricingData) {
+                // Extract pricing from Redux store using same logic as LiveKlookPricing
+                extractPricingFromRedux(pricingData, variantToUse, tourGroupToUse);
+            }
         } else if (!isOpen) {
             // Reset pricing when modal closes
             setActualPricing({
@@ -258,29 +285,76 @@ const MarkupConfigModal = ({
                 originalPrice: null,
                 liveSellingPrice: null,
                 currency: "USD",
+                cityCurrency: null,
+                cityCurrencySymbol: null,
+                inrRate: null,
+                cityRate: null,
                 loading: false,
             });
         }
-    }, [selectedVariant, variantId, selectedTourGroup, tourGroupId, formData.provider, formData.markupConfig.priceSource, isOpen]);
+    }, [klookLivePricing, klookLivePricingLoading, selectedVariant, variantId, selectedTourGroup, tourGroupId, formData.provider, isOpen]);
 
-    // Fetch actual pricing for the selected variant
-    const fetchActualPricing = async (vId = null, tgId = null) => {
-        const variantToFetch = vId || selectedVariant || variantId;
-        const tourGroupToFetch = tgId || selectedTourGroup || tourGroupId;
-
-        if (!variantToFetch || !tourGroupToFetch) {
-            console.log("⚠️ fetchActualPricing: Missing variant or tourGroup", { variantToFetch, tourGroupToFetch });
-            return;
+    // Helper function to convert price to selected display currency
+    const getConvertedPrice = (price, targetCurrency, pricingData, showSymbol = false) => {
+        if (!price || price <= 0) return "0.00";
+        if (!targetCurrency || targetCurrency === "USD") {
+            return showSymbol ? `$${price.toFixed(2)}` : price.toFixed(2);
         }
 
-        console.log("🔵 fetchActualPricing: Starting", { variantToFetch, tourGroupToFetch, provider: formData.provider });
+        // Get conversion rate
+        let conversionRate = 1;
+
+        if (targetCurrency === "INR" && pricingData?.inrRate) {
+            conversionRate = pricingData.inrRate;
+        } else if (targetCurrency === pricingData?.cityCurrency && pricingData?.cityRate) {
+            conversionRate = pricingData.cityRate;
+        } else if (targetCurrency !== "USD") {
+            // Use approximate rates for other currencies
+            const approximateRates = {
+                "EUR": 0.92, "GBP": 0.79, "SAR": 3.75, "QAR": 3.64, "KWD": 0.31,
+                "OMR": 0.38, "BHD": 0.38, "SGD": 1.34, "AUD": 1.52, "CAD": 1.35,
+                "JPY": 150, "CHF": 0.88, "CNY": 7.2, "HKD": 7.8, "THB": 35,
+                "MYR": 4.7, "IDR": 15500, "PHP": 55, "VND": 24500, "KRW": 1300,
+                "NZD": 1.65, "ZAR": 18.5, "BRL": 4.9, "MXN": 17, "ARS": 850,
+                "CLP": 900, "COP": 3900, "PEN": 3.7, "TRY": 32, "RUB": 90,
+                "ILS": 3.7, "EGP": 48, "JOD": 0.71, "LBP": 15000, "PKR": 280,
+                "BDT": 110, "LKR": 325, "NPR": 133, "MMK": 2100, "KHR": 4100, "LAK": 21000,
+                "AED": 3.67, "INR": 83
+            };
+            conversionRate = approximateRates[targetCurrency] || 1;
+        }
+
+        const convertedPrice = price * conversionRate;
+
+        // Get currency symbol
+        const currencySymbols = {
+            "USD": "$", "EUR": "€", "GBP": "£", "INR": "₹", "AED": "د.إ", "SAR": "﷼",
+            "JPY": "¥", "CNY": "¥", "KRW": "₩", "THB": "฿", "SGD": "S$", "AUD": "A$",
+            "CAD": "C$", "HKD": "HK$", "NZD": "NZ$", "CHF": "CHF", "SEK": "kr",
+            "NOK": "kr", "DKK": "kr", "PLN": "zł", "CZK": "Kč", "HUF": "Ft",
+            "RUB": "₽", "TRY": "₺", "BRL": "R$", "MXN": "$", "ZAR": "R"
+        };
+
+        const symbol = currencySymbols[targetCurrency] || targetCurrency;
+
+        if (showSymbol) {
+            return `${symbol} ${convertedPrice.toFixed(2)}`;
+        }
+
+        return convertedPrice.toFixed(2);
+    };
+
+    // Extract pricing data from Redux store (same logic as LiveKlookPricing component)
+    const extractPricingFromRedux = async (pricingData, variantToFetch, tourGroupToFetch) => {
+
+        console.log("🔵 extractPricingFromRedux: Starting", { variantToFetch, tourGroupToFetch, provider: formData.provider });
         setActualPricing(prev => ({ ...prev, loading: true }));
 
         try {
-            const { getKlookLivePricing, getTourGroupVariantDetailAPI } = await import('helpers/location_management_helper');
+            const { getTourGroupVariantDetailAPI } = await import('helpers/location_management_helper');
             const { get } = await import('helpers/api_helper');
 
-            // Get variant details for original price
+            // Get variant details for original price and city info
             const variantResponse = await getTourGroupVariantDetailAPI(variantToFetch);
             const variant = variantResponse?.data?.variant || variantResponse?.data;
 
@@ -339,131 +413,191 @@ const MarkupConfigModal = ({
 
             console.log("💰 Extracted original price:", { originalPrice, variantCurrency });
 
-            // Get B2B price from provider - always fetch for current day
+            // Get B2B price from Redux store (same structure as LiveKlookPricing uses)
             let b2bPrice = null;
             let liveSellingPrice = null;
-
-            // ALWAYS use originalPrice as B2B price (this is the variant's base price)
-            // This ensures we always have a price to show, even if provider API fails
-            if (originalPrice && originalPrice > 0) {
-                b2bPrice = originalPrice;
-                console.log("✅ Using variant's original price as B2B price:", b2bPrice);
-            }
-
-            // Try to fetch today's pricing from calendar pricing endpoint
             const today = new Date().toISOString().split('T')[0];
-            try {
-                const todayPricingResponse = await get(`/v1/variant-calendar-pricing/pricing/${variantToFetch}/${today}?currency=USD`);
-                const todayPricing = todayPricingResponse?.data?.data?.pricing || todayPricingResponse?.data?.pricing;
-                console.log("📅 Today's calendar pricing:", todayPricing);
 
-                if (todayPricing?.prices && Array.isArray(todayPricing.prices) && todayPricing.prices.length > 0) {
-                    const adultPrice = todayPricing.prices.find(p =>
-                        p.type?.toLowerCase() === 'adult' || p.type?.toLowerCase() === 'guest'
-                    ) || todayPricing.prices[0];
-                    const todayOriginalPrice = adultPrice?.originalPrice || adultPrice?.finalPrice;
-                    if (todayOriginalPrice && todayOriginalPrice > 0) {
-                        b2bPrice = todayOriginalPrice; // Use today's price if available
-                        variantCurrency = todayPricing.currency || variantCurrency;
-                        console.log("✅ Using today's calendar pricing as B2B price:", b2bPrice);
-                    }
-                }
-            } catch (error) {
-                console.log("⚠️ Could not fetch today's calendar pricing, using variant base price:", error.message);
-            }
+            console.log("📊 Pricing data from Redux store:", pricingData);
 
-            // Try to get provider pricing if provider is selected
-            if (formData.provider) {
-                try {
-                    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                    console.log("🌐 Fetching provider pricing:", { tourGroupToFetch, today, tomorrow, variantToFetch });
+            if (pricingData?.variants && Array.isArray(pricingData.variants)) {
+                console.log("🔍 Found variants in response:", pricingData.variants.length);
+                console.log("🔍 All variant IDs in response:", pricingData.variants.map(v => ({
+                    variantId: v.variantId || v._id,
+                    variantName: v.variantName || v.name,
+                    hasSchedules: !!v.schedules
+                })));
+                console.log("🔍 Looking for variant:", variantToFetch, typeof variantToFetch);
 
-                    const pricingResponse = await getKlookLivePricing(tourGroupToFetch, today, tomorrow, variantToFetch, 'USD');
-                    console.log("📡 Provider pricing response:", pricingResponse);
+                const variantPricing = pricingData.variants.find(v => {
+                    const vId = v.variantId || v._id;
+                    // Try multiple matching strategies
+                    const matches = vId === variantToFetch ||
+                        vId?.toString() === variantToFetch?.toString() ||
+                        String(vId) === String(variantToFetch) ||
+                        (vId && variantToFetch && String(vId).toLowerCase() === String(variantToFetch).toLowerCase());
+                    console.log("🔎 Checking variant match:", {
+                        responseVariantId: vId,
+                        lookingFor: variantToFetch,
+                        typeMatch: typeof vId === typeof variantToFetch,
+                        stringMatch: String(vId) === String(variantToFetch),
+                        matches
+                    });
+                    return matches;
+                });
 
-                    const pricingData = pricingResponse?.data?.data || pricingResponse?.data || pricingResponse;
-                    console.log("📊 Pricing data extracted:", pricingData);
+                if (variantPricing) {
+                    console.log("✅ Found matching variant pricing:", variantPricing);
+                    if (variantPricing?.schedules && Array.isArray(variantPricing.schedules)) {
+                        // The structure is: schedules -> calendars -> timeslots
+                        // Find today's timeslot across all schedules and calendars
+                        let todaySlot = null;
 
-                    if (pricingData?.variants && Array.isArray(pricingData.variants)) {
-                        console.log("🔍 Found variants in response:", pricingData.variants.length);
-                        const variantPricing = pricingData.variants.find(v => {
-                            const vId = v.variantId || v._id;
-                            const matches = vId === variantToFetch || vId?.toString() === variantToFetch?.toString();
-                            console.log("🔎 Checking variant match:", { vId, variantToFetch, matches });
-                            return matches;
-                        });
+                        for (const schedule of variantPricing.schedules) {
+                            if (schedule?.calendars && Array.isArray(schedule.calendars)) {
+                                for (const calendar of schedule.calendars) {
+                                    if (calendar?.timeslots && Array.isArray(calendar.timeslots)) {
+                                        // Find today's timeslot
+                                        const slot = calendar.timeslots.find(ts => {
+                                            if (ts.startTime) {
+                                                const slotDate = new Date(ts.startTime).toISOString().split('T')[0];
+                                                return slotDate === today;
+                                            }
+                                            return false;
+                                        });
 
-                        if (variantPricing) {
-                            console.log("✅ Found matching variant pricing:", variantPricing);
-                            if (variantPricing?.schedules && Array.isArray(variantPricing.schedules)) {
-                                // Get today's schedule if available, otherwise first schedule
-                                const todaySchedule = variantPricing.schedules.find(s => {
-                                    if (s.date) {
-                                        const scheduleDate = new Date(s.date).toISOString().split('T')[0];
-                                        return scheduleDate === today;
+                                        if (slot) {
+                                            todaySlot = slot;
+                                            break;
+                                        }
+
+                                        // If no today's slot found, use first available slot as fallback
+                                        if (!todaySlot && calendar.timeslots.length > 0) {
+                                            todaySlot = calendar.timeslots[0];
+                                        }
                                     }
-                                    return false;
-                                }) || variantPricing.schedules[0];
-
-                                console.log("📅 Selected schedule:", todaySchedule);
-
-                                if (todaySchedule?.timeslots && Array.isArray(todaySchedule.timeslots) && todaySchedule.timeslots.length > 0) {
-                                    const slot = todaySchedule.timeslots[0];
-                                    console.log("⏰ Selected timeslot:", slot);
-                                    // Use provider API price if available, otherwise keep existing b2bPrice
-                                    if (slot.originalPrice || slot.b2bPrice) {
-                                        b2bPrice = slot.originalPrice || slot.b2bPrice;
-                                        console.log("✅ Using provider API B2B price:", b2bPrice);
-                                    }
-                                    liveSellingPrice = slot.sellingPrice || slot.liveSellingPrice || null;
-                                    console.log("💵 Extracted prices:", { b2bPrice, liveSellingPrice });
-                                } else {
-                                    console.log("⚠️ No timeslots in schedule");
                                 }
-                            } else {
-                                console.log("⚠️ No schedules in variant pricing");
                             }
+
+                            if (todaySlot) break;
+                        }
+
+                        if (todaySlot) {
+                            console.log("⏰ Selected timeslot:", todaySlot);
+                            console.log("⏰ Timeslot keys:", Object.keys(todaySlot));
+                            // originalPrice is the B2B price from provider (USD)
+                            // sellingPrice is the B2C price (with markup applied)
+                            if (todaySlot.originalPrice !== undefined && todaySlot.originalPrice !== null && todaySlot.originalPrice > 0) {
+                                b2bPrice = parseFloat(todaySlot.originalPrice); // This is the actual provider B2B price
+                                console.log("✅ Using provider API B2B price (originalPrice):", b2bPrice);
+                            } else if (todaySlot.b2bPrice !== undefined && todaySlot.b2bPrice !== null && todaySlot.b2bPrice > 0) {
+                                b2bPrice = parseFloat(todaySlot.b2bPrice);
+                                console.log("✅ Using provider API B2B price (b2bPrice):", b2bPrice);
+                            } else {
+                                console.log("⚠️ Timeslot found but no B2B price in originalPrice or b2bPrice fields");
+                                console.log("⚠️ Available fields:", Object.keys(todaySlot));
+                            }
+                            // sellingPrice is the B2C price, but we can also use it as live selling price reference
+                            if (todaySlot.sellingPrice !== undefined && todaySlot.sellingPrice !== null && todaySlot.sellingPrice > 0) {
+                                liveSellingPrice = parseFloat(todaySlot.sellingPrice); // B2C price (with markup)
+                            }
+                            console.log("💵 Extracted prices:", {
+                                b2bPrice,
+                                liveSellingPrice,
+                                originalPrice: todaySlot.originalPrice,
+                                sellingPrice: todaySlot.sellingPrice,
+                                b2bPriceField: todaySlot.b2bPrice,
+                                allFields: todaySlot
+                            });
                         } else {
-                            console.log("⚠️ No matching variant found in pricing data");
+                            console.log("⚠️ No timeslots found in any calendar");
+                            console.log("⚠️ Schedule structure:", variantPricing.schedules.map(s => ({
+                                hasCalendars: !!s.calendars,
+                                calendarsCount: s.calendars?.length || 0,
+                                calendars: s.calendars?.map(c => ({
+                                    month: c.month,
+                                    hasTimeslots: !!c.timeslots,
+                                    timeslotsCount: c.timeslots?.length || 0
+                                }))
+                            })));
                         }
                     } else {
-                        console.log("⚠️ No variants in pricing data, structure:", Object.keys(pricingData || {}));
+                        console.log("⚠️ No schedules in variant pricing");
                     }
-                } catch (error) {
-                    console.error("❌ Error fetching provider pricing:", error);
-                    console.error("Error details:", error.response?.data || error.message);
-                    // Keep the existing b2bPrice (from variant or calendar pricing)
+                } else {
+                    console.log("⚠️ No matching variant found in pricing data");
+                }
+            } else {
+                console.log("⚠️ No variants in pricing data, structure:", Object.keys(pricingData || {}));
+                // Check if there's an error message about mappings
+                if (pricingData?.message && pricingData.message.includes("No active")) {
+                    console.warn("⚠️ Provider mappings not found - cannot fetch provider B2B price. Will try calendar pricing.");
                 }
             }
 
-            // Final fallback: if still no price, use 0 as placeholder (shouldn't happen)
+            // SECONDARY: Try calendar pricing endpoint - this might have more up-to-date prices than variant's stored price
+            // We'll try this even if provider API failed, as it might have synced provider prices
             if (!b2bPrice || b2bPrice <= 0) {
-                console.warn("⚠️ No B2B price found, using placeholder");
-                b2bPrice = 0;
+                try {
+                    const todayPricingResponse = await get(`/v1/variant-calendar-pricing/pricing/${variantToFetch}/${today}?currency=USD`);
+                    const todayPricing = todayPricingResponse?.data?.data?.pricing || todayPricingResponse?.data?.pricing;
+                    console.log("📅 Today's calendar pricing (fallback):", todayPricing);
+
+                    if (todayPricing?.prices && Array.isArray(todayPricing.prices) && todayPricing.prices.length > 0) {
+                        const adultPrice = todayPricing.prices.find(p =>
+                            p.type?.toLowerCase() === 'adult' || p.type?.toLowerCase() === 'guest'
+                        ) || todayPricing.prices[0];
+                        const todayOriginalPrice = adultPrice?.originalPrice || adultPrice?.finalPrice;
+                        if (todayOriginalPrice && todayOriginalPrice > 0) {
+                            b2bPrice = todayOriginalPrice;
+                            variantCurrency = todayPricing.currency || variantCurrency;
+                            console.log("✅ Using today's calendar pricing as B2B price (fallback):", b2bPrice);
+                        }
+                    }
+                } catch (error) {
+                    console.log("⚠️ Could not fetch today's calendar pricing:", error.message);
+                }
+            }
+
+            // FINAL FALLBACK: Only use variant's stored price if everything else failed
+            // NOTE: This stored price might be outdated. The actual provider B2B price should come from the provider API.
+            // If you see this fallback being used, it means provider mappings might not be set up correctly.
+            if (!b2bPrice || b2bPrice <= 0) {
+                if (originalPrice && originalPrice > 0) {
+                    b2bPrice = originalPrice;
+                    console.warn("⚠️ Using variant's stored price as final fallback B2B price:", b2bPrice);
+                    console.warn("⚠️ NOTE: This stored price might be outdated. Please ensure provider mappings are set up correctly to get live provider B2B prices.");
+                } else {
+                    console.warn("⚠️ No B2B price found, using placeholder");
+                    b2bPrice = 0;
+                }
+            } else {
+                console.log("✅ Successfully fetched B2B price:", b2bPrice);
             }
 
             // Get exchange rates for currency conversion
+            // Note: Using default rates since currency exchange endpoint doesn't exist
+            // These are approximate rates - for accurate rates, use the provider pricing API which includes exchange rates
             let inrRate = 83; // Default USD to INR rate (approximate)
             let cityRate = 1; // Default rate for city currency
 
-            try {
-                // Try to get exchange rates from API or use defaults
-                const exchangeRatesResponse = await get('/v1/currency-exchange/rates?base=USD');
-                const rates = exchangeRatesResponse?.data?.data?.rates || exchangeRatesResponse?.data?.rates || {};
+            // Use default rates based on common currencies
+            // These rates are approximate and should be updated regularly
+            const defaultRates = {
+                'AED': 3.67, 'SAR': 3.75, 'QAR': 3.64, 'KWD': 0.31, 'OMR': 0.38, 'BHD': 0.38,
+                'INR': 83, 'GBP': 0.79, 'EUR': 0.92, 'SGD': 1.34, 'AUD': 1.52, 'CAD': 1.35,
+                'JPY': 150, 'CHF': 0.88, 'CNY': 7.2, 'HKD': 7.8, 'THB': 35, 'MYR': 4.7,
+                'IDR': 15600, 'PHP': 56, 'VND': 24500, 'KRW': 1330
+            };
 
-                if (rates.INR) inrRate = rates.INR;
-                if (rates[cityCurrency]) cityRate = rates[cityCurrency];
-
-                console.log("💱 Exchange rates:", { inrRate, cityRate, cityCurrency });
-            } catch (error) {
-                console.log("⚠️ Could not fetch exchange rates, using defaults:", error.message);
-                // Use default rates based on common currencies
-                const defaultRates = {
-                    'AED': 3.67, 'SAR': 3.75, 'QAR': 3.64, 'KWD': 0.31, 'OMR': 0.38, 'BHD': 0.38,
-                    'INR': 83, 'GBP': 0.79, 'EUR': 0.92, 'SGD': 1.34, 'AUD': 1.52
-                };
-                if (defaultRates[cityCurrency]) cityRate = defaultRates[cityCurrency];
+            if (defaultRates[cityCurrency]) {
+                cityRate = defaultRates[cityCurrency];
             }
+            if (defaultRates['INR']) {
+                inrRate = defaultRates['INR'];
+            }
+
+            console.log("💱 Exchange rates (using defaults):", { inrRate, cityRate, cityCurrency });
 
             console.log("✅ Final pricing data:", {
                 b2bPrice,
@@ -1607,6 +1741,17 @@ const MarkupConfigModal = ({
                                         <strong>Base Price Source:</strong> {formData.markupConfig.priceSource || "B2B_PRICE"}
                                     </p>
 
+                                    {/* Show warning if provider mappings not found */}
+                                    {formData.provider && (selectedVariant || variantId) && actualPricing.b2bPrice && actualPricing.b2bPrice === actualPricing.originalPrice && actualPricing.b2bPrice > 0 && (
+                                        <div className="mb-3 p-2 bg-warning bg-opacity-10 border border-warning rounded">
+                                            <small className="text-warning">
+                                                <strong>⚠️ Warning:</strong> Provider mappings may not be set up correctly.
+                                                Showing variant's stored price ({getConvertedPrice(actualPricing.b2bPrice, selectedDisplayCurrency, actualPricing, true)}) instead of live provider B2B price.
+                                                Please ensure provider mappings are active to see actual provider wholesale prices (e.g., $84.71, $76.28, $55.00).
+                                            </small>
+                                        </div>
+                                    )}
+
                                     {/* Show actual prices side by side for comparison */}
                                     {(selectedVariant || variantId) && (actualPricing.b2bPrice !== null && actualPricing.b2bPrice > 0 || actualPricing.originalPrice !== null || actualPricing.liveSellingPrice !== null) && (
                                         <div className="mb-3 p-3 bg-light rounded">
@@ -1616,9 +1761,9 @@ const MarkupConfigModal = ({
                                                     <Col md={4}>
                                                         <div className="text-center p-2 border rounded">
                                                             <small className="text-muted d-block">B2B Price (Wholesale)</small>
-                                                            <strong className="text-primary">{actualPricing.currency || "USD"} {actualPricing.b2bPrice.toFixed(2)}</strong>
+                                                            <strong className="text-primary">{getConvertedPrice(actualPricing.b2bPrice, selectedDisplayCurrency, actualPricing, true)}</strong>
                                                             {actualPricing.liveSellingPrice === null && (
-                                                                <small className="text-muted d-block mt-1">(Variant Base Price)</small>
+                                                                <small className="text-muted d-block mt-1">(Variant Base Price - may be outdated)</small>
                                                             )}
                                                         </div>
                                                     </Col>
