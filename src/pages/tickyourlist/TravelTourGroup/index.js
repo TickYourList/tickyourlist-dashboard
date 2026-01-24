@@ -307,104 +307,21 @@ function TourGroupTable() {
   }, [isSearchMode, searchedTourGroups, totalCount])
 
   // Fetch provider mappings for all tour groups (not just displayed page)
-  // State to store provider pricing summary (B2B/B2C) for each tour group
-  const [providerPricingSummary, setProviderPricingSummary] = useState({})
-
   useEffect(() => {
     const dataSource = isSearchMode ? (searchedTourGroups || []) : tourGroup;
     if (dataSource.length === 0) return;
 
     // Fetch mappings for all tour groups to ensure provider icon shows correctly
+    // Use a Set to track which IDs we've already fetched to prevent duplicate calls
+    const fetchedIds = new Set();
     dataSource.forEach((tg) => {
-      // Only fetch if not already in Redux state
-      if (tg._id && (!providerMappings || !providerMappings[tg._id])) {
+      // Only fetch if not already in Redux state and not already being fetched
+      if (tg._id && (!providerMappings || !providerMappings[tg._id]) && !fetchedIds.has(tg._id)) {
+        fetchedIds.add(tg._id);
         dispatch(fetchKlookMappingsRequest(tg._id));
       }
     });
-  }, [tourGroup, searchedTourGroups, isSearchMode, providerMappings, dispatch])
-
-  // Fetch provider pricing summary (B2B/B2C) for tour groups with provider mappings
-  useEffect(() => {
-    const fetchProviderPricing = async () => {
-      if (!displayData.length || !providerMappings) return;
-
-      const today = new Date().toISOString().split('T')[0];
-      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-      const pricingPromises = displayData
-        .filter(tg => {
-          const mappings = providerMappings?.[tg._id];
-          return mappings && Array.isArray(mappings) && mappings.length > 0 && !providerPricingSummary[tg._id];
-        })
-        .map(async (tg) => {
-          try {
-            const { getKlookLivePricing } = await import('helpers/location_management_helper');
-            const response = await getKlookLivePricing(tg._id, today, tomorrow, null, 'USD');
-            const pricingData = response?.data?.data || response?.data || response;
-            
-            // Extract minimum B2B and B2C prices from all variants
-            let minB2B = Infinity;
-            let minB2C = Infinity;
-            let currency = 'USD';
-            
-            if (pricingData?.variants && Array.isArray(pricingData.variants)) {
-              pricingData.variants.forEach((variant) => {
-                if (variant.schedules && Array.isArray(variant.schedules)) {
-                  variant.schedules.forEach((schedule) => {
-                    if (schedule.timeslots && Array.isArray(schedule.timeslots)) {
-                      schedule.timeslots.forEach((slot) => {
-                        if (slot.originalPrice && slot.originalPrice < minB2B) {
-                          minB2B = slot.originalPrice;
-                        }
-                        if (slot.sellingPrice && slot.sellingPrice < minB2C) {
-                          minB2C = slot.sellingPrice;
-                        }
-                        if (slot.currency) {
-                          currency = slot.currency;
-                        }
-                      });
-                    }
-                  });
-                }
-              });
-            }
-
-            if (minB2B !== Infinity && minB2C !== Infinity) {
-              const markupAmount = minB2C - minB2B;
-              const markupPercentage = minB2B > 0 ? ((markupAmount / minB2B) * 100) : 0;
-              
-              return {
-                tourGroupId: tg._id,
-                pricing: {
-                  b2bPrice: minB2B,
-                  b2cPrice: minB2C,
-                  currency: currency,
-                  markupAmount: markupAmount,
-                  markupPercentage: markupPercentage.toFixed(1)
-                }
-              };
-            }
-          } catch (error) {
-            console.error(`Error fetching provider pricing for ${tg._id}:`, error);
-          }
-          return null;
-        });
-
-      const results = await Promise.all(pricingPromises);
-      const newPricingSummary = {};
-      results.forEach(result => {
-        if (result && result.pricing) {
-          newPricingSummary[result.tourGroupId] = result.pricing;
-        }
-      });
-
-      if (Object.keys(newPricingSummary).length > 0) {
-        setProviderPricingSummary(prev => ({ ...prev, ...newPricingSummary }));
-      }
-    };
-
-    fetchProviderPricing();
-  }, [displayData, providerMappings, providerPricingSummary])
+  }, [tourGroup, searchedTourGroups, isSearchMode, dispatch])
 
   // Show loading while permissions are being fetched
   // Also show loading if permissions are missing (will auto-retry)
@@ -489,47 +406,14 @@ function TourGroupTable() {
         Header: "Price",
         accessor: "listingPrice.finalPrice",
         Cell: ({ row }) => {
-          const internalPrice = row.original.listingPrice?.finalPrice
-          const currency =
-            row.original.city?.country?.currency?.localSymbol || "$"
-          
-          // Check if tour group has provider mappings
-          const mappings = providerMappings?.[row.original._id]
-          const hasProvider = mappings && Array.isArray(mappings) && mappings.length > 0
-          
-          // Get provider pricing from state
-          const providerPricing = providerPricingSummary[row.original._id]
-          const b2cPrice = providerPricing?.b2cPrice
-          const providerCurrency = providerPricing?.currency || "USD"
-          
-          // Show B2C price if available, otherwise show internal price
-          const displayPrice = hasProvider && b2cPrice ? b2cPrice : internalPrice
-          const displayCurrency = hasProvider && b2cPrice ? providerCurrency : currency
-          const hasPricingDetails = hasProvider && providerPricing
-          
+          const price = row.original.listingPrice?.finalPrice;
+          const currency = row.original.city?.country?.currency?.localSymbol || "$";
+
           return (
-            <div 
-              className="d-flex align-items-center gap-2"
-              style={{ cursor: hasPricingDetails ? 'pointer' : 'default' }}
-              onClick={hasPricingDetails ? () => {
-                setSelectedTourGroupForPricingDetails({
-                  ...row.original,
-                  providerPricing: providerPricing,
-                  internalPrice: internalPrice,
-                  internalCurrency: currency
-                })
-                setPricingDetailsModal(true)
-              } : undefined}
-              title={hasPricingDetails ? "Click to view B2B and B2C pricing details" : ""}
-            >
-              <span className="fw-bold">
-                {displayPrice ? `${displayCurrency} ${displayPrice.toFixed(2)}` : "N/A"}
-              </span>
-              {hasPricingDetails && (
-                <i className="fas fa-info-circle text-info" style={{ fontSize: '12px' }}></i>
-              )}
-            </div>
-          )
+            <span>
+              {price ? `${currency} ${price.toFixed(2)}` : "N/A"}
+            </span>
+          );
         },
         filterable: true,
       },

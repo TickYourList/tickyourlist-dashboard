@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import Select from "react-select";
 import {
     Modal,
     ModalHeader,
@@ -48,6 +49,8 @@ import {
     updateMarkupConfigRequest,
     deleteMarkupConfigRequest,
     reorderMarkupConfigsRequest,
+    fetchTourGroupsRequest,
+    fetchVariantsByTourRequest,
 } from "store/tickyourlist/travelTourGroup/action";
 import { getAllMarkupConfigsForVariant } from "helpers/location_management_helper";
 
@@ -78,12 +81,16 @@ const MarkupConfigModal = ({
         upsertingMarkupConfig,
         updatingMarkupConfig,
         deletingMarkupConfig,
+        allTourGroups,
+        variantsByTour,
     } = useSelector((state) => ({
         markupConfigs: state.tourGroup?.markupConfigs || [],
         markupConfigsLoading: state.tourGroup?.markupConfigsLoading || false,
         upsertingMarkupConfig: state.tourGroup?.upsertingMarkupConfig || false,
         updatingMarkupConfig: state.tourGroup?.updatingMarkupConfig || false,
         deletingMarkupConfig: state.tourGroup?.deletingMarkupConfig || false,
+        allTourGroups: state.tourGroup?.tourGroup || [],
+        variantsByTour: state.tourGroup?.variantsByTour || [],
     }));
 
     const [activeTab, setActiveTab] = useState("list");
@@ -92,6 +99,79 @@ const MarkupConfigModal = ({
     const [allVariantConfigs, setAllVariantConfigs] = useState(null); // For variant level: all configs across providers
     const [loadingAllConfigs, setLoadingAllConfigs] = useState(false);
     const [reordering, setReordering] = useState(false);
+
+    // Product and Variant selection states
+    const [tourGroups, setTourGroups] = useState([]);
+    const [variants, setVariants] = useState([]);
+    const [selectedTourGroup, setSelectedTourGroup] = useState(tourGroupId || null);
+    const [selectedVariant, setSelectedVariant] = useState(variantId || null);
+    const [applyToAllVariants, setApplyToAllVariants] = useState(false);
+    const [loadingTourGroups, setLoadingTourGroups] = useState(false);
+    const [loadingVariants, setLoadingVariants] = useState(false);
+
+    // Actual pricing data for preview
+    const [actualPricing, setActualPricing] = useState({
+        b2bPrice: null,
+        originalPrice: null,
+        liveSellingPrice: null,
+        currency: "USD",
+        cityCurrency: null,
+        cityCurrencySymbol: null,
+        inrRate: null,
+        cityRate: null,
+        loading: false,
+    });
+
+    // Selected currency for display
+    const [selectedDisplayCurrency, setSelectedDisplayCurrency] = useState("USD");
+
+    // Currency list with symbols
+    const currencyList = [
+        { code: "USD", symbol: "$", name: "US Dollar" },
+        { code: "INR", symbol: "₹", name: "Indian Rupee" },
+        { code: "AED", symbol: "د.إ", name: "UAE Dirham" },
+        { code: "EUR", symbol: "€", name: "Euro" },
+        { code: "GBP", symbol: "£", name: "British Pound" },
+        { code: "SAR", symbol: "ر.س", name: "Saudi Riyal" },
+        { code: "QAR", symbol: "ر.ق", name: "Qatari Riyal" },
+        { code: "KWD", symbol: "د.ك", name: "Kuwaiti Dinar" },
+        { code: "OMR", symbol: "ر.ع", name: "Omani Rial" },
+        { code: "BHD", symbol: ".د.ب", name: "Bahraini Dinar" },
+        { code: "SGD", symbol: "S$", name: "Singapore Dollar" },
+        { code: "AUD", symbol: "A$", name: "Australian Dollar" },
+        { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
+        { code: "JPY", symbol: "¥", name: "Japanese Yen" },
+        { code: "CHF", symbol: "CHF", name: "Swiss Franc" },
+        { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
+        { code: "HKD", symbol: "HK$", name: "Hong Kong Dollar" },
+        { code: "THB", symbol: "฿", name: "Thai Baht" },
+        { code: "MYR", symbol: "RM", name: "Malaysian Ringgit" },
+        { code: "IDR", symbol: "Rp", name: "Indonesian Rupiah" },
+        { code: "PHP", symbol: "₱", name: "Philippine Peso" },
+        { code: "VND", symbol: "₫", name: "Vietnamese Dong" },
+        { code: "KRW", symbol: "₩", name: "South Korean Won" },
+        { code: "NZD", symbol: "NZ$", name: "New Zealand Dollar" },
+        { code: "ZAR", symbol: "R", name: "South African Rand" },
+        { code: "BRL", symbol: "R$", name: "Brazilian Real" },
+        { code: "MXN", symbol: "$", name: "Mexican Peso" },
+        { code: "ARS", symbol: "$", name: "Argentine Peso" },
+        { code: "CLP", symbol: "$", name: "Chilean Peso" },
+        { code: "COP", symbol: "$", name: "Colombian Peso" },
+        { code: "PEN", symbol: "S/", name: "Peruvian Sol" },
+        { code: "TRY", symbol: "₺", name: "Turkish Lira" },
+        { code: "RUB", symbol: "₽", name: "Russian Ruble" },
+        { code: "ILS", symbol: "₪", name: "Israeli Shekel" },
+        { code: "EGP", symbol: "ج.م", name: "Egyptian Pound" },
+        { code: "JOD", symbol: "د.أ", name: "Jordanian Dinar" },
+        { code: "LBP", symbol: "ل.ل", name: "Lebanese Pound" },
+        { code: "PKR", symbol: "₨", name: "Pakistani Rupee" },
+        { code: "BDT", symbol: "৳", name: "Bangladeshi Taka" },
+        { code: "LKR", symbol: "Rs", name: "Sri Lankan Rupee" },
+        { code: "NPR", symbol: "Rs", name: "Nepalese Rupee" },
+        { code: "MMK", symbol: "K", name: "Myanmar Kyat" },
+        { code: "KHR", symbol: "៛", name: "Cambodian Riel" },
+        { code: "LAK", symbol: "₭", name: "Lao Kip" },
+    ];
 
     const [formData, setFormData] = useState({
         level: level,
@@ -116,6 +196,304 @@ const MarkupConfigModal = ({
         isDefault: false,
     });
 
+    // Fetch variant details to get tour group ID
+    const fetchVariantDetails = async (vId) => {
+        try {
+            const { getTourGroupVariantDetailAPI } = await import('helpers/location_management_helper');
+            const response = await getTourGroupVariantDetailAPI(vId);
+            const variant = response?.data?.variant || response?.data;
+            if (variant?.productId) {
+                const tgId = variant.productId._id || variant.productId;
+                setSelectedTourGroup(tgId);
+                setFormData(prev => ({ ...prev, tourGroupId: tgId, variantId: vId }));
+            }
+        } catch (error) {
+            console.error("Error fetching variant details:", error);
+        }
+    };
+
+    // Initialize tour group and variant from props when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            if (tourGroupId) {
+                setSelectedTourGroup(tourGroupId);
+            }
+            if (variantId) {
+                setSelectedVariant(variantId);
+                // If variantId is provided but no tourGroupId, fetch variant to get tourGroupId
+                if (!tourGroupId && variantId) {
+                    fetchVariantDetails(variantId);
+                }
+            }
+        }
+    }, [isOpen, tourGroupId, variantId]);
+
+    // Fetch tour groups when modal opens
+    useEffect(() => {
+        if (isOpen && level !== "GLOBAL") {
+            fetchTourGroups();
+        }
+    }, [isOpen, level]);
+
+    // Fetch variants when tour group is selected or when modal opens with tourGroupId
+    useEffect(() => {
+        if (selectedTourGroup && level !== "GLOBAL" && level !== "PROVIDER") {
+            fetchVariants(selectedTourGroup);
+        } else {
+            setVariants([]);
+        }
+    }, [selectedTourGroup, level]);
+
+    // Fetch actual pricing when variant is selected or when modal opens with variantId
+    useEffect(() => {
+        const variantToUse = selectedVariant || variantId;
+        const tourGroupToUse = selectedTourGroup || tourGroupId;
+
+        if (isOpen && variantToUse && tourGroupToUse && formData.provider) {
+            fetchActualPricing(variantToUse, tourGroupToUse);
+        } else if (!isOpen) {
+            // Reset pricing when modal closes
+            setActualPricing({
+                b2bPrice: null,
+                originalPrice: null,
+                liveSellingPrice: null,
+                currency: "USD",
+                loading: false,
+            });
+        }
+    }, [selectedVariant, variantId, selectedTourGroup, tourGroupId, formData.provider, formData.markupConfig.priceSource, isOpen]);
+
+    // Fetch actual pricing for the selected variant
+    const fetchActualPricing = async (vId = null, tgId = null) => {
+        const variantToFetch = vId || selectedVariant || variantId;
+        const tourGroupToFetch = tgId || selectedTourGroup || tourGroupId;
+
+        if (!variantToFetch || !tourGroupToFetch) {
+            console.log("⚠️ fetchActualPricing: Missing variant or tourGroup", { variantToFetch, tourGroupToFetch });
+            return;
+        }
+
+        console.log("🔵 fetchActualPricing: Starting", { variantToFetch, tourGroupToFetch, provider: formData.provider });
+        setActualPricing(prev => ({ ...prev, loading: true }));
+
+        try {
+            const { getKlookLivePricing, getTourGroupVariantDetailAPI } = await import('helpers/location_management_helper');
+            const { get } = await import('helpers/api_helper');
+
+            // Get variant details for original price
+            const variantResponse = await getTourGroupVariantDetailAPI(variantToFetch);
+            const variant = variantResponse?.data?.variant || variantResponse?.data;
+
+            console.log("📦 Variant data received:", {
+                hasVariant: !!variant,
+                listingPrice: variant?.listingPrice,
+                listingPricesInAllCurrencies: variant?.listingPricesInAllCurrencies?.length,
+                city: variant?.city,
+                cityCode: variant?.cityCode
+            });
+
+            // Get city currency from variant
+            let cityCurrency = "USD";
+            let cityCurrencySymbol = "$";
+            if (variant?.city?.country?.currency) {
+                cityCurrency = variant.city.country.currency.code || variant.city.country.currency.currencyCode || "USD";
+                cityCurrencySymbol = variant.city.country.currency.localSymbol || variant.city.country.currency.symbol || "$";
+            } else if (variant?.cityCode) {
+                // Fallback: map cityCode to currency (common mappings)
+                const cityCurrencyMap = {
+                    'DUBAI': 'AED', 'ABU_DHABI': 'AED', 'SHARJAH': 'AED',
+                    'RIYADH': 'SAR', 'JEDDAH': 'SAR', 'DAMMAM': 'SAR',
+                    'DOHA': 'QAR',
+                    'KUWAIT': 'KWD',
+                    'MUSCAT': 'OMR',
+                    'MANAMA': 'BHD',
+                    'MUMBAI': 'INR', 'DELHI': 'INR', 'BANGALORE': 'INR', 'GOA': 'INR',
+                    'LONDON': 'GBP', 'PARIS': 'EUR', 'NEW_YORK': 'USD', 'SINGAPORE': 'SGD'
+                };
+                cityCurrency = cityCurrencyMap[variant.cityCode] || "USD";
+            }
+
+            let originalPrice = null;
+            let variantCurrency = "USD";
+
+            // Extract original price from variant - try multiple sources
+            if (variant?.listingPrice?.prices && variant.listingPrice.prices.length > 0) {
+                // Try to get adult/guest price first
+                const adultPrice = variant.listingPrice.prices.find(p =>
+                    p.type?.toLowerCase() === 'adult' || p.type?.toLowerCase() === 'guest'
+                ) || variant.listingPrice.prices[0];
+                originalPrice = adultPrice?.originalPrice || adultPrice?.finalPrice;
+                variantCurrency = variant.listingPrice.currencyCode || "USD";
+            } else if (variant?.listingPricesInAllCurrencies && variant.listingPricesInAllCurrencies.length > 0) {
+                // Try USD first, then any currency
+                const usdPricing = variant.listingPricesInAllCurrencies.find(p => p.currencyCode === "USD")
+                    || variant.listingPricesInAllCurrencies[0];
+                if (usdPricing?.prices && usdPricing.prices.length > 0) {
+                    const adultPrice = usdPricing.prices.find(p =>
+                        p.type?.toLowerCase() === 'adult' || p.type?.toLowerCase() === 'guest'
+                    ) || usdPricing.prices[0];
+                    originalPrice = adultPrice?.originalPrice || adultPrice?.finalPrice;
+                    variantCurrency = usdPricing.currencyCode || "USD";
+                }
+            }
+
+            console.log("💰 Extracted original price:", { originalPrice, variantCurrency });
+
+            // Get B2B price from provider - always fetch for current day
+            let b2bPrice = null;
+            let liveSellingPrice = null;
+
+            // ALWAYS use originalPrice as B2B price (this is the variant's base price)
+            // This ensures we always have a price to show, even if provider API fails
+            if (originalPrice && originalPrice > 0) {
+                b2bPrice = originalPrice;
+                console.log("✅ Using variant's original price as B2B price:", b2bPrice);
+            }
+
+            // Try to fetch today's pricing from calendar pricing endpoint
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                const todayPricingResponse = await get(`/v1/variant-calendar-pricing/pricing/${variantToFetch}/${today}?currency=USD`);
+                const todayPricing = todayPricingResponse?.data?.data?.pricing || todayPricingResponse?.data?.pricing;
+                console.log("📅 Today's calendar pricing:", todayPricing);
+
+                if (todayPricing?.prices && Array.isArray(todayPricing.prices) && todayPricing.prices.length > 0) {
+                    const adultPrice = todayPricing.prices.find(p =>
+                        p.type?.toLowerCase() === 'adult' || p.type?.toLowerCase() === 'guest'
+                    ) || todayPricing.prices[0];
+                    const todayOriginalPrice = adultPrice?.originalPrice || adultPrice?.finalPrice;
+                    if (todayOriginalPrice && todayOriginalPrice > 0) {
+                        b2bPrice = todayOriginalPrice; // Use today's price if available
+                        variantCurrency = todayPricing.currency || variantCurrency;
+                        console.log("✅ Using today's calendar pricing as B2B price:", b2bPrice);
+                    }
+                }
+            } catch (error) {
+                console.log("⚠️ Could not fetch today's calendar pricing, using variant base price:", error.message);
+            }
+
+            // Try to get provider pricing if provider is selected
+            if (formData.provider) {
+                try {
+                    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                    console.log("🌐 Fetching provider pricing:", { tourGroupToFetch, today, tomorrow, variantToFetch });
+
+                    const pricingResponse = await getKlookLivePricing(tourGroupToFetch, today, tomorrow, variantToFetch, 'USD');
+                    console.log("📡 Provider pricing response:", pricingResponse);
+
+                    const pricingData = pricingResponse?.data?.data || pricingResponse?.data || pricingResponse;
+                    console.log("📊 Pricing data extracted:", pricingData);
+
+                    if (pricingData?.variants && Array.isArray(pricingData.variants)) {
+                        console.log("🔍 Found variants in response:", pricingData.variants.length);
+                        const variantPricing = pricingData.variants.find(v => {
+                            const vId = v.variantId || v._id;
+                            const matches = vId === variantToFetch || vId?.toString() === variantToFetch?.toString();
+                            console.log("🔎 Checking variant match:", { vId, variantToFetch, matches });
+                            return matches;
+                        });
+
+                        if (variantPricing) {
+                            console.log("✅ Found matching variant pricing:", variantPricing);
+                            if (variantPricing?.schedules && Array.isArray(variantPricing.schedules)) {
+                                // Get today's schedule if available, otherwise first schedule
+                                const todaySchedule = variantPricing.schedules.find(s => {
+                                    if (s.date) {
+                                        const scheduleDate = new Date(s.date).toISOString().split('T')[0];
+                                        return scheduleDate === today;
+                                    }
+                                    return false;
+                                }) || variantPricing.schedules[0];
+
+                                console.log("📅 Selected schedule:", todaySchedule);
+
+                                if (todaySchedule?.timeslots && Array.isArray(todaySchedule.timeslots) && todaySchedule.timeslots.length > 0) {
+                                    const slot = todaySchedule.timeslots[0];
+                                    console.log("⏰ Selected timeslot:", slot);
+                                    // Use provider API price if available, otherwise keep existing b2bPrice
+                                    if (slot.originalPrice || slot.b2bPrice) {
+                                        b2bPrice = slot.originalPrice || slot.b2bPrice;
+                                        console.log("✅ Using provider API B2B price:", b2bPrice);
+                                    }
+                                    liveSellingPrice = slot.sellingPrice || slot.liveSellingPrice || null;
+                                    console.log("💵 Extracted prices:", { b2bPrice, liveSellingPrice });
+                                } else {
+                                    console.log("⚠️ No timeslots in schedule");
+                                }
+                            } else {
+                                console.log("⚠️ No schedules in variant pricing");
+                            }
+                        } else {
+                            console.log("⚠️ No matching variant found in pricing data");
+                        }
+                    } else {
+                        console.log("⚠️ No variants in pricing data, structure:", Object.keys(pricingData || {}));
+                    }
+                } catch (error) {
+                    console.error("❌ Error fetching provider pricing:", error);
+                    console.error("Error details:", error.response?.data || error.message);
+                    // Keep the existing b2bPrice (from variant or calendar pricing)
+                }
+            }
+
+            // Final fallback: if still no price, use 0 as placeholder (shouldn't happen)
+            if (!b2bPrice || b2bPrice <= 0) {
+                console.warn("⚠️ No B2B price found, using placeholder");
+                b2bPrice = 0;
+            }
+
+            // Get exchange rates for currency conversion
+            let inrRate = 83; // Default USD to INR rate (approximate)
+            let cityRate = 1; // Default rate for city currency
+
+            try {
+                // Try to get exchange rates from API or use defaults
+                const exchangeRatesResponse = await get('/v1/currency-exchange/rates?base=USD');
+                const rates = exchangeRatesResponse?.data?.data?.rates || exchangeRatesResponse?.data?.rates || {};
+
+                if (rates.INR) inrRate = rates.INR;
+                if (rates[cityCurrency]) cityRate = rates[cityCurrency];
+
+                console.log("💱 Exchange rates:", { inrRate, cityRate, cityCurrency });
+            } catch (error) {
+                console.log("⚠️ Could not fetch exchange rates, using defaults:", error.message);
+                // Use default rates based on common currencies
+                const defaultRates = {
+                    'AED': 3.67, 'SAR': 3.75, 'QAR': 3.64, 'KWD': 0.31, 'OMR': 0.38, 'BHD': 0.38,
+                    'INR': 83, 'GBP': 0.79, 'EUR': 0.92, 'SGD': 1.34, 'AUD': 1.52
+                };
+                if (defaultRates[cityCurrency]) cityRate = defaultRates[cityCurrency];
+            }
+
+            console.log("✅ Final pricing data:", {
+                b2bPrice,
+                originalPrice,
+                liveSellingPrice,
+                currency: variantCurrency,
+                cityCurrency,
+                cityCurrencySymbol,
+                inrRate,
+                cityRate
+            });
+
+            setActualPricing({
+                b2bPrice,
+                originalPrice: originalPrice || b2bPrice, // Use b2bPrice as originalPrice if not set
+                liveSellingPrice,
+                currency: variantCurrency,
+                cityCurrency,
+                cityCurrencySymbol,
+                inrRate,
+                cityRate,
+                loading: false,
+            });
+        } catch (error) {
+            console.error("❌ Error fetching actual pricing:", error);
+            console.error("Error details:", error.response?.data || error.message);
+            setActualPricing(prev => ({ ...prev, loading: false }));
+        }
+    };
+
     // Fetch configurations when modal opens
     useEffect(() => {
         if (isOpen) {
@@ -124,10 +502,52 @@ const MarkupConfigModal = ({
                 fetchAllVariantConfigs();
             } else {
                 // Fetch configs for specific provider/level
-                dispatch(fetchMarkupConfigsRequest(selectedProvider, level, tourGroupId, variantId, true));
+                dispatch(fetchMarkupConfigsRequest(selectedProvider, level, tourGroupId || selectedTourGroup, variantId || selectedVariant, true));
             }
         }
-    }, [isOpen, selectedProvider, level, tourGroupId, variantId, dispatch]);
+    }, [isOpen, selectedProvider, level, tourGroupId || selectedTourGroup, variantId || selectedVariant, dispatch]);
+
+    // Fetch tour groups
+    const fetchTourGroups = async () => {
+        try {
+            setLoadingTourGroups(true);
+            dispatch(fetchTourGroupsRequest({ page: 1, limit: 200 }));
+        } catch (error) {
+            console.error("Error fetching tour groups:", error);
+            showToastError("Failed to fetch tour groups");
+        } finally {
+            setLoadingTourGroups(false);
+        }
+    };
+
+    // Fetch variants for selected tour group
+    const fetchVariants = async (tgId) => {
+        try {
+            setLoadingVariants(true);
+            dispatch(fetchVariantsByTourRequest(tgId));
+        } catch (error) {
+            console.error("Error fetching variants:", error);
+            showToastError("Failed to fetch variants");
+        } finally {
+            setLoadingVariants(false);
+        }
+    };
+
+    // Update tour groups from Redux state
+    useEffect(() => {
+        if (allTourGroups && Array.isArray(allTourGroups) && allTourGroups.length > 0) {
+            setTourGroups(allTourGroups);
+        }
+    }, [allTourGroups]);
+
+    // Update variants from Redux state
+    useEffect(() => {
+        if (variantsByTour && Array.isArray(variantsByTour) && variantsByTour.length > 0) {
+            setVariants(variantsByTour);
+        } else {
+            setVariants([]);
+        }
+    }, [variantsByTour]);
 
     // Fetch all markup configs for a variant (across all providers)
     const fetchAllVariantConfigs = async () => {
@@ -225,6 +645,17 @@ const MarkupConfigModal = ({
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        // Validation for product/variant selection
+        if ((level === "PRODUCT" || level === "VARIANT") && !selectedTourGroup) {
+            showToastError("Please select a tour group (product)");
+            return;
+        }
+
+        if (level === "VARIANT" && !applyToAllVariants && !selectedVariant) {
+            showToastError("Please select a variant or check 'Apply to all variants'");
+            return;
+        }
+
         // Validation
         if (!formData.tag || !formData.name) {
             showToastError("Tag and Name are required");
@@ -242,23 +673,52 @@ const MarkupConfigModal = ({
             return;
         }
 
-        // Determine if creating or updating
-        if (editingConfig?._id) {
-            dispatch(updateMarkupConfigRequest(editingConfig._id, formData));
-        } else {
-            dispatch(upsertMarkupConfigRequest(formData));
-        }
+        // Prepare form data with selected tour group and variant
+        const submitData = {
+            ...formData,
+            tourGroupId: selectedTourGroup || formData.tourGroupId || tourGroupId,
+            variantId: applyToAllVariants ? null : (selectedVariant || formData.variantId || variantId),
+        };
 
-        // Reset after a delay
-        setTimeout(() => {
-            setEditingConfig(null);
-            setActiveTab("list");
-            if (level === "VARIANT" && variantId) {
-                fetchAllVariantConfigs();
+        // If applying to all variants, create configs for each variant
+        if (applyToAllVariants && selectedTourGroup && variants.length > 0) {
+            const promises = variants.map(variant => {
+                const variantConfig = {
+                    ...submitData,
+                    variantId: variant._id || variant.id,
+                };
+                return dispatch(upsertMarkupConfigRequest(variantConfig));
+            });
+
+            Promise.all(promises).then(() => {
+                showToastSuccess(`Markup configuration applied to all ${variants.length} variants`);
+                setEditingConfig(null);
+                setActiveTab("list");
+                setApplyToAllVariants(false);
+                setSelectedVariant(null);
+                dispatch(fetchMarkupConfigsRequest(selectedProvider, level, selectedTourGroup, null, true));
+            }).catch(error => {
+                showToastError("Failed to apply markup to some variants");
+            });
+        } else {
+            // Determine if creating or updating
+            if (editingConfig?._id) {
+                dispatch(updateMarkupConfigRequest(editingConfig._id, submitData));
             } else {
-                dispatch(fetchMarkupConfigsRequest(selectedProvider, level, tourGroupId, variantId, true));
+                dispatch(upsertMarkupConfigRequest(submitData));
             }
-        }, 1000);
+
+            // Reset after a delay
+            setTimeout(() => {
+                setEditingConfig(null);
+                setActiveTab("list");
+                if (level === "VARIANT" && (variantId || selectedVariant)) {
+                    fetchAllVariantConfigs();
+                } else {
+                    dispatch(fetchMarkupConfigsRequest(selectedProvider, level, selectedTourGroup || tourGroupId, selectedVariant || variantId, true));
+                }
+            }, 1000);
+        }
     };
 
     const handleEdit = (config) => {
@@ -728,6 +1188,101 @@ const MarkupConfigModal = ({
 
                     <TabPane tabId="form">
                         <form onSubmit={handleSubmit}>
+                            {/* Product and Variant Selection - Only show if level is PRODUCT or VARIANT */}
+                            {(level === "PRODUCT" || level === "VARIANT") && (
+                                <>
+                                    <Row>
+                                        <Col md={6}>
+                                            <FormGroup>
+                                                <Label>Tour Group (Product) <span className="text-danger">*</span></Label>
+                                                <Select
+                                                    isClearable
+                                                    isSearchable
+                                                    placeholder="Search and select a tour group..."
+                                                    options={tourGroups.map(tg => ({
+                                                        value: tg._id || tg.id,
+                                                        label: tg.name || tg.title || "Unnamed Tour Group"
+                                                    }))}
+                                                    value={selectedTourGroup ? tourGroups.find(tg => (tg._id || tg.id) === selectedTourGroup) ? {
+                                                        value: selectedTourGroup,
+                                                        label: tourGroups.find(tg => (tg._id || tg.id) === selectedTourGroup)?.name || tourGroups.find(tg => (tg._id || tg.id) === selectedTourGroup)?.title
+                                                    } : null : null}
+                                                    onChange={(option) => {
+                                                        const tgId = option?.value || null;
+                                                        setSelectedTourGroup(tgId);
+                                                        setSelectedVariant(null);
+                                                        setApplyToAllVariants(false);
+                                                        setFormData(prev => ({ ...prev, tourGroupId: tgId, variantId: null }));
+                                                    }}
+                                                    isDisabled={loadingTourGroups}
+                                                    isLoading={loadingTourGroups}
+                                                />
+                                                <small className="text-muted">Select the tour group (product) for this markup configuration</small>
+                                            </FormGroup>
+                                        </Col>
+                                        {level === "VARIANT" && (
+                                            <Col md={6}>
+                                                <FormGroup>
+                                                    <Label>
+                                                        Variant {!applyToAllVariants && <span className="text-danger">*</span>}
+                                                    </Label>
+                                                    <Select
+                                                        isClearable
+                                                        isSearchable
+                                                        placeholder={selectedTourGroup ? "Search and select a variant..." : "Select tour group first"}
+                                                        options={variants.map(v => ({
+                                                            value: v._id || v.id,
+                                                            label: v.name || "Unnamed Variant"
+                                                        }))}
+                                                        value={selectedVariant ? variants.find(v => (v._id || v.id) === selectedVariant) ? {
+                                                            value: selectedVariant,
+                                                            label: variants.find(v => (v._id || v.id) === selectedVariant)?.name
+                                                        } : null : null}
+                                                        onChange={(option) => {
+                                                            const vId = option?.value || null;
+                                                            setSelectedVariant(vId);
+                                                            setApplyToAllVariants(false);
+                                                            setFormData(prev => ({ ...prev, variantId: vId }));
+                                                        }}
+                                                        isDisabled={loadingVariants || !selectedTourGroup || applyToAllVariants}
+                                                        isLoading={loadingVariants && selectedTourGroup}
+                                                    />
+                                                    <small className="text-muted">Select a specific variant or apply to all variants below</small>
+                                                </FormGroup>
+                                            </Col>
+                                        )}
+                                    </Row>
+                                    {level === "VARIANT" && selectedTourGroup && variants.length > 0 && (
+                                        <Row>
+                                            <Col md={12}>
+                                                <FormGroup>
+                                                    <Label check>
+                                                        <Input
+                                                            type="checkbox"
+                                                            checked={applyToAllVariants}
+                                                            onChange={(e) => {
+                                                                const checked = e.target.checked;
+                                                                setApplyToAllVariants(checked);
+                                                                if (checked) {
+                                                                    setSelectedVariant(null);
+                                                                    setFormData(prev => ({ ...prev, variantId: null }));
+                                                                }
+                                                            }}
+                                                        />
+                                                        {" "}
+                                                        Apply markup to all variants of this tour group
+                                                    </Label>
+                                                    <small className="text-muted d-block mt-1">
+                                                        When checked, this markup will be applied to all {variants.length} variants of the selected tour group
+                                                    </small>
+                                                </FormGroup>
+                                            </Col>
+                                        </Row>
+                                    )}
+                                    <hr className="my-3" />
+                                </>
+                            )}
+
                             <Row>
                                 <Col md={6}>
                                     <FormGroup>
@@ -1012,21 +1567,135 @@ const MarkupConfigModal = ({
                             {/* Preview Section */}
                             <Card className="mt-3">
                                 <CardBody>
-                                    <h6>Price Preview</h6>
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 className="mb-0">Price Preview</h6>
+                                        <FormGroup className="mb-0" style={{ minWidth: '250px' }}>
+                                            <Input
+                                                type="select"
+                                                value={selectedDisplayCurrency}
+                                                onChange={(e) => setSelectedDisplayCurrency(e.target.value)}
+                                            >
+                                                {/* Default currencies - always visible */}
+                                                <option value="USD">USD - US Dollar ($)</option>
+                                                <option value="INR">INR - Indian Rupee (₹)</option>
+                                                <option value="AED">AED - UAE Dirham (د.إ)</option>
+
+                                                {/* Separator */}
+                                                <option disabled>──────────────</option>
+
+                                                {/* Other currencies */}
+                                                {currencyList
+                                                    .filter(c => !["USD", "INR", "AED"].includes(c.code))
+                                                    .map((currency) => (
+                                                        <option key={currency.code} value={currency.code}>
+                                                            {currency.code} - {currency.name} ({currency.symbol})
+                                                        </option>
+                                                    ))}
+                                            </Input>
+                                        </FormGroup>
+                                    </div>
+                                    {actualPricing.loading && (
+                                        <div className="text-center py-2">
+                                            <Spinner size="sm" className="me-2" />
+                                            <small className="text-muted">Loading actual prices...</small>
+                                        </div>
+                                    )}
                                     <p className="mb-1">
                                         <strong>Provider:</strong> {formData.provider ? getProviderDisplayName(formData.provider) : "—"}
                                     </p>
                                     <p className="mb-1">
                                         <strong>Base Price Source:</strong> {formData.markupConfig.priceSource || "B2B_PRICE"}
                                     </p>
+
+                                    {/* Show actual prices side by side for comparison */}
+                                    {(selectedVariant || variantId) && (actualPricing.b2bPrice !== null && actualPricing.b2bPrice > 0 || actualPricing.originalPrice !== null || actualPricing.liveSellingPrice !== null) && (
+                                        <div className="mb-3 p-3 bg-light rounded">
+                                            <h6 className="mb-2">Current Day's Actual Prices:</h6>
+                                            <Row>
+                                                {actualPricing.b2bPrice !== null && actualPricing.b2bPrice > 0 && (
+                                                    <Col md={4}>
+                                                        <div className="text-center p-2 border rounded">
+                                                            <small className="text-muted d-block">B2B Price (Wholesale)</small>
+                                                            <strong className="text-primary">{actualPricing.currency || "USD"} {actualPricing.b2bPrice.toFixed(2)}</strong>
+                                                            {actualPricing.liveSellingPrice === null && (
+                                                                <small className="text-muted d-block mt-1">(Variant Base Price)</small>
+                                                            )}
+                                                        </div>
+                                                    </Col>
+                                                )}
+                                                {actualPricing.originalPrice !== null && actualPricing.originalPrice > 0 && (
+                                                    <Col md={4}>
+                                                        <div className="text-center p-2 border rounded">
+                                                            <small className="text-muted d-block">Original Price (TYL)</small>
+                                                            <strong className="text-info">{actualPricing.currency || "USD"} {actualPricing.originalPrice.toFixed(2)}</strong>
+                                                        </div>
+                                                    </Col>
+                                                )}
+                                                {actualPricing.liveSellingPrice !== null && actualPricing.liveSellingPrice > 0 && (
+                                                    <Col md={4}>
+                                                        <div className="text-center p-2 border rounded">
+                                                            <small className="text-muted d-block">Live Selling Price</small>
+                                                            <strong className="text-warning">{actualPricing.currency || "USD"} {actualPricing.liveSellingPrice.toFixed(2)}</strong>
+                                                        </div>
+                                                    </Col>
+                                                )}
+                                            </Row>
+                                        </div>
+                                    )}
+
+                                    {/* Show actual base price based on source */}
+                                    {(() => {
+                                        let basePrice = null;
+                                        let basePriceLabel = "Base Price";
+                                        let isFallbackPrice = false;
+
+                                        if (formData.markupConfig.priceSource === "B2B_PRICE") {
+                                            basePrice = actualPricing.b2bPrice;
+                                            basePriceLabel = "Actual B2B Price (Provider Wholesale)";
+                                            // If b2bPrice is from variant's base price (not from provider API), it's a fallback
+                                            isFallbackPrice = actualPricing.b2bPrice !== null && actualPricing.liveSellingPrice === null;
+                                        } else if (formData.markupConfig.priceSource === "ORIGINAL_PRICE") {
+                                            basePrice = actualPricing.originalPrice;
+                                            basePriceLabel = "Actual Original Price (TYL Variant)";
+                                        } else if (formData.markupConfig.priceSource === "LIVE_SELLING_PRICE") {
+                                            basePrice = actualPricing.liveSellingPrice;
+                                            basePriceLabel = "Actual Live Selling Price (Provider API)";
+                                        } else if (formData.markupConfig.priceSource === "CUSTOM") {
+                                            basePrice = formData.markupConfig.customPrice;
+                                            basePriceLabel = "Custom Base Price";
+                                        }
+
+                                        // Always show a price - use variant's base price if no other price is available
+                                        if (basePrice === null || basePrice === undefined || basePrice <= 0) {
+                                            basePrice = actualPricing.b2bPrice || actualPricing.originalPrice || 0;
+                                            isFallbackPrice = true;
+                                        }
+
+                                        return (
+                                            <p className="mb-1">
+                                                <strong>{basePriceLabel}:</strong>{" "}
+                                                {basePrice !== null && basePrice !== undefined && basePrice > 0 ? (
+                                                    <span className="text-primary fw-bold">
+                                                        {formData.markupConfig.currency || actualPricing.currency || "USD"} {basePrice.toFixed(2)}
+                                                        {isFallbackPrice && (
+                                                            <small className="text-muted ms-2">(Variant Base Price)</small>
+                                                        )}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted">
+                                                        {selectedVariant || variantId ? "N/A (No price data available)" : "Select a variant to see actual price"}
+                                                    </span>
+                                                )}
+                                            </p>
+                                        );
+                                    })()}
+
                                     {formData.markupConfig.priceSource === "CUSTOM" && (
                                         <p className="mb-1">
                                             <strong>Custom Base Price:</strong> {formData.markupConfig.currency || "USD"} {formData.markupConfig.customPrice?.toFixed(2) || "0.00"}
                                         </p>
                                     )}
-                                    <p className="mb-1">
-                                        <strong>Example Base Price:</strong> {formData.markupConfig.currency || "USD"} 100.00
-                                    </p>
+
                                     <p className="mb-1">
                                         <strong>Markup Type:</strong> {getMarkupTypeDisplayName(formData.markupConfig.type)}
                                     </p>
@@ -1047,29 +1716,117 @@ const MarkupConfigModal = ({
                                             <strong>Custom Final Price:</strong> {formData.markupConfig.currency || "USD"} {formData.markupConfig.customPrice?.toFixed(2) || "0.00"}
                                         </p>
                                     )}
-                                    <p className="mb-1">
-                                        <strong>Calculated Final Price:</strong>{" "}
-                                        <span className="text-success fw-bold">
-                                            {(() => {
-                                                const basePrice = 100; // Example base price
-                                                let finalPrice = basePrice;
+                                    <div className="mb-2 p-2 bg-light rounded">
+                                        <p className="mb-1">
+                                            <strong>Calculated Final Price (B2C):</strong>{" "}
+                                            <span className="text-success fw-bold fs-5">
+                                                {(() => {
+                                                    // Use actual base price if available, otherwise use example
+                                                    let basePrice = 100; // Default example
 
-                                                if (formData.markupConfig.type === "PERCENTAGE") {
-                                                    finalPrice = basePrice * (1 + (formData.markupConfig.value || 0) / 100);
-                                                } else if (formData.markupConfig.type === "FIXED_AMOUNT") {
-                                                    finalPrice = basePrice + (formData.markupConfig.value || 0);
-                                                } else if (formData.markupConfig.type === "DISCOUNT") {
-                                                    finalPrice = basePrice * (1 - (formData.markupConfig.value || 0) / 100);
-                                                } else if (formData.markupConfig.type === "CUSTOM_PRICE") {
-                                                    finalPrice = formData.markupConfig.customPrice || basePrice;
-                                                } else if (formData.markupConfig.type === "NO_MARKUP") {
-                                                    finalPrice = basePrice;
-                                                }
+                                                    if (formData.markupConfig.priceSource === "B2B_PRICE" && actualPricing.b2bPrice !== null) {
+                                                        basePrice = actualPricing.b2bPrice;
+                                                    } else if (formData.markupConfig.priceSource === "ORIGINAL_PRICE" && actualPricing.originalPrice !== null) {
+                                                        basePrice = actualPricing.originalPrice;
+                                                    } else if (formData.markupConfig.priceSource === "LIVE_SELLING_PRICE" && actualPricing.liveSellingPrice !== null) {
+                                                        basePrice = actualPricing.liveSellingPrice;
+                                                    } else if (formData.markupConfig.priceSource === "CUSTOM" && formData.markupConfig.customPrice) {
+                                                        basePrice = formData.markupConfig.customPrice;
+                                                    }
 
-                                                return `${formData.markupConfig.currency || "USD"} ${finalPrice.toFixed(2)}`;
-                                            })()}
-                                        </span>
-                                    </p>
+                                                    let finalPrice = basePrice;
+                                                    let markupAmount = 0;
+
+                                                    if (formData.markupConfig.type === "PERCENTAGE") {
+                                                        markupAmount = basePrice * ((formData.markupConfig.value || 0) / 100);
+                                                        finalPrice = basePrice + markupAmount;
+                                                    } else if (formData.markupConfig.type === "FIXED_AMOUNT") {
+                                                        markupAmount = formData.markupConfig.value || 0;
+                                                        finalPrice = basePrice + markupAmount;
+                                                    } else if (formData.markupConfig.type === "DISCOUNT") {
+                                                        markupAmount = -(basePrice * ((formData.markupConfig.value || 0) / 100));
+                                                        finalPrice = basePrice + markupAmount;
+                                                    } else if (formData.markupConfig.type === "CUSTOM_PRICE") {
+                                                        finalPrice = formData.markupConfig.customPrice || basePrice;
+                                                        markupAmount = finalPrice - basePrice;
+                                                    } else if (formData.markupConfig.type === "NO_MARKUP") {
+                                                        finalPrice = basePrice;
+                                                        markupAmount = 0;
+                                                    }
+
+                                                    const currency = formData.markupConfig.currency || actualPricing.currency || "USD";
+                                                    const isActualPrice = (formData.markupConfig.priceSource === "B2B_PRICE" && actualPricing.b2bPrice !== null) ||
+                                                        (formData.markupConfig.priceSource === "ORIGINAL_PRICE" && actualPricing.originalPrice !== null) ||
+                                                        (formData.markupConfig.priceSource === "LIVE_SELLING_PRICE" && actualPricing.liveSellingPrice !== null) ||
+                                                        (formData.markupConfig.priceSource === "CUSTOM" && formData.markupConfig.customPrice);
+
+                                                    // Convert prices based on selected display currency
+                                                    let displayFinalPrice = finalPrice;
+                                                    let displayBasePrice = basePrice;
+                                                    let displayMarkupAmount = markupAmount;
+                                                    let displayCurrency = currency;
+                                                    let displaySymbol = "$";
+
+                                                    // Get currency info from list
+                                                    const selectedCurrencyInfo = currencyList.find(c => c.code === selectedDisplayCurrency);
+
+                                                    if (selectedCurrencyInfo) {
+                                                        displayCurrency = selectedCurrencyInfo.code;
+                                                        displaySymbol = selectedCurrencyInfo.symbol;
+
+                                                        // Get conversion rate for selected currency
+                                                        let conversionRate = 1;
+
+                                                        // For default currencies, use cached rates
+                                                        if (selectedDisplayCurrency === "INR" && actualPricing.inrRate) {
+                                                            conversionRate = actualPricing.inrRate;
+                                                        } else if (selectedDisplayCurrency === actualPricing.cityCurrency && actualPricing.cityRate) {
+                                                            conversionRate = actualPricing.cityRate;
+                                                        } else if (selectedDisplayCurrency !== "USD") {
+                                                            // For other currencies, we'll need to fetch the rate
+                                                            // For now, use approximate rates (can be enhanced to fetch from API)
+                                                            const approximateRates = {
+                                                                "EUR": 0.92, "GBP": 0.79, "SAR": 3.75, "QAR": 3.64, "KWD": 0.31,
+                                                                "OMR": 0.38, "BHD": 0.38, "SGD": 1.34, "AUD": 1.52, "CAD": 1.35,
+                                                                "JPY": 150, "CHF": 0.88, "CNY": 7.2, "HKD": 7.8, "THB": 35,
+                                                                "MYR": 4.7, "IDR": 15500, "PHP": 55, "VND": 24500, "KRW": 1300,
+                                                                "NZD": 1.65, "ZAR": 18.5, "BRL": 4.9, "MXN": 17, "ARS": 850,
+                                                                "CLP": 900, "COP": 3900, "PEN": 3.7, "TRY": 32, "RUB": 90,
+                                                                "ILS": 3.7, "EGP": 48, "JOD": 0.71, "LBP": 15000, "PKR": 280,
+                                                                "BDT": 110, "LKR": 325, "NPR": 133, "MMK": 2100, "KHR": 4100, "LAK": 21000
+                                                            };
+                                                            conversionRate = approximateRates[selectedDisplayCurrency] || 1;
+                                                        }
+
+                                                        // Convert if needed
+                                                        if (conversionRate !== 1) {
+                                                            displayFinalPrice = finalPrice * conversionRate;
+                                                            displayBasePrice = basePrice * conversionRate;
+                                                            displayMarkupAmount = markupAmount * conversionRate;
+                                                        }
+                                                    }
+
+                                                    return (
+                                                        <>
+                                                            <div className="mb-2">
+                                                                <strong className="d-block mb-1 fs-4">{displaySymbol} {displayFinalPrice.toFixed(2)} ({displayCurrency})</strong>
+                                                            </div>
+                                                            {isActualPrice && (
+                                                                <div className="d-block text-muted small mt-1 border-top pt-2">
+                                                                    <small className="d-block">
+                                                                        <strong>Breakdown:</strong> B2B: {displaySymbol} {displayBasePrice.toFixed(2)} + Markup: {displaySymbol} {displayMarkupAmount.toFixed(2)} = {displaySymbol} {displayFinalPrice.toFixed(2)}
+                                                                    </small>
+                                                                </div>
+                                                            )}
+                                                            {!isActualPrice && (selectedVariant || variantId) && (
+                                                                <small className="text-muted ms-2 d-block">(Example - actual prices loading...)</small>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
+                                            </span>
+                                        </p>
+                                    </div>
                                     {formData.markupConfig.type === "FIXED_AMOUNT" && (
                                         <p className="mb-1 text-muted">
                                             <small>
