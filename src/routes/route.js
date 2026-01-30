@@ -9,11 +9,11 @@ const Authmiddleware = (props) => {
     permissions: state.UserPermissionsReducer.permissions,
     loading: state.UserPermissionsReducer.loading,
   }));
-  
+
   const permissionsLoadedRef = useRef(false);
   const currentUserRef = useRef(null);
   const authUser = localStorage.getItem("authUser");
-  
+
   // If no auth user, redirect to login
   if (!authUser) {
     return (
@@ -21,36 +21,29 @@ const Authmiddleware = (props) => {
     );
   }
 
-  // Parse user data and ensure permissions are loaded
+  // Parse user data and ensure permissions are loaded on every page load/reload
   useEffect(() => {
-    if (authUser && !loading) {
+    if (authUser) {
       try {
         const userData = JSON.parse(authUser);
         const userId = userData.userId || userData.id || userData.user_id;
-        
+
         if (userId) {
           // Reset permission loaded flag if user changed
           if (currentUserRef.current !== userId) {
             permissionsLoadedRef.current = false;
             currentUserRef.current = userId;
           }
-          
-          // Check if permissions are missing after loading completes
-          const permissionsMissing = !loading && permissions.length === 0;
-          
-          if ((!permissionsLoadedRef.current && !loading) || permissionsMissing) {
-            // Mark as loaded to prevent multiple calls (but allow retry if missing)
-            if (!permissionsMissing) {
-              permissionsLoadedRef.current = true;
-            }
-            
-            // Always load permissions on app initialization or if missing
-            if (permissionsMissing) {
-              console.warn("⚠️ Permissions missing after load. Re-fetching permissions for user:", userId);
-            } else {
-              console.log("App initialization - Loading permissions for user:", userId);
-            }
+
+          // Check if permissions array is empty in Redux - fetch if empty
+          // This ensures permissions are always available, even on page reload
+          // Only fetch if not currently loading and permissions array is empty
+          const permissionsEmpty = !loading && permissions.length === 0;
+
+          if (permissionsEmpty) {
+            console.log("🔄 Page load/reload detected - Permissions array is empty in Redux. Fetching permissions for user:", userId);
             dispatch(getUserPermissions(userId));
+            permissionsLoadedRef.current = true;
           }
         } else {
           console.warn("No userId found in authUser data:", userData);

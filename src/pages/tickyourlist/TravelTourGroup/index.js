@@ -323,47 +323,6 @@ function TourGroupTable() {
     });
   }, [tourGroup, searchedTourGroups, isSearchMode, dispatch])
 
-  // Show loading while permissions are being fetched
-  // Also show loading if permissions are missing (will auto-retry)
-  if (permissionsLoading || !isPermissionsReady) {
-    return (
-      <div className="page-content">
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
-          <div className="text-center">
-            <div className="spinner-border" role="status">
-              <span className="sr-only">Loading...</span>
-            </div>
-            <p className="mt-2">
-              {permissionsLoading ? 'Loading permissions...' : 'Loading page data...'}
-            </p>
-            {!permissionsLoading && !isPermissionsReady && (
-              <p className="text-muted small mt-2">
-                <i className="mdi mdi-information me-1"></i>
-                If this takes too long, permissions are being refreshed automatically...
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Check permissions
-  if (!canViewTourGroup) {
-    return (
-      <div className="page-content">
-        <div className="container-fluid">
-          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
-            <div className="alert alert-danger text-center w-100" style={{ maxWidth: '600px' }}>
-              <h5 className="mb-3">Permission Required!</h5>
-              <p className="mb-2">You do not have permission to access this page.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const columns = useMemo(
     () => [
       {
@@ -569,6 +528,47 @@ function TourGroupTable() {
       providerMappings,
     ]
   )
+
+  // Show loading while permissions are being fetched
+  // Also show loading if permissions are missing (will auto-retry)
+  if (permissionsLoading || !isPermissionsReady) {
+    return (
+      <div className="page-content">
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+          <div className="text-center">
+            <div className="spinner-border" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+            <p className="mt-2">
+              {permissionsLoading ? 'Loading permissions...' : 'Loading page data...'}
+            </p>
+            {!permissionsLoading && !isPermissionsReady && (
+              <p className="text-muted small mt-2">
+                <i className="mdi mdi-information me-1"></i>
+                If this takes too long, permissions are being refreshed automatically...
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Check permissions
+  if (!canViewTourGroup) {
+    return (
+      <div className="page-content">
+        <div className="container-fluid">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+            <div className="alert alert-danger text-center w-100" style={{ maxWidth: '600px' }}>
+              <h5 className="mb-3">Permission Required!</h5>
+              <p className="mb-2">You do not have permission to access this page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   document.title = "Tour Groups | TickYourList"
   if (!canViewTourGroup) {

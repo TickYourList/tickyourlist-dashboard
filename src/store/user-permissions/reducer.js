@@ -14,7 +14,14 @@ const getCachedPermissions = () => {
       const userId = userData.userId || userData.id || userData.user_id;
       if (userId) {
         const cached = localStorage.getItem(`permissions_${userId}`);
-        return cached ? JSON.parse(cached) : null;
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          // Only return cached data if it has valid permissions (non-empty array) or full access
+          // This ensures we don't initialize with empty permissions from cache
+          if (parsed && (Array.isArray(parsed.permissions) && parsed.permissions.length > 0) || parsed.hasFullAccess) {
+            return parsed;
+          }
+        }
       }
     }
   } catch (error) {
@@ -27,7 +34,11 @@ const cachedData = getCachedPermissions();
 
 const INIT_STATE = {
   loading: false,
-  permissions: cachedData?.permissions || [],
+  // Only use cached permissions if they exist and are not empty, otherwise start with empty array
+  // This ensures the useEffect hooks will detect empty array and fetch permissions
+  permissions: (cachedData?.permissions && Array.isArray(cachedData.permissions) && cachedData.permissions.length > 0) 
+    ? cachedData.permissions 
+    : [],
   hasFullAccess: cachedData?.hasFullAccess || false,
   error: null,
 }

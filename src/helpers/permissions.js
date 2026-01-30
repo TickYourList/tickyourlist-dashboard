@@ -37,42 +37,48 @@ export const usePermissions = () => {
   const retryTimeoutRef = useRef(null);
   const lastRetryTimeRef = useRef(0);
 
-  // Auto-retry permissions if they're missing after loading completes
+  // Auto-fetch permissions if they're empty - runs on every mount/page load
   useEffect(() => {
     const authUser = localStorage.getItem("authUser");
     if (!authUser) return;
 
     try {
       const userData = JSON.parse(authUser);
-      const userId = userData.userId || userData.id || userData.user_id;
-      
+      const userId = userData.data?.user?._id || userData.userId || userData.id || userData.user_id;
+
       if (!userId) return;
 
-      // If loading is complete, no permissions, no full access, and no error (or error exists)
-      // This means permissions failed to load or were cleared
-      const shouldRetry = !loading && 
-                         permissions.length === 0 && 
-                         !hasFullAccess &&
-                         retryCount < 3; // Max 3 retries
+      // Check if permissions are empty in Redux
+      // If loading is not in progress and permissions array is empty and no full access
+      const shouldFetch = !loading &&
+        permissions.length === 0 &&
+        !hasFullAccess;
 
-      if (shouldRetry) {
+      console.log("Permissions Debug:", {
+        loading,
+        permissionsLength: permissions.length,
+        hasFullAccess,
+        shouldFetch,
+        userId,
+        lastRetryTime: lastRetryTimeRef.current,
+        now: Date.now()
+      });
+
+      if (shouldFetch) {
         const now = Date.now();
-        // Only retry if at least 2 seconds have passed since last retry
-        if (now - lastRetryTimeRef.current > 2000) {
+        // Only fetch if at least 1 second has passed since last attempt (to prevent rapid calls)
+        if (now - lastRetryTimeRef.current > 1000) {
           lastRetryTimeRef.current = now;
-          setRetryCount(prev => prev + 1);
-          
-          console.warn(`⚠️ Permissions missing after load. Retrying fetch (attempt ${retryCount + 1}/3)...`);
-          
+
+          console.log("🔄 Permissions array is empty in Redux. Fetching permissions for user:", userId);
+
           // Clear any existing timeout
           if (retryTimeoutRef.current) {
             clearTimeout(retryTimeoutRef.current);
           }
-          
-          // Retry after a short delay
-          retryTimeoutRef.current = setTimeout(() => {
-            dispatch(getUserPermissions(userId));
-          }, 1000);
+
+          // Fetch immediately (no delay for initial fetch)
+          dispatch(getUserPermissions(userId));
         }
       } else if (permissions.length > 0 || hasFullAccess) {
         // Reset retry count on success
@@ -85,7 +91,7 @@ export const usePermissions = () => {
         }
       }
     } catch (error) {
-      console.error("Error in permissions auto-retry:", error);
+      console.error("Error in permissions auto-fetch:", error);
     }
 
     // Cleanup timeout on unmount
@@ -94,7 +100,7 @@ export const usePermissions = () => {
         clearTimeout(retryTimeoutRef.current);
       }
     };
-  }, [loading, permissions, hasFullAccess, error, dispatch, retryCount]);
+  }, [loading, permissions, hasFullAccess, dispatch]);
 
   const permissionsMap = useMemo(() => {
     const map = new Map();
@@ -121,18 +127,22 @@ export const usePermissions = () => {
   const isPermissionsReady = useMemo(() => {
     // If loading, not ready
     if (loading) return false;
-    
+
     // If we have permissions or full access, ready
     if (permissions.length > 0 || hasFullAccess) return true;
-    
+
     // If we've tried loading and got an error, consider ready (to show error state)
-    // This prevents infinite loading spinner - retry logic will handle refetching
     if (error) return true;
-    
-    // If retries exhausted, consider ready (to prevent infinite loading)
+
+    // If we have an empty array (loaded from cache or redux init) but haven't hit retry limit yet,
+    // and we clearly don't have full access, we might still be waiting for the auto-fetch to kick in.
+    // However, to prevent UI blocking, if retries are exhausted, we say ready.
     if (retryCount >= 3) return true;
-    
-    // Otherwise, not ready (will trigger retry in useEffect)
+
+    // If permissions are completely empty and we are not loading, we might need to fetch.
+    // But if we return 'false' here, the UI shows a spinner.
+    // Ideally, we want to show spinner until we either get data or definitively fail.
+    // So if empty and no error and retries < 3, return false implies "still working on it".
     return false;
   }, [loading, permissions, hasFullAccess, error, retryCount]);
 
@@ -142,7 +152,7 @@ export const usePermissions = () => {
     if (loading) {
       return null;
     }
-    
+
     // If permissions are loaded, use normal can function
     return can(action, module);
   }, [loading, can]);
@@ -171,7 +181,7 @@ export const usePermissions = () => {
       const authUser = localStorage.getItem("authUser");
       if (authUser) {
         const userData = JSON.parse(authUser);
-        const userId = userData.userId || userData.id || userData.user_id;
+        const userId = userData.data?.user?._id || userData.userId || userData.id || userData.user_id;
         if (userId) {
           console.log("Manually refreshing permissions for user:", userId);
           dispatch(getUserPermissions(userId));
@@ -182,8 +192,8 @@ export const usePermissions = () => {
     }
   }, [dispatch]);
 
-  return { 
-    can, 
+  return {
+    can,
     canWithLoading,
     isPermissionsReady,
     loading,
@@ -203,5 +213,5 @@ export const usePermissions = () => {
     getCountryPermissions,
     refreshPermissions
   };
-}; 
+};
 

@@ -24,9 +24,9 @@ import {
 import classnames from "classnames";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { 
-  getSubCategoryDetailsForView, 
-  getSubCategoryViewToursTable, 
+import {
+  getSubCategoryDetailsForView,
+  getSubCategoryViewToursTable,
   getSubCategoryViewBookingsTable,
   // This is a new action you need to create in your Redux actions file
   clearSubCategoryViewData
@@ -247,7 +247,7 @@ const BookingsTable = ({ bookings }) => {
 const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit }) => {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("1");
-  
+
   // Bulk connection state
   const [connectCityCode, setConnectCityCode] = useState("");
   const [availableTours, setAvailableTours] = useState([]);
@@ -268,15 +268,15 @@ const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit 
   useEffect(() => {
     if (isOpen && subCategoryId) {
       // 1. Reset the active tab to "1" (Tours) every time the modal opens
-      setActiveTab("1"); 
-      
+      setActiveTab("1");
+
       // 2. Clear old data from the Redux store
       dispatch(clearSubCategoryViewData());
 
       // 3. Fetch new data
       dispatch(getSubCategoryDetailsForView(subCategoryId));
       dispatch(getSubCategoryViewToursTable(subCategoryId));
-      
+
       console.log("Fetching data for subcategory ID:", subCategoryId);
     }
   }, [subCategoryId, dispatch, isOpen]);
@@ -296,7 +296,7 @@ const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit 
 
   const handleFetchToursByCity = async () => {
     if (!connectCityCode || !subCategoryId) return;
-    
+
     setLoadingTours(true);
     try {
       const response = await getCityTours({ cityCode: connectCityCode, page: 1, limit: 100 });
@@ -452,7 +452,7 @@ const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit 
                         </Button>
                       )}
                     </div>
-                    
+
                     {showConnectSection && canEdit && (
                       <Row>
                         <Col md={4}>
@@ -567,10 +567,17 @@ const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit 
 };
 
 TravelSubCategoryDetailsModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  toggle: PropTypes.func.isRequired,
+  isOpen: PropTypes.bool,
+  toggle: PropTypes.func,
   subCategoryId: PropTypes.string,
   canEdit: PropTypes.bool,
+};
+
+TravelSubCategoryDetailsModal.defaultProps = {
+  isOpen: false,
+  toggle: () => { },
+  subCategoryId: null,
+  canEdit: false,
 };
 
 export default TravelSubCategoryDetailsModal;

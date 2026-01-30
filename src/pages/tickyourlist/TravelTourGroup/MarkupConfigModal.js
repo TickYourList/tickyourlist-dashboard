@@ -254,10 +254,30 @@ const MarkupConfigModal = ({
         const variantToUse = selectedVariant || variantId;
         const tourGroupToUse = selectedTourGroup || tourGroupId;
 
-        if (isOpen && variantToUse && tourGroupToUse && formData.provider) {
-            const today = new Date().toISOString().split('T')[0];
+        // Only fetch from API for Klook providers (backend only supports KLOOK_AGENT currently)
+        const isKlookProvider = formData.provider === 'KLOOK_AGENT' || formData.provider === 'KLOOK_OCTO';
+
+        if (isOpen && variantToUse && tourGroupToUse && formData.provider && isKlookProvider) {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            // endDate must be at least next day, but using 30 days range like LiveKlookPricing for better results
+            const endDate = new Date(today);
+            endDate.setDate(endDate.getDate() + 30); // 30 days range like the working curl example
+            const endDateStr = endDate.toISOString().split('T')[0];
             // Use Redux action to fetch pricing (same as LiveKlookPricing component)
-            dispatch(fetchKlookLivePricingRequest(tourGroupToUse, today, today, variantToUse, 'USD'));
+            // Always fetch from Klook API - don't skip even if mappings might not exist
+            console.log("🔄 Fetching Klook live pricing for markup config:", {
+                tourGroupId: tourGroupToUse,
+                variantId: variantToUse,
+                provider: formData.provider,
+                startDate: todayStr,
+                endDate: endDateStr
+            });
+            dispatch(fetchKlookLivePricingRequest(tourGroupToUse, todayStr, endDateStr, variantToUse, 'USD'));
+        } else if (isOpen && variantToUse && tourGroupToUse && formData.provider && !isKlookProvider) {
+            // For non-Klook providers, we can't fetch live pricing yet
+            console.warn("⚠️ Live pricing API only supports Klook providers currently. Provider:", formData.provider);
+            setActualPricing(prev => ({ ...prev, loading: false }));
         }
     }, [selectedVariant, variantId, selectedTourGroup, tourGroupId, formData.provider, isOpen, dispatch]);
 
@@ -274,9 +294,29 @@ const MarkupConfigModal = ({
 
             const pricingData = klookLivePricing[tourGroupToUse];
 
+            console.log("📥 Pricing data from Redux store:", {
+                hasPricingData: !!pricingData,
+                tourGroupId: tourGroupToUse,
+                variantId: variantToUse,
+                provider: formData.provider,
+                pricingDataKeys: pricingData ? Object.keys(pricingData) : []
+            });
+
             if (pricingData) {
                 // Extract pricing from Redux store using same logic as LiveKlookPricing
                 extractPricingFromRedux(pricingData, variantToUse, tourGroupToUse);
+            } else {
+                // If no pricing data, it might mean:
+                // 1. API call hasn't completed yet (still loading)
+                // 2. API call failed
+                // 3. No mappings exist for this variant
+                console.warn("⚠️ No pricing data in Redux store. This could mean:");
+                console.warn("   1. API call is still in progress");
+                console.warn("   2. API call failed (check network tab)");
+                console.warn("   3. No provider mappings exist for this variant");
+                console.warn("   4. Provider mappings exist but are not active or sync is disabled");
+                // Don't set loading to false yet - wait a bit to see if data arrives
+                // The loading state will be handled by the extractPricingFromRedux function
             }
         } else if (!isOpen) {
             // Reset pricing when modal closes
@@ -485,17 +525,20 @@ const MarkupConfigModal = ({
                         if (todaySlot) {
                             console.log("⏰ Selected timeslot:", todaySlot);
                             console.log("⏰ Timeslot keys:", Object.keys(todaySlot));
-                            // originalPrice is the B2B price from provider (USD)
+                            console.log("⏰ Full timeslot data:", JSON.stringify(todaySlot, null, 2));
+                            // originalPrice is the B2B price from provider (USD) - this is the live price from Klook API
                             // sellingPrice is the B2C price (with markup applied)
                             if (todaySlot.originalPrice !== undefined && todaySlot.originalPrice !== null && todaySlot.originalPrice > 0) {
-                                b2bPrice = parseFloat(todaySlot.originalPrice); // This is the actual provider B2B price
-                                console.log("✅ Using provider API B2B price (originalPrice):", b2bPrice);
+                                b2bPrice = parseFloat(todaySlot.originalPrice); // This is the actual provider B2B price from Klook API
+                                console.log("✅ SUCCESS: Using live provider API B2B price (originalPrice):", b2bPrice);
                             } else if (todaySlot.b2bPrice !== undefined && todaySlot.b2bPrice !== null && todaySlot.b2bPrice > 0) {
                                 b2bPrice = parseFloat(todaySlot.b2bPrice);
-                                console.log("✅ Using provider API B2B price (b2bPrice):", b2bPrice);
+                                console.log("✅ SUCCESS: Using live provider API B2B price (b2bPrice):", b2bPrice);
                             } else {
-                                console.log("⚠️ Timeslot found but no B2B price in originalPrice or b2bPrice fields");
-                                console.log("⚠️ Available fields:", Object.keys(todaySlot));
+                                console.warn("⚠️ WARNING: Timeslot found but no B2B price in originalPrice or b2bPrice fields");
+                                console.warn("⚠️ This means the API response doesn't contain the expected price fields");
+                                console.warn("⚠️ Available fields:", Object.keys(todaySlot));
+                                console.warn("⚠️ Full timeslot:", todaySlot);
                             }
                             // sellingPrice is the B2C price, but we can also use it as live selling price reference
                             if (todaySlot.sellingPrice !== undefined && todaySlot.sellingPrice !== null && todaySlot.sellingPrice > 0) {
@@ -531,7 +574,14 @@ const MarkupConfigModal = ({
                 console.log("⚠️ No variants in pricing data, structure:", Object.keys(pricingData || {}));
                 // Check if there's an error message about mappings
                 if (pricingData?.message && pricingData.message.includes("No active")) {
-                    console.warn("⚠️ Provider mappings not found - cannot fetch provider B2B price. Will try calendar pricing.");
+                    console.error("❌ CRITICAL: Provider mappings not found!");
+                    console.error("❌ The API returned:", pricingData.message);
+                    console.error("❌ This means:");
+                    console.error("   1. No provider mappings exist for this variant/tour group");
+                    console.error("   2. OR mappings exist but are not active (isActive = false)");
+                    console.error("   3. OR mappings exist but sync is disabled (syncEnabled = false)");
+                    console.error("❌ Please check provider mappings and ensure they are active and synced.");
+                    console.error("❌ Will try calendar pricing as fallback, but this will use stored prices, not live API prices.");
                 }
             }
 
@@ -561,18 +611,28 @@ const MarkupConfigModal = ({
 
             // FINAL FALLBACK: Only use variant's stored price if everything else failed
             // NOTE: This stored price might be outdated. The actual provider B2B price should come from the provider API.
-            // If you see this fallback being used, it means provider mappings might not be set up correctly.
+            // If you see this fallback being used, it means:
+            // 1. Provider mappings might not be set up correctly
+            // 2. The API call might have failed
+            // 3. The variant might not be properly mapped to a Klook product
             if (!b2bPrice || b2bPrice <= 0) {
                 if (originalPrice && originalPrice > 0) {
                     b2bPrice = originalPrice;
-                    console.warn("⚠️ Using variant's stored price as final fallback B2B price:", b2bPrice);
-                    console.warn("⚠️ NOTE: This stored price might be outdated. Please ensure provider mappings are set up correctly to get live provider B2B prices.");
+                    console.error("❌ FALLBACK: Using variant's stored price as final fallback B2B price:", b2bPrice);
+                    console.error("❌ This means the Klook API did not return a live price.");
+                    console.error("❌ Possible reasons:");
+                    console.error("   1. Provider mappings are not set up or not active");
+                    console.error("   2. The variant is not mapped to a Klook product");
+                    console.error("   3. The Klook API call failed or returned no data");
+                    console.error("   4. The variant mapping exists but syncEnabled is false");
+                    console.error("❌ Please check provider mappings and ensure they are active and synced.");
                 } else {
-                    console.warn("⚠️ No B2B price found, using placeholder");
+                    console.error("❌ No B2B price found from any source, using placeholder");
                     b2bPrice = 0;
                 }
             } else {
-                console.log("✅ Successfully fetched B2B price:", b2bPrice);
+                console.log("✅ SUCCESS: Successfully fetched LIVE B2B price from Klook API:", b2bPrice);
+                console.log("✅ This is the actual current price from the provider, not a stored fallback.");
             }
 
             // Get exchange rates for currency conversion
