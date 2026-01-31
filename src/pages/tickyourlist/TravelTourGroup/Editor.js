@@ -6,28 +6,73 @@ import htmlToDraft from "html-to-draftjs"
 import { convertToRaw, EditorState, ContentState, Modifier } from "draft-js"
 import { Button } from "reactstrap"
 
-export default function EditorReact({ value, onChange = () => {} }) {
+export default function EditorReact({ value, onChange = () => { } }) {
   const [editorState, setEditorState] = useState(EditorState.createEmpty())
-  const latestHtml = useRef(value)
+  const latestHtml = useRef(null)
+  const isInitialized = useRef(false)
 
-  // Function to strip font-family and font-size from HTML
+  // Function to strip ALL problematic styles from HTML (including margin, padding, etc.)
   const stripFontStyles = (html) => {
     if (!html) return html
-    
-    // Remove inline font-family and font-size styles
+
+    // Remove all common problematic inline styles
     let cleanedHtml = html
-      .replace(/font-family:\s*[^;}"']+;?/gi, '')
-      .replace(/font-size:\s*[^;}"']+;?/gi, '')
-      // Clean up empty style attributes
-      .replace(/style="\s*"/gi, '')
+      // Font styles
+      .replace(/font-family:\s*[^;}\"']+;?/gi, '')
+      .replace(/font-size:\s*[^;}\"']+;?/gi, '')
+      .replace(/font-weight:\s*[^;}\"']+;?/gi, '')
+      // Margin and padding (including margin-left that causes indentation)
+      .replace(/margin-left:\s*[^;}\"']+;?/gi, '')
+      .replace(/margin-right:\s*[^;}\"']+;?/gi, '')
+      .replace(/margin-top:\s*[^;}\"']+;?/gi, '')
+      .replace(/margin-bottom:\s*[^;}\"']+;?/gi, '')
+      .replace(/margin:\s*[^;}\"']+;?/gi, '')
+      .replace(/padding-left:\s*[^;}\"']+;?/gi, '')
+      .replace(/padding-right:\s*[^;}\"']+;?/gi, '')
+      .replace(/padding-top:\s*[^;}\"']+;?/gi, '')
+      .replace(/padding-bottom:\s*[^;}\"']+;?/gi, '')
+      .replace(/padding:\s*[^;}\"']+;?/gi, '')
+      // Text indentation
+      .replace(/text-indent:\s*[^;}\"']+;?/gi, '')
+      // Line height and letter spacing
+      .replace(/line-height:\s*[^;}\"']+;?/gi, '')
+      .replace(/letter-spacing:\s*[^;}\"']+;?/gi, '')
+      // Colors (keep text readable by removing background)
+      .replace(/background-color:\s*[^;}\"']+;?/gi, '')
+      .replace(/background:\s*[^;}\"']+;?/gi, '')
+      // Remove color styles that may conflict
+      .replace(/color:\s*[^;}\"']+;?/gi, '')
+      // Width and height
+      .replace(/width:\s*[^;}\"']+;?/gi, '')
+      .replace(/height:\s*[^;}\"']+;?/gi, '')
+      // Clean up empty style attributes and extra semicolons
+      .replace(/style="\s*;*\s*"/gi, '')
       .replace(/style=''/gi, '')
-    
+      .replace(/style="\s*"/gi, '')
+      // Clean up multiple semicolons from removed styles
+      .replace(/;\s*;+/g, ';')
+      .replace(/style=";\s*/gi, 'style="')
+      .replace(/;\s*"/g, '"')
+
     return cleanedHtml
   }
 
+  // Normalize value for comparison (treat null, undefined, '' as equivalent)
+  const normalizeValue = (val) => {
+    if (!val || val === '<p></p>' || val === '<p></p>\n') return ''
+    return val
+  }
+
   useEffect(() => {
-    // Update editor only if incoming value differs from latest internal content
-    if (value !== latestHtml.current) {
+    const normalizedValue = normalizeValue(value)
+    const normalizedLatest = normalizeValue(latestHtml.current)
+
+    // Initialize or update editor when value meaningfully changes
+    // Or when receiving a non-empty value for the first time (data loaded)
+    const hasNewContent = normalizedValue && !isInitialized.current
+    const valueChanged = normalizedValue !== normalizedLatest
+
+    if (hasNewContent || valueChanged) {
       if (value) {
         const blocksFromHtml = htmlToDraft(value)
         if (blocksFromHtml) {
@@ -37,6 +82,7 @@ export default function EditorReact({ value, onChange = () => {} }) {
             entityMap
           )
           setEditorState(EditorState.createWithContent(contentState))
+          isInitialized.current = true
         }
       } else {
         setEditorState(EditorState.createEmpty())
@@ -52,46 +98,69 @@ export default function EditorReact({ value, onChange = () => {} }) {
     onChange(html)
   }
 
-  // Handle pasted text - strip font styles
+  // Handle pasted text - strip all problematic styles automatically
   const handlePastedText = (text, html) => {
+    // If HTML is available, clean it and use it
     if (html) {
       const cleanedHtml = stripFontStyles(html)
       const blocksFromHtml = htmlToDraft(cleanedHtml)
-      
+
       if (blocksFromHtml) {
         const { contentBlocks, entityMap } = blocksFromHtml
         const pastedContentState = ContentState.createFromBlockArray(
           contentBlocks,
           entityMap
         )
-        
+
         const currentContentState = editorState.getCurrentContent()
         const selection = editorState.getSelection()
-        
+
         const newContentState = Modifier.replaceWithFragment(
           currentContentState,
           selection,
           pastedContentState.getBlockMap()
         )
-        
+
         const newEditorState = EditorState.push(
           editorState,
           newContentState,
           'insert-fragment'
         )
-        
+
         handleEditorChange(newEditorState)
         return true // Prevent default paste behavior
       }
     }
+
+    // If only plain text is available, insert it as plain text (no styles)
+    if (text) {
+      const currentContentState = editorState.getCurrentContent()
+      const selection = editorState.getSelection()
+
+      const newContentState = Modifier.insertText(
+        currentContentState,
+        selection,
+        text
+      )
+
+      const newEditorState = EditorState.push(
+        editorState,
+        newContentState,
+        'insert-characters'
+      )
+
+      handleEditorChange(newEditorState)
+      return true
+    }
+
     return false
   }
 
-  // Function to clear font styles from current content
+  // Function to clear all formatting styles from current content
   const clearFontStyles = () => {
     const currentHtml = draftToHtml(convertToRaw(editorState.getCurrentContent()))
     const cleanedHtml = stripFontStyles(currentHtml)
-    
+
     const blocksFromHtml = htmlToDraft(cleanedHtml)
     if (blocksFromHtml) {
       const { contentBlocks, entityMap } = blocksFromHtml
@@ -112,10 +181,10 @@ export default function EditorReact({ value, onChange = () => {} }) {
           color="warning"
           size="sm"
           onClick={clearFontStyles}
-          title="Remove all font-family and font-size styles"
+          title="Remove all formatting styles (margins, fonts, colors, etc.) from existing content"
         >
           <i className="bx bx-eraser me-1"></i>
-          Clear Font Styles
+          Clear All Formatting
         </Button>
       </div>
       <Editor

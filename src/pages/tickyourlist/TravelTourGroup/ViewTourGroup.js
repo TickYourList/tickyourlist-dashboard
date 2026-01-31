@@ -46,15 +46,25 @@ export default function ViewTourGroup({
   }
 
   const dispatch = useDispatch()
-  const { tourGroupById } = useSelector(state => state.tourGroup)
+  const tourGroupByIdMap = useSelector(state => state.tourGroup.tourGroupById)
+  const currentTourGroupId = useSelector(state => state.tourGroup.id)
   const { can, getTourGroupPermissions } = usePermissions()
+
+  // Access the tour group data using the editId as the key
+  const tourGroupById = tourGroupByIdMap?.[editId] || {}
+
   /*   console.log(tourGroupById) */
   const highlights = extractListItemsFromHTML(tourGroupById?.highlights || "")
   const id = editId
   useEffect(() => {
     dispatch(fetchTourGroupByIdRequest(id))
-    setTourGroupByIdName(tourGroupById.name)
-  }, [tourGroupById.name])
+  }, [id, dispatch])
+
+  useEffect(() => {
+    if (tourGroupById?.name) {
+      setTourGroupByIdName(tourGroupById.name)
+    }
+  }, [tourGroupById?.name, setTourGroupByIdName])
 
   const toggleCustom = tab => {
     if (customActiveTab !== tab) {

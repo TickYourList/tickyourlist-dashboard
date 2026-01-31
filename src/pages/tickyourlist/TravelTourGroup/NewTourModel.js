@@ -37,7 +37,9 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
   const [activeTab, setactiveTab] = useState(1)
   const [passedSteps, setPassedSteps] = useState([1])
 
-  const tourGroupById = useSelector(state => state.tourGroup.tourGroupById)
+  const tourGroupByIdMap = useSelector(state => state.tourGroup.tourGroupById)
+  // Access the tour group data using the editId as the key
+  const tourGroupById = isEdit ? (tourGroupByIdMap?.[editId] || {}) : {}
 
   useEffect(() => {
     dispatch(getCities())
@@ -165,49 +167,49 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
 
     imageUploads: tourGroupById?.imageUploads?.length
       ? tourGroupById.imageUploads.map(item => ({
-          altText: item.altText || "",
-          url: item.url || null,
-        }))
+        altText: item.altText || "",
+        url: item.url || null,
+      }))
       : [
-          {
-            altText: "",
-            url: null,
-          },
-        ],
+        {
+          altText: "",
+          url: null,
+        },
+      ],
 
     productImages: tourGroupById?.media?.productImages?.length
       ? tourGroupById.media.productImages.map(item => ({
-          altText: item.altText || "",
-          url: item.url || null,
-        }))
+        altText: item.altText || "",
+        url: item.url || null,
+      }))
       : [
-          {
-            altText: "",
-            url: null,
-          },
-        ],
+        {
+          altText: "",
+          url: null,
+        },
+      ],
     safetyImages: tourGroupById?.media?.safetyImages?.length
       ? tourGroupById.media.safetyImages.map(item => ({
-          altText: item.altText || "",
-          url: item.url || null,
-        }))
+        altText: item.altText || "",
+        url: item.url || null,
+      }))
       : [
-          {
-            altText: "",
-            url: null,
-          },
-        ],
+        {
+          altText: "",
+          url: null,
+        },
+      ],
     safetyVideos: tourGroupById?.media?.SafetyVideos?.length
       ? tourGroupById.media.safetyVideos.map(item => ({
-          altText: item.altText || "",
-          url: item.url || null,
-        }))
+        altText: item.altText || "",
+        url: item.url || null,
+      }))
       : [
-          {
-            altText: "",
-            url: null,
-          },
-        ],
+        {
+          altText: "",
+          url: null,
+        },
+      ],
   }
 
   const validationSchema = Yup.object({
@@ -404,7 +406,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
     "tourType",
     "descriptors",
     "microBrandsDescriptor",
-    "microBrandsHighlight", 
+    "microBrandsHighlight",
     "callToAction",
     "canonicalUrl",
     "noIndex",
@@ -1380,7 +1382,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                     />
                                   </Col>
                                 </Row>
-                                
+
                                 {/* Additional Meta Fields */}
                                 <Row>
                                   <Col className="mb-3">
@@ -1403,7 +1405,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                     />
                                   </Col>
                                 </Row>
-                                
+
                                 <Row>
                                   <Col className="mb-3">
                                     <Label
@@ -1425,7 +1427,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                     />
                                   </Col>
                                 </Row>
-                                
+
                                 <Row>
                                   <Col className="mb-3">
                                     <Label
@@ -1447,7 +1449,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                     />
                                   </Col>
                                 </Row>
-                                
+
                                 <Row>
                                   <Col className="mb-3">
                                     <Label
@@ -1469,7 +1471,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                     />
                                   </Col>
                                 </Row>
-                                
+
                                 <Row>
                                   <Col className="mb-3">
                                     <Label
@@ -1499,7 +1501,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                       name="noIndex"
                                     />
                                   </Col>
-                                  
+
                                   <Col className="mb-3">
                                     <Label
                                       className="form-label"
