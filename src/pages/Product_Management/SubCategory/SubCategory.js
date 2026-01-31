@@ -80,23 +80,17 @@ const SubCategory = () => {
 
         // Safety check: if permissions are empty, fetch them
         const authUser = localStorage.getItem("authUser");
-        console.log("SubCategory: Checking authUser from localStorage:", authUser ? "Found" : "Not Found");
 
         if (authUser) {
-            console.log("SubCategory: Raw authUser string:", authUser);
             try {
                 const userData = JSON.parse(authUser);
                 // Handle various potential structures of authUser
                 const userId = userData.data?.user?._id || userData.userId || userData.id || userData.user_id;
-                console.log("SubCategory: Parsed userId:", userId);
 
                 // We dispatch if not ready/empty, handled by redux checking redundant calls usually, 
                 // but here we force it if we see empty state to be safe on reload.
                 if (userId) {
-                    console.log("SubCategory: Dispatching getUserPermissions for userId:", userId);
                     dispatch(getUserPermissions(userId));
-                } else {
-                    console.warn("SubCategory: No userId found in authUser data");
                 }
             } catch (e) {
                 console.error("SubCategory: Error parsing authUser:", e);
