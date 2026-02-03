@@ -28,8 +28,13 @@ function TravelCategoryDetail() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Existing selectors
-  const data = useSelector((state) => state.travelCategory.data || []);
+  // Existing selectors - ensure data is always an array
+  const rawData = useSelector((state) => state.travelCategory.data);
+  const data = useMemo(() => {
+    // If data is not an array, return empty array
+    // This handles cases where FETCH_TRAVEL_CATEGORY_SUCCESS sets data to a single object
+    return Array.isArray(rawData) ? rawData : [];
+  }, [rawData]);
   const loading = useSelector((state) => state.travelCategory.loading);
   const error = useSelector((state) => state.travelCategory.error);
 
@@ -83,13 +88,15 @@ function TravelCategoryDetail() {
 
   // Filter data based on selected city
   useEffect(() => {
+    // Ensure data is an array before filtering
+    const dataArray = Array.isArray(data) ? data : [];
     if (selectedCity) {
-      const filtered = data.filter(
+      const filtered = dataArray.filter(
         (category) => category.cityCode === selectedCity.value
       );
       setFilteredData(filtered);
     } else {
-      setFilteredData(data);
+      setFilteredData(dataArray);
     }
   }, [selectedCity, data]);
 
@@ -320,7 +327,7 @@ function TravelCategoryDetail() {
 
             <TableContainer
               columns={columns}
-              data={filteredData.length > 0 || selectedCity ? filteredData : data}
+              data={Array.isArray(filteredData) && (filteredData.length > 0 || selectedCity) ? filteredData : (Array.isArray(data) ? data : [])}
               loading={loading}
               isGlobalFilter={true}
               isAddOptions={false}

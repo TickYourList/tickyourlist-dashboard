@@ -18,6 +18,7 @@ import {
   resetTravelCategory,
 } from "../../store/travelCategories/actions";
 import NoPermission from "./NoPermissions"; // Import NoPermission component
+import { usePermissions, MODULES, ACTIONS } from "helpers/permissions";
 
 const EditTravelCategory = () => {
   const { categoryId } = useParams();
@@ -30,43 +31,16 @@ const EditTravelCategory = () => {
     (state) => state.travelCategory
   );
 
-  // Permission selectors - get permissions data from API
-  const permissionsData = useSelector((state) => {
-    
-    return state.travelCategory.permissions || {};
-  });
+  // Use standardized permissions hook
+  const { can, isPermissionsReady, loading: permissionsLoading } = usePermissions();
 
-  // Extract permissions from API response based on module
-  const permissions = useMemo(() => {
-   
-    
-    // Get permissions array from API
-    const allPermissions = permissionsData.permissions || [];
-    
-    // Find tylTravelCategory module permissions
-    const travelCategoryPermission = allPermissions.find(
-      permission => permission.module === 'tylTravelCategory'
-    );
-    
-    
-    // Return permissions from API for tylTravelCategory module
-    if (travelCategoryPermission) {
-      return {
-        canAdd: travelCategoryPermission.canAdd || false,
-        canDelete: travelCategoryPermission.canDelete || false,
-        canEdit: travelCategoryPermission.canEdit || false,
-        canView: travelCategoryPermission.canView || false
-      };
-    }
-
-    // Default permissions if module not found
-    return {
-      canAdd: false,
-      canDelete: false,
-      canEdit: false,
-      canView: false
-    };
-  }, [permissionsData]);
+  // Permission checks using standardized system
+  const permissions = useMemo(() => ({
+    canAdd: can(ACTIONS.CAN_ADD, MODULES.CATEGORY_PERMS),
+    canDelete: can(ACTIONS.CAN_DELETE, MODULES.CATEGORY_PERMS),
+    canEdit: can(ACTIONS.CAN_EDIT, MODULES.CATEGORY_PERMS),
+    canView: can(ACTIONS.CAN_VIEW, MODULES.CATEGORY_PERMS)
+  }), [can]);
 
   toastr.options = {
     closeButton: true,
@@ -86,10 +60,11 @@ const EditTravelCategory = () => {
   }, [updateSuccess, error, dispatch, navigate, loading]);
 
   useEffect(() => {
-    if (categoryId) {
+    // Fetch category only when permissions are ready
+    if (isPermissionsReady && categoryId) {
       dispatch(fetchTravelCategoryRequest(categoryId));
     }
-  }, [dispatch, categoryId]);
+  }, [dispatch, categoryId, isPermissionsReady]);
 
   const validationSchema = Yup.object({
     name: Yup.string().required("Please enter the Category Name"),
@@ -245,6 +220,24 @@ const EditTravelCategory = () => {
       setSlugsEntered(data.urlSlugs || {});
     }
   }, [data]);
+
+  // Show loading while permissions are being fetched
+  if (permissionsLoading || !isPermissionsReady) {
+    return (
+      <div className="page-content">
+        <Container fluid>
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+            <div className="text-center">
+              <div className="spinner-border text-primary" role="status">
+                <span className="sr-only">Loading...</span>
+              </div>
+              <p className="mt-2">Loading page data...</p>
+            </div>
+          </div>
+        </Container>
+      </div>
+    );
+  }
 
   // Permission check - if no canEdit permission, show NoPermission component
   if (!permissions.canEdit) {
