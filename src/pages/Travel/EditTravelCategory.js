@@ -9,6 +9,7 @@ import toastr from "toastr";
 import "toastr/build/toastr.min.css";
 import { useParams, useNavigate } from "react-router-dom";
 import CreatableSelect from "react-select/creatable";
+import Select from "react-select";
 import URLSlugsSection from "./URLSlugsSection";
 import EditImageUploader from "./EditImageUploader";
 import SlugList from "./SlugList";
@@ -19,6 +20,7 @@ import {
 } from "../../store/travelCategories/actions";
 import NoPermission from "./NoPermissions"; // Import NoPermission component
 import { usePermissions, MODULES, ACTIONS } from "helpers/permissions";
+import { getCitiesList } from "../../helpers/location_management_helper";
 
 const EditTravelCategory = () => {
   const { categoryId } = useParams();
@@ -26,6 +28,8 @@ const EditTravelCategory = () => {
   const dispatch = useDispatch();
 
   const [slugsEntered, setSlugsEntered] = useState({});
+  const [cities, setCities] = useState([]);
+  const [loadingCities, setLoadingCities] = useState(false);
 
   const { data, loading, error, updateSuccess } = useSelector(
     (state) => state.travelCategory || {}
@@ -58,6 +62,28 @@ const EditTravelCategory = () => {
       }, 500);
     }
   }, [updateSuccess, dispatch, navigate]);
+
+  // Fetch cities on mount
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setLoadingCities(true);
+        const response = await getCitiesList();
+        const cityOptions = response.data.travelCityList.map((city) => ({
+          value: city.cityCode, // Always use cityCode as value
+          label: `${city.name} (${city.cityCode})`,
+          name: city.name, // Store name for matching
+        }));
+        setCities(cityOptions);
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+        toastr.error("Failed to load cities");
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, []);
 
   useEffect(() => {
     // Fetch category only when permissions are ready
@@ -139,17 +165,40 @@ const EditTravelCategory = () => {
         const newImages = values.images?.filter((img) => img instanceof File) || [];
         const existingImages = values.images?.filter((img) => !(img instanceof File)) || [];
 
-        const mediaArray = existingImages.map((img) => ({
-          _id: img._id || undefined,
-          url: img.url,
-          type: img.type || "IMAGE",
-          altText: img.altText || img.filename || "",
-          metadata: img.metadata || {},
-          info: img.info || {},
-        }));
+        const mediaArray = existingImages.map((img) => {
+          // Handle existing images - convert type to mediaType if needed
+          let mediaType = img.mediaType;
+          if (!mediaType && img.type) {
+            // If type is "IMAGE", convert to proper MIME type
+            if (img.type === "IMAGE" || img.type === "image") {
+              // Try to detect from URL or default to image/jpeg
+              const url = img.url || "";
+              if (url.includes(".png")) {
+                mediaType = "image/png";
+              } else if (url.includes(".gif")) {
+                mediaType = "image/gif";
+              } else if (url.includes(".webp")) {
+                mediaType = "image/webp";
+              } else {
+                mediaType = "image/jpeg"; // Default
+              }
+            } else {
+              mediaType = img.type; // Use as-is if it's already a MIME type
+            }
+          }
+          if (!mediaType) {
+            mediaType = "image/jpeg"; // Final fallback
+          }
+
+          return {
+            url: img.url,
+            mediaType: mediaType,
+            altText: img.altText || img.filename || "",
+          };
+        });
 
         const updatedData = {
-          id: data?._id || values.id,
+          // Don't send id in payload - it's in the URL parameter
           name: cleanString(values.name),
           displayName: cleanString(values.displayName),
           heading: cleanString(values.heading),
@@ -169,11 +218,31 @@ const EditTravelCategory = () => {
             metaTitle: cleanString(values.microMetaTitle),
             metaDescription: cleanString(values.microMetaDescription) || "",
           },
-          cityCode: cleanString(values.cityCode),
-          city: data?.city || null,
-          sortOrder: values.sortOrder || 1,
-          medias: mediaArray,
+          cityCode: cleanString(values.cityCode) || null,
+          city: data?.city?._id || data?.city || null,
+          sortOrder: parseInt(values.sortOrder) || 1,
+          medias: mediaArray.length > 0 ? mediaArray : undefined,
         };
+
+        // Validate cityCode - ensure it's a valid city code, not a name
+        if (updatedData.cityCode && cities.length > 0) {
+          const cityMatch = cities.find(city => city.value === updatedData.cityCode);
+          if (!cityMatch) {
+            // If cityCode doesn't match any city code, try to find by name and use the code
+            const cityByName = cities.find(city =>
+              city.name?.toLowerCase() === updatedData.cityCode.toLowerCase() ||
+              city.label?.toLowerCase().includes(updatedData.cityCode.toLowerCase())
+            );
+            if (cityByName) {
+              updatedData.cityCode = cityByName.value;
+              console.log("Converted city name to code:", cityByName.value);
+            } else {
+              console.warn("City code not found in cities list:", updatedData.cityCode);
+            }
+          }
+        }
+
+        console.log("Final updatedData:", JSON.stringify(updatedData, null, 2));
 
         const formData = new FormData();
         formData.append("data", JSON.stringify(updatedData));
@@ -308,15 +377,51 @@ const EditTravelCategory = () => {
 
                   <Col md={6} className="mb-3">
                     <Label>City Code *</Label>
-                    <Input
+                    <Select
                       name="cityCode"
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      value={formik.values.cityCode}
-                      invalid={formik.touched.cityCode && !!formik.errors.cityCode}
+                      value={cities.find(city => {
+                        // Match by city code value or by name if code matches the name
+                        return city.value === formik.values.cityCode ||
+                          city.value.toLowerCase() === formik.values.cityCode?.toLowerCase() ||
+                          city.label.toLowerCase().includes(formik.values.cityCode?.toLowerCase());
+                      }) || null}
+                      onChange={(selectedOption) => {
+                        // Always use the city code value, not the label
+                        const cityCode = selectedOption ? selectedOption.value : "";
+                        formik.setFieldValue("cityCode", cityCode);
+                        console.log("Selected city code:", cityCode);
+                      }}
+                      onBlur={() => formik.setFieldTouched("cityCode", true)}
+                      options={cities}
+                      isClearable
+                      isSearchable
+                      isLoading={loadingCities}
+                      placeholder="Select City"
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      styles={{
+                        control: (base, state) => ({
+                          ...base,
+                          borderColor: formik.touched.cityCode && formik.errors.cityCode
+                            ? '#dc3545'
+                            : state.isFocused
+                              ? '#80bdff'
+                              : '#ced4da',
+                          '&:hover': {
+                            borderColor: formik.touched.cityCode && formik.errors.cityCode
+                              ? '#dc3545'
+                              : '#80bdff'
+                          }
+                        })
+                      }}
                     />
                     {formik.touched.cityCode && formik.errors.cityCode && (
-                      <div className="text-danger">{formik.errors.cityCode}</div>
+                      <div className="text-danger" style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>
+                        {formik.errors.cityCode}
+                      </div>
+                    )}
+                    {loadingCities && (
+                      <small className="text-muted">Loading cities...</small>
                     )}
                   </Col>
 
