@@ -172,6 +172,8 @@
     "autoprefixer": "10.4.5"
   },
   "devDependencies": {
+    "baseline-browser-mapping": "^2.9.19",
+    "caniuse-lite": "^1.0.30001767",
     "eslint-config-standard-react": "^9.2.0",
     "eslint-plugin-react": "^7.20.6",
     "prettier": "^2.1.1"
