@@ -159,10 +159,20 @@ function* updateTravelCategorySaga(action) {
   try {
     const { categoryId, formData } = action.payload;
     const response = yield call(updateCategory, categoryId, formData);
-    yield put(updateTravelCategorySuccess(response.data));
+
+    const statusCode = response?.statusCode;
+
+    if (statusCode === "10000") {
+      yield put(updateTravelCategorySuccess());
+      toastr.success("Travel Category Updated Successfully ✅");
+    } else {
+      yield put(updateTravelCategoryFailure(response?.message || "Failed to update category"));
+      toastr.error(response?.message || "Failed to update Travel Category");
+    }
   } catch (error) {
-    yield put(updateTravelCategoryFailure(error.message));
-    yield put(resetTravelCategory());
+    const errorMessage = error.response?.data?.message || error.message || "Failed to update Travel Category";
+    yield put(updateTravelCategoryFailure(errorMessage));
+    toastr.error(errorMessage);
   }
 }
 

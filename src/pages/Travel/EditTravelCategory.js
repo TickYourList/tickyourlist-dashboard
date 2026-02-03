@@ -28,7 +28,7 @@ const EditTravelCategory = () => {
   const [slugsEntered, setSlugsEntered] = useState({});
 
   const { data, loading, error, updateSuccess } = useSelector(
-    (state) => state.travelCategory
+    (state) => state.travelCategory || {}
   );
 
   // Use standardized permissions hook
@@ -51,13 +51,13 @@ const EditTravelCategory = () => {
 
   useEffect(() => {
     if (updateSuccess) {
-      toastr.success("Travel Category Updated Successfully ✅");
       dispatch(resetTravelCategory());
-      navigate("/travel-categories");
-    } else if (!updateSuccess && !loading && error) {
-      toastr.error("❌ Failed to update Travel Category.");
+      // Small delay to ensure toast is visible before navigation
+      setTimeout(() => {
+        navigate("/travel-categories");
+      }, 500);
     }
-  }, [updateSuccess, error, dispatch, navigate, loading]);
+  }, [updateSuccess, dispatch, navigate]);
 
   useEffect(() => {
     // Fetch category only when permissions are ready
@@ -67,25 +67,23 @@ const EditTravelCategory = () => {
   }, [dispatch, categoryId, isPermissionsReady]);
 
   const validationSchema = Yup.object({
-    name: Yup.string().required("Please enter the Category Name"),
-    cityCode: Yup.string().required("Please enter the City Code"),
-    displayName: Yup.string().required("Please enter the Display Name"),
-    heading: Yup.string().required("Please enter the Heading"),
-    metaTitle: Yup.string().required("Please enter the Meta Title"),
-    metaDescription: Yup.string().required("Please enter the Meta Description"),
-    canonicalUrl: Yup.string().required("Please enter the Canonical URL"),
-    descriptors: Yup.string().required("Please enter the Descriptors"),
-    highlights: Yup.string().required("Please enter the Highlights"),
-    supportedLanguages: Yup.string().required("Please enter Supported Languages"),
-    microMetaTitle: Yup.string().required("Please enter the Micro Meta Title"),
-    microMetaDescription: Yup.string().required("Please enter the Micro Meta Description"),
-    indexing: Yup.string().required("Please select Indexing"),
+    name: Yup.string(),
+    cityCode: Yup.string(),
+    displayName: Yup.string(),
+    heading: Yup.string(),
+    metaTitle: Yup.string(),
+    metaDescription: Yup.string(),
+    canonicalUrl: Yup.string(),
+    descriptors: Yup.string(),
+    highlights: Yup.string(),
+    supportedLanguages: Yup.string(),
+    microMetaTitle: Yup.string(),
+    microMetaDescription: Yup.string(),
+    indexing: Yup.string(),
     sortOrder: Yup.number()
       .typeError("Sort Order must be a number")
-      .required("Please enter the Sort Order"),
-    images: Yup.array()
-      .min(1, "Please upload at least one image")
-      .required("Please upload at least one image"),
+      .nullable(),
+    images: Yup.array(),
   });
 
   const formik = useFormik({
@@ -131,10 +129,7 @@ const EditTravelCategory = () => {
           cityCode: true,
         });
 
-        if (Object.keys(slugsEntered).length === 0) {
-          toastr.error("Please enter atleast one URL Slug");
-          return;
-        }
+        // URL slugs are now optional - removed validation
 
         const cleanString = (val) => {
           if (!val || val.trim().toLowerCase() === "null") return null;
@@ -154,7 +149,7 @@ const EditTravelCategory = () => {
         }));
 
         const updatedData = {
-          id: data?.id,
+          id: data?._id || values.id,
           name: cleanString(values.name),
           displayName: cleanString(values.displayName),
           heading: cleanString(values.heading),
@@ -186,7 +181,15 @@ const EditTravelCategory = () => {
         newImages.forEach((file) => {
           formData.append("images", file);
         });
-        dispatch(updateTravelCategoryRequest({ categoryId: values.id, formData }));
+
+        const categoryId = data?._id || values.id;
+        if (!categoryId) {
+          toastr.error("Category ID is missing. Please refresh the page.");
+          return;
+        }
+
+        console.log("Dispatching update request for category:", categoryId);
+        dispatch(updateTravelCategoryRequest({ categoryId, formData }));
       } catch (error) {
         console.error("❌ Submit error:", error);
         toastr.error("Something went wrong while submitting.");
@@ -499,9 +502,9 @@ const EditTravelCategory = () => {
                   <Button
                     type="submit"
                     color="primary"
-                    disabled={!(formik.isValid && formik.dirty) || formik.isSubmitting}
+                    disabled={formik.isSubmitting || loading}
                   >
-                    Update
+                    {loading ? "Updating..." : "Update"}
                   </Button>
 
                   <Button
