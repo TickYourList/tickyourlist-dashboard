@@ -1,4 +1,6 @@
 import { call, put, takeLatest, all } from "redux-saga/effects";
+import toastr from "toastr";
+import "toastr/build/toastr.min.css";
 import {
   GET_TRAVEL_CATEGORIES_REQUEST,
   GET_TRAVEL_CATEGORIES_SUCCESS,
@@ -27,6 +29,18 @@ import {
   GET_SETTING_FAILURE,
 
   UPDATE_SYSTEM_SETTINGS_REQUEST,
+
+  GET_CATEGORIES_BY_CITY_REQUEST,
+  GET_CATEGORIES_BY_CITY_SUCCESS,
+  GET_CATEGORIES_BY_CITY_FAILURE,
+
+  SORT_CATEGORIES_REQUEST,
+  SORT_CATEGORIES_SUCCESS,
+  SORT_CATEGORIES_FAILURE,
+
+  SORT_SUBCATEGORIES_REQUEST,
+  SORT_SUBCATEGORIES_SUCCESS,
+  SORT_SUBCATEGORIES_FAILURE,
 } from "./actionTypes";
 
 import {
@@ -35,7 +49,7 @@ import {
   getCategoryById,
   updateCategory,
   addCategory,
-   getCategoryByUrl,
+  getCategoryByUrl,
   getCategoryTours,
   getCategorySubcategories,
   getCategoryBookings,
@@ -43,16 +57,27 @@ import {
   getCategoryPermissions,
   getSettings,
   updateSystemSettings,
+  getCategoriesForCity,
+  sortCategory,
+  sortSubCategory,
 } from "../../helpers/location_management_helper";
-import { addTravelCategoryFailure, addTravelCategorySuccess, fetchTravelCategoryFailure, fetchTravelCategorySuccess, updateTravelCategoryFailure, updateTravelCategorySuccess, fetchMySettingsSucc, fetchMySettingsFail,
+import {
+  addTravelCategoryFailure, addTravelCategorySuccess, fetchTravelCategoryFailure, fetchTravelCategorySuccess, updateTravelCategoryFailure, updateTravelCategorySuccess, fetchMySettingsSucc, fetchMySettingsFail,
   updateSystemSettingsSuccess,
-  updateSystemSettingsFailure } from "./actions";
+  updateSystemSettingsFailure,
+  getCategoriesByCitySuccess,
+  getCategoriesByCityFailure,
+  sortCategoriesSuccess,
+  sortCategoriesFailure,
+  sortSubcategoriesSuccess,
+  sortSubcategoriesFailure
+} from "./actions";
 
 // 🚀 Get all categories
 function* getTravelCategories() {
   try {
     const response = yield call(getCategoriesList);
-  
+
 
     const statusCode = response?.statusCode;  // ✅ NOT response.data.statusCode
     const payloadData = response?.data || [];
@@ -63,14 +88,14 @@ function* getTravelCategories() {
         payload: payloadData,
       });
     } else {
-    
+
       yield put({
-        type: GET_TRAVEL_CATEGORIES_FAILURE, 
+        type: GET_TRAVEL_CATEGORIES_FAILURE,
         payload: "Unexpected response format",
       });
     }
   } catch (error) {
-  
+
     yield put({
       type: GET_TRAVEL_CATEGORIES_FAILURE,
       payload: error.message,
@@ -103,13 +128,13 @@ function* addTravelCategorySaga(action) {
     }
 
     for (let pair of submissionData.entries()) {
-    
+
     }
 
     const res = yield call(() => addCategory(submissionData, cityCode));
-    
 
-       if (res.statusCode === "10000") {
+
+    if (res.statusCode === "10000") {
       yield put(addTravelCategorySuccess("Category created successfully."));
     } else {
       yield put(addTravelCategoryFailure("Failed to create category."));
@@ -230,18 +255,106 @@ function* updateSystemSettingsSaga(action) {
   try {
     const response = yield call(updateSystemSettings, action.payload.data);
 
-   // 👇 Debug karo pehle
+    // 👇 Debug karo pehle
     console.log("API full response:", response.data);
 
-    if (response?.data?.updated) {  
-  yield put(updateSystemSettingsSuccess(response.data));
-} else {
-  yield put(updateSystemSettingsFailure(response.data?.message || "Failed to update settings"));
-}
+    if (response?.data?.updated) {
+      yield put(updateSystemSettingsSuccess(response.data));
+    } else {
+      yield put(updateSystemSettingsFailure(response.data?.message || "Failed to update settings"));
+    }
 
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message || "An error occurred while updating settings";
     yield put(updateSystemSettingsFailure(errorMessage));
+  }
+}
+
+// Get Categories by City
+function* getCategoriesByCitySaga(action) {
+  try {
+    const cityCode = action.payload;
+    const response = yield call(getCategoriesForCity, cityCode);
+
+    const statusCode = response?.statusCode;
+    const payloadData = response?.data?.categories || [];
+
+    if (statusCode === "10000") {
+      yield put({
+        type: GET_CATEGORIES_BY_CITY_SUCCESS,
+        payload: payloadData,
+      });
+    } else {
+      yield put({
+        type: GET_CATEGORIES_BY_CITY_FAILURE,
+        payload: response?.message || "Failed to fetch categories",
+      });
+    }
+  } catch (error) {
+    yield put({
+      type: GET_CATEGORIES_BY_CITY_FAILURE,
+      payload: error.message || "Failed to fetch categories",
+    });
+  }
+}
+
+// Sort Categories
+function* sortCategoriesSaga(action) {
+  try {
+    const categoryOrder = action.payload;
+    const response = yield call(sortCategory, categoryOrder);
+
+    const statusCode = response?.statusCode;
+
+    if (statusCode === "10000") {
+      yield put({
+        type: SORT_CATEGORIES_SUCCESS,
+        payload: response?.data || {},
+      });
+      toastr.success("Categories sorted successfully!");
+    } else {
+      yield put({
+        type: SORT_CATEGORIES_FAILURE,
+        payload: response?.message || "Failed to sort categories",
+      });
+      toastr.error(response?.message || "Failed to sort categories");
+    }
+  } catch (error) {
+    yield put({
+      type: SORT_CATEGORIES_FAILURE,
+      payload: error.message || "Failed to sort categories",
+    });
+    toastr.error(error.message || "Failed to sort categories");
+  }
+}
+
+// Sort Subcategories
+function* sortSubcategoriesSaga(action) {
+  try {
+    const { categoryId, subcategoryOrders } = action.payload;
+    const response = yield call(sortSubCategory, { categoryId, subcategoryOrders });
+
+    const statusCode = response?.statusCode;
+
+    if (statusCode === "10000") {
+      yield put({
+        type: SORT_SUBCATEGORIES_SUCCESS,
+        payload: response?.data || {},
+      });
+      toastr.success("Subcategories sorted successfully!");
+    } else {
+      yield put({
+        type: SORT_SUBCATEGORIES_FAILURE,
+        payload: response?.message || "Failed to sort subcategories",
+      });
+      toastr.error(response?.message || "Failed to sort subcategories");
+    }
+  } catch (error) {
+    yield put({
+      type: SORT_SUBCATEGORIES_FAILURE,
+      payload: error.message || "Failed to sort subcategories",
+    });
+    toastr.error(error.message || "Failed to sort subcategories");
   }
 }
 
@@ -259,5 +372,8 @@ export default function* travelCategorySaga() {
     takeLatest(FETCH_CATEGORY_BOOKINGS_REQUEST, fetchCategoryBookings),
     takeLatest(GET_SETTING_REQUEST, fetchSettingsSaga),
     takeLatest(UPDATE_SYSTEM_SETTINGS_REQUEST, updateSystemSettingsSaga),
+    takeLatest(GET_CATEGORIES_BY_CITY_REQUEST, getCategoriesByCitySaga),
+    takeLatest(SORT_CATEGORIES_REQUEST, sortCategoriesSaga),
+    takeLatest(SORT_SUBCATEGORIES_REQUEST, sortSubcategoriesSaga),
   ]);
 }

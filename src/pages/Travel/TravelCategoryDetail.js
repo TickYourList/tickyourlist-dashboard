@@ -1,4 +1,5 @@
 import ViewCategoryModal from "./ViewCategoryModal";
+import CategorySortingModal from "./CategorySortingModal";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -54,6 +55,7 @@ function TravelCategoryDetail() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [loadingCities, setLoadingCities] = useState(false);
@@ -305,24 +307,44 @@ function TravelCategoryDetail() {
                   classNamePrefix="react-select"
                 />
               </div>
-              {/* Add button - show only if API says canAdd is true */}
-              {permissions.canAdd && (
-                <button
-                  className="btn btn-success rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2"
-                  style={{
-                    backgroundColor: '#28c76f',
-                    borderColor: '#28c76f',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    boxShadow: '0 2px 6px rgba(40, 199, 111, 0.3)',
-                    border: 'none'
-                  }}
-                  onClick={handleAddClick}
-                >
-                  <i className="fas fa-plus" style={{ fontSize: '12px' }}></i>
-                  Add New Travel Category
-                </button>
-              )}
+              <div className="d-flex gap-2">
+                {/* Sort button - show only if API says canEdit is true */}
+                {permissions.canEdit && (
+                  <button
+                    className="btn btn-info rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2"
+                    style={{
+                      backgroundColor: '#17a2b8',
+                      borderColor: '#17a2b8',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      boxShadow: '0 2px 6px rgba(23, 162, 184, 0.3)',
+                      border: 'none'
+                    }}
+                    onClick={() => setIsSortModalOpen(true)}
+                  >
+                    <i className="mdi mdi-sort" style={{ fontSize: '14px' }}></i>
+                    Sort Categories
+                  </button>
+                )}
+                {/* Add button - show only if API says canAdd is true */}
+                {permissions.canAdd && (
+                  <button
+                    className="btn btn-success rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2"
+                    style={{
+                      backgroundColor: '#28c76f',
+                      borderColor: '#28c76f',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      boxShadow: '0 2px 6px rgba(40, 199, 111, 0.3)',
+                      border: 'none'
+                    }}
+                    onClick={handleAddClick}
+                  >
+                    <i className="fas fa-plus" style={{ fontSize: '12px' }}></i>
+                    Add New Travel Category
+                  </button>
+                )}
+              </div>
             </div>
 
             <TableContainer
@@ -395,6 +417,12 @@ function TravelCategoryDetail() {
           </ModalFooter>
         </Modal>
       )}
+
+      {/* Category Sorting Modal */}
+      <CategorySortingModal
+        isOpen={isSortModalOpen}
+        toggle={() => setIsSortModalOpen(false)}
+      />
     </div>
   );
 }

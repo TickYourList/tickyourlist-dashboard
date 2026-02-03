@@ -35,6 +35,7 @@ import { usePermissions, MODULES, ACTIONS } from '../../../helpers/permissions';
 
 // Component imports
 import TravelSubCategoryDetailsModal from "./TravelSubCategoryDetailsModal";
+import SubCategorySortingModal from "./SubCategorySortingModal";
 import { getUserPermissions } from "store/user-permissions/actions";
 
 const SubCategory = () => {
@@ -58,6 +59,7 @@ const SubCategory = () => {
     const [currentCategory, setCurrentCategory] = useState(null);
     const [filterCityCode, setFilterCityCode] = useState("");
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [isSortModalOpen, setIsSortModalOpen] = useState(false);
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState(null);
@@ -397,7 +399,16 @@ const SubCategory = () => {
                         <Col xs="12">
                             <Card>
                                 <CardBody>
-                                    <div className="text-sm-end mb-2 btn-rounded">
+                                    <div className="text-sm-end mb-2 btn-rounded d-flex gap-2 justify-content-end">
+                                        {canEdit && (
+                                            <button
+                                                className="btn btn-info"
+                                                onClick={() => setIsSortModalOpen(true)}
+                                            >
+                                                <i className="mdi mdi-sort me-1"></i>
+                                                Sort Sub Categories
+                                            </button>
+                                        )}
                                         {canAdd && (
                                             <Link to="/add-new-travel-sub-category" className="text-primary">
                                                 <button className="btn btn-success">Add New Sub Category</button>
@@ -509,6 +520,10 @@ const SubCategory = () => {
                 toggle={closeDetailsModal}
                 subCategoryId={selectedSubCategory}
                 canEdit={canEdit}
+            />
+            <SubCategorySortingModal
+                isOpen={isSortModalOpen}
+                toggle={() => setIsSortModalOpen(false)}
             />
         </React.Fragment>
     );

@@ -40,6 +40,18 @@
   UPDATE_SYSTEM_SETTINGS_REQUEST,
   UPDATE_SYSTEM_SETTINGS_SUCCESS,
   UPDATE_SYSTEM_SETTINGS_FAILURE,
+
+  GET_CATEGORIES_BY_CITY_REQUEST,
+  GET_CATEGORIES_BY_CITY_SUCCESS,
+  GET_CATEGORIES_BY_CITY_FAILURE,
+
+  SORT_CATEGORIES_REQUEST,
+  SORT_CATEGORIES_SUCCESS,
+  SORT_CATEGORIES_FAILURE,
+
+  SORT_SUBCATEGORIES_REQUEST,
+  SORT_SUBCATEGORIES_SUCCESS,
+  SORT_SUBCATEGORIES_FAILURE,
 } from "./actionTypes";
 
 export const getTravelCategoriesRequest = () => ({
@@ -218,4 +230,51 @@ type: UPDATE_SYSTEM_SETTINGS_REQUEST,
 payload: { data },
 });
 
+// Get Categories by City
+export const getCategoriesByCityRequest = (cityCode) => ({
+  type: GET_CATEGORIES_BY_CITY_REQUEST,
+  payload: cityCode,
+});
+
+export const getCategoriesByCitySuccess = (categories) => ({
+  type: GET_CATEGORIES_BY_CITY_SUCCESS,
+  payload: categories,
+});
+
+export const getCategoriesByCityFailure = (error) => ({
+  type: GET_CATEGORIES_BY_CITY_FAILURE,
+  payload: error,
+});
+
+// Sort Categories
+export const sortCategoriesRequest = (categoryOrders) => ({
+  type: SORT_CATEGORIES_REQUEST,
+  payload: categoryOrders,
+});
+
+export const sortCategoriesSuccess = (data) => ({
+  type: SORT_CATEGORIES_SUCCESS,
+  payload: data,
+});
+
+export const sortCategoriesFailure = (error) => ({
+  type: SORT_CATEGORIES_FAILURE,
+  payload: error,
+});
+
+// Sort Subcategories
+export const sortSubcategoriesRequest = (payload) => ({
+  type: SORT_SUBCATEGORIES_REQUEST,
+  payload,
+});
+
+export const sortSubcategoriesSuccess = (data) => ({
+  type: SORT_SUBCATEGORIES_SUCCESS,
+  payload: data,
+});
+
+export const sortSubcategoriesFailure = (error) => ({
+  type: SORT_SUBCATEGORIES_FAILURE,
+  payload: error,
+});
 

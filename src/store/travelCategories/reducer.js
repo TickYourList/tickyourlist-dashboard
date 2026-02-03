@@ -44,6 +44,18 @@ import {
   UPDATE_SYSTEM_SETTINGS_REQUEST,
   UPDATE_SYSTEM_SETTINGS_SUCCESS,
   UPDATE_SYSTEM_SETTINGS_FAILURE,
+
+  GET_CATEGORIES_BY_CITY_REQUEST,
+  GET_CATEGORIES_BY_CITY_SUCCESS,
+  GET_CATEGORIES_BY_CITY_FAILURE,
+
+  SORT_CATEGORIES_REQUEST,
+  SORT_CATEGORIES_SUCCESS,
+  SORT_CATEGORIES_FAILURE,
+
+  SORT_SUBCATEGORIES_REQUEST,
+  SORT_SUBCATEGORIES_SUCCESS,
+  SORT_SUBCATEGORIES_FAILURE,
 } from "./actionTypes";
 
 const initialState = { 
@@ -78,6 +90,18 @@ const initialState = {
   updateLoading: false,
   updateError: null,
   updateSuccess: false,
+
+  categoriesByCity: [],
+  categoriesByCityLoading: false,
+  categoriesByCityError: null,
+
+  sortCategoriesLoading: false,
+  sortCategoriesError: null,
+  sortCategoriesSuccess: false,
+
+  sortSubcategoriesLoading: false,
+  sortSubcategoriesError: null,
+  sortSubcategoriesSuccess: false,
 };
 
 const travelCategory = (state = initialState, action) => {
@@ -287,6 +311,74 @@ const travelCategory = (state = initialState, action) => {
           updateLoading: false,
           updateError: action.payload,
           updateSuccess: false,
+        };
+
+      // Get Categories by City
+      case GET_CATEGORIES_BY_CITY_REQUEST:
+        return {
+          ...state,
+          categoriesByCityLoading: true,
+          categoriesByCityError: null,
+        };
+      case GET_CATEGORIES_BY_CITY_SUCCESS:
+        return {
+          ...state,
+          categoriesByCityLoading: false,
+          categoriesByCity: action.payload,
+          categoriesByCityError: null,
+        };
+      case GET_CATEGORIES_BY_CITY_FAILURE:
+        return {
+          ...state,
+          categoriesByCityLoading: false,
+          categoriesByCityError: action.payload,
+          categoriesByCity: [],
+        };
+
+      // Sort Categories
+      case SORT_CATEGORIES_REQUEST:
+        return {
+          ...state,
+          sortCategoriesLoading: true,
+          sortCategoriesError: null,
+          sortCategoriesSuccess: false,
+        };
+      case SORT_CATEGORIES_SUCCESS:
+        return {
+          ...state,
+          sortCategoriesLoading: false,
+          sortCategoriesSuccess: true,
+          sortCategoriesError: null,
+        };
+      case SORT_CATEGORIES_FAILURE:
+        return {
+          ...state,
+          sortCategoriesLoading: false,
+          sortCategoriesError: action.payload,
+          sortCategoriesSuccess: false,
+        };
+
+      // Sort Subcategories
+      case SORT_SUBCATEGORIES_REQUEST:
+        return {
+          ...state,
+          sortSubcategoriesLoading: true,
+          sortSubcategoriesError: null,
+          sortSubcategoriesSuccess: false,
+        };
+      case SORT_SUBCATEGORIES_SUCCESS:
+        return {
+          ...state,
+          sortSubcategoriesLoading: false,
+          sortSubcategoriesSuccess: true,
+          sortSubcategoriesError: null,
+        };
+      case SORT_SUBCATEGORIES_FAILURE:
+        return {
+          ...state,
+          sortSubcategoriesLoading: false,
+          sortSubcategoriesError: action.payload,
+          sortSubcategoriesSuccess: false,
         };
 
     default:
