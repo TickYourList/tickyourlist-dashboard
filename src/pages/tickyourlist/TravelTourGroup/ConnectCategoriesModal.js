@@ -36,7 +36,6 @@ const ConnectCategoriesModal = ({
   const [fetching, setFetching] = useState(false);
   const [loadingTourGroup, setLoadingTourGroup] = useState(false);
   const [cityCode, setCityCode] = useState("");
-  const [tourGroupData, setTourGroupData] = useState(null);
 
   // Helper function to normalize ID to string for comparison
   const normalizeId = (id) => {
@@ -56,7 +55,6 @@ const ConnectCategoriesModal = ({
           const response = await getTourById(tourGroup._id);
           if (response?.data) {
             const fetchedTourGroup = response.data;
-            setTourGroupData(fetchedTourGroup);
 
             const tourCityCode = fetchedTourGroup.cityCode || fetchedTourGroup.city?.cityCode;
             setCityCode(tourCityCode || "");
@@ -82,7 +80,6 @@ const ConnectCategoriesModal = ({
           // Fallback to using the passed tourGroup
           const tourCityCode = tourGroup.cityCode || tourGroup.city?.cityCode;
           setCityCode(tourCityCode || "");
-          setTourGroupData(tourGroup);
 
           const existingCategories = (tourGroup.categoryConnections || []).map(
             (conn) => normalizeId(conn.item?._id || conn.item)
@@ -108,7 +105,6 @@ const ConnectCategoriesModal = ({
       // Fallback if no _id
       const tourCityCode = tourGroup.cityCode || tourGroup.city?.cityCode;
       setCityCode(tourCityCode || "");
-      setTourGroupData(tourGroup);
 
       const existingCategories = (tourGroup.categoryConnections || []).map(
         (conn) => normalizeId(conn.item?._id || conn.item)
@@ -165,18 +161,76 @@ const ConnectCategoriesModal = ({
     });
   };
 
-  const handleSubcategoryToggle = (subcategoryId) => {
+  const resolveParentCategoryId = (subcategory) => {
+    if (!subcategory) return null;
+
+    const subcategoryCategoryObjectId = normalizeId(
+      subcategory?.category?._id || subcategory?.category
+    );
+    const subcategoryCategoryNumericId =
+      subcategory?.categoryId !== undefined && subcategory?.categoryId !== null
+        ? String(subcategory.categoryId)
+        : null;
+
+    const parentCategory = categories.find((category) => {
+      const categoryObjectId = normalizeId(category?._id || category?.id);
+      const categoryNumericId =
+        category?.id !== undefined && category?.id !== null
+          ? String(category.id)
+          : null;
+      const categoryDomainId =
+        category?.categoryId !== undefined && category?.categoryId !== null
+          ? String(category.categoryId)
+          : null;
+
+      const objectIdMatches =
+        subcategoryCategoryObjectId &&
+        categoryObjectId &&
+        subcategoryCategoryObjectId === categoryObjectId;
+
+      const numericIdMatches =
+        subcategoryCategoryNumericId &&
+        ((categoryNumericId && subcategoryCategoryNumericId === categoryNumericId) ||
+          (categoryDomainId && subcategoryCategoryNumericId === categoryDomainId));
+
+      return objectIdMatches || numericIdMatches;
+    });
+
+    return normalizeId(parentCategory?._id || parentCategory?.id);
+  };
+
+  const handleSubcategoryToggle = (subcategory) => {
+    const subcategoryId = subcategory?._id || subcategory?.id || subcategory;
     const normalizedId = normalizeId(subcategoryId);
     if (!normalizedId) return;
 
-    setSelectedSubcategories((prev) => {
-      const normalizedPrev = prev.map(id => normalizeId(id));
-      if (normalizedPrev.includes(normalizedId)) {
-        return prev.filter((id) => normalizeId(id) !== normalizedId);
-      } else {
-        return [...prev, normalizedId];
-      }
-    });
+    const normalizedCurrent = selectedSubcategories.map(id => normalizeId(id));
+    const isSelecting = !normalizedCurrent.includes(normalizedId);
+    const nextSelectedSubcategories = isSelecting
+      ? [...selectedSubcategories, normalizedId]
+      : selectedSubcategories.filter((id) => normalizeId(id) !== normalizedId);
+
+    setSelectedSubcategories(nextSelectedSubcategories);
+
+    if (typeof subcategory !== "object" || subcategory === null) {
+      return;
+    }
+
+    const parentCategoryId = resolveParentCategoryId(subcategory);
+    if (!parentCategoryId) {
+      return;
+    }
+
+    // Auto-select parent category when a subcategory is selected.
+    if (isSelecting) {
+      setSelectedCategories((prev) => {
+        const normalizedPrev = prev.map((id) => normalizeId(id));
+        if (normalizedPrev.includes(parentCategoryId)) {
+          return prev;
+        }
+        return [...prev, parentCategoryId];
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -208,68 +262,115 @@ const ConnectCategoriesModal = ({
   const handleCityCodeChange = (e) => {
     const newCityCode = e.target.value.toUpperCase();
     setCityCode(newCityCode);
+    // Do not auto-carry hidden selections across cities.
+    setSelectedCategories([]);
+    setSelectedSubcategories([]);
     if (newCityCode) {
       fetchCategoriesAndSubcategories(newCityCode);
+    } else {
+      setCategories([]);
+      setSubcategories([]);
     }
   };
 
-  // Create a map of categoryId -> category.sortOrder for looking up parent category rank
-  const categoryRankMap = useMemo(() => {
+  const getItemName = (item) =>
+    item?.displayName || item?.name || item?.title || "Unnamed";
+
+  // Categories ranked from 1..N based on existing sortOrder and then name.
+  const rankedCategories = useMemo(() => {
+    const sorted = [...categories].sort((a, b) => {
+      const aSort = Number.isFinite(Number(a?.sortOrder)) ? Number(a.sortOrder) : Number.MAX_SAFE_INTEGER;
+      const bSort = Number.isFinite(Number(b?.sortOrder)) ? Number(b.sortOrder) : Number.MAX_SAFE_INTEGER;
+      if (aSort !== bSort) return aSort - bSort;
+      return getItemName(a).toLowerCase().localeCompare(getItemName(b).toLowerCase());
+    });
+
+    return sorted.map((category, index) => ({
+      ...category,
+      displayRank: index + 1,
+    }));
+  }, [categories]);
+
+  // Support both numeric `id/categoryId` and ObjectId mappings.
+  const categoryLookup = useMemo(() => {
     const map = new Map();
-    categories.forEach((category) => {
-      // Map by both _id and id to handle different data structures
-      const categoryId = category._id || category.id;
-      if (categoryId && (category.sortOrder !== undefined && category.sortOrder !== null)) {
-        map.set(String(categoryId), category.sortOrder);
-        // Also map by numeric id if it exists
-        if (category.id) {
-          map.set(category.id, category.sortOrder);
-        }
+    rankedCategories.forEach((category) => {
+      const objectId = normalizeId(category?._id || category?.id);
+      if (objectId) {
+        map.set(objectId, category);
+      }
+      if (category?.id !== undefined && category?.id !== null) {
+        map.set(String(category.id), category);
+      }
+      if (category?.categoryId !== undefined && category?.categoryId !== null) {
+        map.set(String(category.categoryId), category);
       }
     });
     return map;
-  }, [categories]);
+  }, [rankedCategories]);
 
-  // Helper function to get display rank for a subcategory
-  const getSubcategoryDisplayRank = (subcategory) => {
-    // Get parent category's rank using categoryId
-    const parentCategoryRank = subcategory.categoryId
-      ? categoryRankMap.get(subcategory.categoryId)
-      : null;
+  // Group subcategories under their parent category rank.
+  const groupedSubcategories = useMemo(() => {
+    const groupsByCategory = new Map();
+    const unlinked = [];
 
-    // Also try to find by category _id if it exists
-    const categoryId = subcategory.category?._id || subcategory.category;
-    const parentCategoryRankById = categoryId
-      ? categoryRankMap.get(String(categoryId))
-      : null;
+    subcategories.forEach((subcategory) => {
+      const parentKeys = [
+        subcategory?.categoryId !== undefined && subcategory?.categoryId !== null
+          ? String(subcategory.categoryId)
+          : null,
+        normalizeId(subcategory?.category?._id || subcategory?.category),
+      ].filter(Boolean);
 
-    // Use the parent category's rank, fallback to subcategory's own sortOrder if not found
-    const displayRank = parentCategoryRank !== null && parentCategoryRank !== undefined
-      ? parentCategoryRank
-      : (parentCategoryRankById !== null && parentCategoryRankById !== undefined
-        ? parentCategoryRankById
-        : (subcategory.sortOrder !== undefined && subcategory.sortOrder !== null
-          ? subcategory.sortOrder
-          : Infinity)); // Use Infinity for items without rank so they appear at the end
-
-    return displayRank;
-  };
-
-  // Sort subcategories by their parent category's rank (1, 2, 3, etc.)
-  const sortedSubcategories = useMemo(() => {
-    return [...subcategories].sort((a, b) => {
-      const rankA = getSubcategoryDisplayRank(a);
-      const rankB = getSubcategoryDisplayRank(b);
-      // Sort by rank (ascending), then by name if ranks are equal
-      if (rankA !== rankB) {
-        return rankA - rankB;
+      let parentCategory = null;
+      for (const key of parentKeys) {
+        if (categoryLookup.has(key)) {
+          parentCategory = categoryLookup.get(key);
+          break;
+        }
       }
-      // If ranks are equal, sort alphabetically by name
-      const nameA = (a.name || a.displayName || '').toLowerCase();
-      const nameB = (b.name || b.displayName || '').toLowerCase();
-      return nameA.localeCompare(nameB);
+
+      if (!parentCategory) {
+        unlinked.push(subcategory);
+        return;
+      }
+
+      const groupKey = normalizeId(parentCategory?._id || parentCategory?.id) || String(parentCategory?.displayRank);
+      if (!groupsByCategory.has(groupKey)) {
+        groupsByCategory.set(groupKey, {
+          category: parentCategory,
+          items: [],
+        });
+      }
+
+      groupsByCategory.get(groupKey).items.push(subcategory);
     });
-  }, [subcategories, categoryRankMap]);
+
+    const linkedGroups = Array.from(groupsByCategory.values())
+      .map((group) => ({
+        ...group,
+        items: [...group.items].sort((a, b) =>
+          getItemName(a).toLowerCase().localeCompare(getItemName(b).toLowerCase()),
+        ),
+      }))
+      .sort((a, b) => a.category.displayRank - b.category.displayRank);
+
+    const sortedUnlinked = [...unlinked].sort((a, b) =>
+      getItemName(a).toLowerCase().localeCompare(getItemName(b).toLowerCase()),
+    );
+
+    return { linkedGroups, unlinked: sortedUnlinked };
+  }, [subcategories, categoryLookup]);
+
+  const selectedCategorySummary = useMemo(() => {
+    const normalizedSelected = selectedCategories.map(id => normalizeId(id));
+    return rankedCategories
+      .filter((category) => {
+        const categoryId = normalizeId(category?._id || category?.id);
+        return categoryId && normalizedSelected.includes(categoryId);
+      })
+      .map((category) => `Rank ${category.displayRank}: ${getItemName(category)}`);
+  }, [rankedCategories, selectedCategories]);
 
   return (
     <Modal isOpen={isOpen} toggle={toggle} size="lg">
@@ -321,11 +422,16 @@ const ConnectCategoriesModal = ({
                         {selectedCategories.length} selected
                       </Badge>
                     </h5>
+                    {selectedCategorySummary.length > 0 && (
+                      <small className="text-muted d-block mb-2">
+                        {selectedCategorySummary.join(" | ")}
+                      </small>
+                    )}
                     <div style={{ maxHeight: "300px", overflowY: "auto" }}>
                       {categories.length === 0 ? (
                         <p className="text-muted">No categories found</p>
                       ) : (
-                        categories.map((category) => {
+                        rankedCategories.map((category) => {
                           const categoryId = category._id || category.id;
                           const normalizedId = normalizeId(categoryId);
                           const normalizedSelected = selectedCategories.map(id => normalizeId(id));
@@ -350,14 +456,11 @@ const ConnectCategoriesModal = ({
                                 className="mb-0 flex-grow-1"
                                 style={{ cursor: 'pointer', userSelect: 'none' }}
                               >
-                                {category.name || category.displayName}
-                                {(category.sortOrder !== undefined && category.sortOrder !== null) && (
-                                  <Badge color="secondary" className="ms-2">
-                                    Rank: {category.sortOrder}
-                                  </Badge>
-                                )}
+                                {getItemName(category)}
+                                <Badge color="secondary" className="ms-2">
+                                  Rank: {category.displayRank}
+                                </Badge>
                               </Label>
-                              {/* Alternative: Clickable Badge */}
                               <Badge
                                 color={isSelected ? "success" : "secondary"}
                                 style={{ cursor: 'pointer' }}
@@ -366,7 +469,7 @@ const ConnectCategoriesModal = ({
                                   handleCategoryToggle(categoryId);
                                 }}
                               >
-                                {isSelected ? "✓ Selected" : "Click to Select"}
+                                {isSelected ? "✓ Selected" : "Select"}
                               </Badge>
                             </div>
                           );
@@ -386,58 +489,113 @@ const ConnectCategoriesModal = ({
                       </Badge>
                     </h5>
                     <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-                      {sortedSubcategories.length === 0 ? (
+                      {groupedSubcategories.linkedGroups.length === 0 && groupedSubcategories.unlinked.length === 0 ? (
                         <p className="text-muted">No subcategories found</p>
                       ) : (
-                        sortedSubcategories.map((subcategory) => {
-                          const subcategoryId = subcategory._id || subcategory.id;
-                          const normalizedId = normalizeId(subcategoryId);
-                          const normalizedSelected = selectedSubcategories.map(id => normalizeId(id));
-                          const isSelected = normalizedSelected.includes(normalizedId);
+                        <>
+                          {groupedSubcategories.linkedGroups.map((group) => (
+                            <div key={normalizeId(group.category?._id || group.category?.id) || group.category.displayRank} className="mb-3">
+                              <div className="mb-2">
+                                <Badge color="info">
+                                  Rank {group.category.displayRank}
+                                </Badge>
+                                <span className="ms-2 fw-semibold">{getItemName(group.category)}</span>
+                              </div>
+                              {group.items.map((subcategory) => {
+                                const subcategoryId = subcategory._id || subcategory.id;
+                                const normalizedId = normalizeId(subcategoryId);
+                                const normalizedSelected = selectedSubcategories.map(id => normalizeId(id));
+                                const isSelected = normalizedSelected.includes(normalizedId);
 
-                          // Get display rank for this subcategory
-                          const displayRank = getSubcategoryDisplayRank(subcategory);
-
-                          return (
-                            <div
-                              key={normalizedId || subcategoryId}
-                              className="mb-2 d-flex align-items-center"
-                              style={{ cursor: 'pointer' }}
-                              onClick={() => handleSubcategoryToggle(subcategoryId)}
-                            >
-                              <Input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => handleSubcategoryToggle(subcategoryId)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="me-2"
-                                style={{ cursor: 'pointer' }}
-                              />
-                              <Label
-                                className="mb-0 flex-grow-1"
-                                style={{ cursor: 'pointer', userSelect: 'none' }}
-                              >
-                                {subcategory.name || subcategory.displayName}
-                                {displayRank !== null && displayRank !== Infinity && (
-                                  <Badge color="secondary" className="ms-2">
-                                    Rank: {displayRank}
-                                  </Badge>
-                                )}
-                              </Label>
-                              {/* Alternative: Clickable Badge */}
-                              <Badge
-                                color={isSelected ? "success" : "secondary"}
-                                style={{ cursor: 'pointer' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSubcategoryToggle(subcategoryId);
-                                }}
-                              >
-                                {isSelected ? "✓ Selected" : "Click to Select"}
-                              </Badge>
+                                return (
+                                  <div
+                                    key={normalizedId || subcategoryId}
+                                    className="mb-2 d-flex align-items-center"
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() => handleSubcategoryToggle(subcategory)}
+                                  >
+                                    <Input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => handleSubcategoryToggle(subcategory)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="me-2"
+                                      style={{ cursor: "pointer" }}
+                                    />
+                                    <Label
+                                      className="mb-0 flex-grow-1"
+                                      style={{ cursor: "pointer", userSelect: "none" }}
+                                    >
+                                      {getItemName(subcategory)}
+                                    </Label>
+                                    <Badge
+                                      color={isSelected ? "success" : "secondary"}
+                                      style={{ cursor: "pointer" }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSubcategoryToggle(subcategory);
+                                      }}
+                                    >
+                                      {isSelected ? "✓ Selected" : "Select"}
+                                    </Badge>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })
+                          ))}
+
+                          {groupedSubcategories.unlinked.length > 0 && (
+                            <div className="mt-3">
+                              <div className="mb-2">
+                                <Badge color="warning">No Rank</Badge>
+                                <span className="ms-2 fw-semibold">Unlinked Subcategories</span>
+                              </div>
+                              <small className="text-muted d-block mb-2">
+                                These subcategories are not linked to any category rank.
+                              </small>
+                              {groupedSubcategories.unlinked.map((subcategory) => {
+                                const subcategoryId = subcategory._id || subcategory.id;
+                                const normalizedId = normalizeId(subcategoryId);
+                                const normalizedSelected = selectedSubcategories.map(id => normalizeId(id));
+                                const isSelected = normalizedSelected.includes(normalizedId);
+
+                                return (
+                                  <div
+                                    key={normalizedId || subcategoryId}
+                                    className="mb-2 d-flex align-items-center"
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() => handleSubcategoryToggle(subcategory)}
+                                  >
+                                    <Input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => handleSubcategoryToggle(subcategory)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="me-2"
+                                      style={{ cursor: "pointer" }}
+                                    />
+                                    <Label
+                                      className="mb-0 flex-grow-1"
+                                      style={{ cursor: "pointer", userSelect: "none" }}
+                                    >
+                                      {getItemName(subcategory)}
+                                    </Label>
+                                    <Badge
+                                      color={isSelected ? "success" : "secondary"}
+                                      style={{ cursor: "pointer" }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSubcategoryToggle(subcategory);
+                                      }}
+                                    >
+                                      {isSelected ? "✓ Selected" : "Select"}
+                                    </Badge>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </CardBody>
@@ -479,4 +637,3 @@ const ConnectCategoriesModal = ({
 };
 
 export default ConnectCategoriesModal;
-
