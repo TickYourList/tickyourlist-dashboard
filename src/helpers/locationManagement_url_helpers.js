@@ -162,6 +162,11 @@ export const GET_CATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details
 export const GET_TOURS_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/tours";
 export const GET_COLLECTIONS_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/collections";
 export const GET_SUBCATEGORIES_FOR_CITY = "/v1/tyltravelcity/get/travelcity-details/sub-categories";
+export const GET_TRAVEL_SECTIONS_PAGINATED = "/v1/tyltravelsection/travel-sections/all";
+export const GET_TRAVEL_SECTIONS_BY_CITY = "/v1/tyltravelsection/travel-sections";
+export const SORT_TRAVEL_SECTIONS = "/v1/tyltravelsection/sort/travel-sections";
+export const DELETE_TRAVEL_SECTION = "/v1/tyltravelsection/delete/travel-sections";
+export const CREATE_TRAVEL_SECTION = "/v1/tyltravelsection/travel-sections";
 
 //Pricing Calendar
 export const ON_ADD_DEFAUL_PRICING = "/v1/variant-calendar-pricing/pricing-rule/685e6b39a5cea386da8cb312"

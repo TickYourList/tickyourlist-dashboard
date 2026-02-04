@@ -510,6 +510,163 @@ const getToursForCity = (cityCode) => get(`${url.GET_TOURS_FOR_CITY}/${cityCode}
 
 const getCollectionsForCity = (cityCode) => get(`${url.GET_COLLECTIONS_FOR_CITY}/${cityCode}`);
 
+const normalizeSectionsPayload = (response, fallbackPage = 1, fallbackLimit = 10) => {
+  const payload = response && response.data ? response.data : {};
+  const sections = Array.isArray(payload?.sections)
+    ? payload.sections
+    : Array.isArray(payload)
+      ? payload
+      : [];
+
+  const total = Number(payload?.total);
+  const page = Number(payload?.page);
+  const limit = Number(payload?.limit);
+  const totalPages = Number(payload?.totalPages);
+
+  const normalizedTotal = Number.isFinite(total) ? total : sections.length;
+  const normalizedLimit = Number.isFinite(limit) && limit > 0 ? limit : fallbackLimit;
+  const normalizedTotalPages = Number.isFinite(totalPages) && totalPages > 0
+    ? totalPages
+    : Math.max(Math.ceil(normalizedTotal / normalizedLimit), 1);
+  const normalizedPage = Number.isFinite(page) && page > 0
+    ? page
+    : Math.min(fallbackPage, normalizedTotalPages);
+
+  return {
+    sections,
+    total: normalizedTotal,
+    page: normalizedPage,
+    limit: normalizedLimit,
+    totalPages: normalizedTotalPages,
+    hasNextPage: normalizedPage < normalizedTotalPages,
+    hasPrevPage: normalizedPage > 1,
+  };
+};
+
+const getTravelSectionsPaginated = ({ page = 1, limit = 10, cityCode = "", status } = {}) => {
+  const query = [`page=${Math.max(page, 1)}`, `limit=${Math.max(limit, 1)}`];
+  if (cityCode) {
+    query.push(`cityCode=${encodeURIComponent(String(cityCode).trim().toUpperCase())}`);
+  }
+  if (status === true || status === false) {
+    query.push(`status=${status}`);
+  }
+  return get(`${url.GET_TRAVEL_SECTIONS_PAGINATED}?${query.join("&")}`);
+};
+
+const getTravelSectionsByCity = (cityCode) =>
+  get(`${url.GET_TRAVEL_SECTIONS_BY_CITY}?cityCode=${encodeURIComponent(cityCode)}`);
+
+const sortTravelSections = ({ cityCode, sectionIds }) =>
+  post(url.SORT_TRAVEL_SECTIONS, { cityCode, sectionIds });
+
+const deleteTravelSection = (sectionId) =>
+  del(`${url.DELETE_TRAVEL_SECTION}/${sectionId}`);
+
+const createTravelSection = ({ cityCode, category, iconName }) =>
+  post(url.CREATE_TRAVEL_SECTION, {
+    cityCode,
+    category,
+    iconName,
+  });
+
+const getTravelSectionsWithFallback = async ({ page = 1, limit = 10, cityCode = "", status } = {}) => {
+  try {
+    const response = await getTravelSectionsPaginated({ page, limit, cityCode, status });
+    if (response?.statusCode !== "10000") {
+      throw new Error(response?.message || "Primary sections API returned failure");
+    }
+
+    const normalized = normalizeSectionsPayload(response, page, limit);
+    if (Array.isArray(normalized.sections)) {
+      return {
+        statusCode: response?.statusCode || "10000",
+        message: response?.message || "Travel sections fetched successfully",
+        data: normalized,
+      };
+    }
+  } catch (error) {
+    // Fall back to city-wise sections API for older backend versions.
+  }
+
+  const citiesResponse = await getCitiesList();
+  const cityList = citiesResponse?.data?.travelCityList || [];
+  const normalizedCityCode = String(cityCode || "").trim().toUpperCase();
+
+  const filteredCities = normalizedCityCode
+    ? cityList.filter((city) => String(city?.cityCode || "").toUpperCase() === normalizedCityCode)
+    : cityList;
+
+  const citySections = await Promise.all(
+    filteredCities.map(async (city) => {
+      try {
+        const response = await getTravelSectionsByCity(city.cityCode);
+        const rawSections = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response?.data?.sections)
+            ? response.data.sections
+            : [];
+
+        return rawSections.map((section) => ({
+          ...section,
+          cityCode: section?.cityCode || city?.cityCode,
+          city: section?.city || city,
+        }));
+      } catch (error) {
+        return [];
+      }
+    }),
+  );
+
+  const flattenedSections = citySections.reduce(
+    (allSections, sectionList) => allSections.concat(sectionList),
+    [],
+  );
+  const statusFilteredSections = (status === true || status === false)
+    ? flattenedSections.filter((section) => Boolean(section?.status) === status)
+    : flattenedSections;
+
+  const sortedSections = [...statusFilteredSections].sort((a, b) => {
+    const aCityCode = String(a?.cityCode || "").toUpperCase();
+    const bCityCode = String(b?.cityCode || "").toUpperCase();
+    if (aCityCode !== bCityCode) {
+      return aCityCode.localeCompare(bCityCode);
+    }
+
+    const aSortOrder = Number(a?.sortOrder);
+    const bSortOrder = Number(b?.sortOrder);
+    const safeASort = Number.isFinite(aSortOrder) ? aSortOrder : Number.MAX_SAFE_INTEGER;
+    const safeBSort = Number.isFinite(bSortOrder) ? bSortOrder : Number.MAX_SAFE_INTEGER;
+    if (safeASort !== safeBSort) {
+      return safeASort - safeBSort;
+    }
+
+    return String(a?._id || "").localeCompare(String(b?._id || ""));
+  });
+
+  const safeLimit = Math.max(Number(limit) || 10, 1);
+  const total = sortedSections.length;
+  const totalPages = Math.max(Math.ceil(total / safeLimit), 1);
+  const safePage = Math.min(Math.max(Number(page) || 1, 1), totalPages);
+  const startIndex = (safePage - 1) * safeLimit;
+  const sections = sortedSections.slice(startIndex, startIndex + safeLimit);
+
+  return {
+    statusCode: "10000",
+    message: "Travel sections fetched successfully (fallback mode)",
+    data: {
+      sections,
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages,
+      hasNextPage: safePage < totalPages,
+      hasPrevPage: safePage > 1,
+      source: "fallback",
+    },
+  };
+};
+
 //Pricing Calendar
 const onAddDefaultCalendarPricing = (data) => {
   return postFormData(`${url.ON_ADD_DEFAUL_PRICING}`, data)
@@ -783,6 +940,11 @@ export {
   getSubcategoriesForCity,
   getToursForCity,
   getCollectionsForCity,
+  getTravelSectionsPaginated,
+  getTravelSectionsWithFallback,
+  sortTravelSections,
+  deleteTravelSection,
+  createTravelSection,
   getPermissionsList,
   onAddDefaultCalendarPricing,
   getSubcategoryDetailsForView,

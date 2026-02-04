@@ -130,19 +130,19 @@ const ViewCategoryModal = ({ isOpen, toggle, category, onEdit }) => {
   const [connecting, setConnecting] = useState(false);
   const [showConnectSection, setShowConnectSection] = useState(false);
 
-  const filteredTours = tours.filter(tour =>
-    tour?.id?.toString().toLowerCase().includes(tourSearch.id.toLowerCase()) &&
-    tour?.name?.toLowerCase().includes(tourSearch.name.toLowerCase()) &&
-    (tourSearch.status === "" || (tour.status ? "active" : "inactive").includes(tourSearch.status.toLowerCase()))
+  const filteredTours = (tours || []).filter(tour =>
+    tour?.id?.toString().toLowerCase().includes((tourSearch?.id || "").toLowerCase()) &&
+    tour?.name?.toLowerCase().includes((tourSearch?.name || "").toLowerCase()) &&
+    ((tourSearch?.status || "") === "" || (tour.status ? "active" : "inactive").includes((tourSearch?.status || "").toLowerCase()))
   );
 
-  const filteredSubCategories = subCategories.filter(sub =>
-    sub?.id?.toString().toLowerCase().includes(subCatSearch.id.toLowerCase()) &&
-    sub?.name?.toLowerCase().includes(subCatSearch.name.toLowerCase()) &&
-    sub?.cityCode?.toLowerCase().includes(subCatSearch.city.toLowerCase())
+  const filteredSubCategories = (subCategories || []).filter(sub =>
+    sub?.id?.toString().toLowerCase().includes((subCatSearch?.id || "").toLowerCase()) &&
+    sub?.name?.toLowerCase().includes((subCatSearch?.name || "").toLowerCase()) &&
+    (sub?.cityCode || "").toLowerCase().includes((subCatSearch?.city || "").toLowerCase())
   );
 
-  const filteredBookings = bookings.filter((booking) =>
+  const filteredBookings = (bookings || []).filter((booking) =>
     (booking?._id?.toString().toLowerCase() || "").includes((bookingSearch.id || "").toLowerCase()) &&
     (booking?.customerName?.toLowerCase() || "").includes((bookingSearch.name || "").toLowerCase()) &&
     (
