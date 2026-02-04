@@ -327,67 +327,126 @@ const getExistingSubcategoryForEdit = (subCategoryId) => {
 
 const getBannerList = () => get(url.GET_BANNER_LIST);
 
-const getCityList = () => get(url.GET_CITY_LIST).then(res =>
+const getCityList = () =>
+  get(url.GET_CITY_LIST).then(res =>
+    (res?.data?.travelCityList || []).map(city => ({
+      value: city.cityCode,
+      label: city.displayName || city.name || city.cityCode,
+      cityCode: city.cityCode,
+      cityId: city._id,
+    })),
+  );
 
-  res.data.travelCityList.map(city => ({
-    value: city._id,
-    label: city.name
-  }))
-);
+const normalizeCityCode = cityCodeOrOption => {
+  if (!cityCodeOrOption) return "";
+  if (typeof cityCodeOrOption === "string") return cityCodeOrOption;
+  return cityCodeOrOption.cityCode || cityCodeOrOption.value || "";
+};
 
-const getTours = (city) => {
-  const cityId = city.value;
-  let baseUrl = url.GET_TOURS;
+const getTours = cityCodeOrOption => {
+  const cityCode = normalizeCityCode(cityCodeOrOption);
+  if (!cityCode) return Promise.resolve([]);
 
-  const separator = baseUrl.includes('?') ? '&' : '?';
-
-  const fullUrl = `${baseUrl}${separator}city=${cityId}`;
-
-  return get(fullUrl).then(res =>
-    res.data.map(tour => ({
+  return get(url.GET_TOURS, { params: { currency: "AED", cityCode } }).then(res =>
+    (res?.data || []).map(tour => ({
       value: tour._id,
-      label: tour.displayName
-    }))
+      label: tour.displayName || tour.name,
+    })),
   );
 };
 
-const getCategories = (cityId) => get(`${url.GET_CATEGORIES}?city=${cityId}`).then(res =>
-  res.data.map(category => ({
-    value: category._id,
-    label: category.displayName
-  }))
-);
+const getCategories = cityCodeOrOption => {
+  const cityCode = normalizeCityCode(cityCodeOrOption);
+  if (!cityCode) return Promise.resolve([]);
 
-const getSubcategories = (cityId) => get(`${url.GET_SUBCATEGORIES}?city=${cityId}`).then(res =>
-  res.data.map(subcategory => ({
-    value: subcategory._id,
-    label: subcategory.displayName
-  }))
-);
+  return get(`${url.GET_CATEGORIES}/${cityCode}`).then(res =>
+    (res?.data || []).map(category => ({
+      value: category._id,
+      label: category.displayName || category.name,
+    })),
+  );
+};
 
+const getSubcategories = cityCodeOrOption => {
+  const cityCode = normalizeCityCode(cityCodeOrOption);
+  if (!cityCode) return Promise.resolve([]);
 
-const getBannerCollections = (city) => {
+  return get(url.GET_SUBCATEGORIES).then(res =>
+    (res?.data || [])
+      .filter(subcategory => subcategory?.cityCode === cityCode)
+      .map(subcategory => ({
+        value: subcategory._id,
+        label: subcategory.displayName || subcategory.name,
+      })),
+  );
+};
 
-  const cityId = city.value;
-  let baseUrl = url.GET_BANNER_COLLECTIONS;
+const getBannerCollections = cityCodeOrOption => {
+  const cityCode = normalizeCityCode(cityCodeOrOption);
+  if (!cityCode) return Promise.resolve([]);
 
-  const separator = baseUrl.includes('?') ? '&' : '?';
-
-  const fullUrl = `${baseUrl}${separator}city=${cityId}`;
-
-  return get(fullUrl).then(res =>
-    res.data.map(collection => ({
+  return get(url.GET_BANNER_COLLECTIONS, { params: { cityCode } }).then(res =>
+    (res?.data || []).map(collection => ({
       value: collection._id,
-      label: collection.displayName
-    }))
+      label: collection.displayName || collection.name,
+    })),
   );
 };
 
-const addNewBanner = (bannerData) => postFormData(url.ADD_NEW_BANNER, bannerData);
+const buildBannerFormData = bannerPayload => {
+  const formData = new FormData();
+  formData.append("slides", JSON.stringify(bannerPayload?.slides || []));
+  formData.append("status", String(Boolean(bannerPayload?.status ?? true)));
 
-const editBanner = (id, banner) => putFormData(`${url.EDIT_BANNER}/${id}`, banner);
+  if (!bannerPayload?.isHomeScreen && bannerPayload?.cityCode) {
+    formData.append("cityCode", bannerPayload.cityCode);
+  }
 
-const deleteBanner = (bannerId) => del(`${url.DELETE_BANNER}/${bannerId}`);
+  (bannerPayload?.medias || []).forEach(mediaFile => {
+    if (mediaFile) {
+      formData.append("medias", mediaFile);
+    }
+  });
+
+  (bannerPayload?.phoneViewMedias || []).forEach(phoneFile => {
+    if (phoneFile) {
+      formData.append("phoneViewMedias", phoneFile);
+    }
+  });
+
+  return formData;
+};
+
+const addNewBanner = bannerPayload => {
+  const endpoint = bannerPayload?.isHomeScreen
+    ? url.ADD_NEW_BANNER_HOME
+    : url.ADD_NEW_BANNER_CITY;
+
+  return postFormData(endpoint, buildBannerFormData(bannerPayload));
+};
+
+const editBanner = bannerPayload => {
+  if (bannerPayload?.isHomeScreen) {
+    return putFormData(url.UPDATE_HOME_BANNER, buildBannerFormData(bannerPayload));
+  }
+
+  return put(`${url.UPDATE_CITY_BANNER}/${bannerPayload?.cityCode}`, {
+    slides: bannerPayload?.slides || [],
+    status: Boolean(bannerPayload?.status ?? true),
+  });
+};
+
+const deleteBanner = bannerPayload => {
+  if (bannerPayload?.isHomeScreen) {
+    return del(url.DELETE_HOME_BANNER);
+  }
+
+  if (!bannerPayload?.cityCode) {
+    throw new Error("City code is required to delete a city banner");
+  }
+
+  return del(`${url.DELETE_CITY_BANNER}/${bannerPayload?.cityCode}`);
+};
 
 // HomeBanner Permissions
 const getPermissionsList = id => get(`${url.GET_PERMISSIONS_LIST}`)

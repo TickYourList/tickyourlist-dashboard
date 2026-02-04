@@ -4,43 +4,77 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { editBanner } from "store/banners/bannerActions";
 import {
-  Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, Button, FormFeedback, Row, Col, Card, CardImg
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  Button,
+  FormFeedback,
+  Row,
+  Col,
 } from "reactstrap";
 
 const EditBannerForm = ({ isOpen, toggle, banner }) => {
   const dispatch = useDispatch();
 
   const validation = useFormik({
-    
-    enableReinitialize: true, 
-
+    enableReinitialize: true,
     initialValues: {
-      cityCode: banner?.cityCode || "",
-      isHomeScreen: banner?.isHomeScreen || false,
-      status: banner?.status === "Active",
-      bannerFile: null, // field to hold the new file
+      title: banner?.title || "",
+      subtitle: banner?.subtitle || "",
+      buttonText: banner?.buttonText || "",
+      sortOrder: banner?.sortOrder ?? 0,
+      status: banner?.groupStatus ?? true,
     },
-
     validationSchema: Yup.object({
-      cityCode: Yup.string().required("City Code is required"),
+      sortOrder: Yup.number()
+        .typeError("Sort order must be a number.")
+        .min(0, "Sort order must be 0 or more.")
+        .required("Sort order is required."),
     }),
+    onSubmit: values => {
+      if (!banner) return;
 
-    // The logic to build and dispatch the FormData
-    onSubmit: (values) => {
-      const formData = new FormData();
+      const existingSlides = Array.isArray(banner.allSlides) ? banner.allSlides : [];
+      const updatedSlides = existingSlides.length
+        ? existingSlides.map((slide, index) => {
+            const isCurrentSlide = slide?._id
+              ? String(slide._id) === String(banner._id)
+              : index === banner.slideIndex;
 
-      // 1. Append the updated banner properties
-      formData.append('cityCode', values.cityCode);
-      formData.append('isHomeScreen', values.isHomeScreen);
-      formData.append('status', values.status);
+            if (!isCurrentSlide) return slide;
 
-      // 2. If a new banner image was selected, append it
-      if (values.bannerFile) {
-        formData.append('bannerImage', values.bannerFile);
-      }
-      console.log("ID being sent to edit action:", banner?._id);
-      // 3. Dispatch the action with the banner ID and the FormData
-      dispatch(editBanner(banner._id, formData));
+            return {
+              ...slide,
+              title: values.title || undefined,
+              subtitle: values.subtitle || undefined,
+              buttonText: values.buttonText || undefined,
+              sortOrder: Number(values.sortOrder),
+            };
+          })
+        : [
+            {
+              ...banner,
+              title: values.title || undefined,
+              subtitle: values.subtitle || undefined,
+              buttonText: values.buttonText || undefined,
+              sortOrder: Number(values.sortOrder),
+            },
+          ];
+
+      dispatch(
+        editBanner({
+          isHomeScreen: banner.isHomeScreen,
+          cityCode: banner.cityCode,
+          status: values.status,
+          slides: updatedSlides,
+        }),
+      );
+
       toggle();
     },
   });
@@ -48,60 +82,113 @@ const EditBannerForm = ({ isOpen, toggle, banner }) => {
   if (!banner) return null;
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} >
-      <ModalHeader toggle={toggle}>Edit Home Banner</ModalHeader>
-      <Form onSubmit={(e) => { e.preventDefault(); validation.handleSubmit(); }}>
+    <Modal isOpen={isOpen} toggle={toggle}>
+      <ModalHeader toggle={toggle}>Edit Banner</ModalHeader>
+      <Form
+        onSubmit={event => {
+          event.preventDefault();
+          validation.handleSubmit();
+        }}
+      >
         <ModalBody>
           <Row>
             <Col xs="12">
               <FormGroup>
-                <Label>Upload New Image (Optional)</Label>
-                <Input 
-                  type="file" 
-                  name="bannerFile" 
-                  onChange={(e) => validation.setFieldValue('bannerFile', e.currentTarget.files[0])} 
-                  accept="image/*,video/*"
-                />
-                {validation.values.bannerFile && (
-                  <Card className="mt-2">
-                    <CardImg top src={URL.createObjectURL(validation.values.bannerFile)} alt="New Banner Preview" />
-                  </Card>
-                )}
-              </FormGroup>
-            </Col>
-          </Row>
-
-          <Row className="mt-3">
-            <Col xs="12">
-              <FormGroup>
-                <Label>City Code</Label>
-                <Input name="cityCode" value={validation.values.cityCode} onChange={validation.handleChange} onBlur={validation.handleBlur} invalid={!!(validation.touched.cityCode && validation.errors.cityCode)} />
-                {validation.touched.cityCode && validation.errors.cityCode ? <FormFeedback type="invalid">{validation.errors.cityCode}</FormFeedback> : null}
-              </FormGroup>
-            </Col>
-            <Col xs="12">
-              <FormGroup>
                 <Label>Banner Type</Label>
-                <Input type="select" name="isHomeScreen" value={validation.values.isHomeScreen} onChange={validation.handleChange}>
-                  <option value={false}>City</option>
-                  <option value={true}>Worldwide</option>
-                </Input>
+                <Input
+                  type="text"
+                  value={banner.isHomeScreen ? "Worldwide" : "City"}
+                  disabled
+                />
+              </FormGroup>
+            </Col>
+            {!banner.isHomeScreen && (
+              <Col xs="12">
+                <FormGroup>
+                  <Label>City Code</Label>
+                  <Input type="text" value={banner.cityCode || ""} disabled />
+                </FormGroup>
+              </Col>
+            )}
+            <Col xs="12">
+              <FormGroup>
+                <Label>Title</Label>
+                <Input
+                  name="title"
+                  value={validation.values.title}
+                  onChange={validation.handleChange}
+                />
+              </FormGroup>
+            </Col>
+            <Col xs="12">
+              <FormGroup>
+                <Label>Subtitle</Label>
+                <Input
+                  name="subtitle"
+                  value={validation.values.subtitle}
+                  onChange={validation.handleChange}
+                />
+              </FormGroup>
+            </Col>
+            <Col xs="12">
+              <FormGroup>
+                <Label>Button Text</Label>
+                <Input
+                  name="buttonText"
+                  value={validation.values.buttonText}
+                  onChange={validation.handleChange}
+                />
+              </FormGroup>
+            </Col>
+            <Col xs="12">
+              <FormGroup>
+                <Label>Sort Order</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  name="sortOrder"
+                  value={validation.values.sortOrder}
+                  onChange={validation.handleChange}
+                  onBlur={validation.handleBlur}
+                  invalid={
+                    !!(validation.touched.sortOrder && validation.errors.sortOrder)
+                  }
+                />
+                {validation.touched.sortOrder && validation.errors.sortOrder ? (
+                  <FormFeedback type="invalid">
+                    {validation.errors.sortOrder}
+                  </FormFeedback>
+                ) : null}
               </FormGroup>
             </Col>
             <Col xs="12">
               <FormGroup>
                 <Label>Status</Label>
-                <Input type="select" name="status" value={validation.values.status} onChange={validation.handleChange}>
-                  <option value={true}>Active</option>
-                  <option value={false}>Inactive</option>
+                <Input
+                  type="select"
+                  name="status"
+                  value={String(validation.values.status)}
+                  onChange={event =>
+                    validation.setFieldValue(
+                      "status",
+                      event.target.value === "true",
+                    )
+                  }
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
                 </Input>
               </FormGroup>
             </Col>
           </Row>
         </ModalBody>
         <ModalFooter>
-          <Button type="submit" color="primary">Update Banner</Button>
-          <Button color="secondary" onClick={toggle}>Cancel</Button>
+          <Button type="submit" color="primary">
+            Update Banner
+          </Button>
+          <Button color="secondary" onClick={toggle}>
+            Cancel
+          </Button>
         </ModalFooter>
       </Form>
     </Modal>

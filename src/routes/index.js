@@ -154,6 +154,7 @@ import Cities from "../pages/LocationManagement/Cities/Cities";
 import Continents from "../pages/LocationManagement/Continents/Continents";
 import CityDetails from "../pages/LocationManagement/Cities/CityDetails";
 import AddNewCity from "../pages/LocationManagement/Cities/AddNewCity";
+import CityWiseSections from "../pages/LocationManagement/CityWiseSections/CityWiseSections";
 // Travel currency
 import CurrencyTable from "../pages/TravelCurrency/CurrencyTable";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
@@ -350,6 +351,7 @@ const authProtectedRoutes = [
   { path: "/country", component: <Country /> },
   //Cities
   { path: "/cities", component: <Cities /> },
+  { path: "/city-wise-sections", component: <CityWiseSections /> },
   //Continents
   { path: "/continents", component: <Continents /> },
   { path: "/city-details/:cityCode", component: <CityDetails /> },

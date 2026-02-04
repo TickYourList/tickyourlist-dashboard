@@ -1,4 +1,4 @@
-import { all, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, call, put, takeEvery } from 'redux-saga/effects';
 import {
   getBannersSuccess,
   getBannersFailure,
@@ -8,6 +8,7 @@ import {
   deleteBannersFailure,
   editBannerSuccess,
   editBannerFailure,
+  getBanners as getBannersAction,
 } from "./bannerActions";
 
 
@@ -30,7 +31,7 @@ import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 
 
 // Worker: Get Banners
-function* getBanners() {
+function* getBannersWorker() {
   try {
     const response = yield call(getBannerList);
     yield put(getBannersSuccess(response));
@@ -43,7 +44,8 @@ function* getBanners() {
 function* onAddNewBanner({ payload: bannerData }) {
   try {
     const response = yield call(addNewBannerAPI, bannerData);
-    yield put(addBannerSuccess(response.data));
+    yield put(addBannerSuccess(response?.data));
+    yield put(getBannersAction());
     showToastSuccess("Banner Added Successfully", "Success");
   } catch (error) {
     yield put(addBannerFail(error));
@@ -52,29 +54,25 @@ function* onAddNewBanner({ payload: bannerData }) {
 }
 
 //worker: Edit Banner
-function* onEditBanner({ payload: { id, formData } }) {
+function* onEditBanner({ payload: bannerPayload }) {
   try {
-    
-    const response = yield call(editBannerAPI, id, formData);
-
-    
-    yield put(editBannerSuccess(response.data)); 
-    
+    const response = yield call(editBannerAPI, bannerPayload);
+    yield put(editBannerSuccess(response?.data));
+    yield put(getBannersAction());
     showToastSuccess("Banner Updated Successfully", "Success");
   } catch (error) {
-    
-    yield put(editBannerFailure(error)); 
-    
+    yield put(editBannerFailure(error));
     showToastError("Banner Failed to Update. Please try again.", "Error");
   }
 }
 
 
 // Worker: Delete Banner
-function* deleteBanner({ payload: bannerId }) {
+function* deleteBanner({ payload: bannerPayload }) {
   try {
-    yield call(deleteBannerAPI, bannerId);
-    yield put(deleteBannersSuccess(bannerId)); 
+    yield call(deleteBannerAPI, bannerPayload);
+    yield put(deleteBannersSuccess(bannerPayload));
+    yield put(getBannersAction());
 
     showToastSuccess("Banner Deleted Successfully", "Success");
 
@@ -88,7 +86,7 @@ function* deleteBanner({ payload: bannerId }) {
 export default function* BannerSaga() {
   
   yield all([
-    takeEvery(GET_BANNERS, getBanners),
+    takeEvery(GET_BANNERS, getBannersWorker),
     takeEvery(ADD_NEW_BANNER, onAddNewBanner),
     takeEvery(EDIT_BANNER, onEditBanner),
     takeEvery(DELETE_BANNER, deleteBanner),

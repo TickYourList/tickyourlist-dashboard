@@ -172,7 +172,7 @@ const HomeBanner = () => {
   const [lightboxImage, setLightboxImage] = useState("");
   const [lightboxVideo, setLightboxVideo] = useState("");
 
-  const { banners, loading, error } = useSelector(state => state.banner);
+  const { banners } = useSelector(state => state.banner);
 
   useEffect(() => {
     dispatch(getBanners());
@@ -194,8 +194,10 @@ const handleDelete = (banner) => {
 
 const confirmDelete = () => {
   if (deleteModal.banner) {
-    dispatch(deleteBanner(deleteModal.banner._id));
-    
+    dispatch(deleteBanner({
+      isHomeScreen: deleteModal.banner.isHomeScreen,
+      cityCode: deleteModal.banner.cityCode,
+    }));
   }
   setDeleteModal({ isOpen: false, banner: null }); 
 };
@@ -213,7 +215,6 @@ const data = useMemo(() => {
   if (!Array.isArray(banners)) return [];
 
   return banners.map(banner => {
-    
     return {
       ...banner,
       id: banner._id || Math.random().toString(36).substring(2),
@@ -221,12 +222,11 @@ const data = useMemo(() => {
       media: banner.media,
       phoneViewMedia: banner.phoneViewMedia,
       type: banner.type || 'image',
-      cityCode: banner.cityCode || banner.cityCode || '—',
+      cityCode: banner.isHomeScreen ? "WORLDWIDE" : (banner.cityCode || "—"),
       bannerType: banner.isHomeScreen ? 'Worldwide' : 'City',
-      status: "Active",
+      status: banner.groupStatus ? "Active" : "Inactive",
       details: banner,
       actions: banner,
-      
     };
   });
 }, [banners]);

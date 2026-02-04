@@ -15,6 +15,7 @@ import {
 const initialState = {
   loading: false,
   banners: [],
+  bannerGroups: [],
   error: null
 };
 
@@ -27,26 +28,32 @@ const initialState = {
         error: null
       };
     case GET_BANNERS_SUCCESS: {
-  const flatBanners = action.payload.data.flatMap((cityBanner) => {
-    const { cityCode, isHomeScreen, _id, slides = [] } = cityBanner;
+  const bannerGroups = action.payload?.data || [];
+  const flatBanners = bannerGroups.flatMap((cityBanner) => {
+    const { cityCode, isHomeScreen, status, _id, slides = [] } = cityBanner;
 
-    return slides.map((slide) => ({
+    return slides.map((slide, slideIndex) => ({
       ...slide,
       cityCode,
       isHomeScreen,
-      bannerGroupId: _id, 
+      groupStatus: status,
+      bannerGroupId: _id,
+      allSlides: slides,
+      slideIndex,
     }));
   });
 
   return {
     ...state,
     loading: false,
+    bannerGroups,
     banners: flatBanners,
   };
 }
     case GET_BANNERS_FAILURE:
       return {
         ...state,
+        loading: false,
         error: action.payload,
       }
 
@@ -56,12 +63,13 @@ const initialState = {
       case ADD_BANNER_SUCCESS:
       return {
         ...state,
-        banners: [action.payload, ...state.banners],
+        loading: false,
       };
 
     case ADD_BANNER_FAIL:
       return {
         ...state,
+        loading: false,
         error: action.payload,
       }
 
@@ -73,37 +81,30 @@ const initialState = {
       };
 
     case EDIT_BANNER_SUCCESS: {
-      const updatedBanners = state.banners.map(banner => {
-        if (banner._id === action.payload._id) {
-          return action.payload;
-        }
-        return banner;
-      });
       return {
         ...state,
         loading: false,
-        banners: updatedBanners,
       };
     }
 
     case EDIT_BANNER_FAILURE:
       return {
         ...state,
+        loading: false,
         error: action.payload,
       } 
     
     case DELETE_BANNERS_SUCCESS:
       return {
         ...state,
-        banners: state.banners.filter(
-          banner => banner._id !== action.payload
-        ),
+        loading: false,
       };
 
 
     case DELETE_BANNERS_FAILURE:
       return {
         ...state,
+        loading: false,
         error: action.payload,
       }
     default:

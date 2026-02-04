@@ -259,6 +259,9 @@ const SidebarContent = props => {
                 </li>
                 )}
                 <li>
+                  <Link to="/city-wise-sections">{props.t("City Wise Sections")}</Link>
+                </li>
+                <li>
                   <Link to="/continents">{props.t("Continents")}</Link>
                 </li>
               </ul>

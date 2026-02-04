@@ -6,13 +6,13 @@ const DeleteConfirmationModal = ({ isOpen, toggle, banner, onDelete }) => {
     return null;
   }
 
-  const city_name = banner.cityCode || 'this';
+  const bannerScope = banner.isHomeScreen ? "worldwide" : (banner.cityCode || "city");
 
   return (
     <Modal isOpen={isOpen} toggle={toggle} centered>
-      <ModalHeader toggle={toggle}>Delete Home Banner</ModalHeader>
+      <ModalHeader toggle={toggle}>Delete Banner</ModalHeader>
       <ModalBody>
-        <p>Are you sure you want to permanently delete this {city_name} Home Banner?</p>
+        <p>Are you sure you want to permanently delete the {bannerScope} banner group?</p>
         <p className="text-danger">Once deleted, it cannot be recovered.</p>
       </ModalBody>
       <ModalFooter>

@@ -116,14 +116,16 @@ export const GET_USERS_PERMISSIONS_FOR_SUBCATEGORY = "/v1/admin/subusers/my-perm
 
 // HomeBanner
 export const GET_BANNER_LIST = "/v1/tylTravelCitySectionBanner/list/all";
-export const ADD_NEW_BANNER = "/v1/tylTravelCitySectionBanner/create/home/banner";
+export const ADD_NEW_BANNER_HOME = "/v1/tylTravelCitySectionBanner/create/home/banner";
+export const ADD_NEW_BANNER_CITY = "/v1/tylTravelCitySectionBanner/create/section/banner";
 export const GET_CITY_LIST = "/v1/tyltravelcity/get/travelcity/submitted/all";
-export const GET_TOURS = "/v1/tyltraveltourgroup/get/all/travel-tour-groups?currency=AED&cityCode=DUBAI";
-export const GET_CATEGORIES = "/v1/tyltravelcategory/travel-categories/city/DUBAI";
-export const GET_SUBCATEGORIES_DATA = "/v1/tyltravelsubcategory/get/travel-subcategories-data";
-export const GET_BANNER_COLLECTIONS = "/v1/tyltravelcollection/get/travel-collection/top/list?cityCode=DUBAI";
-export const EDIT_BANNER = "/v1/tylHomeScreenBanner";
-export const DELETE_BANNER = "/v1/tylHomeScreenBanner";
+export const GET_TOURS = "/v1/tyltraveltourgroup/get/all/travel-tour-groups";
+export const GET_CATEGORIES = "/v1/tyltravelcategory/travel-categories/city";
+export const GET_BANNER_COLLECTIONS = "/v1/tyltravelcollection/get/travel-collection/top/list";
+export const UPDATE_HOME_BANNER = "/v1/tylTravelCitySectionBanner/update/home";
+export const UPDATE_CITY_BANNER = "/v1/tylTravelCitySectionBanner/update";
+export const DELETE_HOME_BANNER = "/v1/tylTravelCitySectionBanner/delete/home";
+export const DELETE_CITY_BANNER = "/v1/tylTravelCitySectionBanner/delete";
 
 export const GET_CATEGORIES_LIST = "/v1/tyltravelcategory/get/travel-category";
 export const DELETE_CATEGORY = "/v1/tyltravelcategory/travel-category/{id}";

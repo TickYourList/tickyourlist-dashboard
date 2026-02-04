@@ -19,12 +19,13 @@ export const getBannersFailure = (error) => ({
 
 export const deleteBanner = banner => ({
   type: DELETE_BANNER,
-  payload: bannerId,
+  payload: banner,
 });
 
 
-export const deleteBannersSuccess = () => ({
-  type: DELETE_BANNERS_SUCCESS
+export const deleteBannersSuccess = (payload) => ({
+  type: DELETE_BANNERS_SUCCESS,
+  payload
 });
 
 export const deleteBannersFailure = () => ({
@@ -46,9 +47,9 @@ export const addBannerFail = (error) => ({
   payload: error
 });
 
-export const editBanner = (id, banner) => ({
+export const editBanner = bannerPayload => ({
   type: EDIT_BANNER,
-  payload: { id, banner }
+  payload: bannerPayload
 });
 
 export const editBannerSuccess = (banner) => ({
