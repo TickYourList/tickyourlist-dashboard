@@ -31,8 +31,8 @@ function CareerApplications() {
 
   const dispatch = useDispatch();
   const { applications, loading } = useSelector((state) => ({
-    applications: state.careers.applications,
-    loading: state.careers.loading,
+    applications: state.careers?.applications || [],
+    loading: state.careers?.loading || false,
   }));
 
   useEffect(() => {
@@ -130,7 +130,9 @@ function CareerApplications() {
         accessor: "status",
         disableFilters: true,
         Cell: (cellProps) => {
-          return getStatusBadge(cellProps.row.original.status);
+          const application = cellProps.row.original;
+          if (!application) return <span>N/A</span>;
+          return getStatusBadge(application.status || "Pending");
         },
       },
       {
@@ -139,6 +141,7 @@ function CareerApplications() {
         disableFilters: true,
         Cell: (cellProps) => {
           const application = cellProps.row.original;
+          if (!application || !application._id) return <span>N/A</span>;
           return (
             <UncontrolledDropdown>
               <DropdownToggle
@@ -179,7 +182,7 @@ function CareerApplications() {
                 </DropdownItem>
                 <DropdownItem divider />
                 <DropdownItem
-                  href={application.resumeUrl}
+                  href={application.resumeUrl || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

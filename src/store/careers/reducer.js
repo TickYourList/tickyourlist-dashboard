@@ -42,7 +42,7 @@ const careersReducer = (state = initialState, action) => {
     case GET_CAREER_POSTINGS_SUCCESS:
       return {
         ...state,
-        postings: action.payload,
+        postings: Array.isArray(action.payload) ? action.payload : [],
         loading: false,
         error: null,
       };
@@ -157,7 +157,7 @@ const careersReducer = (state = initialState, action) => {
     case GET_CAREER_APPLICATIONS_SUCCESS:
       return {
         ...state,
-        applications: action.payload,
+        applications: Array.isArray(action.payload) ? action.payload : [],
         loading: false,
         error: null,
       };

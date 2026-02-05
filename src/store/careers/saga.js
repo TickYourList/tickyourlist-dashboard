@@ -44,14 +44,33 @@ function* fetchCareerPostings() {
     const response = yield call(getCareerPostingsList);
     
     if (response?.statusCode === "10000" || response?.data) {
-      const postings = response?.data || response;
+      // Handle different response structures
+      let postings = [];
+      if (Array.isArray(response?.data)) {
+        postings = response.data;
+      } else if (Array.isArray(response?.data?.careers)) {
+        postings = response.data.careers;
+      } else if (Array.isArray(response?.data?.postings)) {
+        postings = response.data.postings;
+      } else if (Array.isArray(response)) {
+        postings = response;
+      }
+      
+      // Ensure all postings have required fields with defaults
+      postings = postings.map(posting => ({
+        ...posting,
+        status: posting.status !== undefined ? posting.status : true,
+        featured: posting.featured || false,
+      }));
+      
       yield put(getCareerPostingsSuccess(postings));
     } else {
-      yield put(getCareerPostingsFail(response?.message || "Failed to fetch career postings"));
-      toastr.error(response?.message || "Failed to fetch career postings");
+      yield put(getCareerPostingsSuccess([])); // Return empty array instead of failing
+      console.warn("No career postings found or invalid response structure");
     }
   } catch (error) {
-    yield put(getCareerPostingsFail(error.message || "Something went wrong"));
+    console.error("Error fetching career postings:", error);
+    yield put(getCareerPostingsSuccess([])); // Return empty array on error
     toastr.error(error.message || "Failed to fetch career postings");
   }
 }

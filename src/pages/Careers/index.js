@@ -48,8 +48,8 @@ function Careers() {
 
   const dispatch = useDispatch();
   const { postings, loading } = useSelector((state) => ({
-    postings: state.careers.postings,
-    loading: state.careers.loading,
+    postings: state.careers?.postings || [],
+    loading: state.careers?.loading || false,
   }));
 
   useEffect(() => {
@@ -74,7 +74,7 @@ function Careers() {
       requirements: (posting && posting.requirements) || [],
       responsibilities: (posting && posting.responsibilities) || [],
       benefits: (posting && posting.benefits) || [],
-      status: (posting && posting.status) !== undefined ? posting.status : true,
+      status: posting?.status !== undefined ? posting.status : true,
       featured: (posting && posting.featured) || false,
       applicationDeadline: (posting && posting.applicationDeadline) || "",
       salaryRange: {
@@ -171,7 +171,8 @@ function Careers() {
         accessor: "title",
         filterable: true,
         Cell: (cellProps) => {
-          return <span>{cellProps.row.original.title}</span>;
+          const posting = cellProps.row.original;
+          return <span>{posting?.title || "N/A"}</span>;
         },
       },
       {
@@ -179,7 +180,8 @@ function Careers() {
         accessor: "department",
         filterable: true,
         Cell: (cellProps) => {
-          return <span>{cellProps.row.original.department}</span>;
+          const posting = cellProps.row.original;
+          return <span>{posting?.department || "N/A"}</span>;
         },
       },
       {
@@ -187,14 +189,16 @@ function Careers() {
         accessor: "location",
         filterable: true,
         Cell: (cellProps) => {
-          return <span>{cellProps.row.original.location}</span>;
+          const posting = cellProps.row.original;
+          return <span>{posting?.location || "N/A"}</span>;
         },
       },
       {
         Header: "Type",
         accessor: "employmentType",
         Cell: (cellProps) => {
-          return <span>{cellProps.row.original.employmentType}</span>;
+          const posting = cellProps.row.original;
+          return <span>{posting?.employmentType || "N/A"}</span>;
         },
       },
       {
@@ -202,13 +206,14 @@ function Careers() {
         accessor: "status",
         disableFilters: true,
         Cell: (cellProps) => {
+          const posting = cellProps.row.original;
+          if (!posting) return <span>N/A</span>;
+          const status = posting.status !== undefined ? posting.status : true;
           return (
             <Badge
-              className={`badge-soft-${
-                cellProps.row.original.status ? "success" : "danger"
-              }`}
+              className={`badge-soft-${status ? "success" : "danger"}`}
             >
-              {cellProps.row.original.status ? "Active" : "Inactive"}
+              {status ? "Active" : "Inactive"}
             </Badge>
           );
         },
@@ -218,13 +223,14 @@ function Careers() {
         accessor: "featured",
         disableFilters: true,
         Cell: (cellProps) => {
+          const posting = cellProps.row.original;
+          if (!posting) return <span>N/A</span>;
+          const featured = posting.featured || false;
           return (
             <Badge
-              className={`badge-soft-${
-                cellProps.row.original.featured ? "primary" : "secondary"
-              }`}
+              className={`badge-soft-${featured ? "primary" : "secondary"}`}
             >
-              {cellProps.row.original.featured ? "Yes" : "No"}
+              {featured ? "Yes" : "No"}
             </Badge>
           );
         },
@@ -293,7 +299,7 @@ function Careers() {
 
                   <TableContainer
                     columns={columns}
-                    data={postingsList}
+                    data={Array.isArray(postingsList) ? postingsList.filter(p => p !== null && p !== undefined) : []}
                     isGlobalFilter={true}
                     isAddOptions={false}
                     customPageSize={10}
