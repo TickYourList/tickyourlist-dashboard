@@ -116,10 +116,10 @@ function CareerApplications() {
             <span>
               {date
                 ? new Date(date).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })
                 : "N/A"}
             </span>
           );

@@ -42,7 +42,7 @@ import {
 function* fetchCareerPostings() {
   try {
     const response = yield call(getCareerPostingsList);
-    
+
     if (response?.statusCode === "10000" || response?.data) {
       // Handle different response structures
       let postings = [];
@@ -55,14 +55,14 @@ function* fetchCareerPostings() {
       } else if (Array.isArray(response)) {
         postings = response;
       }
-      
+
       // Ensure all postings have required fields with defaults
       postings = postings.map(posting => ({
         ...posting,
         status: posting.status !== undefined ? posting.status : true,
         featured: posting.featured || false,
       }));
-      
+
       yield put(getCareerPostingsSuccess(postings));
     } else {
       yield put(getCareerPostingsSuccess([])); // Return empty array instead of failing
@@ -79,7 +79,7 @@ function* fetchCareerPostings() {
 function* fetchCareerPosting({ payload: id }) {
   try {
     const response = yield call(getCareerPostingById, id);
-    
+
     if (response?.statusCode === "10000" || response?.data) {
       const posting = response?.data || response;
       yield put(getCareerPostingSuccess(posting));
@@ -97,7 +97,7 @@ function* fetchCareerPosting({ payload: id }) {
 function* onAddNewCareerPosting({ payload: data }) {
   try {
     const response = yield call(createCareerPosting, data);
-    
+
     if (response?.statusCode === "10000" || response?.data) {
       const posting = response?.data || response;
       yield put(addCareerPostingSuccess(posting));
@@ -117,7 +117,7 @@ function* onUpdateCareerPosting({ payload: data }) {
   try {
     const { id, ...updateData } = data;
     const response = yield call(updateCareerPosting, id, updateData);
-    
+
     if (response?.statusCode === "10000" || response?.data) {
       const posting = response?.data || response;
       yield put(updateCareerPostingSuccess(posting));
@@ -136,7 +136,7 @@ function* onUpdateCareerPosting({ payload: data }) {
 function* onDeleteCareerPosting({ payload: id }) {
   try {
     const response = yield call(deleteCareerPosting, id);
-    
+
     if (response?.statusCode === "10000" || response?.success) {
       yield put(deleteCareerPostingSuccess(id));
       toastr.success("Career posting deleted successfully");
@@ -154,7 +154,7 @@ function* onDeleteCareerPosting({ payload: id }) {
 function* fetchCareerApplications() {
   try {
     const response = yield call(getCareerApplications);
-    
+
     if (response?.statusCode === "10000" || response?.data) {
       const applications = response?.data || response;
       yield put(getCareerApplicationsSuccess(applications));
@@ -173,7 +173,7 @@ function* onUpdateApplicationStatus({ payload: data }) {
   try {
     const { id, status } = data;
     const response = yield call(updateApplicationStatus, id, status);
-    
+
     if (response?.statusCode === "10000" || response?.data) {
       const application = response?.data || response;
       yield put(updateApplicationStatusSuccess(application));

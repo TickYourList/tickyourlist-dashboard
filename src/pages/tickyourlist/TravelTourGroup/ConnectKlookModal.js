@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
     Modal,
@@ -71,6 +71,7 @@ const ConnectKlookModal = ({
     const [markupConfigModalOpen, setMarkupConfigModalOpen] = useState(false);
     const [markupConfigLevel, setMarkupConfigLevel] = useState("PROVIDER"); // PROVIDER or VARIANT
     const [selectedVariantForMarkup, setSelectedVariantForMarkup] = useState(null);
+    const packagesSectionRef = useRef(null);
 
     // Reset state when modal closes
     useEffect(() => {
@@ -233,6 +234,12 @@ const ConnectKlookModal = ({
         } else {
             // It's a search query - search activities
             dispatch(searchKlookActivitiesRequest(query));
+        }
+    };
+
+    const scrollToPackages = () => {
+        if (packagesSectionRef.current) {
+            packagesSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     };
 
@@ -427,7 +434,7 @@ const ConnectKlookModal = ({
                         {/* Map Variants to Packages */}
                         {klookActivity && (
                             variants.length > 0 ? (
-                                <Card>
+                                <Card ref={packagesSectionRef}>
                                     <CardBody>
                                         <h5 className="mb-3">Step 2: Map Variants to Packages</h5>
                                         <Table responsive>
@@ -666,6 +673,13 @@ const ConnectKlookModal = ({
                         dispatch(fetchKlookMappingsRequest(tourGroup._id));
                         dispatch(fetchTourGroupByIdRequest(tourGroup._id));
                     }
+                }}
+                onEditPackages={() => {
+                    setEditModalOpen(false);
+                    setSelectedMapping(null);
+                    setTimeout(() => {
+                        scrollToPackages();
+                    }, 150);
                 }}
             />
 

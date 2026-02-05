@@ -71,6 +71,7 @@ function TourGroupTable() {
   const [selectedTourGroupForPricingDetails, setSelectedTourGroupForPricingDetails] = useState(null)
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
   const { can, getTourGroupPermissions, isPermissionsReady, loading: permissionsLoading } = usePermissions()
 
   // Permission checks using standardized usePermissions hook - moved before useEffect
@@ -134,6 +135,22 @@ function TourGroupTable() {
       }
     }
   }, [currentPage, pageSize, selectedCity, tourGroup.length, totalCount, isPermissionsReady, canViewTourGroup])
+
+  // Open edit modal directly when editId is passed in query params
+  useEffect(() => {
+    if (!isPermissionsReady || !canEditTourGroup) return
+
+    const params = new URLSearchParams(location.search)
+    const editIdFromUrl = params.get("editId")
+
+    if (editIdFromUrl) {
+      dispatch(fetchTourGroupByIdRequest(editIdFromUrl))
+      setEditId(editIdFromUrl)
+      setIsEdit(true)
+      setIsViewing(false)
+      setModal(true)
+    }
+  }, [location.search, isPermissionsReady, canEditTourGroup, dispatch])
 
   const handlePageChange = newPage => {
     setCurrentPage(newPage)

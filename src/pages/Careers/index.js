@@ -106,10 +106,10 @@ function Careers() {
           : values.benefits.split("\n").filter((r) => r.trim()),
         salaryRange: values.salaryRange.min || values.salaryRange.max
           ? {
-              min: parseFloat(values.salaryRange.min) || 0,
-              max: parseFloat(values.salaryRange.max) || 0,
-              currency: values.salaryRange.currency,
-            }
+            min: parseFloat(values.salaryRange.min) || 0,
+            max: parseFloat(values.salaryRange.max) || 0,
+            currency: values.salaryRange.currency,
+          }
           : undefined,
         applicationDeadline: values.applicationDeadline || undefined,
       };
@@ -360,13 +360,13 @@ function Careers() {
                     value={validation.values.department || ""}
                     invalid={
                       validation.touched.department &&
-                      validation.errors.department
+                        validation.errors.department
                         ? true
                         : false
                     }
                   />
                   {validation.touched.department &&
-                  validation.errors.department ? (
+                    validation.errors.department ? (
                     <FormFeedback type="invalid">
                       {validation.errors.department}
                     </FormFeedback>
@@ -408,7 +408,7 @@ function Careers() {
                     value={validation.values.employmentType || ""}
                     invalid={
                       validation.touched.employmentType &&
-                      validation.errors.employmentType
+                        validation.errors.employmentType
                         ? true
                         : false
                     }
@@ -421,7 +421,7 @@ function Careers() {
                     <option value="Freelance">Freelance</option>
                   </Input>
                   {validation.touched.employmentType &&
-                  validation.errors.employmentType ? (
+                    validation.errors.employmentType ? (
                     <FormFeedback type="invalid">
                       {validation.errors.employmentType}
                     </FormFeedback>
@@ -441,13 +441,13 @@ function Careers() {
                     value={validation.values.description || ""}
                     invalid={
                       validation.touched.description &&
-                      validation.errors.description
+                        validation.errors.description
                         ? true
                         : false
                     }
                   />
                   {validation.touched.description &&
-                  validation.errors.description ? (
+                    validation.errors.description ? (
                     <FormFeedback type="invalid">
                       {validation.errors.description}
                     </FormFeedback>
@@ -471,13 +471,13 @@ function Careers() {
                     }
                     invalid={
                       validation.touched.requirements &&
-                      validation.errors.requirements
+                        validation.errors.requirements
                         ? true
                         : false
                     }
                   />
                   {validation.touched.requirements &&
-                  validation.errors.requirements ? (
+                    validation.errors.requirements ? (
                     <FormFeedback type="invalid">
                       {validation.errors.requirements}
                     </FormFeedback>
@@ -501,13 +501,13 @@ function Careers() {
                     }
                     invalid={
                       validation.touched.responsibilities &&
-                      validation.errors.responsibilities
+                        validation.errors.responsibilities
                         ? true
                         : false
                     }
                   />
                   {validation.touched.responsibilities &&
-                  validation.errors.responsibilities ? (
+                    validation.errors.responsibilities ? (
                     <FormFeedback type="invalid">
                       {validation.errors.responsibilities}
                     </FormFeedback>

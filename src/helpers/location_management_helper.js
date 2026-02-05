@@ -750,6 +750,10 @@ const getKlookActivity = (activityId) => {
   });
 };
 
+const generateTourGroupContentAI = (payload) => {
+  return post(`/v1/tyltraveltourgroup/ai-rewrite`, payload);
+};
+
 const bulkLinkKlookMappings = (mappings) => {
   return post(`/v1/provider/mapping/bulk-link`, { mappings });
 };
@@ -973,6 +977,7 @@ export {
   getKlookLivePricing,
   createVariantFromKlookPackage,
   deleteKlookMapping,
+  generateTourGroupContentAI,
   getSupportedCurrencies,
   getMarkupConfigs,
   upsertMarkupConfig,
