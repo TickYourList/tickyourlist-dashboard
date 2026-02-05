@@ -133,6 +133,10 @@ function CityWiseSections() {
   const [sectionOptionsByType, setSectionOptionsByType] = useState([]);
   const [loadingSectionOptions, setLoadingSectionOptions] = useState(false);
   const [creatingSection, setCreatingSection] = useState(false);
+  const [allSectionsForCity, setAllSectionsForCity] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [availableSubcategories, setAvailableSubcategories] = useState([]);
+  const [loadingAddSectionData, setLoadingAddSectionData] = useState(false);
 
   const sectionTypeOptions = useMemo(
     () => [
@@ -217,47 +221,166 @@ function CityWiseSections() {
   }, []);
 
   useEffect(() => {
-    const fetchSectionOptions = async () => {
-      if (!isAddSectionModalOpen || !addSectionCity?.value || !addSectionType?.value) {
+    const fetchAddSectionData = async () => {
+      if (!isAddSectionModalOpen || !addSectionCity?.value) {
+        setAllSectionsForCity([]);
+        setAvailableCategories([]);
+        setAvailableSubcategories([]);
         setSectionOptionsByType([]);
         setAddSectionOption(null);
         return;
       }
 
-      setLoadingSectionOptions(true);
+      setLoadingAddSectionData(true);
       try {
         const cityCode = addSectionCity.value;
-        const response =
-          addSectionType.value === "PRIMARY_CATEGORY"
-            ? await getCategoriesForCity(cityCode)
-            : await getSubcategoriesForCity(cityCode);
 
-        const rawOptions =
-          addSectionType.value === "PRIMARY_CATEGORY"
-            ? response?.data?.categories || []
-            : response?.data?.subcategories || [];
-
-        const mappedOptions = rawOptions.map((item) => ({
-          value: item?._id,
-          label: item?.displayName || item?.name || item?.title || "Unnamed",
-        }));
-
-        setSectionOptionsByType(mappedOptions);
-        setAddSectionOption((current) => {
-          if (!current) return null;
-          return mappedOptions.find((opt) => opt.value === current.value) || null;
+        // Fetch all sections for the city
+        const sectionsResponse = await getTravelSectionsWithFallback({
+          page: 1,
+          limit: 1000,
+          cityCode,
         });
+        const sectionsPayload = sectionsResponse?.data || {};
+        const allSections = Array.isArray(sectionsPayload.sections)
+          ? sectionsPayload.sections
+          : [];
+
+        // Handle pagination if needed
+        const totalPages = Number(sectionsPayload.totalPages) || 1;
+        if (totalPages > 1) {
+          for (let page = 2; page <= totalPages; page += 1) {
+            const pageResponse = await getTravelSectionsWithFallback({
+              page,
+              limit: 1000,
+              cityCode,
+            });
+            const pageSections = Array.isArray(pageResponse?.data?.sections)
+              ? pageResponse.data.sections
+              : [];
+            allSections.push(...pageSections);
+          }
+        }
+
+        setAllSectionsForCity(allSections);
+
+        // Get IDs of categories and subcategories already used in sections
+        // Check multiple possible paths for category ID and type
+        const usedCategoryIds = new Set();
+        const usedSubcategoryIds = new Set();
+        const usedIds = new Set(); // Track all used IDs regardless of type
+
+        allSections.forEach((section) => {
+          // Try multiple ways to get the category ID
+          const categoryId =
+            section?.category?.id ||
+            section?.category?._id ||
+            section?.categoryId ||
+            (typeof section?.category === "string" ? section.category : null);
+
+          // Try multiple ways to get the category type
+          const categoryType =
+            section?.category?.type ||
+            section?.categoryType ||
+            section?.type;
+
+          if (categoryId) {
+            // Convert to string for consistent comparison
+            const idString = String(categoryId);
+            usedIds.add(idString); // Track in general set
+
+            if (categoryType === "PRIMARY_CATEGORY") {
+              usedCategoryIds.add(idString);
+            } else if (categoryType === "SUB_CATEGORY") {
+              usedSubcategoryIds.add(idString);
+            }
+            // If type is unclear, we'll check against both lists when filtering
+          }
+        });
+
+        // Fetch all categories and subcategories
+        const [categoriesResponse, subcategoriesResponse] = await Promise.all([
+          getCategoriesForCity(cityCode),
+          getSubcategoriesForCity(cityCode),
+        ]);
+
+        const allCategories = Array.isArray(categoriesResponse?.data?.categories)
+          ? categoriesResponse.data.categories
+          : [];
+        const allSubcategories = Array.isArray(subcategoriesResponse?.data?.subcategories)
+          ? subcategoriesResponse.data.subcategories
+          : [];
+
+        // Filter out already used items - convert IDs to strings for comparison
+        // A category/subcategory is excluded if its ID is in the usedIds set
+        const leftOutCategories = allCategories.filter((cat) => {
+          if (!cat?._id) return false;
+          const catIdString = String(cat._id);
+          // Exclude if used as either category or subcategory (to prevent duplicates)
+          return !usedIds.has(catIdString);
+        });
+
+        const leftOutSubcategories = allSubcategories.filter((sub) => {
+          if (!sub?._id) return false;
+          const subIdString = String(sub._id);
+          // Exclude if used as either category or subcategory (to prevent duplicates)
+          return !usedIds.has(subIdString);
+        });
+
+        setAvailableCategories(leftOutCategories);
+        setAvailableSubcategories(leftOutSubcategories);
+
+        // Update section options based on selected type
+        if (addSectionType?.value) {
+          const rawOptions =
+            addSectionType.value === "PRIMARY_CATEGORY"
+              ? leftOutCategories
+              : leftOutSubcategories;
+
+          const mappedOptions = rawOptions.map((item) => ({
+            value: item?._id,
+            label: item?.displayName || item?.name || item?.title || "Unnamed",
+          }));
+
+          setSectionOptionsByType(mappedOptions);
+        }
       } catch (error) {
+        console.error("Error fetching add section data:", error);
+        setAllSectionsForCity([]);
+        setAvailableCategories([]);
+        setAvailableSubcategories([]);
         setSectionOptionsByType([]);
-        setAddSectionOption(null);
-        showToastError("Failed to load section options for selected city");
+        showToastError("Failed to load section data for selected city");
       } finally {
+        setLoadingAddSectionData(false);
         setLoadingSectionOptions(false);
       }
     };
 
-    fetchSectionOptions();
-  }, [isAddSectionModalOpen, addSectionCity, addSectionType]);
+    fetchAddSectionData();
+  }, [isAddSectionModalOpen, addSectionCity]);
+
+  // Update section options when type changes
+  useEffect(() => {
+    if (!addSectionType?.value || !isAddSectionModalOpen) {
+      setSectionOptionsByType([]);
+      setAddSectionOption(null);
+      return;
+    }
+
+    const rawOptions =
+      addSectionType.value === "PRIMARY_CATEGORY"
+        ? availableCategories
+        : availableSubcategories;
+
+    const mappedOptions = rawOptions.map((item) => ({
+      value: item?._id,
+      label: item?.displayName || item?.name || item?.title || "Unnamed",
+    }));
+
+    setSectionOptionsByType(mappedOptions);
+    setAddSectionOption(null);
+  }, [addSectionType, availableCategories, availableSubcategories, isAddSectionModalOpen]);
 
   const tableData = useMemo(
     () =>
@@ -413,6 +536,9 @@ function CityWiseSections() {
     setAddSectionType(sectionTypeOptions[0]);
     setAddSectionOption(null);
     setSectionOptionsByType([]);
+    setAllSectionsForCity([]);
+    setAvailableCategories([]);
+    setAvailableSubcategories([]);
     setIsAddSectionModalOpen(true);
   };
 
@@ -424,6 +550,10 @@ function CityWiseSections() {
     setAddSectionOption(null);
     setSectionOptionsByType([]);
     setLoadingSectionOptions(false);
+    setAllSectionsForCity([]);
+    setAvailableCategories([]);
+    setAvailableSubcategories([]);
+    setLoadingAddSectionData(false);
   };
 
   const handleCreateSection = async () => {
@@ -692,7 +822,7 @@ function CityWiseSections() {
         </ModalFooter>
       </Modal>
 
-      <Modal isOpen={isAddSectionModalOpen} toggle={handleCloseAddSectionModal} centered>
+      <Modal isOpen={isAddSectionModalOpen} toggle={handleCloseAddSectionModal} centered size="xl">
         <ModalHeader toggle={handleCloseAddSectionModal}>
           Add New Section
         </ModalHeader>
@@ -715,46 +845,178 @@ function CityWiseSections() {
             />
           </div>
 
-          <div className="mb-3">
-            <Label className="form-label">Section Type</Label>
-            <Select
-              value={addSectionType}
-              onChange={(option) => {
-                setAddSectionType(option || null);
-                setAddSectionOption(null);
-              }}
-              options={sectionTypeOptions}
-              isClearable={false}
-              isSearchable={false}
-              placeholder="Select section type..."
-              className="react-select-container"
-              classNamePrefix="react-select"
-            />
-          </div>
+          {loadingAddSectionData ? (
+            <div className="text-center py-4">
+              <Spinner color="primary" />
+              <p className="mt-2 text-muted">Loading sections and categories...</p>
+            </div>
+          ) : addSectionCity?.value ? (
+            <Row>
+              <Col md={6}>
+                <Card className="h-100">
+                  <CardBody>
+                    <h5 className="mb-3">
+                      Selected Sections ({allSectionsForCity.length})
+                    </h5>
+                    <div
+                      style={{
+                        maxHeight: "400px",
+                        overflowY: "auto",
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "4px",
+                        padding: "8px",
+                      }}
+                    >
+                      {allSectionsForCity.length > 0 ? (
+                        <ListGroup flush>
+                          {allSectionsForCity.map((section, index) => {
+                            const categoryId =
+                              section?.category?.id ||
+                              section?.category?._id ||
+                              section?.categoryId ||
+                              null;
+                            const categoryType =
+                              section?.category?.type ||
+                              section?.categoryType ||
+                              "Unknown";
+                            const sectionName = getSectionName(section);
 
-          <div className="mb-1">
-            <Label className="form-label">
-              {addSectionType?.value === "PRIMARY_CATEGORY"
-                ? "Category"
-                : "Subcategory"}
-            </Label>
-            <Select
-              value={addSectionOption}
-              onChange={(option) => setAddSectionOption(option || null)}
-              options={sectionOptionsByType}
-              isClearable
-              isSearchable
-              isLoading={loadingSectionOptions}
-              isDisabled={!addSectionCity || !addSectionType || loadingSectionOptions}
-              placeholder={
-                addSectionCity
-                  ? "Select section item..."
-                  : "Select city first"
-              }
-              className="react-select-container"
-              classNamePrefix="react-select"
-            />
-          </div>
+                            return (
+                              <ListGroupItem
+                                key={section?._id || index}
+                                className="d-flex justify-content-between align-items-start"
+                              >
+                                <div className="flex-grow-1">
+                                  <strong>{sectionName}</strong>
+                                  <br />
+                                  <small className="text-muted">
+                                    <Badge color="secondary" className="me-1">
+                                      {getCategoryTypeLabel(categoryType)}
+                                    </Badge>
+                                    {categoryId && (
+                                      <span className="text-muted">
+                                        ID: {String(categoryId).substring(0, 8)}...
+                                      </span>
+                                    )}
+                                  </small>
+                                </div>
+                                <Badge color="info" className="ms-2">
+                                  #{section?.sortOrder || index + 1}
+                                </Badge>
+                              </ListGroupItem>
+                            );
+                          })}
+                        </ListGroup>
+                      ) : (
+                        <p className="text-muted text-center py-3">
+                          No sections found for this city
+                        </p>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              </Col>
+              <Col md={6}>
+                <Card className="h-100">
+                  <CardBody>
+                    <div className="mb-3">
+                      <Label className="form-label">Section Type</Label>
+                      <Select
+                        value={addSectionType}
+                        onChange={(option) => {
+                          setAddSectionType(option || null);
+                          setAddSectionOption(null);
+                        }}
+                        options={sectionTypeOptions}
+                        isClearable={false}
+                        isSearchable={false}
+                        placeholder="Select section type..."
+                        className="react-select-container"
+                        classNamePrefix="react-select"
+                      />
+                    </div>
+
+                    <h5 className="mb-2">
+                      Available{" "}
+                      {addSectionType?.value === "PRIMARY_CATEGORY"
+                        ? "Categories"
+                        : "Subcategories"}{" "}
+                      (
+                      {addSectionType?.value === "PRIMARY_CATEGORY"
+                        ? availableCategories.length
+                        : availableSubcategories.length}
+                      )
+                    </h5>
+                    <p className="text-muted small mb-3">
+                      <i className="mdi mdi-information-outline me-1"></i>
+                      Only showing items not already used in sections
+                    </p>
+                    <div
+                      style={{
+                        maxHeight: "300px",
+                        overflowY: "auto",
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "4px",
+                        padding: "8px",
+                      }}
+                    >
+                      {addSectionType?.value ? (
+                        sectionOptionsByType.length > 0 ? (
+                          <ListGroup flush>
+                            {sectionOptionsByType.map((option, index) => (
+                              <ListGroupItem
+                                key={option.value || index}
+                                className="d-flex justify-content-between align-items-center"
+                                style={{
+                                  cursor: "pointer",
+                                  backgroundColor:
+                                    addSectionOption?.value === option.value
+                                      ? "#e3f2fd"
+                                      : "transparent",
+                                }}
+                                onClick={() =>
+                                  setAddSectionOption(
+                                    addSectionOption?.value === option.value
+                                      ? null
+                                      : option
+                                  )
+                                }
+                              >
+                                <div>
+                                  <strong>{option.label}</strong>
+                                </div>
+                                {addSectionOption?.value === option.value && (
+                                  <Badge color="success">
+                                    <i className="mdi mdi-check"></i>
+                                  </Badge>
+                                )}
+                              </ListGroupItem>
+                            ))}
+                          </ListGroup>
+                        ) : (
+                          <p className="text-muted text-center py-3">
+                            No available{" "}
+                            {addSectionType.value === "PRIMARY_CATEGORY"
+                              ? "categories"
+                              : "subcategories"}{" "}
+                            left to add
+                          </p>
+                        )
+                      ) : (
+                        <p className="text-muted text-center py-3">
+                          Please select a section type
+                        </p>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              </Col>
+            </Row>
+          ) : (
+            <p className="text-muted text-center py-4">
+              Please select a city to view sections and available categories/subcategories
+            </p>
+          )}
         </ModalBody>
         <ModalFooter>
           <Button

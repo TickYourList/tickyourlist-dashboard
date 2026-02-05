@@ -67,6 +67,10 @@ import ApplyJobs from "../pages/JobPages/ApplyJobs/index";
 import CandidateList from "../pages/JobPages/CandidateList";
 import CandidateOverview from "../pages/JobPages/CandidateOverview";
 
+//Careers
+import Careers from "../pages/Careers/index";
+import CareerApplications from "../pages/Careers/Applications";
+
 // Forms
 import FormElements from "../pages/Forms/FormElements";
 import FormLayouts from "../pages/Forms/FormLayouts";
@@ -170,7 +174,7 @@ import PMCollections from "../pages/product-management/PMCollections"
 import AddCollectionForm from "../pages/product-management/PMCollections/AddCollectionForm"
 import TourGroupVariantData from "../pages/TourGroupVariantData/index";
 import AddTourGroupVariants from "../pages/TourGroupVariantData/AddTourGroupVariants";
-import TourGroupVariant from "../pages/TourGroupVariants/tourGroupVariant"; 
+import TourGroupVariant from "../pages/TourGroupVariants/tourGroupVariant";
 import SubCategory from "../pages/Product_Management/SubCategory/SubCategory";
 import EditSubCategory from "pages/Product_Management/SubCategory/EditSubCategory";
 import HomeBanner from "pages/Content-marketing/HomeBanner";
@@ -250,9 +254,9 @@ const authProtectedRoutes = [
   { path: "/about", component: <Aboutus /> },
   { path: "/careerwithus", component: <Careerwithus /> },
   { path: "/termsandcondition", component: <Termsandconditions /> },
-  { path: "/privacypolicy", component: <PrivacyPolicy /> }, 
-  { path: "/corporatepolicy", component: <CorporatePolicy /> }, 
-  { path: "/investors", component: <Investors /> }, 
+  { path: "/privacypolicy", component: <PrivacyPolicy /> },
+  { path: "/corporatepolicy", component: <CorporatePolicy /> },
+  { path: "/investors", component: <Investors /> },
   { path: "/faqs", component: <Faqs /> },
   { path: "/contactus", component: <Contactus /> },
   { path: "/advertisewithus", component: <AdvertiseWithUs /> },
@@ -281,6 +285,10 @@ const authProtectedRoutes = [
   { path: "/job-apply", component: <ApplyJobs /> },
   { path: "/candidate-list", component: <CandidateList /> },
   { path: "/candidate-overview", component: <CandidateOverview /> },
+
+  //careers
+  { path: "/careers", component: <Careers /> },
+  { path: "/career-applications", component: <CareerApplications /> },
 
   //Charts
   { path: "/apex-charts", component: <ChartApex /> },
@@ -369,14 +377,14 @@ const authProtectedRoutes = [
     component: <AddCurrency />,
     exact: true,
   },
-   //TickyourList Dashboard
-   { path: "/tours-&-experience", component: <TourGroupTable /> },
-   {
+  //TickyourList Dashboard
+  { path: "/tours-&-experience", component: <TourGroupTable /> },
+  {
     path: "/travel-partners",
     component: <TravelPartners />,
-   },
-   {path: "/operations/coupons", component: <Coupons />},
-   //Customers
+  },
+  { path: "/operations/coupons", component: <Coupons /> },
+  //Customers
   { path: "/customer-list", component: <CustomersList /> },
   //Invoices
   { path: "/create-invoice-list", component: <CreateInvoiceList /> },
@@ -400,20 +408,20 @@ const authProtectedRoutes = [
     path: '/tour-group-sub-category',
     component: <SubCategory />,
   },
-  {path:"/sub-category-details/:categoryid", component:<TravelSubCategoryDetailsModal />},
+  { path: "/sub-category-details/:categoryid", component: <TravelSubCategoryDetailsModal /> },
 
-  {path:"/add-new-travel-sub-category", component:<AddNewSubCategory />},
-  {path:"/edit-subCategory/:subCategoryid",component:<EditSubCategory/>},
+  { path: "/add-new-travel-sub-category", component: <AddNewSubCategory /> },
+  { path: "/edit-subCategory/:subCategoryid", component: <EditSubCategory /> },
   { path: "/content-marketing-home-banner", component: <HomeBanner /> },
-     // Travel Categories
+  // Travel Categories
   { path: "/travel-categories", component: <TravelCategoryDetail /> },
   { path: "/travel-category/add", component: <AddTravelCategory /> },
   { path: "/edit-travel-category/:categoryId", component: <EditTravelCategory /> },
   {
     path: "/calendar-pricing-&-availability",
     component: <CalendarPricingAndAvailability />,
-   },
-   { path: "/categories/:cityCode/sort", component: <CategorySorting /> },
+  },
+  { path: "/categories/:cityCode/sort", component: <CategorySorting /> },
   { path: "/sub-categories/:categoryId/sort", component: <SubCategorySorting /> },
   { path: "/sections/:cityCode/sort", component: <SectionSorting /> },
   { path: "/settings", component: <Settings /> },
@@ -423,30 +431,30 @@ const authProtectedRoutes = [
   // Pricing Management
   { path: "/pricing-management/:variantId", component: <PricingManagement /> },
   { path: "/pricing-management", component: <PricingManagement /> },
-  
+
   // Email Templates
   { path: "/email-templates", component: <EmailTemplates /> },
   { path: "/email-templates/create", component: <CreateEditTemplate /> },
   { path: "/email-templates/edit/:id", component: <CreateEditTemplate /> },
   { path: "/email-templates/ai-generate", component: <AIGenerateTemplate /> },
   { path: "/email-templates/logs", component: <EmailLogs /> },
-  
+
   // Email Campaigns
   { path: "/email-campaigns", component: <Campaigns /> },
   { path: "/email-campaigns/create", component: <CreateCampaign /> },
   { path: "/email-campaigns/:id/edit", component: <CreateCampaign /> },
-  
+
   // Email Builder
   { path: "/email-builder", component: <EmailBuilder /> },
-  
+
   // Email Workflows/Automations
   { path: "/email-workflows", component: <Workflows /> },
   { path: "/email-workflows/create", component: <WorkflowEditor /> },
   { path: "/email-workflows/:id/edit", component: <WorkflowEditor /> },
-  
+
   // Customer Segments
   { path: "/email-segments", component: <Segments /> },
-  
+
   {
     path: "/",
     exact: true,

@@ -30,6 +30,9 @@ import invoices from "./invoices/reducer";
 //jobs
 import JobReducer from "./jobs/reducer";
 
+//careers
+import careers from "./careers/reducer";
+
 //projects
 import projects from "./projects/reducer";
 
@@ -157,6 +160,7 @@ const rootReducer = combineReducers({
   faqsReducer,
   continents,
   emailWorkflows,
+  careers,
 });
 
 export default rootReducer;

@@ -30,6 +30,9 @@ export * from "./customers/actions"
 //jobs
 export * from "./jobs/actions";
 
+//careers
+export * from "./careers/actions";
+
 // projects
 export * from "./projects/actions";
 

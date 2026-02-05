@@ -320,6 +320,18 @@ const SidebarContent = props => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/careers">
+                    <i className="bx bx-briefcase me-1"></i>
+                    {props.t("Careers")}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/career-applications">
+                    <i className="bx bx-file me-1"></i>
+                    {props.t("Career Applications")}
+                  </Link>
+                </li>
+                <li>
                   <Link to="/email-builder">
                     <i className="bx bx-paint me-1"></i>
                     {props.t("Email Builder")}
