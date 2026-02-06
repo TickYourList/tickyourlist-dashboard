@@ -142,6 +142,15 @@ function Cities() {
             Header: 'Action',
             disableFilters: true,
             Cell: ({row}) => {
+              // Sanitize cityCode to create valid DOM IDs (remove spaces and special characters)
+              const sanitizeId = (value) => {
+                if (!value) return '';
+                return String(value).replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+              };
+              const cityCodeId = sanitizeId(row.original.cityCode || row.original._id || row.original.id || 'city');
+              const editTooltipId = `edittooltip-${cityCodeId}`;
+              const deleteTooltipId = `deletetooltip-${cityCodeId}`;
+              
               return (
                 <div className="d-flex justify-content-center gap-3">
                   {
@@ -149,8 +158,8 @@ function Cities() {
                     to={`/edit-city/${row.original.cityCode}`}
                     className="text-success"
                   >
-                    <i className="mdi mdi-pencil font-size-18" id={`edittooltip-${row.original.cityCode}`} />
-                    <UncontrolledTooltip placement="top" target={`edittooltip-${row.original.cityCode}`}>
+                    <i className="mdi mdi-pencil font-size-18" id={editTooltipId} />
+                    <UncontrolledTooltip placement="top" target={editTooltipId}>
                       Edit
                     </UncontrolledTooltip>
                   </Link>
@@ -165,8 +174,8 @@ function Cities() {
                       onClickDelete(cityData);     
                     }}
                   >
-                    <i className="mdi mdi-delete font-size-18" id={`deletetooltip-${row.original.cityCode}`} />
-                    <UncontrolledTooltip placement="top" target={`deletetooltip-${row.original.cityCode}`} >
+                    <i className="mdi mdi-delete font-size-18" id={deleteTooltipId} />
+                    <UncontrolledTooltip placement="top" target={deleteTooltipId} >
                       Delete
                     </UncontrolledTooltip>
                   </Link>

@@ -52,6 +52,8 @@ const EditKlookMappingModal = ({
     }));
 
     const [activeTab, setActiveTab] = useState("tourgroup");
+    const [tourGroupView, setTourGroupView] = useState("compare");
+    const [variantView, setVariantView] = useState("compare");
     const [tylData, setTylData] = useState(null);
     const [klookData, setKlookData] = useState(null);
     const [variantDetail, setVariantDetail] = useState(null);
@@ -111,6 +113,8 @@ const EditKlookMappingModal = ({
             setTourGroupUpdates({});
             setVariantUpdates({});
             setActiveTab("tourgroup");
+            setTourGroupView("compare");
+            setVariantView("compare");
             setVariantDetail(null);
         }
     }, [isOpen]);
@@ -733,65 +737,63 @@ const EditKlookMappingModal = ({
     };
 
     const renderPendingUpdates = ({ title, rows, onSave, emptyText, ctaLabel }) => (
-        <Card className="mt-3">
-            <CardBody>
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                    <div>
-                        <h6 className="mb-0">{title}</h6>
-                        <small className="text-muted">Review the changes before saving.</small>
-                    </div>
-                    <Button
-                        size="sm"
-                        color="primary"
-                        onClick={onSave}
-                        disabled={rows.length === 0 || saving}
-                    >
-                        {saving ? (
-                            <>
-                                <Spinner size="sm" className="me-2" />
-                                Saving...
-                            </>
-                        ) : (
-                            ctaLabel
-                        )}
-                    </Button>
+        <div>
+            <div className="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <h6 className="mb-0">{title}</h6>
+                    <small className="text-muted">Review the changes before saving.</small>
                 </div>
-                {rows.length === 0 ? (
-                    <Alert color="info" className="mb-0">
-                        {emptyText}
-                    </Alert>
-                ) : (
-                    <Table responsive>
-                        <thead>
-                            <tr>
-                                <th>Field</th>
-                                <th>Current Value</th>
-                                <th>New Value</th>
+                <Button
+                    size="sm"
+                    color="primary"
+                    onClick={onSave}
+                    disabled={rows.length === 0 || saving}
+                >
+                    {saving ? (
+                        <>
+                            <Spinner size="sm" className="me-2" />
+                            Saving...
+                        </>
+                    ) : (
+                        ctaLabel
+                    )}
+                </Button>
+            </div>
+            {rows.length === 0 ? (
+                <Alert color="info" className="mb-0">
+                    {emptyText}
+                </Alert>
+            ) : (
+                <Table responsive>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Current Value</th>
+                            <th>New Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows.map((row) => (
+                            <tr key={row.id}>
+                                <td>
+                                    <strong>{row.label}</strong>
+                                </td>
+                                <td>
+                                    <div style={{ maxHeight: "120px", overflowY: "auto", whiteSpace: "pre-wrap" }}>
+                                        {formatDisplayValue(row.current, row.fieldDef)}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style={{ maxHeight: "120px", overflowY: "auto", whiteSpace: "pre-wrap" }}>
+                                        {formatDisplayValue(row.next, row.fieldDef)}
+                                    </div>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {rows.map((row) => (
-                                <tr key={row.id}>
-                                    <td>
-                                        <strong>{row.label}</strong>
-                                    </td>
-                                    <td>
-                                        <div style={{ maxHeight: "120px", overflowY: "auto", whiteSpace: "pre-wrap" }}>
-                                            {formatDisplayValue(row.current, row.fieldDef)}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div style={{ maxHeight: "120px", overflowY: "auto", whiteSpace: "pre-wrap" }}>
-                                            {formatDisplayValue(row.next, row.fieldDef)}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                )}
-            </CardBody>
-        </Card>
+                        ))}
+                    </tbody>
+                </Table>
+            )}
+        </div>
     );
 
     return (
@@ -920,6 +922,27 @@ const EditKlookMappingModal = ({
                                                 <small className="text-muted">Edit high-level tour group copy separately from variants.</small>
                                             </div>
                                         </div>
+                                        <Nav pills className="mb-3">
+                                            <NavItem>
+                                                <NavLink
+                                                    style={{ cursor: "pointer" }}
+                                                    className={classnames({ active: tourGroupView === "compare" })}
+                                                    onClick={() => setTourGroupView("compare")}
+                                                >
+                                                    Compare
+                                                </NavLink>
+                                            </NavItem>
+                                            <NavItem>
+                                                <NavLink
+                                                    style={{ cursor: "pointer" }}
+                                                    className={classnames({ active: tourGroupView === "preview" })}
+                                                    onClick={() => setTourGroupView("preview")}
+                                                >
+                                                    Preview & Save ({pendingTourGroupRows.length})
+                                                </NavLink>
+                                            </NavItem>
+                                        </Nav>
+                                        {tourGroupView === "compare" ? (
                                         <Table responsive striped className="align-middle">
                                             <thead>
                                                 <tr>
@@ -973,13 +996,15 @@ const EditKlookMappingModal = ({
                                                 ))}
                                             </tbody>
                                         </Table>
-                                        {renderPendingUpdates({
-                                            title: "Pending Tour Group Updates",
-                                            rows: pendingTourGroupRows,
-                                            onSave: saveTourGroupUpdates,
-                                            emptyText: "No tour group updates selected yet.",
-                                            ctaLabel: "Save Tour Group Updates",
-                                        })}
+                                        ) : (
+                                            renderPendingUpdates({
+                                                title: "Pending Tour Group Updates",
+                                                rows: pendingTourGroupRows,
+                                                onSave: saveTourGroupUpdates,
+                                                emptyText: "No tour group updates selected yet.",
+                                                ctaLabel: "Save Tour Group Updates",
+                                            })
+                                        )}
                                     </CardBody>
                                 </Card>
                             </TabPane>
@@ -996,6 +1021,27 @@ const EditKlookMappingModal = ({
                                         <Alert color="info" className="py-2">
                                             Status & Availability Settings
                                         </Alert>
+                                        <Nav pills className="mb-3">
+                                            <NavItem>
+                                                <NavLink
+                                                    style={{ cursor: "pointer" }}
+                                                    className={classnames({ active: variantView === "compare" })}
+                                                    onClick={() => setVariantView("compare")}
+                                                >
+                                                    Compare
+                                                </NavLink>
+                                            </NavItem>
+                                            <NavItem>
+                                                <NavLink
+                                                    style={{ cursor: "pointer" }}
+                                                    className={classnames({ active: variantView === "preview" })}
+                                                    onClick={() => setVariantView("preview")}
+                                                >
+                                                    Preview & Save ({pendingVariantRows.length})
+                                                </NavLink>
+                                            </NavItem>
+                                        </Nav>
+                                        {variantView === "compare" ? (
                                         <Table responsive striped className="align-middle">
                                             <thead>
                                                 <tr>
@@ -1054,13 +1100,15 @@ const EditKlookMappingModal = ({
                                                 ))}
                                             </tbody>
                                         </Table>
-                                        {renderPendingUpdates({
-                                            title: "Pending Variant Updates",
-                                            rows: pendingVariantRows,
-                                            onSave: saveVariantUpdates,
-                                            emptyText: "No variant updates selected yet.",
-                                            ctaLabel: "Save Variant Updates",
-                                        })}
+                                        ) : (
+                                            renderPendingUpdates({
+                                                title: "Pending Variant Updates",
+                                                rows: pendingVariantRows,
+                                                onSave: saveVariantUpdates,
+                                                emptyText: "No variant updates selected yet.",
+                                                ctaLabel: "Save Variant Updates",
+                                            })
+                                        )}
                                     </CardBody>
                                 </Card>
                             </TabPane>
