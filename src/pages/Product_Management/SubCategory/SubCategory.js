@@ -387,7 +387,9 @@ const SubCategory = () => {
                                         placeholder="Search and select a city..."
                                         options={cities.map(city => ({
                                             value: city.cityCode,
-                                            label: `${city.cityName || city.city} (${city.cityCode})`
+                                            // `travelCity.cities` comes from API `travelCityList` (usually has `displayName`/`name`)
+                                            // Fall back to older shapes (`cityName`/`city`) if present.
+                                            label: `${city.displayName || city.name || city.cityName || city.city || city.cityCode} (${city.cityCode})`
                                         }))}
                                         value={selectedCity}
                                         onChange={handleCityChange}
