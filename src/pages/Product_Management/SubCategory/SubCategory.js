@@ -58,6 +58,7 @@ const SubCategory = () => {
     const [isEdit, setIsEdit] = useState(false);
     const [currentCategory, setCurrentCategory] = useState(null);
     const [filterCityCode, setFilterCityCode] = useState("");
+    const [selectedCity, setSelectedCity] = useState(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [isSortModalOpen, setIsSortModalOpen] = useState(false);
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
@@ -103,7 +104,9 @@ const SubCategory = () => {
     // Fetch subcategories if user has view permission
     useEffect(() => {
         if (isPermissionsReady && canView) {
-            dispatch(getSubcategories(filterCityCode || null));
+            // When filterCityCode is empty string, pass null/undefined to get all subcategories
+            const cityCodeParam = filterCityCode && filterCityCode.trim() !== "" ? filterCityCode : null;
+            dispatch(getSubcategories(cityCodeParam));
         }
     }, [dispatch, canView, isPermissionsReady, filterCityCode]);
 
@@ -195,6 +198,8 @@ const SubCategory = () => {
     };
 
     const handleCityChange = (selectedOption) => {
+        setSelectedCity(selectedOption);
+        // When clearing (selectedOption is null), set to empty string to trigger refetch
         const cityCode = selectedOption?.value || "";
         setFilterCityCode(cityCode);
     };
@@ -384,10 +389,7 @@ const SubCategory = () => {
                                             value: city.cityCode,
                                             label: `${city.cityName || city.city} (${city.cityCode})`
                                         }))}
-                                        value={filterCityCode ? cities.find(c => c.cityCode === filterCityCode) ? {
-                                            value: filterCityCode,
-                                            label: `${cities.find(c => c.cityCode === filterCityCode)?.cityName || cities.find(c => c.cityCode === filterCityCode)?.city} (${filterCityCode})`
-                                        } : null : null}
+                                        value={selectedCity}
                                         onChange={handleCityChange}
                                         isDisabled={cities.length === 0}
                                     />

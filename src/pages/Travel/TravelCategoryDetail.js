@@ -92,7 +92,7 @@ function TravelCategoryDetail() {
   useEffect(() => {
     // Ensure data is an array before filtering
     const dataArray = Array.isArray(data) ? data : [];
-    if (selectedCity) {
+    if (selectedCity && selectedCity.value) {
       const filtered = dataArray.filter(
         (category) => category.cityCode === selectedCity.value
       );
@@ -145,6 +145,10 @@ function TravelCategoryDetail() {
       return;
     }
     navigate("/travel-category/add");
+  };
+
+  const handleCityChange = (selectedOption) => {
+    setSelectedCity(selectedOption);
   };
 
   const columns = useMemo(() => {
@@ -297,7 +301,7 @@ function TravelCategoryDetail() {
                 <label className="form-label">Filter by City Code</label>
                 <Select
                   value={selectedCity}
-                  onChange={setSelectedCity}
+                  onChange={handleCityChange}
                   options={cities}
                   isClearable
                   isSearchable
@@ -349,7 +353,7 @@ function TravelCategoryDetail() {
 
             <TableContainer
               columns={columns}
-              data={Array.isArray(filteredData) && (filteredData.length > 0 || selectedCity) ? filteredData : (Array.isArray(data) ? data : [])}
+              data={selectedCity && selectedCity.value ? filteredData : (Array.isArray(data) ? data : [])}
               loading={loading}
               isGlobalFilter={true}
               isAddOptions={false}
