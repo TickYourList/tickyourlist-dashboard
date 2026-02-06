@@ -352,6 +352,7 @@ function TravelCategoryDetail() {
             </div>
 
             <TableContainer
+              key={selectedCity?.value || 'all-cities'}
               columns={columns}
               data={selectedCity && selectedCity.value ? filteredData : (Array.isArray(data) ? data : [])}
               loading={loading}

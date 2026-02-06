@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import * as Yup from "yup";
 import { useFormik } from "formik";
@@ -71,6 +71,8 @@ const SubCategory = () => {
     });
     const [showReloadButton, setShowReloadButton] = useState(false);
     const [showNotFound, setShowNotFound] = useState(false); // New state for 'not found' message
+    const debounceTimerRef = useRef(null);
+    const isInitialMount = useRef(true);
 
     const canView = can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS);
     const canAdd = can(ACTIONS.CAN_ADD, MODULES.SUBCATEGORY_PERMS);
@@ -101,12 +103,37 @@ const SubCategory = () => {
         }
     }, [dispatch]);
 
-    // Fetch subcategories if user has view permission
+    // Fetch subcategories if user has view permission - with debouncing for performance
     useEffect(() => {
         if (isPermissionsReady && canView) {
-            // When filterCityCode is empty string, pass null/undefined to get all subcategories
-            const cityCodeParam = filterCityCode && filterCityCode.trim() !== "" ? filterCityCode : null;
-            dispatch(getSubcategories(cityCodeParam));
+            // Clear any existing timer
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+
+            // For initial mount, fetch immediately without debounce
+            // For subsequent filter changes, debounce to avoid rapid API calls
+            const fetchData = () => {
+                // When filterCityCode is empty string, pass null/undefined to get all subcategories
+                const cityCodeParam = filterCityCode && filterCityCode.trim() !== "" ? filterCityCode : null;
+                dispatch(getSubcategories(cityCodeParam));
+            };
+
+            if (isInitialMount.current) {
+                // Initial load - fetch immediately
+                fetchData();
+                isInitialMount.current = false;
+            } else {
+                // Subsequent filter changes - debounce for 300ms
+                debounceTimerRef.current = setTimeout(fetchData, 300);
+            }
+
+            // Cleanup timer on unmount or when dependencies change
+            return () => {
+                if (debounceTimerRef.current) {
+                    clearTimeout(debounceTimerRef.current);
+                }
+            };
         }
     }, [dispatch, canView, isPermissionsReady, filterCityCode]);
 
@@ -445,6 +472,7 @@ const SubCategory = () => {
                                         </Alert>
                                     ) : Array.isArray(subcategories) && subcategories.length > 0 ? (
                                         <TableContainer
+                                            key={filterCityCode || 'all-cities'}
                                             columns={columns}
                                             data={subcategories}
                                             isGlobalFilter={true}
