@@ -18,7 +18,7 @@ import {
     Alert,
     Button,
 } from "reactstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Breadcrumbs from "components/Common/Breadcrumb";
 import TableContainer from "components/Common/TableContainer";
 
@@ -41,6 +41,7 @@ import { getUserPermissions } from "store/user-permissions/actions";
 const SubCategory = () => {
     document.title = "Travel Sub Categories | Scrollit";
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const dispatch = useDispatch();
     const {
@@ -73,6 +74,8 @@ const SubCategory = () => {
     const [showNotFound, setShowNotFound] = useState(false); // New state for 'not found' message
     const debounceTimerRef = useRef(null);
     const isInitialMount = useRef(true);
+    const [imageModalOpen, setImageModalOpen] = useState(false);
+    const [selectedImageUrl, setSelectedImageUrl] = useState(null);
 
     const canView = can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS);
     const canAdd = can(ACTIONS.CAN_ADD, MODULES.SUBCATEGORY_PERMS);
@@ -102,6 +105,21 @@ const SubCategory = () => {
             }
         }
     }, [dispatch]);
+
+    // Restore city filter from URL params on mount
+    useEffect(() => {
+        const cityCodeFromUrl = searchParams.get('cityCode');
+        if (cityCodeFromUrl && cities.length > 0) {
+            const cityFromUrl = cities.find(c => c.cityCode === cityCodeFromUrl);
+            if (cityFromUrl) {
+                setSelectedCity({
+                    value: cityFromUrl.cityCode,
+                    label: `${cityFromUrl.displayName || cityFromUrl.name || cityFromUrl.cityName || cityFromUrl.city || cityFromUrl.cityCode} (${cityFromUrl.cityCode})`
+                });
+                setFilterCityCode(cityCodeFromUrl);
+            }
+        }
+    }, [cities, searchParams]);
 
     // Fetch subcategories if user has view permission - with debouncing for performance
     useEffect(() => {
@@ -229,6 +247,15 @@ const SubCategory = () => {
         // When clearing (selectedOption is null), set to empty string to trigger refetch
         const cityCode = selectedOption?.value || "";
         setFilterCityCode(cityCode);
+        
+        // Update URL params to preserve filter
+        const newSearchParams = new URLSearchParams(searchParams);
+        if (cityCode) {
+            newSearchParams.set('cityCode', cityCode);
+        } else {
+            newSearchParams.delete('cityCode');
+        }
+        setSearchParams(newSearchParams);
     };
 
     const handleReloadData = () => {
@@ -297,13 +324,87 @@ const SubCategory = () => {
         setIsDetailsModalOpen(false);
     };
 
+    const handleImageClick = (imageUrl) => {
+        setSelectedImageUrl(imageUrl);
+        setImageModalOpen(true);
+    };
+
     const columns = useMemo(() => {
         const baseColumns = [
+            {
+                Header: "Image",
+                accessor: "medias",
+                disableFilters: true,
+                disableSortBy: true,
+                Cell: ({ row }) => {
+                    const imageUrl = row.original?.medias?.[0]?.url;
+                    if (!imageUrl) {
+                        return (
+                            <div className="d-flex align-items-center justify-content-center" style={{ width: "80px", height: "60px" }}>
+                                <i className="mdi mdi-image-off text-muted" style={{ fontSize: "24px" }}></i>
+                            </div>
+                        );
+                    }
+                    return (
+                        <div
+                            className="d-flex align-items-center justify-content-center"
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleImageClick(imageUrl)}
+                            title="Click to enlarge image"
+                        >
+                            <img
+                                src={imageUrl}
+                                alt="Subcategory"
+                                className="img-fluid"
+                                style={{
+                                    width: "80px",
+                                    height: "60px",
+                                    objectFit: "cover",
+                                    borderRadius: "4px",
+                                    border: "1px solid #e0e0e0",
+                                    transition: "transform 0.2s",
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = "scale(1.05)";
+                                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = "scale(1)";
+                                    e.currentTarget.style.boxShadow = "none";
+                                }}
+                            />
+                        </div>
+                    );
+                },
+            },
             {
                 Header: "Name",
                 accessor: "name",
                 filterable: true,
                 sortType: "basic",
+            },
+            {
+                Header: "City",
+                accessor: "cityCode",
+                filterable: true,
+                sortType: "basic",
+                Cell: ({ value }) => {
+                    // Find city name from cities list
+                    const city = cities.find(c => c.cityCode === value);
+                    if (city) {
+                        const cityLabel = city.displayName || city.name || city.cityName || city.city || city.cityCode;
+                        return (
+                            <span className="badge bg-info text-white px-3 py-2">
+                                {cityLabel} ({city.cityCode})
+                            </span>
+                        );
+                    }
+                    return (
+                        <span className="text-muted">
+                            {value || "-"}
+                        </span>
+                    );
+                },
             },
             {
                 Header: "Display Name",
@@ -387,7 +488,7 @@ const SubCategory = () => {
             });
         }
         return baseColumns;
-    }, [canEdit, canDelete]);
+    }, [canEdit, canDelete, cities]);
 
     const renderContent = () => {
         if (permissionLoading || !isPermissionsReady) {
@@ -557,6 +658,45 @@ const SubCategory = () => {
                 isOpen={isSortModalOpen}
                 toggle={() => setIsSortModalOpen(false)}
             />
+            {/* Image Enlargement Modal */}
+            <Modal
+                isOpen={imageModalOpen}
+                toggle={() => setImageModalOpen(false)}
+                centered
+                size="lg"
+                contentClassName="border-0 shadow-lg"
+            >
+                <ModalHeader
+                    toggle={() => setImageModalOpen(false)}
+                    className="border-0 pb-2"
+                >
+                    <h5 className="mb-0">Subcategory Image</h5>
+                </ModalHeader>
+                <ModalBody className="text-center p-4">
+                    {selectedImageUrl && (
+                        <img
+                            src={selectedImageUrl}
+                            alt="Subcategory"
+                            className="img-fluid"
+                            style={{
+                                maxWidth: "100%",
+                                maxHeight: "70vh",
+                                borderRadius: "8px",
+                                objectFit: "contain",
+                            }}
+                        />
+                    )}
+                </ModalBody>
+                <div className="modal-footer border-0 pt-2">
+                    <Button
+                        color="secondary"
+                        onClick={() => setImageModalOpen(false)}
+                        className="px-4"
+                    >
+                        Close
+                    </Button>
+                </div>
+            </Modal>
         </React.Fragment>
     );
 };

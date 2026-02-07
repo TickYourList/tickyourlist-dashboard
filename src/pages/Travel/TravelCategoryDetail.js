@@ -2,7 +2,7 @@ import ViewCategoryModal from "./ViewCategoryModal";
 import CategorySortingModal from "./CategorySortingModal";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Modal,
   ModalHeader,
@@ -28,6 +28,7 @@ import Select from "react-select";
 function TravelCategoryDetail() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Existing selectors - ensure data is always an array
   const rawData = useSelector((state) => state.travelCategory.data);
@@ -60,6 +61,8 @@ function TravelCategoryDetail() {
   const [selectedCity, setSelectedCity] = useState(null);
   const [loadingCities, setLoadingCities] = useState(false);
   const [filteredData, setFilteredData] = useState([]);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState(null);
 
   // Fetch cities list on mount
   useEffect(() => {
@@ -72,6 +75,15 @@ function TravelCategoryDetail() {
           label: `${city.name} (${city.cityCode})`,
         }));
         setCities(cityOptions);
+        
+        // Restore city filter from URL params after cities are loaded
+        const cityCodeFromUrl = searchParams.get('cityCode');
+        if (cityCodeFromUrl) {
+          const cityFromUrl = cityOptions.find(c => c.value === cityCodeFromUrl);
+          if (cityFromUrl) {
+            setSelectedCity(cityFromUrl);
+          }
+        }
       } catch (error) {
         console.error("Error fetching cities:", error);
       } finally {
@@ -135,7 +147,12 @@ function TravelCategoryDetail() {
       toastr.error("You don't have permission to edit this category.");
       return;
     }
-    navigate(`/edit-travel-category/${categoryId}`);
+    // Preserve city filter in URL
+    const cityCode = selectedCity?.value || searchParams.get('cityCode');
+    const url = cityCode 
+      ? `/edit-travel-category/${categoryId}?cityCode=${cityCode}`
+      : `/edit-travel-category/${categoryId}`;
+    navigate(url);
   };
 
   const handleAddClick = () => {
@@ -144,15 +161,78 @@ function TravelCategoryDetail() {
       toastr.error("You don't have permission to add new categories.");
       return;
     }
-    navigate("/travel-category/add");
+    // Preserve city filter in URL
+    const cityCode = selectedCity?.value || searchParams.get('cityCode');
+    const url = cityCode 
+      ? `/travel-category/add?cityCode=${cityCode}`
+      : `/travel-category/add`;
+    navigate(url);
   };
 
   const handleCityChange = (selectedOption) => {
     setSelectedCity(selectedOption);
+    // Update URL params to preserve filter
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (selectedOption?.value) {
+      newSearchParams.set('cityCode', selectedOption.value);
+    } else {
+      newSearchParams.delete('cityCode');
+    }
+    setSearchParams(newSearchParams);
+  };
+
+  const handleImageClick = (imageUrl) => {
+    setSelectedImageUrl(imageUrl);
+    setImageModalOpen(true);
   };
 
   const columns = useMemo(() => {
     const baseColumns = [
+      {
+        Header: "Image",
+        accessor: "medias",
+        disableFilters: true,
+        Cell: ({ row }) => {
+          const imageUrl = row.original?.medias?.[0]?.url;
+          if (!imageUrl) {
+            return (
+              <div className="d-flex align-items-center justify-content-center" style={{ width: "80px", height: "60px" }}>
+                <i className="mdi mdi-image-off text-muted" style={{ fontSize: "24px" }}></i>
+              </div>
+            );
+          }
+          return (
+            <div
+              className="d-flex align-items-center justify-content-center"
+              style={{ cursor: "pointer" }}
+              onClick={() => handleImageClick(imageUrl)}
+              title="Click to enlarge image"
+            >
+              <img
+                src={imageUrl}
+                alt="Category"
+                className="img-fluid"
+                style={{
+                  width: "80px",
+                  height: "60px",
+                  objectFit: "cover",
+                  borderRadius: "4px",
+                  border: "1px solid #e0e0e0",
+                  transition: "transform 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.05)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              />
+            </div>
+          );
+        },
+      },
       {
         Header: "Name",
         accessor: "name",
@@ -161,6 +241,33 @@ function TravelCategoryDetail() {
             className="form-control form-control-sm"
             onChange={(e) => column.setFilter(e.target.value)}
             placeholder="Search name..."
+          />
+        ),
+      },
+      {
+        Header: "City",
+        accessor: "cityCode",
+        Cell: ({ value }) => {
+          // Find city name from cities list
+          const city = cities.find(c => c.value === value);
+          if (city) {
+            return (
+              <span className="badge bg-info text-white px-3 py-2">
+                {city.label}
+              </span>
+            );
+          }
+          return (
+            <span className="text-muted">
+              {value || "-"}
+            </span>
+          );
+        },
+        Filter: ({ column }) => (
+          <input
+            className="form-control form-control-sm"
+            onChange={(e) => column.setFilter(e.target.value)}
+            placeholder="Search city..."
           />
         ),
       },
@@ -250,7 +357,7 @@ function TravelCategoryDetail() {
     }
 
     return baseColumns;
-  }, [permissions, navigate]);
+  }, [permissions, navigate, cities]);
 
   document.title = "Travel Categories | TickYourList";
 
@@ -428,6 +535,46 @@ function TravelCategoryDetail() {
         isOpen={isSortModalOpen}
         toggle={() => setIsSortModalOpen(false)}
       />
+
+      {/* Image Enlargement Modal */}
+      <Modal
+        isOpen={imageModalOpen}
+        toggle={() => setImageModalOpen(false)}
+        centered
+        size="lg"
+        contentClassName="border-0 shadow-lg"
+      >
+        <ModalHeader
+          toggle={() => setImageModalOpen(false)}
+          className="border-0 pb-2"
+        >
+          <h5 className="mb-0">Category Image</h5>
+        </ModalHeader>
+        <ModalBody className="text-center p-4">
+          {selectedImageUrl && (
+            <img
+              src={selectedImageUrl}
+              alt="Category"
+              className="img-fluid"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "70vh",
+                borderRadius: "8px",
+                objectFit: "contain",
+              }}
+            />
+          )}
+        </ModalBody>
+        <ModalFooter className="border-0 pt-2">
+          <Button
+            color="secondary"
+            onClick={() => setImageModalOpen(false)}
+            className="px-4"
+          >
+            Close
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }

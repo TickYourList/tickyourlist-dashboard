@@ -14,7 +14,7 @@ import {
     FormFeedback,
     Alert
 } from "reactstrap";
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Select from "react-select";
@@ -34,6 +34,7 @@ const EditSubCategory = () => {
     const { subCategoryid } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const [searchParams] = useSearchParams();
 
     document.title = "Edit Travel Sub Category | Scrollit";
     
@@ -201,12 +202,17 @@ const EditSubCategory = () => {
     useEffect(() => {
         if (success) {
             dispatch(resetUpdateSubcategoryStatus());
-            navigate("/tour-group-sub-category");
+            // Preserve city filter from URL params
+            const cityCode = searchParams.get('cityCode');
+            const url = cityCode 
+                ? `/tour-group-sub-category?cityCode=${cityCode}`
+                : "/tour-group-sub-category";
+            navigate(url);
         }
         if (error) {
             dispatch(resetUpdateSubcategoryStatus());
         }
-    }, [success, error, dispatch, navigate]);
+    }, [success, error, dispatch, navigate, searchParams]);
 
     const handleSupportedLanguagesChange = (selectedOptions) => {
         setSelectedLanguages(selectedOptions);

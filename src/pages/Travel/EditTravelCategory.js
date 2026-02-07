@@ -7,7 +7,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import toastr from "toastr";
 import "toastr/build/toastr.min.css";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import CreatableSelect from "react-select/creatable";
 import Select from "react-select";
 import URLSlugsSection from "./URLSlugsSection";
@@ -26,6 +26,7 @@ const EditTravelCategory = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
 
   const [slugsEntered, setSlugsEntered] = useState({});
   const [cities, setCities] = useState([]);
@@ -57,11 +58,16 @@ const EditTravelCategory = () => {
     if (updateSuccess) {
       dispatch(resetTravelCategory());
       // Small delay to ensure toast is visible before navigation
+      // Preserve city filter from URL params
+      const cityCode = searchParams.get('cityCode');
+      const url = cityCode 
+        ? `/travel-categories?cityCode=${cityCode}`
+        : "/travel-categories";
       setTimeout(() => {
-        navigate("/travel-categories");
+        navigate(url);
       }, 500);
     }
-  }, [updateSuccess, dispatch, navigate]);
+  }, [updateSuccess, dispatch, navigate, searchParams]);
 
   // Fetch cities on mount
   useEffect(() => {

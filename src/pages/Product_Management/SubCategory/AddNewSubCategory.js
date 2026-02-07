@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Card,
     CardBody,
@@ -34,6 +34,7 @@ import {
 const AddNewSubCategory = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     
     document.title = "Add New Travel Sub Category | Scrollit";
     const [selectedLanguages, setSelectedLanguages] = useState([]);
@@ -166,12 +167,17 @@ const AddNewSubCategory = () => {
             setSelectedFile(null);
             setSelectedLanguages([]);
             dispatch(resetCategoryStatus());
-            navigate("/tour-group-sub-category");
+            // Preserve city filter from URL params
+            const cityCode = searchParams.get('cityCode');
+            const url = cityCode 
+                ? `/tour-group-sub-category?cityCode=${cityCode}`
+                : "/tour-group-sub-category";
+            navigate(url);
         }
         if (error) {
             dispatch(resetCategoryStatus());
         }
-    }, [success, error, dispatch, navigate]);
+    }, [success, error, dispatch, navigate, searchParams]);
 
     function handleSupportedLanguagesChange(selectedOptions) {
         setSelectedLanguages(selectedOptions);
@@ -384,7 +390,13 @@ const AddNewSubCategory = () => {
                                                 <Input type="file" className="form-control" id="imageUpload" name="images" onChange={handleFileChange} accept="image/*" />
                                             </FormGroup>
                                             <div className="d-flex justify-content-end gap-2 mt-3">
-                                                <Button color="secondary" type="button" onClick={() => navigate("/tour-group-sub-category")}>
+                                                <Button color="secondary" type="button" onClick={() => {
+                                                    const cityCode = searchParams.get('cityCode');
+                                                    const url = cityCode 
+                                                        ? `/tour-group-sub-category?cityCode=${cityCode}`
+                                                        : "/tour-group-sub-category";
+                                                    navigate(url);
+                                                }}>
                                                     Cancel
                                                 </Button>
                                                 <Button color="primary" type="submit" disabled={loading}>

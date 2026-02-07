@@ -5,7 +5,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import toastr from "toastr";
 import "toastr/build/toastr.min.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import CreatableSelect from "react-select/creatable";
 import { addTravelCategoryRequest } from "../../store/travelCategories/actions";
 import URLSlugsSection from "./URLSlugsSection";
@@ -19,6 +19,7 @@ import { usePermissions, MODULES, ACTIONS } from "helpers/permissions";
 const TravelCategoryForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const {cities, successMessage, error } = useSelector(state => ({
     cities: state.travelCity.cities,
@@ -49,12 +50,17 @@ const TravelCategoryForm = () => {
     if (successMessage) {
       toastr.success(successMessage);
       dispatch({ type: "RESET_ADD_TRAVEL_CATEGORY" });
-      navigate("/travel-categories");
+      // Preserve city filter from URL params
+      const cityCode = searchParams.get('cityCode');
+      const url = cityCode 
+        ? `/travel-categories?cityCode=${cityCode}`
+        : "/travel-categories";
+      navigate(url);
     } else if (error) {
       toastr.error(error);
       dispatch({ type: "RESET_ADD_TRAVEL_CATEGORY" });
     }
-  }, [successMessage, error, dispatch, navigate]);
+  }, [successMessage, error, dispatch, navigate, searchParams]);
 
   const formik = useFormik({
     initialValues: {
