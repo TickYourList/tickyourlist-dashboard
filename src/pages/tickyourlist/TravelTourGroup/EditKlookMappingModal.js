@@ -7,6 +7,7 @@ import {
     ModalFooter,
     Button,
     Input,
+    Label,
     Spinner,
     Card,
     CardBody,
@@ -63,6 +64,8 @@ const EditKlookMappingModal = ({
     const [aiLoading, setAiLoading] = useState(false);
     const [aiError, setAiError] = useState("");
     const [saving, setSaving] = useState(false);
+    const [aiGenerateScope, setAiGenerateScope] = useState("both"); // "tourgroup", "variant", "both"
+    const [selectedFieldsToSave, setSelectedFieldsToSave] = useState({}); // Track which fields user wants to save
 
     const booleanFields = useMemo(() => new Set([
         "variant.openDated",
@@ -88,6 +91,10 @@ const EditKlookMappingModal = ({
 
     const redirectTo = (url) => {
         window.location.href = url;
+    };
+
+    const openInNewTab = (url) => {
+        window.open(url, '_blank');
     };
 
     // Fetch data when modal opens
@@ -116,6 +123,8 @@ const EditKlookMappingModal = ({
             setTourGroupView("compare");
             setVariantView("compare");
             setVariantDetail(null);
+            setSelectedFieldsToSave({});
+            setAiGenerateScope("both");
         }
     }, [isOpen]);
 
@@ -243,10 +252,13 @@ const EditKlookMappingModal = ({
     };
 
     const handleAiDraftChange = (fieldId, value, autoUpdate = true) => {
-        setAiDraft(prev => ({
+        setAiDraft(prev => {
+            const updated = {
             ...prev,
             [fieldId]: value,
-        }));
+            };
+            return updated;
+        });
         if (autoUpdate) {
             updateScopeState(fieldId, value);
         }
@@ -290,7 +302,19 @@ const EditKlookMappingModal = ({
     };
 
     const handleUpdateField = (field, value) => {
+        if (!hasDisplayValue(value)) {
+            showToastError("No value available to use for this field");
+            return;
+        }
+        // Ensure the AI draft is set and visible in the editor (this updates the editor display)
+        setAiDraft(prev => ({
+            ...prev,
+            [field]: value,
+        }));
+        // Add to pending updates (this adds it to the Preview & Save list)
         updateScopeState(field, value);
+        const fieldName = field.split('.').pop();
+        showToastSuccess(`"${fieldName}" added to pending updates`);
     };
 
     const stripHtml = (value) => {
@@ -429,26 +453,106 @@ const EditKlookMappingModal = ({
         { id: "variant.status", label: "Status (Active/Inactive)", type: "boolean" },
     ]), []);
 
-    const mapAiToDraft = (aiData) => ({
-        "tourGroup.name": aiData?.tourGroup?.name || "",
-        "tourGroup.summary": aiData?.tourGroup?.summary || "",
-        "tourGroup.highlights": aiData?.tourGroup?.highlights || "",
-        "tourGroup.inclusions": aiData?.tourGroup?.inclusions || "",
-        "tourGroup.exclusions": aiData?.tourGroup?.exclusions || "",
-        "tourGroup.faq": aiData?.tourGroup?.faq || "",
-        "tourGroup.additionalInfo": aiData?.tourGroup?.additionalInfo || "",
-        "tourGroup.ticketDeliveryInfo": aiData?.tourGroup?.ticketDeliveryInfo || "",
-        "tourGroup.confirmedTicketInfo": aiData?.tourGroup?.confirmedTicketInfo || "",
-        "variant.name": aiData?.variant?.name || "",
-        "variant.variantInfo": aiData?.variant?.variantInfo || "",
-        "variant.ticketDeliveryInfo": aiData?.variant?.ticketDeliveryInfo || "",
-        "variant.confirmedTicketInfo": aiData?.variant?.confirmedTicketInfo || "",
-        "variant.boosterTags": aiData?.variant?.boosterTags || "",
-        "variant.openDated": aiData?.variant?.openDated ?? "",
-        "variant.notAvailable": aiData?.variant?.notAvailable ?? "",
-        "variant.externalVariantId": aiData?.variant?.externalVariantId ?? "",
-        "variant.status": aiData?.variant?.status ?? "",
-    });
+    // Convert markdown to HTML for variantInfo (AI sometimes returns markdown despite instructions)
+    const convertMarkdownToHtml = (text) => {
+        if (!text || typeof text !== 'string') return text;
+        
+        // If it already contains HTML tags, return as is
+        if (text.includes('<ul>') || text.includes('<li>') || text.includes('<p>')) {
+            return text;
+        }
+        
+        // Split by lines and process
+        const lines = text.split('\n');
+        const result = [];
+        let inList = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+            
+            // Skip empty lines
+            if (!line) {
+                if (inList) {
+                    result.push('</ul>');
+                    inList = false;
+                }
+                continue;
+            }
+            
+            // Check if line is a markdown heading
+            if (line.startsWith('##')) {
+                if (inList) {
+                    result.push('</ul>');
+                    inList = false;
+                }
+                const heading = line.replace(/^##+\s*/, '').trim();
+                if (heading) {
+                    result.push(`<h2>${heading}</h2>`);
+                }
+                continue;
+            }
+            
+            // Check if line is a bullet point (starts with - or *)
+            if (line.match(/^[-*]\s+(.+)$/)) {
+                if (!inList) {
+                    result.push('<ul>');
+                    inList = true;
+                }
+                const content = line.replace(/^[-*]\s+/, '').trim();
+                if (content) {
+                    result.push(`<li>${content}</li>`);
+                }
+            } else {
+                // Regular text line
+                if (inList) {
+                    result.push('</ul>');
+                    inList = false;
+                }
+                // Wrap in paragraph if it doesn't start with HTML tag
+                if (line && !line.startsWith('<')) {
+                    result.push(`<p>${line}</p>`);
+                } else if (line) {
+                    result.push(line);
+                }
+            }
+        }
+        
+        // Close any open list
+        if (inList) {
+            result.push('</ul>');
+        }
+        
+        return result.join('\n').trim();
+    };
+
+    const mapAiToDraft = (aiData) => {
+        // Convert variantInfo from markdown to HTML if needed
+        let variantInfo = aiData?.variant?.variantInfo || "";
+        if (variantInfo && !variantInfo.includes('<ul>') && !variantInfo.includes('<li>')) {
+            variantInfo = convertMarkdownToHtml(variantInfo);
+        }
+        
+        return {
+            "tourGroup.name": aiData?.tourGroup?.name || "",
+            "tourGroup.summary": aiData?.tourGroup?.summary || "",
+            "tourGroup.highlights": aiData?.tourGroup?.highlights || "",
+            "tourGroup.inclusions": aiData?.tourGroup?.inclusions || "",
+            "tourGroup.exclusions": aiData?.tourGroup?.exclusions || "",
+            "tourGroup.faq": aiData?.tourGroup?.faq || "",
+            "tourGroup.additionalInfo": aiData?.tourGroup?.additionalInfo || "",
+            "tourGroup.ticketDeliveryInfo": aiData?.tourGroup?.ticketDeliveryInfo || "",
+            "tourGroup.confirmedTicketInfo": aiData?.tourGroup?.confirmedTicketInfo || "",
+            "variant.name": aiData?.variant?.name || "",
+            "variant.variantInfo": variantInfo,
+            "variant.ticketDeliveryInfo": aiData?.variant?.ticketDeliveryInfo || "",
+            "variant.confirmedTicketInfo": aiData?.variant?.confirmedTicketInfo || "",
+            "variant.boosterTags": aiData?.variant?.boosterTags || "",
+            "variant.openDated": aiData?.variant?.openDated ?? "",
+            "variant.notAvailable": aiData?.variant?.notAvailable ?? "",
+            "variant.externalVariantId": aiData?.variant?.externalVariantId ?? "",
+            "variant.status": aiData?.variant?.status ?? "",
+        };
+    };
 
     const handleGenerateAI = async () => {
         setAiError("");
@@ -459,17 +563,48 @@ const EditKlookMappingModal = ({
 
         setAiLoading(true);
         try {
-            const response = await generateTourGroupContentAI({
+            // Prepare payload based on selected scope
+            const payload = {
                 activity: klookData?.activity || {},
                 package: klookData?.package || null,
-                currentTourGroup: tylData?.tourGroup || {},
-                currentVariant: tylData?.variant || {},
                 tone: "professional",
-            });
+            };
+
+            // Only include current data for the selected scope
+            if (aiGenerateScope === "tourgroup" || aiGenerateScope === "both") {
+                payload.currentTourGroup = tylData?.tourGroup || {};
+            }
+            if (aiGenerateScope === "variant" || aiGenerateScope === "both") {
+                payload.currentVariant = tylData?.variant || {};
+            }
+
+            // Add scope parameter to backend
+            payload.scope = aiGenerateScope;
+
+            const response = await generateTourGroupContentAI(payload);
 
             if (response?.success) {
-                setAiDraft(mapAiToDraft(response.data || {}));
-                showToastSuccess("AI draft generated");
+                const mappedDraft = mapAiToDraft(response.data || {});
+                
+                // Only populate fields for the selected scope
+                if (aiGenerateScope === "tourgroup") {
+                    // Only keep tour group fields
+                    Object.keys(mappedDraft).forEach(key => {
+                        if (!key.startsWith("tourGroup.")) {
+                            delete mappedDraft[key];
+                        }
+                    });
+                } else if (aiGenerateScope === "variant") {
+                    // Only keep variant fields
+                    Object.keys(mappedDraft).forEach(key => {
+                        if (!key.startsWith("variant.")) {
+                            delete mappedDraft[key];
+                        }
+                    });
+                }
+                
+                setAiDraft(mappedDraft);
+                showToastSuccess(`AI draft generated for ${aiGenerateScope === "both" ? "Tour Group & Variant" : aiGenerateScope === "tourgroup" ? "Tour Group" : "Variant"}`);
             } else {
                 setAiError(response?.message || "AI generation failed");
             }
@@ -497,8 +632,10 @@ const EditKlookMappingModal = ({
         showToastSuccess("AI draft applied to pending updates");
     };
 
-    const saveTourGroupUpdates = async () => {
-        if (Object.keys(tourGroupUpdates).length === 0) {
+    const saveTourGroupUpdates = async (filteredUpdates = null) => {
+        const updatesToSave = filteredUpdates || tourGroupUpdates;
+        
+        if (Object.keys(updatesToSave).length === 0) {
             showToastError("No tour group updates selected");
             return false;
         }
@@ -509,7 +646,7 @@ const EditKlookMappingModal = ({
                 throw new Error("Tour group ID not found");
             }
             const payload = {};
-            Object.entries(tourGroupUpdates).forEach(([fieldId, value]) => {
+            Object.entries(updatesToSave).forEach(([fieldId, value]) => {
                 const [, field] = fieldId.split(".");
                 payload[field] = value;
             });
@@ -517,7 +654,14 @@ const EditKlookMappingModal = ({
             formData.append("data", JSON.stringify(payload));
             await updateTourGroupHelper(tourGroup._id, formData);
             showToastSuccess("Tour group updates saved");
-            setTourGroupUpdates({});
+            
+            // Remove saved fields from updates
+            const remainingUpdates = { ...tourGroupUpdates };
+            Object.keys(updatesToSave).forEach(key => {
+                delete remainingUpdates[key];
+            });
+            setTourGroupUpdates(remainingUpdates);
+            
             if (onSuccess) onSuccess();
             return true;
         } catch (error) {
@@ -529,8 +673,10 @@ const EditKlookMappingModal = ({
         }
     };
 
-    const saveVariantUpdates = async () => {
-        if (Object.keys(variantUpdates).length === 0) {
+    const saveVariantUpdates = async (filteredUpdates = null) => {
+        const updatesToSave = filteredUpdates || variantUpdates;
+        
+        if (Object.keys(updatesToSave).length === 0) {
             showToastError("No variant updates selected");
             return false;
         }
@@ -549,7 +695,7 @@ const EditKlookMappingModal = ({
             };
 
             const variantPayload = {};
-            Object.entries(variantUpdates).forEach(([fieldId, value]) => {
+            Object.entries(updatesToSave).forEach(([fieldId, value]) => {
                 const [, field] = fieldId.split(".");
                 variantPayload[field] = value;
             });
@@ -576,7 +722,14 @@ const EditKlookMappingModal = ({
 
             await updateTourGroupVariantAPI(baseVariant._id, payload);
             showToastSuccess("Variant updates saved");
-            setVariantUpdates({});
+            
+            // Remove saved fields from updates
+            const remainingUpdates = { ...variantUpdates };
+            Object.keys(updatesToSave).forEach(key => {
+                delete remainingUpdates[key];
+            });
+            setVariantUpdates(remainingUpdates);
+            
             if (onSuccess) onSuccess();
             return true;
         } catch (error) {
@@ -616,7 +769,8 @@ const EditKlookMappingModal = ({
         const variantId = resolveVariantId();
         if (!variantId) return;
         const url = `/tour-group-variants/edit/${variantId}`;
-        maybeSaveBeforeRedirect(() => redirectTo(url));
+        // Open in new tab instead of redirecting
+        openInNewTab(url);
     };
 
     const tourGroupFieldMap = useMemo(() => {
@@ -736,18 +890,78 @@ const EditKlookMappingModal = ({
         );
     };
 
-    const renderPendingUpdates = ({ title, rows, onSave, emptyText, ctaLabel }) => (
+    const renderPendingUpdates = ({ title, rows, onSave, emptyText, ctaLabel, fieldPrefix }) => {
+        const selectedCount = rows.filter(row => selectedFieldsToSave[row.id]).length;
+        const allSelected = rows.length > 0 && selectedCount === rows.length;
+        
+        const toggleAllFields = () => {
+            const newSelection = {};
+            if (!allSelected) {
+                rows.forEach(row => {
+                    newSelection[row.id] = true;
+                });
+            }
+            setSelectedFieldsToSave(prev => ({ ...prev, ...newSelection }));
+        };
+
+        const toggleField = (fieldId) => {
+            setSelectedFieldsToSave(prev => ({
+                ...prev,
+                [fieldId]: !prev[fieldId]
+            }));
+        };
+
+        const handleSaveSelected = async () => {
+            const fieldsToSave = rows.filter(row => selectedFieldsToSave[row.id]);
+            if (fieldsToSave.length === 0) {
+                showToastError("Please select at least one field to save");
+                return;
+            }
+
+            // Create a filtered updates object with only selected fields
+            const filteredUpdates = {};
+            fieldsToSave.forEach(row => {
+                filteredUpdates[row.id] = row.next;
+            });
+
+            // Call save function with filtered updates
+            const success = await onSave(filteredUpdates);
+
+            if (success) {
+                // Clear selections after successful save
+                const clearedSelection = {};
+                rows.forEach(row => {
+                    clearedSelection[row.id] = false;
+                });
+                setSelectedFieldsToSave(prev => ({ ...prev, ...clearedSelection }));
+            }
+        };
+
+        return (
         <div>
             <div className="d-flex justify-content-between align-items-center mb-2">
                 <div>
                     <h6 className="mb-0">{title}</h6>
-                    <small className="text-muted">Review the changes before saving.</small>
+                        <small className="text-muted">
+                            Select fields to save. {selectedCount > 0 && `${selectedCount} of ${rows.length} selected`}
+                        </small>
                 </div>
+                    <div className="d-flex gap-2">
+                        {rows.length > 0 && (
+                            <Button
+                                size="sm"
+                                color="secondary"
+                                outline
+                                onClick={toggleAllFields}
+                            >
+                                {allSelected ? "Deselect All" : "Select All"}
+                            </Button>
+                        )}
                 <Button
                     size="sm"
                     color="primary"
-                    onClick={onSave}
-                    disabled={rows.length === 0 || saving}
+                            onClick={handleSaveSelected}
+                            disabled={selectedCount === 0 || saving}
                 >
                     {saving ? (
                         <>
@@ -755,9 +969,10 @@ const EditKlookMappingModal = ({
                             Saving...
                         </>
                     ) : (
-                        ctaLabel
+                                `${ctaLabel} (${selectedCount})`
                     )}
                 </Button>
+                    </div>
             </div>
             {rows.length === 0 ? (
                 <Alert color="info" className="mb-0">
@@ -767,14 +982,42 @@ const EditKlookMappingModal = ({
                 <Table responsive>
                     <thead>
                         <tr>
+                            <th style={{ width: "140px" }}>
+                                <Button
+                                    size="sm"
+                                    color={allSelected ? "success" : "outline-secondary"}
+                                    onClick={toggleAllFields}
+                                    style={{ fontSize: "0.75rem", minWidth: "100px" }}
+                                    title={allSelected ? "Deselect all fields" : "Select all fields"}
+                                >
+                                    {allSelected ? "✓ All Selected" : "Select All"}
+                                </Button>
+                            </th>
                             <th>Field</th>
                             <th>Current Value</th>
                             <th>New Value</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {rows.map((row) => (
+                            {rows.map((row) => {
+                                const isSelected = selectedFieldsToSave[row.id] || false;
+                                return (
                             <tr key={row.id}>
+                                        <td>
+                                            <Button
+                                                size="sm"
+                                                color={isSelected ? "success" : "outline-secondary"}
+                                                onClick={() => toggleField(row.id)}
+                                                style={{ 
+                                                    fontSize: "0.75rem", 
+                                                    minWidth: "100px",
+                                                    padding: "4px 8px"
+                                                }}
+                                                title={isSelected ? "Click to deselect" : "Click to select"}
+                                            >
+                                                {isSelected ? "✓ Selected" : "Select"}
+                                            </Button>
+                                        </td>
                                 <td>
                                     <strong>{row.label}</strong>
                                 </td>
@@ -789,12 +1032,14 @@ const EditKlookMappingModal = ({
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                                );
+                            })}
                     </tbody>
                 </Table>
             )}
         </div>
     );
+    };
 
     return (
         <Modal isOpen={isOpen} toggle={toggle} size="xl">
@@ -856,7 +1101,22 @@ const EditKlookMappingModal = ({
                                             Generate a safe AI draft, review it, and apply changes field-by-field.
                                         </small>
                                     </div>
-                                    <div className="d-flex gap-2">
+                                    <div className="d-flex gap-2 align-items-center">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <Label className="mb-0 small">Generate for:</Label>
+                                            <Input
+                                                type="select"
+                                                size="sm"
+                                                style={{ width: "150px" }}
+                                                value={aiGenerateScope}
+                                                onChange={(e) => setAiGenerateScope(e.target.value)}
+                                                disabled={aiLoading}
+                                            >
+                                                <option value="tourgroup">Tour Group</option>
+                                                <option value="variant">Variant</option>
+                                                <option value="both">Both</option>
+                                            </Input>
+                                        </div>
                                         <Button
                                             size="sm"
                                             color="primary"
@@ -968,14 +1228,30 @@ const EditKlookMappingModal = ({
                                                         </td>
                                                         <td>
                                                             {renderAiFieldEditor(field)}
-                                                            <div className="d-flex gap-2 mt-2">
+                                                            <div className="d-flex gap-2 mt-2 flex-wrap">
                                                                 <Button
                                                                     size="sm"
                                                                     color="primary"
                                                                     onClick={() => {
-                                                                        handleUpdateField(field.id, aiDraft[field.id]);
+                                                                        // Get the current AI draft value
+                                                                        const currentAiDraft = aiDraft[field.id];
+                                                                        
+                                                                        if (!hasDisplayValue(currentAiDraft)) {
+                                                                            showToastError("No AI draft available for this field. Please click 'Generate AI Draft' first.");
+                                                                            return;
+                                                                        }
+                                                                        
+                                                                        // Ensure the value is properly set in AI draft state (updates editor display)
+                                                                        handleAiDraftChange(field.id, currentAiDraft, false);
+                                                                        
+                                                                        // Add to pending updates (this makes it appear in Preview & Save tab)
+                                                                        updateScopeState(field.id, currentAiDraft);
+                                                                        
+                                                                        const fieldName = field.label;
+                                                                        showToastSuccess(`"${fieldName}" added to pending updates. Go to Preview & Save tab to review and save.`);
                                                                     }}
                                                                     disabled={!hasDisplayValue(aiDraft[field.id])}
+                                                                    title="Add this AI-generated content to pending updates"
                                                                 >
                                                                     Use AI
                                                                 </Button>
@@ -1003,6 +1279,7 @@ const EditKlookMappingModal = ({
                                                 onSave: saveTourGroupUpdates,
                                                 emptyText: "No tour group updates selected yet.",
                                                 ctaLabel: "Save Tour Group Updates",
+                                                fieldPrefix: "tourGroup",
                                             })
                                         )}
                                     </CardBody>
@@ -1072,14 +1349,42 @@ const EditKlookMappingModal = ({
                                                         </td>
                                                         <td>
                                                             {renderAiFieldEditor(field)}
-                                                            <div className="d-flex gap-2 mt-2">
+                                                            <div className="d-flex gap-2 mt-2 flex-wrap">
                                                                 <Button
                                                                     size="sm"
                                                                     color="primary"
                                                                     onClick={() => {
-                                                                        handleUpdateField(field.id, aiDraft[field.id]);
+                                                                        // Get the current AI draft value
+                                                                        let currentAiDraft = aiDraft[field.id];
+                                                                        
+                                                                        if (!hasDisplayValue(currentAiDraft)) {
+                                                                            showToastError("No AI draft available for this field. Please click 'Generate AI Draft' first.");
+                                                                            return;
+                                                                        }
+                                                                        
+                                                                        // Convert markdown to HTML for variantInfo if needed
+                                                                        if (field.id === "variant.variantInfo" && currentAiDraft && typeof currentAiDraft === 'string') {
+                                                                            if (!currentAiDraft.includes('<ul>') && !currentAiDraft.includes('<li>')) {
+                                                                                currentAiDraft = convertMarkdownToHtml(currentAiDraft);
+                                                                                // Update the aiDraft state with converted value
+                                                                                setAiDraft(prev => ({
+                                                                                    ...prev,
+                                                                                    [field.id]: currentAiDraft
+                                                                                }));
+                                                                            }
+                                                                        }
+                                                                        
+                                                                        // Ensure the value is properly set in AI draft state (updates editor display)
+                                                                        handleAiDraftChange(field.id, currentAiDraft, false);
+                                                                        
+                                                                        // Add to pending updates (this makes it appear in Preview & Save tab)
+                                                                        updateScopeState(field.id, currentAiDraft);
+                                                                        
+                                                                        const fieldName = field.label;
+                                                                        showToastSuccess(`"${fieldName}" added to pending updates. Go to Preview & Save tab to review and save.`);
                                                                     }}
                                                                     disabled={!hasDisplayValue(aiDraft[field.id])}
+                                                                    title="Add this AI-generated content to pending updates"
                                                                 >
                                                                     Use AI
                                                                 </Button>
@@ -1107,6 +1412,7 @@ const EditKlookMappingModal = ({
                                                 onSave: saveVariantUpdates,
                                                 emptyText: "No variant updates selected yet.",
                                                 ctaLabel: "Save Variant Updates",
+                                                fieldPrefix: "variant",
                                             })
                                         )}
                                     </CardBody>
