@@ -14,7 +14,7 @@ import {
     FormFeedback,
     Alert
 } from "reactstrap";
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Select from "react-select";
@@ -35,6 +35,7 @@ const EditSubCategory = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [searchParams] = useSearchParams();
+    const location = useLocation();
 
     document.title = "Edit Travel Sub Category | Scrollit";
     
@@ -136,7 +137,15 @@ const EditSubCategory = () => {
     useEffect(() => {
         dispatch(getUsersPermissionsForSubcategory());
         dispatch(resetUpdateSubcategoryStatus());
-    }, [dispatch]);
+        
+        // Store cityCode from URL params in localStorage as backup
+        const cityCodeFromUrl = searchParams.get('cityCode');
+        if (cityCodeFromUrl) {
+            localStorage.setItem('subcategoryEditCityCode', cityCodeFromUrl);
+        } else if (location.state?.cityCode) {
+            localStorage.setItem('subcategoryEditCityCode', location.state.cityCode);
+        }
+    }, [dispatch, searchParams, location.state]);
 
     // 2. Once permissions are loaded, check if the user can view.
     useEffect(() => {
@@ -202,8 +211,38 @@ const EditSubCategory = () => {
     useEffect(() => {
         if (success) {
             dispatch(resetUpdateSubcategoryStatus());
-            // Preserve city filter from URL params
-            const cityCode = searchParams.get('cityCode');
+            // Preserve city filter - check multiple sources in order of priority:
+            // 1. URL params (if passed in edit link)
+            // 2. Location state (if passed via navigate with state)
+            // 3. localStorage (stored when navigating to edit)
+            // 4. document.referrer (fallback to check previous page)
+            let cityCode = searchParams.get('cityCode');
+            
+            if (!cityCode && location.state?.cityCode) {
+                cityCode = location.state.cityCode;
+            }
+            
+            if (!cityCode) {
+                const storedCityCode = localStorage.getItem('subcategoryEditCityCode');
+                if (storedCityCode) {
+                    cityCode = storedCityCode;
+                    localStorage.removeItem('subcategoryEditCityCode'); // Clean up after use
+                }
+            }
+            
+            // Fallback: try to extract from referrer if available
+            if (!cityCode && typeof window !== 'undefined' && document.referrer) {
+                try {
+                    const referrerUrl = new URL(document.referrer);
+                    const referrerCityCode = referrerUrl.searchParams.get('cityCode');
+                    if (referrerCityCode) {
+                        cityCode = referrerCityCode;
+                    }
+                } catch (e) {
+                    // Ignore errors parsing referrer
+                }
+            }
+            
             const url = cityCode 
                 ? `/tour-group-sub-category?cityCode=${cityCode}`
                 : "/tour-group-sub-category";
@@ -212,7 +251,7 @@ const EditSubCategory = () => {
         if (error) {
             dispatch(resetUpdateSubcategoryStatus());
         }
-    }, [success, error, dispatch, navigate, searchParams]);
+    }, [success, error, dispatch, navigate, searchParams, location.state]);
 
     const handleSupportedLanguagesChange = (selectedOptions) => {
         setSelectedLanguages(selectedOptions);
@@ -456,7 +495,29 @@ const EditSubCategory = () => {
                                             </Row>
                                             <div className="d-flex justify-content-end gap-2 mt-3">
                                                 <Button color="secondary" type="button" onClick={() => {
-                                                    const cityCode = searchParams.get('cityCode');
+                                                    // Preserve city filter - check multiple sources
+                                                    let cityCode = searchParams.get('cityCode');
+                                                    if (!cityCode && location.state?.cityCode) {
+                                                        cityCode = location.state.cityCode;
+                                                    }
+                                                    if (!cityCode) {
+                                                        const storedCityCode = localStorage.getItem('subcategoryEditCityCode');
+                                                        if (storedCityCode) {
+                                                            cityCode = storedCityCode;
+                                                            localStorage.removeItem('subcategoryEditCityCode');
+                                                        }
+                                                    }
+                                                    if (!cityCode && typeof window !== 'undefined' && document.referrer) {
+                                                        try {
+                                                            const referrerUrl = new URL(document.referrer);
+                                                            const referrerCityCode = referrerUrl.searchParams.get('cityCode');
+                                                            if (referrerCityCode) {
+                                                                cityCode = referrerCityCode;
+                                                            }
+                                                        } catch (e) {
+                                                            // Ignore errors
+                                                        }
+                                                    }
                                                     const url = cityCode 
                                                         ? `/tour-group-sub-category?cityCode=${cityCode}`
                                                         : "/tour-group-sub-category";
@@ -475,7 +536,29 @@ const EditSubCategory = () => {
                                 <Alert color="danger" className="text-center">
                                     <p>You do not have permission to edit this subcategory.</p>
                                     {canView?<Button color="primary" className="mt-2" onClick={() => {
-                                        const cityCode = searchParams.get('cityCode');
+                                        // Preserve city filter - check multiple sources
+                                        let cityCode = searchParams.get('cityCode');
+                                        if (!cityCode && location.state?.cityCode) {
+                                            cityCode = location.state.cityCode;
+                                        }
+                                        if (!cityCode) {
+                                            const storedCityCode = localStorage.getItem('subcategoryEditCityCode');
+                                            if (storedCityCode) {
+                                                cityCode = storedCityCode;
+                                                localStorage.removeItem('subcategoryEditCityCode');
+                                            }
+                                        }
+                                        if (!cityCode && typeof window !== 'undefined' && document.referrer) {
+                                            try {
+                                                const referrerUrl = new URL(document.referrer);
+                                                const referrerCityCode = referrerUrl.searchParams.get('cityCode');
+                                                if (referrerCityCode) {
+                                                    cityCode = referrerCityCode;
+                                                }
+                                            } catch (e) {
+                                                // Ignore errors
+                                            }
+                                        }
                                         const url = cityCode 
                                             ? `/tour-group-sub-category?cityCode=${cityCode}`
                                             : "/tour-group-sub-category";

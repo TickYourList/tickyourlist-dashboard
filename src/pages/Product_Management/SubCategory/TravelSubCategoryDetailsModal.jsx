@@ -386,7 +386,16 @@ const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit 
                   </p>
                 </div>
                 {canEdit && (
-                  <Link to={`/edit-subcategory/${travelSubcategoryDetails._id}${searchParams.get('cityCode') ? `?cityCode=${searchParams.get('cityCode')}` : ''}`}>
+                  <Link 
+                    to={`/edit-subCategory/${travelSubcategoryDetails._id}${searchParams.get('cityCode') ? `?cityCode=${searchParams.get('cityCode')}` : ''}`}
+                    onClick={() => {
+                      // Store cityCode in localStorage as backup
+                      const cityCode = searchParams.get('cityCode');
+                      if (cityCode) {
+                        localStorage.setItem('subcategoryEditCityCode', cityCode);
+                      }
+                    }}
+                  >
                     <Button color="primary" className="ms-3">
                       <i className="bx bx-edit font-size-18 align-middle me-1"></i>
                       Edit SubCategory

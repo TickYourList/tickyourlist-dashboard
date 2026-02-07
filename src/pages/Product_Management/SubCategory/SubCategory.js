@@ -479,9 +479,15 @@ const SubCategory = () => {
                         {canEdit && (
                             <>
                                 <Link
-                                    to={`/edit-subcategory/${original._id}${filterCityCode ? `?cityCode=${filterCityCode}` : ''}`}
+                                    to={`/edit-subCategory/${original._id}${filterCityCode ? `?cityCode=${filterCityCode}` : ''}`}
                                     className="text-primary"
                                     id={`editTooltip-${original._id}`}
+                                    onClick={() => {
+                                        // Store cityCode in localStorage as backup in case URL params get lost
+                                        if (filterCityCode) {
+                                            localStorage.setItem('subcategoryEditCityCode', filterCityCode);
+                                        }
+                                    }}
                                 >
                                     <i className="bx bx-pencil font-size-18"></i>
                                 </Link>
