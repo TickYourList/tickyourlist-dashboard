@@ -26,6 +26,9 @@ import {
 
 const TRAVEL_DATA_INIT_STATE = {
     subcategories: [],
+    totalCount: 0,
+    currentPage: 1,
+    pageSize: 10,
     selectedCategory: null, // This seems related to subcategories
     travelcategories: [],
     travelCities: [],
@@ -46,7 +49,10 @@ const travelSubCategoryReducer = (state = TRAVEL_DATA_INIT_STATE, action) => {
         case GET_SUBCATEGORIES_SUCCESS:
             return {
                 ...state,
-                subcategories: action.payload,
+                subcategories: action.payload.subcategories || action.payload || [],
+                totalCount: action.payload.total || 0,
+                currentPage: action.payload.page || 1,
+                pageSize: action.payload.limit || 10,
                 loading: false,
                 error: null,
             };

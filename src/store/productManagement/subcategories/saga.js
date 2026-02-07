@@ -46,18 +46,31 @@ import { get, take } from "lodash";
 
 function* fetchSubcategories(action) {
   try {
-    const cityCode = action.payload || null;
+    const { cityCode, page = 1, limit = 10 } = action.payload || {};
     let response;
     if (cityCode) {
-      // Use city-specific endpoint
-      response = yield call(getSubcategoriesForCity, cityCode);
-      // Extract subcategories from the response structure
-      const subcategories = response?.data?.subcategories || response?.data || [];
-      yield put(getSubcategoriesSuccess(subcategories));
+      // Use city-specific endpoint with pagination
+      response = yield call(getSubcategoriesForCity, cityCode, page, limit);
     } else {
-      // Use general endpoint
-      response = yield call(getSubcategoriesList);
-      yield put(getSubcategoriesSuccess(response.data));
+      // Use general endpoint with pagination
+      response = yield call(getSubcategoriesList, page, limit);
+    }
+    
+    // Handle response structure - could be { subcategories, total, page, limit } or just array
+    const responseData = response?.data || response;
+    if (responseData.subcategories) {
+      // New paginated response structure
+      yield put(getSubcategoriesSuccess(responseData));
+    } else if (Array.isArray(responseData)) {
+      // Legacy response structure (array only)
+      yield put(getSubcategoriesSuccess({
+        subcategories: responseData,
+        total: responseData.length,
+        page: 1,
+        limit: responseData.length
+      }));
+    } else {
+      yield put(getSubcategoriesSuccess(responseData));
     }
   } catch (error) {
     yield put(getSubcategoriesFail(error));

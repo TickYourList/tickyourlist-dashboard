@@ -276,9 +276,15 @@ const deleteTourGroupVariantAPI = variantId =>
   del(`${url.DELETE_TOUR_GROUP_VARIANT_API}${variantId}`);
 
 // GET SUB CATEGORIES
-const getSubcategoriesList = () => {
+const getSubcategoriesList = (page = 1, limit = 10, cityCode = null) => {
   console.log("The url for getsubcategories ", url.GET_SUBCATEGORIES)
-  return get(url.GET_SUBCATEGORIES);
+  const params = new URLSearchParams();
+  params.append('page', page.toString());
+  params.append('limit', limit.toString());
+  if (cityCode) {
+    params.append('cityCode', cityCode);
+  }
+  return get(`${url.GET_SUBCATEGORIES}?${params.toString()}`);
 }
 
 
@@ -504,7 +510,13 @@ const getSectionDetailsById = (sectionId) => get(`${url.GET_SECTION_LIST}/${sect
 
 const getCategoriesForCity = (cityCode) => get(`${url.GET_CATEGORIES_FOR_CITY}/${cityCode}`);
 
-const getSubcategoriesForCity = (cityCode) => get(`${url.GET_SUBCATEGORIES_FOR_CITY}/${cityCode}`);
+const getSubcategoriesForCity = (cityCode, page = 1, limit = 10) => {
+  const params = new URLSearchParams();
+  params.append('page', page.toString());
+  params.append('limit', limit.toString());
+  params.append('cityCode', cityCode);
+  return get(`${url.GET_SUBCATEGORIES}?${params.toString()}`);
+};
 
 const getToursForCity = (cityCode) => get(`${url.GET_TOURS_FOR_CITY}/${cityCode}`);
 

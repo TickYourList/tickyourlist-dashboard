@@ -21,6 +21,7 @@ import {
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Breadcrumbs from "components/Common/Breadcrumb";
 import TableContainer from "components/Common/TableContainer";
+import TableContainerWithServerSidePagination from "components/Common/TableContainerWithServerSidePagination";
 
 // Redux imports
 import { useDispatch, useSelector } from "react-redux";
@@ -46,10 +47,16 @@ const SubCategory = () => {
     const dispatch = useDispatch();
     const {
         subcategories,
+        totalCount,
+        currentPage: reduxCurrentPage,
+        pageSize: reduxPageSize,
         loading,
         error,
         deleteSuccess,
     } = useSelector((state) => state.travelSubCategoryReducer);
+
+    const [page, setPage] = useState(() => Number(localStorage.getItem("subcategoryPage")) || 1);
+    const [pageSize, setPageSize] = useState(() => Number(localStorage.getItem("subcategoryPageSize")) || 10);
 
     const cities = useSelector((state) => state.travelCity?.cities || []);
 
@@ -134,7 +141,7 @@ const SubCategory = () => {
             const fetchData = () => {
                 // When filterCityCode is empty string, pass null/undefined to get all subcategories
                 const cityCodeParam = filterCityCode && filterCityCode.trim() !== "" ? filterCityCode : null;
-                dispatch(getSubcategories(cityCodeParam));
+                dispatch(getSubcategories(cityCodeParam, page, pageSize));
             };
 
             if (isInitialMount.current) {
@@ -153,7 +160,23 @@ const SubCategory = () => {
                 }
             };
         }
-    }, [dispatch, canView, isPermissionsReady, filterCityCode]);
+    }, [dispatch, canView, isPermissionsReady, filterCityCode, page, pageSize]);
+
+    // Reset to page 1 when city filter changes
+    useEffect(() => {
+        if (filterCityCode !== undefined) {
+            setPage(1);
+        }
+    }, [filterCityCode]);
+
+    // Save page and pageSize to localStorage
+    useEffect(() => {
+        localStorage.setItem("subcategoryPage", page);
+    }, [page]);
+
+    useEffect(() => {
+        localStorage.setItem("subcategoryPageSize", pageSize);
+    }, [pageSize]);
 
     // Manage "No Subcategories Found" message delay
     useEffect(() => {
@@ -247,7 +270,8 @@ const SubCategory = () => {
         // When clearing (selectedOption is null), set to empty string to trigger refetch
         const cityCode = selectedOption?.value || "";
         setFilterCityCode(cityCode);
-        
+        setPage(1); // Reset to page 1 when filter changes
+
         // Update URL params to preserve filter
         const newSearchParams = new URLSearchParams(searchParams);
         if (cityCode) {
@@ -258,10 +282,20 @@ const SubCategory = () => {
         setSearchParams(newSearchParams);
     };
 
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+    };
+
+    const handlePageSizeChange = (newPageSize) => {
+        setPageSize(newPageSize);
+        setPage(1); // Reset to page 1 when page size changes
+    };
+
     const handleReloadData = () => {
         setShowReloadButton(false);
         if (canView) {
-            dispatch(getSubcategories());
+            const cityCodeParam = filterCityCode && filterCityCode.trim() !== "" ? filterCityCode : null;
+            dispatch(getSubcategories(cityCodeParam, page, pageSize));
         }
     };
 
@@ -292,16 +326,12 @@ const SubCategory = () => {
         if (!categoryToDelete) return;
         try {
             dispatch(deleteSubcategory(categoryToDelete._id));
-            if (deleteSuccess) {
-                dispatch(getSubcategories());
-                showNotification(`${categoryToDelete.name} deleted successfully.`, "success");
-                closeDeleteDialog();
-                dispatch(resetCategoryStatus());
-            } else {
-                dispatch(getSubcategories());
-                closeDeleteDialog();
-                showNotification(`${categoryToDelete.name} failed to delete.`, "error");
-            }
+            // Refetch with current pagination
+            const cityCodeParam = filterCityCode && filterCityCode.trim() !== "" ? filterCityCode : null;
+            dispatch(getSubcategories(cityCodeParam, page, pageSize));
+            showNotification(`${categoryToDelete.name} deleted successfully.`, "success");
+            closeDeleteDialog();
+            dispatch(resetCategoryStatus());
         } catch (error) {
             console.error("Deletion error:", error);
             showNotification(`An unexpected error occurred while deleting ${categoryToDelete.name}.`, "error");
@@ -572,13 +602,16 @@ const SubCategory = () => {
                                             )}
                                         </Alert>
                                     ) : Array.isArray(subcategories) && subcategories.length > 0 ? (
-                                        <TableContainer
+                                        <TableContainerWithServerSidePagination
                                             key={filterCityCode || 'all-cities'}
                                             columns={columns}
                                             data={subcategories}
+                                            totalCount={totalCount || 0}
+                                            currentPage={page}
+                                            pageSize={pageSize}
+                                            onPageChange={handlePageChange}
+                                            setPageSize={handlePageSizeChange}
                                             isGlobalFilter={true}
-                                            isAddButton={false}
-                                            customPageSize={10}
                                             className="custom-header-css"
                                         />
                                     ) : showNotFound ? (

@@ -40,9 +40,9 @@ import {
   // New
 } from "./actionTypes";
 
-export const getSubcategories = (cityCode = null) => ({
+export const getSubcategories = (cityCode = null, page = 1, limit = 10) => ({
   type: GET_SUBCATEGORIES,
-  payload: cityCode,
+  payload: { cityCode, page, limit },
 });
 
 export const getSubcategoriesSuccess = (data) => ({
