@@ -479,7 +479,7 @@ const SubCategory = () => {
                         {canEdit && (
                             <>
                                 <Link
-                                    to={`/edit-subcategory/${original._id}`}
+                                    to={`/edit-subcategory/${original._id}${filterCityCode ? `?cityCode=${filterCityCode}` : ''}`}
                                     className="text-primary"
                                     id={`editTooltip-${original._id}`}
                                 >

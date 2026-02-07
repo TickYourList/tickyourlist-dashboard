@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Card,
     CardBody,
@@ -32,6 +32,7 @@ import {
 const SubCategoryForm = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [selectedCityName, setSelectedCityName] = useState("");
     const [selectedCityNameId, setSelectedCityNameId] = useState("");
     document.title = "Add New Travel Sub Category | Scrollit";
@@ -201,7 +202,12 @@ const SubCategoryForm = () => {
             }
             dispatch(addTravelSubcategory(formData, selectedCityName));
             console.log("Form data submitted:", formData);
-            navigate("/tour-group-sub-category"); // Navigate to the subcategories page after submission
+            // Preserve city filter from URL params
+            const cityCode = searchParams.get('cityCode');
+            const url = cityCode 
+                ? `/tour-group-sub-category?cityCode=${cityCode}`
+                : "/tour-group-sub-category";
+            navigate(url); // Navigate to the subcategories page after submission
             
         },
     });

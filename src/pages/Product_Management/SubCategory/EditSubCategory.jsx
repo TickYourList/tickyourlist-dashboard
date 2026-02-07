@@ -455,7 +455,13 @@ const EditSubCategory = () => {
                                                 </Col>
                                             </Row>
                                             <div className="d-flex justify-content-end gap-2 mt-3">
-                                                <Button color="secondary" type="button" onClick={() => navigate("/tour-group-sub-category")}>
+                                                <Button color="secondary" type="button" onClick={() => {
+                                                    const cityCode = searchParams.get('cityCode');
+                                                    const url = cityCode 
+                                                        ? `/tour-group-sub-category?cityCode=${cityCode}`
+                                                        : "/tour-group-sub-category";
+                                                    navigate(url);
+                                                }}>
                                                     Cancel
                                                 </Button>
                                                 <Button color="primary" type="submit" disabled={loading}>
@@ -468,7 +474,13 @@ const EditSubCategory = () => {
                             ) : (
                                 <Alert color="danger" className="text-center">
                                     <p>You do not have permission to edit this subcategory.</p>
-                                    {canView?<Button color="primary" className="mt-2" onClick={() => navigate("/tour-group-sub-category")}>
+                                    {canView?<Button color="primary" className="mt-2" onClick={() => {
+                                        const cityCode = searchParams.get('cityCode');
+                                        const url = cityCode 
+                                            ? `/tour-group-sub-category?cityCode=${cityCode}`
+                                            : "/tour-group-sub-category";
+                                        navigate(url);
+                                    }}>
                                         Go Back to Home
                                     </Button>:<Button color="primary" className="mt-2" onClick={() => navigate("/dashboard")}>
                                         Go Back to Dashboard

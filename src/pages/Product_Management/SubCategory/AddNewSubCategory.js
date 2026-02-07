@@ -409,7 +409,13 @@ const AddNewSubCategory = () => {
                             ) : (
                                 <Alert color="danger" className="text-center">
                                     <p>You do not have permission to access this page.</p>
-                                 {canView?<Button color="primary" className="mt-2" onClick={() => navigate("/tour-group-sub-category")}>
+                                 {canView?<Button color="primary" className="mt-2" onClick={() => {
+                                        const cityCode = searchParams.get('cityCode');
+                                        const url = cityCode 
+                                            ? `/tour-group-sub-category?cityCode=${cityCode}`
+                                            : "/tour-group-sub-category";
+                                        navigate(url);
+                                    }}>
                                         Go Back to Home
                                     </Button>:
                                     <Button color="primary" className="mt-2" onClick={() => navigate("/dashboard")}>

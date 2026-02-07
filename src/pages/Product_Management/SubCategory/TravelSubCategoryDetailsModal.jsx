@@ -22,7 +22,7 @@ import {
   Badge,
 } from "reactstrap";
 import classnames from "classnames";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getSubCategoryDetailsForView,
@@ -246,6 +246,7 @@ const BookingsTable = ({ bookings }) => {
 // Main Modal Component
 const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit }) => {
   const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("1");
 
   // Bulk connection state
@@ -385,7 +386,7 @@ const TravelSubCategoryDetailsModal = ({ isOpen, toggle, subCategoryId, canEdit 
                   </p>
                 </div>
                 {canEdit && (
-                  <Link to={`/edit-subcategory/${travelSubcategoryDetails._id}`}>
+                  <Link to={`/edit-subcategory/${travelSubcategoryDetails._id}${searchParams.get('cityCode') ? `?cityCode=${searchParams.get('cityCode')}` : ''}`}>
                     <Button color="primary" className="ms-3">
                       <i className="bx bx-edit font-size-18 align-middle me-1"></i>
                       Edit SubCategory
