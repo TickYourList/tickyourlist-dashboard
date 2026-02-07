@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { Link, useLocation, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import Select from "react-select"
 
 import Breadcrumbs from "components/Common/Breadcrumb"
@@ -72,6 +72,7 @@ function TourGroupTable() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { can, getTourGroupPermissions, isPermissionsReady, loading: permissionsLoading } = usePermissions()
 
   // Permission checks using standardized usePermissions hook - moved before useEffect
@@ -106,6 +107,15 @@ function TourGroupTable() {
           label: `${city.name} (${city.cityCode})`,
         }))
         setCities(cityOptions)
+        
+        // Restore city filter from URL params after cities are loaded
+        const cityCodeFromUrl = searchParams.get('cityCode')
+        if (cityCodeFromUrl) {
+          const cityFromUrl = cityOptions.find(c => c.value === cityCodeFromUrl)
+          if (cityFromUrl) {
+            setSelectedCity(cityFromUrl)
+          }
+        }
       } catch (error) {
         console.error("Error fetching cities:", error)
       } finally {
@@ -169,6 +179,15 @@ function TourGroupTable() {
       setIsSearchMode(false)
       setSearchQuery('')
     }
+    
+    // Update URL params to preserve filter
+    const newSearchParams = new URLSearchParams(searchParams)
+    if (selectedOption?.value) {
+      newSearchParams.set('cityCode', selectedOption.value)
+    } else {
+      newSearchParams.delete('cityCode')
+    }
+    setSearchParams(newSearchParams)
   }
 
   const handleSearch = () => {

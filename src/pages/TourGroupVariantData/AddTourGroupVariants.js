@@ -137,6 +137,19 @@ const AddTourGroupVariants = () => {
     dispatch(getCities());
   }, [dispatch]);
 
+  // Restore city filter from URL params on mount
+  useEffect(() => {
+    const cityCodeFromUrl = searchParams.get('cityCode') || urlCityCode;
+    if (cityCodeFromUrl && cities.length > 0 && !selectedCity) {
+      const cityFromUrl = cities.find(c => c.cityCode === cityCodeFromUrl);
+      if (cityFromUrl) {
+        setSelectedCity(cityCodeFromUrl);
+        // Fetch tour groups for this city
+        dispatch(fetchTourGroupsByCityRequest(cityCodeFromUrl));
+      }
+    }
+  }, [cities, searchParams, urlCityCode, dispatch, selectedCity]);
+
   useEffect(() => {
     if (isEdit && variantId) {
       dispatch(getTourGroupVariantById(variantId));
@@ -354,11 +367,21 @@ const AddTourGroupVariants = () => {
     e.preventDefault();
     const payload = createPayload();
     dispatch(updateTourGroupVariant(variantId, payload));
-    navigate("/tour-group-variants-data");
+    // Preserve city filter from URL params
+    const cityCode = searchParams.get('cityCode');
+    const url = cityCode 
+      ? `/tour-group-variants-data?cityCode=${cityCode}`
+      : "/tour-group-variants-data";
+    navigate(url);
   };
 
   const handleCancelClick = () => {
-    navigate("/tour-group-variants-data");
+    // Preserve city filter from URL params
+    const cityCode = searchParams.get('cityCode');
+    const url = cityCode 
+      ? `/tour-group-variants-data?cityCode=${cityCode}`
+      : "/tour-group-variants-data";
+    navigate(url);
   };
 
   return (

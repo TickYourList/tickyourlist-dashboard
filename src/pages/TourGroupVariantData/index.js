@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react"
 import { Button, Container, Modal, ModalHeader, ModalBody, ModalFooter, Row, Col, Label, Input, Card, CardBody } from "reactstrap"
 import { useDispatch, useSelector } from "react-redux"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import Select from "react-select"
 
 import { getTourGroupVariants, getTourGroupVariantDetail, deleteTourGroupVariant } from "../../store/TourGroupVariant/action"
@@ -68,6 +68,17 @@ const TourGroupVariantsTable = () => {
   useEffect(() => {
     dispatch(getCities())
   }, [dispatch])
+
+  // Restore city filter from URL params on mount
+  useEffect(() => {
+    const cityCodeFromUrl = searchParams.get('cityCode')
+    if (cityCodeFromUrl && cities.length > 0) {
+      const cityFromUrl = cities.find(c => c.cityCode === cityCodeFromUrl)
+      if (cityFromUrl) {
+        setSelectedCity(cityCodeFromUrl)
+      }
+    }
+  }, [cities, searchParams])
 
   // Fetch tours when city is selected (same as calendar page)
   useEffect(() => {
@@ -144,15 +155,26 @@ const TourGroupVariantsTable = () => {
   const canDeleteTourGroupVariant = can(ACTIONS.CAN_DELETE, MODULES.TOUR_GROUP_VARIANT_PERMS)
 
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   
   // Define all handler functions before useMemo
   const handleAddTourGroupVariantClicks = () => {
-    navigate("add-tour-group-variants")
+    // Preserve city filter in URL
+    const cityCode = selectedCity || searchParams.get('cityCode')
+    const url = cityCode 
+      ? `add-tour-group-variants?cityCode=${cityCode}`
+      : "add-tour-group-variants"
+    navigate(url)
   }
 
   const handleEditButtonClick = variantId => {
     console.log("Editing variant with ID:", variantId)
-    navigate(`/tour-group-variants/edit/${variantId}`)
+    // Preserve city filter in URL
+    const cityCode = selectedCity || searchParams.get('cityCode')
+    const url = cityCode 
+      ? `/tour-group-variants/edit/${variantId}?cityCode=${cityCode}`
+      : `/tour-group-variants/edit/${variantId}`
+    navigate(url)
   }
 
   const handleViewButtonClick = variantId => {
