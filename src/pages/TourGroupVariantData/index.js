@@ -24,6 +24,9 @@ const TourGroupVariantsTable = () => {
   document.title = "Tour Group Variants | Scrollit"
 
   const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  
   const { tourGroupVariants, totalRecords, loading } = useSelector(
     state => state.TourGroupVariant
   )
@@ -153,9 +156,6 @@ const TourGroupVariantsTable = () => {
   const canEditTourGroupVariant = can(ACTIONS.CAN_EDIT, MODULES.TOUR_GROUP_VARIANT_PERMS)
   const canViewTourGroupVariant = can(ACTIONS.CAN_VIEW, MODULES.TOUR_GROUP_VARIANT_PERMS)
   const canDeleteTourGroupVariant = can(ACTIONS.CAN_DELETE, MODULES.TOUR_GROUP_VARIANT_PERMS)
-
-  const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
   
   // Define all handler functions before useMemo
   const handleAddTourGroupVariantClicks = () => {

@@ -13,6 +13,8 @@ import {
   CardText,
   CardTitle,
   Col,
+  Input,
+  Label,
   Nav,
   NavItem,
   Row,
@@ -97,9 +99,46 @@ export default function ViewTourGroup({
                   <div className="px-3 py-2">
                     {/* Title & Status */}
                     <div className="d-flex align-items-center justify-content-between mb-3">
-                      <CardTitle className="fs-3 mb-0 text-primary ">
-                        <strong>{tourGroupById.name}</strong>
-                      </CardTitle>
+                      <div>
+                        <CardTitle className="fs-3 mb-0 text-primary ">
+                          <strong>{tourGroupById.name}</strong>
+                        </CardTitle>
+                        {/* Tour Group ID - Disabled field for copying */}
+                        {editId && (
+                          <div className="mt-2">
+                            <Label className="form-label mb-1" style={{ fontSize: "0.875rem", color: "#6c757d" }}>
+                              Tour Group ID
+                            </Label>
+                            <div className="d-flex gap-2">
+                              <Input
+                                type="text"
+                                value={editId}
+                                disabled
+                                readOnly
+                                className="form-control"
+                                style={{ 
+                                  fontSize: "0.875rem",
+                                  backgroundColor: "#f8f9fa",
+                                  cursor: "text",
+                                  userSelect: "all"
+                                }}
+                                onClick={(e) => e.target.select()}
+                              />
+                              <Button
+                                color="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(editId);
+                                  // You could add a toast notification here if available
+                                }}
+                                title="Copy Tour Group ID"
+                              >
+                                <i className="fas fa-copy"></i>
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
                       <div
                         style={{

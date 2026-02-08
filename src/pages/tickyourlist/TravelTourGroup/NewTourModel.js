@@ -589,6 +589,46 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                     />
                                   </Col>
 
+                                  {/* Tour Group ID - Disabled field for copying (only in edit mode) */}
+                                  {isEdit && editId && (
+                                    <Col className="mb-3">
+                                      <Label className="form-label">
+                                        Tour Group ID
+                                      </Label>
+                                      <div className="d-flex gap-2">
+                                        <Input
+                                          type="text"
+                                          value={editId}
+                                          disabled
+                                          readOnly
+                                          className="form-control"
+                                          style={{ 
+                                            backgroundColor: "#f8f9fa",
+                                            cursor: "text",
+                                            userSelect: "all"
+                                          }}
+                                          onClick={(e) => e.target.select()}
+                                        />
+                                        <Button
+                                          color="secondary"
+                                          size="sm"
+                                          type="button"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(editId);
+                                            // You could add a toast notification here if available
+                                          }}
+                                          title="Copy Tour Group ID"
+                                          style={{ height: "38px", alignSelf: "flex-end" }}
+                                        >
+                                          <i className="fas fa-copy"></i>
+                                        </Button>
+                                      </div>
+                                      <small className="form-text text-muted">
+                                        Copy this ID to use in scripts or API calls
+                                      </small>
+                                    </Col>
+                                  )}
+
                                   <Col className="mb-3">
                                     <Label
                                       className="form-label"

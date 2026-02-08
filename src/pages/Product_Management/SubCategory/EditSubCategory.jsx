@@ -38,7 +38,7 @@ const EditSubCategory = () => {
     const location = useLocation();
 
     document.title = "Edit Travel Sub Category | Scrollit";
-    
+
     const [selectedLanguages, setSelectedLanguages] = useState([]);
     const [selectedFile, setSelectedFile] = useState(null);
     const [permissionsLoaded, setPermissionsLoaded] = useState(false);
@@ -74,7 +74,7 @@ const EditSubCategory = () => {
 
     const canView = subCategoryPermissions?.canView;
     const canEdit = subCategoryPermissions?.canEdit;
-    
+
     // Formik initialization and schema must be declared first
     const initialUrlSlugs = { "EN": "", "ES": "", "FR": "", "IT": "", "DE": "", "PT": "", "NL": "", "PL": "", "DA": "", "NO": "", "RO": "", "RU": "", "SV": "", "TR": "" };
     const urlSlugsPlaceholder = { "EN": "/tours-en/", "ES": "/tours-es/", "FR": "/tours-fr/", "IT": "/tours-it/", "DE": "/tours-de/", "PT": "/tours-pt/", "NL": "/tours-nl/", "PL": "/tours-pl/", "DA": "/tours-da/", "NO": "/tours-no/", "RO": "/tours-ro/", "RU": "/tours-ru/", "SV": "/tours-sv/", "TR": "/tours-tr/" };
@@ -123,8 +123,10 @@ const EditSubCategory = () => {
                 noIndex: values.indexing === "not allowed", canonicalUrl: values.canonicalUrl || null,
                 urlSlugs: values.urlSlugs,
                 ratingsInfo: { ratingsCount: values.ratingCount || 0, averageRating: values.averageRating || 0, showRatings: values.displayRating === "yes" },
-                microBrandInfo: { descriptors: values.descriptors || null, highlights: values.highlights || null, supportedLanguages: selectedLanguages.map(lang => lang.value),
-                    metaTitle: values.microBrandMetaTitle || null, metaDescription: values.microBrandMetaDescription || null },
+                microBrandInfo: {
+                    descriptors: values.descriptors || null, highlights: values.highlights || null, supportedLanguages: selectedLanguages.map(lang => lang.value),
+                    metaTitle: values.microBrandMetaTitle || null, metaDescription: values.microBrandMetaDescription || null
+                },
                 cityCode: values.cityCode, city: values.city
             };
             formData.append("data", JSON.stringify(transformedData));
@@ -137,7 +139,7 @@ const EditSubCategory = () => {
     useEffect(() => {
         dispatch(getUsersPermissionsForSubcategory());
         dispatch(resetUpdateSubcategoryStatus());
-        
+
         // Store cityCode from URL params in localStorage as backup
         const cityCodeFromUrl = searchParams.get('cityCode');
         if (cityCodeFromUrl) {
@@ -184,7 +186,7 @@ const EditSubCategory = () => {
                 city: travelSubcategoryDetails.city?._id || travelSubcategoryDetails.city || ""
             };
             formik.setValues(formValues);
-            
+
             if (travelSubcategoryDetails.microBrandInfo?.supportedLanguages && Array.isArray(travelSubcategoryDetails.microBrandInfo.supportedLanguages)) {
                 const preselectedLangs = travelSubcategoryDetails.microBrandInfo.supportedLanguages.map(lang => ({ label: lang, value: lang }));
                 setSelectedLanguages(preselectedLangs);
@@ -212,16 +214,21 @@ const EditSubCategory = () => {
         if (success) {
             dispatch(resetUpdateSubcategoryStatus());
             // Preserve city filter - check multiple sources in order of priority:
-            // 1. URL params (if passed in edit link)
-            // 2. Location state (if passed via navigate with state)
-            // 3. localStorage (stored when navigating to edit)
-            // 4. document.referrer (fallback to check previous page)
-            let cityCode = searchParams.get('cityCode');
-            
+            // 1. Form values (the cityCode that was just saved/updated)
+            // 2. URL params (if passed in edit link)
+            // 3. Location state (if passed via navigate with state)
+            // 4. localStorage (stored when navigating to edit)
+            // 5. document.referrer (fallback to check previous page)
+            let cityCode = formik.values.cityCode;
+
+            if (!cityCode) {
+                cityCode = searchParams.get('cityCode');
+            }
+
             if (!cityCode && location.state?.cityCode) {
                 cityCode = location.state.cityCode;
             }
-            
+
             if (!cityCode) {
                 const storedCityCode = localStorage.getItem('subcategoryEditCityCode');
                 if (storedCityCode) {
@@ -229,7 +236,7 @@ const EditSubCategory = () => {
                     localStorage.removeItem('subcategoryEditCityCode'); // Clean up after use
                 }
             }
-            
+
             // Fallback: try to extract from referrer if available
             if (!cityCode && typeof window !== 'undefined' && document.referrer) {
                 try {
@@ -242,8 +249,8 @@ const EditSubCategory = () => {
                     // Ignore errors parsing referrer
                 }
             }
-            
-            const url = cityCode 
+
+            const url = cityCode
                 ? `/tour-group-sub-category?cityCode=${cityCode}`
                 : "/tour-group-sub-category";
             navigate(url);
@@ -251,7 +258,7 @@ const EditSubCategory = () => {
         if (error) {
             dispatch(resetUpdateSubcategoryStatus());
         }
-    }, [success, error, dispatch, navigate, searchParams, location.state]);
+    }, [success, error, dispatch, navigate, searchParams, location.state, formik.values.cityCode]);
 
     const handleSupportedLanguagesChange = (selectedOptions) => {
         setSelectedLanguages(selectedOptions);
@@ -261,14 +268,14 @@ const EditSubCategory = () => {
     const handleFileChange = (e) => {
         setSelectedFile(e.target.files[0]);
     };
-    
+
     const handleCityCodeChange = (e) => {
         const selectedCode = e.target.value;
         const requiredCity = cityCodes.find(city => city.cityCode === selectedCode);
         formik.setFieldValue('cityCode', selectedCode);
         formik.setFieldValue('city', requiredCity?.city || '');
     };
-    
+
     if (!permissionsLoaded) {
         return (
             <div className="page-content">
@@ -282,7 +289,7 @@ const EditSubCategory = () => {
             </div>
         );
     }
-    
+
     // The main render logic for the page
     return (
         <React.Fragment>
@@ -518,7 +525,7 @@ const EditSubCategory = () => {
                                                             // Ignore errors
                                                         }
                                                     }
-                                                    const url = cityCode 
+                                                    const url = cityCode
                                                         ? `/tour-group-sub-category?cityCode=${cityCode}`
                                                         : "/tour-group-sub-category";
                                                     navigate(url);
@@ -535,7 +542,7 @@ const EditSubCategory = () => {
                             ) : (
                                 <Alert color="danger" className="text-center">
                                     <p>You do not have permission to edit this subcategory.</p>
-                                    {canView?<Button color="primary" className="mt-2" onClick={() => {
+                                    {canView ? <Button color="primary" className="mt-2" onClick={() => {
                                         // Preserve city filter - check multiple sources
                                         let cityCode = searchParams.get('cityCode');
                                         if (!cityCode && location.state?.cityCode) {
@@ -559,13 +566,13 @@ const EditSubCategory = () => {
                                                 // Ignore errors
                                             }
                                         }
-                                        const url = cityCode 
+                                        const url = cityCode
                                             ? `/tour-group-sub-category?cityCode=${cityCode}`
                                             : "/tour-group-sub-category";
                                         navigate(url);
                                     }}>
                                         Go Back to Home
-                                    </Button>:<Button color="primary" className="mt-2" onClick={() => navigate("/dashboard")}>
+                                    </Button> : <Button color="primary" className="mt-2" onClick={() => navigate("/dashboard")}>
                                         Go Back to Dashboard
                                     </Button>}
 
