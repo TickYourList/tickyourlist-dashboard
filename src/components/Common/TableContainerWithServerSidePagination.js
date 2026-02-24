@@ -143,7 +143,7 @@ const TableContainerWithServerSidePagination = ({
                 <Button
                   type="button"
                   color="success"
-                  className="btn-rounded "
+                  className="btn-rounded btn-add-primary"
                   onClick={toggleViewModal}
                 >
                   <i className="mdi mdi-plus me-1" />
@@ -158,7 +158,7 @@ const TableContainerWithServerSidePagination = ({
                 <Button
                   type="button"
                   color="success"
-                  className="btn-rounded "
+                  className="btn-rounded btn-add-primary"
                   onClick={toggleViewModal}
                 >
                   <i className="mdi mdi-plus me-1" />
@@ -173,7 +173,7 @@ const TableContainerWithServerSidePagination = ({
                 <Button
                   type="button"
                   color="success"
-                  className="btn-rounded "
+                  className="btn-rounded btn-add-primary"
                   onClick={handleAddTourGroupVariantClicks}
                 >
                   <i className="mdi mdi-plus me-1" />

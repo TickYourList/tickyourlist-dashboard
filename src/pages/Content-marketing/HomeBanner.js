@@ -3,8 +3,10 @@ import { useSelector, useDispatch } from "react-redux";
 import TableContainer from "components/Common/TableContainer";
 import Breadcrumbs from "components/Common/Breadcrumb";
 import { getBanners } from "store/banners/bannerActions";
-import { Card, CardBody, Container, Row, Col, Button, Input, Dropdown,
-  DropdownToggle, DropdownMenu, DropdownItem } from "reactstrap";
+import {
+  Card, CardBody, Container, Row, Col, Button, Input, Dropdown,
+  DropdownToggle, DropdownMenu, DropdownItem
+} from "reactstrap";
 import paginationFactory from "react-bootstrap-table2-paginator";
 import { deleteBanner } from "store/banners/bannerActions";
 import AddBannerForm from "./AddBannerForm";
@@ -88,7 +90,7 @@ const Actions = ({ row, onEdit, onDelete }) => {
 function SelectColumnFilter({
   column: { filterValue, setFilter, preFilteredRows, id },
 }) {
-  
+
   const options = React.useMemo(() => {
     const options = new Set();
     preFilteredRows.forEach(row => {
@@ -108,7 +110,7 @@ function SelectColumnFilter({
       bsSize="sm"
     >
       <option value="">All</option>
-      
+
       {options.map((option, i) => (
         <option key={i} value={option}>
           {option}
@@ -119,55 +121,55 @@ function SelectColumnFilter({
 }
 
 const BannerColumns = (onEdit, onDelete, onView, onPreviewClick) => [
-  { 
-    Header: 'Preview', 
-    accessor: 'preview', 
+  {
+    Header: 'Preview',
+    accessor: 'preview',
     disableFilters: true,
-    Cell: ({ row }) => <Preview row={row} onPreviewClick={onPreviewClick} /> 
+    Cell: ({ row }) => <Preview row={row} onPreviewClick={onPreviewClick} />
   },
-  { 
-    Header: 'City Name', 
-    accessor: 'cityCode', 
-    Cell: ({ row }) => cityCode({ row }) 
+  {
+    Header: 'City Name',
+    accessor: 'cityCode',
+    Cell: ({ row }) => cityCode({ row })
   },
-  { 
-    Header: 'Banner Type', 
-    accessor: 'bannerType', 
-    Filter: SelectColumnFilter, 
+  {
+    Header: 'Banner Type',
+    accessor: 'bannerType',
+    Filter: SelectColumnFilter,
     filter: 'exactText',
-    Cell: ({ row }) => BannerType({ row }) 
+    Cell: ({ row }) => BannerType({ row })
   },
-  { 
-    Header: 'Status', 
-    accessor: 'status', 
-    Filter: SelectColumnFilter, 
+  {
+    Header: 'Status',
+    accessor: 'status',
+    Filter: SelectColumnFilter,
     filter: 'exactText',
-    Cell: ({ row }) => <Status row={row} /> 
+    Cell: ({ row }) => <Status row={row} />
   },
-  { 
-    Header: 'View Banner Details', 
-    accessor: 'view', 
+  {
+    Header: 'View Banner Details',
+    accessor: 'view',
     disableFilters: true,
-    Cell: ({ row }) => <ViewDetails row={row} onView={onView} /> 
+    Cell: ({ row }) => <ViewDetails row={row} onView={onView} />
   },
-  { 
-    Header: 'Action', 
+  {
+    Header: 'Action',
     accessor: 'actions',
     disableFilters: true,
-    Cell: ({ row }) => <Actions row={row} onEdit={onEdit} onDelete={onDelete} /> 
+    Cell: ({ row }) => <Actions row={row} onEdit={onEdit} onDelete={onDelete} />
   },
 ];
 
 const HomeBanner = () => {
   document.title = "Home Banners | Content & Marketing";
   const dispatch = useDispatch();
-  
-  
+
+
   const [selectedBanner, setSelectedBanner] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, banner: null });
   const [modal, setModal] = useState({ type: null, isOpen: false });
-  
+
   const [lightboxIsOpen, setLightboxIsOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState("");
   const [lightboxVideo, setLightboxVideo] = useState("");
@@ -179,64 +181,64 @@ const HomeBanner = () => {
   }, [dispatch]);
 
   const handleOpenModal = (type, banner = null) => {
-    setSelectedBanner(banner); 
+    setSelectedBanner(banner);
     setModal({ type: type, isOpen: true })
   }
 
   const handleCloseModal = () => {
-  setModal({ type: null, isOpen: false }); 
-  setSelectedBanner(null)
-}
-
-const handleDelete = (banner) => {
-  setDeleteModal({ isOpen: true, banner: banner });
-}
-
-const confirmDelete = () => {
-  if (deleteModal.banner) {
-    dispatch(deleteBanner({
-      isHomeScreen: deleteModal.banner.isHomeScreen,
-      cityCode: deleteModal.banner.cityCode,
-    }));
+    setModal({ type: null, isOpen: false });
+    setSelectedBanner(null)
   }
-  setDeleteModal({ isOpen: false, banner: null }); 
-};
 
-
- const handlePreviewClick = (banner) => {
-  
-  if (banner.type !== 'video') {
-    setLightboxImage(banner.preview);
-    setLightboxIsOpen(true);
+  const handleDelete = (banner) => {
+    setDeleteModal({ isOpen: true, banner: banner });
   }
-};
 
-const data = useMemo(() => {
-  if (!Array.isArray(banners)) return [];
-
-  return banners.map(banner => {
-    return {
-      ...banner,
-      id: banner._id || Math.random().toString(36).substring(2),
-      preview: banner.phoneViewMedia?.url || banner.media?.url || '',
-      media: banner.media,
-      phoneViewMedia: banner.phoneViewMedia,
-      type: banner.type || 'image',
-      cityCode: banner.isHomeScreen ? "WORLDWIDE" : (banner.cityCode || "—"),
-      bannerType: banner.isHomeScreen ? 'Worldwide' : 'City',
-      status: banner.groupStatus ? "Active" : "Inactive",
-      details: banner,
-      actions: banner,
-    };
-  });
-}, [banners]);
+  const confirmDelete = () => {
+    if (deleteModal.banner) {
+      dispatch(deleteBanner({
+        isHomeScreen: deleteModal.banner.isHomeScreen,
+        cityCode: deleteModal.banner.cityCode,
+      }));
+    }
+    setDeleteModal({ isOpen: false, banner: null });
+  };
 
 
- 
+  const handlePreviewClick = (banner) => {
 
-return (
-  <React.Fragment>
-    {lightboxIsOpen && (
+    if (banner.type !== 'video') {
+      setLightboxImage(banner.preview);
+      setLightboxIsOpen(true);
+    }
+  };
+
+  const data = useMemo(() => {
+    if (!Array.isArray(banners)) return [];
+
+    return banners.map(banner => {
+      return {
+        ...banner,
+        id: banner._id || Math.random().toString(36).substring(2),
+        preview: banner.phoneViewMedia?.url || banner.media?.url || '',
+        media: banner.media,
+        phoneViewMedia: banner.phoneViewMedia,
+        type: banner.type || 'image',
+        cityCode: banner.isHomeScreen ? "WORLDWIDE" : (banner.cityCode || "—"),
+        bannerType: banner.isHomeScreen ? 'Worldwide' : 'City',
+        status: banner.groupStatus ? "Active" : "Inactive",
+        details: banner,
+        actions: banner,
+      };
+    });
+  }, [banners]);
+
+
+
+
+  return (
+    <React.Fragment>
+      {lightboxIsOpen && (
         <Lightbox
           mainSrc={lightboxImage}
           mainSrcThumbnail={lightboxImage}
@@ -248,77 +250,77 @@ return (
           }}
         />
       )}
-    <div className="page-content">
-      <Container fluid>
-        <Breadcrumbs title="Banners" breadcrumbItem="Content & Marketing" />
-        
-        {/* --- Main Conditional Logic for Add/Edit/View --- */}
+      <div className="page-content">
+        <Container fluid>
+          <Breadcrumbs title="Banners" breadcrumbItem="Content & Marketing" />
 
-        {isAdding ? (
-          <AddBannerForm onCancel={() => setIsAdding(false)} />
-        ) : selectedBanner && modal.type !== 'edit' ? (
-          <BannerDetailsView 
-            banner={selectedBanner}
-            onBack={() => setSelectedBanner(null)} 
-          />
-        ) : (
-          // --- Default Table View ---
-          <Row>
-            <Col xs="12">
-              <Card>
-                <CardBody>
-                  {/* --- Top Control Bar --- */}
-                  <Row className="mb-3">
-                    <Col sm={4}>
-                      <div className="d-flex align-items-center">
-                        <h4 className="card-title mb-0 flex-grow-1">Home Banners</h4>
-                      </div>
-                    </Col>
-                    <Col sm={8}>
-                      <div className="d-flex flex-wrap justify-content-sm-end gap-2">
-                        <Button color="primary" onClick={() => setIsAdding(true)}>
-                           + Add New Banner
-                        </Button>
-                      </div>
-                    </Col>
-                  </Row>
+          {/* --- Main Conditional Logic for Add/Edit/View --- */}
 
-                  {/* --- Table Container --- */}
-                  <TableContainer
-                    columns={BannerColumns(
-                      (banner) => handleOpenModal('edit', banner),
-                      handleDelete,
-                      (banner) => setSelectedBanner(banner),
-                      handlePreviewClick,
-                    )}
-                    data={data}
-                    isGlobalFilter={false}
-                    
-                    customPageSize={10}
-                    pagination={paginationFactory({ sizePerPage: 10, showTotal: true })}
-                  />
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
-        )}
-      </Container>
+          {isAdding ? (
+            <AddBannerForm onCancel={() => setIsAdding(false)} />
+          ) : selectedBanner && modal.type !== 'edit' ? (
+            <BannerDetailsView
+              banner={selectedBanner}
+              onBack={() => setSelectedBanner(null)}
+            />
+          ) : (
+            // --- Default Table View ---
+            <Row>
+              <Col xs="12">
+                <Card>
+                  <CardBody>
+                    {/* --- Top Control Bar --- */}
+                    <Row className="mb-3">
+                      <Col sm={4}>
+                        <div className="d-flex align-items-center">
+                          <h4 className="card-title mb-0 flex-grow-1">Home Banners</h4>
+                        </div>
+                      </Col>
+                      <Col sm={8}>
+                        <div className="d-flex flex-wrap justify-content-sm-end gap-2">
+                          <Button color="primary" onClick={() => setIsAdding(true)}>
+                            + Add New Banner
+                          </Button>
+                        </div>
+                      </Col>
+                    </Row>
 
-      {/* --- Modals (remain outside the main logic) --- */}
-      <EditBannerForm
-        isOpen={modal.type === 'edit' && modal.isOpen}
-        toggle={handleCloseModal}
-        banner={selectedBanner}
-      />
-      <DeleteConfirmationModal
-        isOpen={deleteModal.isOpen}
-        toggle={() => setDeleteModal({ isOpen: false, banner: null })}
-        banner={deleteModal.banner}
-        onDelete={confirmDelete}
-      />
-    </div>
-  </React.Fragment>
-);
+                    {/* --- Table Container --- */}
+                    <TableContainer
+                      columns={BannerColumns(
+                        (banner) => handleOpenModal('edit', banner),
+                        handleDelete,
+                        (banner) => setSelectedBanner(banner),
+                        handlePreviewClick,
+                      )}
+                      data={data}
+                      isGlobalFilter={false}
+
+                      customPageSize={10}
+                      pagination={paginationFactory({ sizePerPage: 10, showTotal: true })}
+                    />
+                  </CardBody>
+                </Card>
+              </Col>
+            </Row>
+          )}
+        </Container>
+
+        {/* --- Modals (remain outside the main logic) --- */}
+        <EditBannerForm
+          isOpen={modal.type === 'edit' && modal.isOpen}
+          toggle={handleCloseModal}
+          banner={selectedBanner}
+        />
+        <DeleteConfirmationModal
+          isOpen={deleteModal.isOpen}
+          toggle={() => setDeleteModal({ isOpen: false, banner: null })}
+          banner={deleteModal.banner}
+          onDelete={confirmDelete}
+        />
+      </div>
+    </React.Fragment>
+  );
 };
 
 export default HomeBanner;

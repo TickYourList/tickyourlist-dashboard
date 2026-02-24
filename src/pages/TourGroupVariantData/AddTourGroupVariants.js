@@ -14,7 +14,7 @@ import {
   Row,
   Table,
 } from "reactstrap";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 import EditorReact from "./Editor";
 
@@ -77,15 +77,18 @@ const AddTourGroupVariants = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { variantId } = useParams();
   const [searchParams] = useSearchParams();
   const isEdit = Boolean(variantId);
   
-  // Get productId from URL params when adding new variant
+  // Get productId, cityCode, tourGroupId from URL params (sustains filters when returning from edit)
   const urlProductId = searchParams.get('productId');
   const urlCityCode = searchParams.get('cityCode');
+  const urlTourGroupId = searchParams.get('tourGroupId');
+  const urlVariantId = searchParams.get('variantId');
 
-  const { selectedVariant, travelTourGroups, tourGroupVariants, loading } =
+  const { selectedVariant, travelTourGroups, tourGroupVariants, loading, updatedVariant } =
     useSelector(state => state.TourGroupVariant || {});
   
   // Debug log for edit mode
@@ -137,6 +140,24 @@ const AddTourGroupVariants = () => {
     dispatch(getCities());
   }, [dispatch]);
 
+  // Store cityCode and tourGroupId in localStorage when entering edit (sustains filters when returning - same as subcategory)
+  useEffect(() => {
+    if (isEdit) {
+      const cityCodeFromUrl = searchParams.get('cityCode') || location.state?.cityCode;
+      const tourGroupIdFromUrl = searchParams.get('tourGroupId') || location.state?.tourGroupId;
+      const variantIdFromUrl = searchParams.get('variantId') || location.state?.variantId;
+      if (cityCodeFromUrl) {
+        localStorage.setItem('variantEditCityCode', cityCodeFromUrl);
+      }
+      if (tourGroupIdFromUrl) {
+        localStorage.setItem('variantEditTourGroupId', tourGroupIdFromUrl);
+      }
+      if (variantIdFromUrl) {
+        localStorage.setItem('variantEditVariantId', variantIdFromUrl);
+      }
+    }
+  }, [isEdit, searchParams, location.state]);
+
   // Restore city filter from URL params on mount
   useEffect(() => {
     const cityCodeFromUrl = searchParams.get('cityCode') || urlCityCode;
@@ -149,6 +170,19 @@ const AddTourGroupVariants = () => {
       }
     }
   }, [cities, searchParams, urlCityCode, dispatch, selectedCity]);
+
+  // Restore tour group from URL when adding new variant (sustains filters when returning from add form)
+  useEffect(() => {
+    if (
+      !isEdit &&
+      urlTourGroupId &&
+      selectedCity &&
+      !selectedTourGroup &&
+      tourGroupsByCity.some(t => (t._id || t.id)?.toString() === urlTourGroupId)
+    ) {
+      setSelectedTourGroup(urlTourGroupId);
+    }
+  }, [isEdit, urlTourGroupId, selectedCity, selectedTourGroup, tourGroupsByCity]);
 
   useEffect(() => {
     if (isEdit && variantId) {
@@ -357,6 +391,59 @@ const AddTourGroupVariants = () => {
     };
   };
 
+  // Build return URL params for list page (same priority as subcategory: form -> URL -> location.state -> localStorage -> referrer)
+  const getReturnListParams = () => {
+    let cityCode = selectedCity || searchParams.get('cityCode') || location.state?.cityCode;
+    let tourGroupId = selectedTourGroup || searchParams.get('tourGroupId') || location.state?.tourGroupId;
+    let variantId = searchParams.get('variantId') || location.state?.variantId || urlVariantId;
+    if (!cityCode) {
+      const stored = localStorage.getItem('variantEditCityCode');
+      if (stored) {
+        cityCode = stored;
+        localStorage.removeItem('variantEditCityCode');
+      }
+    }
+    if (!tourGroupId) {
+      const stored = localStorage.getItem('variantEditTourGroupId');
+      if (stored) {
+        tourGroupId = stored;
+        localStorage.removeItem('variantEditTourGroupId');
+      }
+    }
+    if (!variantId) {
+      const stored = localStorage.getItem('variantEditVariantId');
+      if (stored) {
+        variantId = stored;
+        localStorage.removeItem('variantEditVariantId');
+      }
+    }
+    if (!cityCode && typeof window !== 'undefined' && document.referrer) {
+      try {
+        const referrerUrl = new URL(document.referrer);
+        const refCity = referrerUrl.searchParams.get('cityCode');
+        const refTour = referrerUrl.searchParams.get('tourGroupId');
+        const refVariant = referrerUrl.searchParams.get('variantId');
+        if (refCity) cityCode = refCity;
+        if (refTour) tourGroupId = refTour;
+        if (refVariant) variantId = refVariant;
+      } catch (e) {}
+    }
+    return { cityCode, tourGroupId, variantId };
+  };
+
+  // Navigate back to variant list with sustained filters after update success (same as subcategory)
+  useEffect(() => {
+    if (isEdit && updatedVariant) {
+      const { cityCode, tourGroupId, variantId } = getReturnListParams();
+      const params = new URLSearchParams();
+      if (cityCode) params.set('cityCode', cityCode);
+      if (tourGroupId) params.set('tourGroupId', tourGroupId);
+      if (variantId) params.set('variantId', variantId);
+      const qs = params.toString();
+      navigate(qs ? `/tour-group-variants-data?${qs}` : '/tour-group-variants-data');
+    }
+  }, [isEdit, updatedVariant, navigate, selectedCity, selectedTourGroup, searchParams, location.state]);
+
   const handleSubmitClick = e => {
     e.preventDefault();
     const payload = createPayload();
@@ -367,21 +454,16 @@ const AddTourGroupVariants = () => {
     e.preventDefault();
     const payload = createPayload();
     dispatch(updateTourGroupVariant(variantId, payload));
-    // Preserve city filter from URL params
-    const cityCode = searchParams.get('cityCode');
-    const url = cityCode 
-      ? `/tour-group-variants-data?cityCode=${cityCode}`
-      : "/tour-group-variants-data";
-    navigate(url);
   };
 
   const handleCancelClick = () => {
-    // Preserve city filter from URL params
-    const cityCode = searchParams.get('cityCode');
-    const url = cityCode 
-      ? `/tour-group-variants-data?cityCode=${cityCode}`
-      : "/tour-group-variants-data";
-    navigate(url);
+    const { cityCode, tourGroupId, variantId } = getReturnListParams();
+    const params = new URLSearchParams();
+    if (cityCode) params.set('cityCode', cityCode);
+    if (tourGroupId) params.set('tourGroupId', tourGroupId);
+    if (variantId) params.set('variantId', variantId);
+    const qs = params.toString();
+    navigate(qs ? `/tour-group-variants-data?${qs}` : '/tour-group-variants-data');
   };
 
   return (

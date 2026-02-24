@@ -112,3 +112,38 @@ $value in $theme-colors {
         }
     }
 }
+
+// Enhanced "Add New" primary action button
+.btn.btn-add-primary {
+    background: linear-gradient(135deg, #34c38f 0%, #1a9e72 100%);
+    border-color: transparent;
+    box-shadow: 0 4px 15px rgba(52, 195, 143, 0.38);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    padding: 8px 22px;
+    transition: all 0.25s ease;
+
+    i {
+        display: inline-block;
+        transition: transform 0.3s ease;
+    }
+
+    &:hover {
+        background: linear-gradient(135deg, #3dd9a2 0%, #22b07f 100%);
+        border-color: transparent;
+        box-shadow: 0 7px 22px rgba(52, 195, 143, 0.52);
+        transform: translateY(-2px);
+
+        i {
+            transform: rotate(90deg);
+        }
+    }
+
+    &:active,
+    &:focus {
+        background: linear-gradient(135deg, #2db87c 0%, #178f62 100%) !important;
+        border-color: transparent !important;
+        box-shadow: 0 2px 8px rgba(52, 195, 143, 0.3) !important;
+        transform: translateY(0px);
+    }
+}

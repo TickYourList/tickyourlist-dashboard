@@ -16,7 +16,7 @@ import {
 import classnames from "classnames";
 import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Breadcrumbs from "components/Common/Breadcrumb";
 import TableContainer from "components/Common/TableContainer";
 
@@ -43,12 +43,14 @@ const ViewDetail = ({ isOpen, toggle, activeTab, setActiveTab }) => {
   const imageUrl =
     tourGroup?.media?.productImages?.[0]?.url || "/placeholder.jpg";
   const navigate = useNavigate();
+  const location = useLocation();
 
   const bookings = bookingList.bookings || [];
 
   const handleEditButtonClick = variantId => {
-    // console.log(variantId);
-    navigate(`/tour-group-variants/edit/${variantId}`);
+    // Keep current list filters while opening edit.
+    const query = location.search || "";
+    navigate(`/tour-group-variants/edit/${variantId}${query}`);
   };
 
   const dispatch = useDispatch();

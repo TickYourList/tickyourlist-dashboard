@@ -72,7 +72,7 @@ const TourGroupVariantsTable = () => {
     dispatch(getCities())
   }, [dispatch])
 
-  // Restore city filter from URL params on mount
+  // Restore city filter from URL params on mount (sustains data when returning from edit)
   useEffect(() => {
     const cityCodeFromUrl = searchParams.get('cityCode')
     if (cityCodeFromUrl && cities.length > 0) {
@@ -82,6 +82,33 @@ const TourGroupVariantsTable = () => {
       }
     }
   }, [cities, searchParams])
+
+  // Restore tour group filter from URL params once tour groups for city are loaded (sustains data when returning from edit)
+  useEffect(() => {
+    const tourGroupIdFromUrl = searchParams.get('tourGroupId')
+    if (
+      tourGroupIdFromUrl &&
+      selectedCity &&
+      !selectedTour &&
+      tourGroupsByCity.some(t => (t._id || t.id)?.toString() === tourGroupIdFromUrl)
+    ) {
+      setSelectedTour(tourGroupIdFromUrl)
+    }
+  }, [searchParams, selectedCity, selectedTour, tourGroupsByCity])
+
+  // Restore variant filter from URL params once variants for selected tour are loaded
+  useEffect(() => {
+    const variantIdFromUrl = searchParams.get('variantId')
+    if (
+      variantIdFromUrl &&
+      selectedTour &&
+      !selectedVariant &&
+      Array.isArray(variants) &&
+      variants.some(v => (v._id || v.id)?.toString() === variantIdFromUrl)
+    ) {
+      setSelectedVariant(variantIdFromUrl)
+    }
+  }, [searchParams, selectedTour, selectedVariant, variants])
 
   // Fetch tours when city is selected (same as calendar page)
   useEffect(() => {
@@ -129,8 +156,39 @@ const TourGroupVariantsTable = () => {
   useEffect(() => {
     const cityCode = selectedCity || null
     const tourGroupId = selectedTour || null
-    dispatch(getTourGroupVariants(page, limit, cityCode, tourGroupId, null))
-  }, [dispatch, page, limit, selectedCity, selectedTour])
+    const variantId = selectedVariant || null
+    dispatch(getTourGroupVariants(page, limit, cityCode, tourGroupId, variantId))
+  }, [dispatch, page, limit, selectedCity, selectedTour, selectedVariant])
+
+  // Keep filter params in URL so they survive edit/add navigation and browser back.
+  useEffect(() => {
+    const currentCity = searchParams.get('cityCode') || ''
+    const currentTour = searchParams.get('tourGroupId') || ''
+    const currentVariant = searchParams.get('variantId') || ''
+    const nextCity = selectedCity || ''
+    const nextTour = selectedTour || ''
+    const nextVariant = selectedVariant || ''
+
+    if (
+      currentCity === nextCity &&
+      currentTour === nextTour &&
+      currentVariant === nextVariant
+    ) {
+      return
+    }
+
+    const params = new URLSearchParams(searchParams)
+    if (nextCity) params.set('cityCode', nextCity)
+    else params.delete('cityCode')
+
+    if (nextTour) params.set('tourGroupId', nextTour)
+    else params.delete('tourGroupId')
+
+    if (nextVariant) params.set('variantId', nextVariant)
+    else params.delete('variantId')
+
+    setSearchParams(params, { replace: true })
+  }, [selectedCity, selectedTour, selectedVariant, searchParams, setSearchParams])
 
   useEffect(() => {
     localStorage.setItem("variantPage", page)
@@ -159,22 +217,30 @@ const TourGroupVariantsTable = () => {
   
   // Define all handler functions before useMemo
   const handleAddTourGroupVariantClicks = () => {
-    // Preserve city filter in URL
+    // Preserve selected filters in URL (sustains data when returning)
     const cityCode = selectedCity || searchParams.get('cityCode')
-    const url = cityCode 
-      ? `add-tour-group-variants?cityCode=${cityCode}`
-      : "add-tour-group-variants"
-    navigate(url)
+    const tourGroupId = selectedTour || searchParams.get('tourGroupId')
+    const variantId = selectedVariant || searchParams.get('variantId')
+    const params = new URLSearchParams()
+    if (cityCode) params.set('cityCode', cityCode)
+    if (tourGroupId) params.set('tourGroupId', tourGroupId)
+    if (variantId) params.set('variantId', variantId)
+    const qs = params.toString()
+    navigate(qs ? `add-tour-group-variants?${qs}` : "add-tour-group-variants")
   }
 
   const handleEditButtonClick = variantId => {
     console.log("Editing variant with ID:", variantId)
-    // Preserve city filter in URL
+    // Preserve selected filters in URL (sustains data when returning)
     const cityCode = selectedCity || searchParams.get('cityCode')
-    const url = cityCode 
-      ? `/tour-group-variants/edit/${variantId}?cityCode=${cityCode}`
-      : `/tour-group-variants/edit/${variantId}`
-    navigate(url)
+    const tourGroupId = selectedTour || searchParams.get('tourGroupId')
+    const selectedVariantId = selectedVariant || searchParams.get('variantId')
+    const params = new URLSearchParams()
+    if (cityCode) params.set('cityCode', cityCode)
+    if (tourGroupId) params.set('tourGroupId', tourGroupId)
+    if (selectedVariantId) params.set('variantId', selectedVariantId)
+    const qs = params.toString()
+    navigate(qs ? `/tour-group-variants/edit/${variantId}?${qs}` : `/tour-group-variants/edit/${variantId}`)
   }
 
   const handleViewButtonClick = variantId => {
@@ -465,8 +531,9 @@ const TourGroupVariantsTable = () => {
                     setSearchQuery('')
                     setIsSearching(false)
                     setPage(1)
+                    setSearchParams({}, { replace: true })
                   }}
-                  disabled={!selectedCity && !selectedTour}
+                  disabled={!selectedCity && !selectedTour && !selectedVariant}
                   className="w-100"
                 >
                   Clear Filters
