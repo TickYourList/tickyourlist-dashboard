@@ -36,6 +36,7 @@ import DeleteModal from "components/Common/DeleteModal"
 import ViewTourGroup from "./ViewTourGroup"
 import ConnectCategoriesModal from "./ConnectCategoriesModal"
 import ConnectKlookModal from "./ConnectKlookModal"
+import ConnectGlobtixModal from "./ConnectGlobtixModal"
 import VariantsPricingModal from "./VariantsPricingModal"
 import VariantManagementModal from "./VariantManagementModal"
 import { showToastSuccess } from "helpers/toastBuilder"
@@ -62,6 +63,8 @@ function TourGroupTable() {
   const [connectModal, setConnectModal] = useState(false)
   const [selectedTourGroupForConnection, setSelectedTourGroupForConnection] = useState(null)
   const [connectKlookModal, setConnectKlookModal] = useState(false)
+  const [connectGlobtixModal, setConnectGlobtixModal] = useState(false)
+  const [selectedTourGroupForGlobtix, setSelectedTourGroupForGlobtix] = useState(null)
   const [selectedTourGroupForKlook, setSelectedTourGroupForKlook] = useState(null)
   const [variantsPricingModal, setVariantsPricingModal] = useState(false)
   const [selectedTourGroupForPricing, setSelectedTourGroupForPricing] = useState(null)
@@ -287,6 +290,11 @@ function TourGroupTable() {
         })
       )
     }
+  }
+
+  const handleConnectGlobtix = (tourGroup) => {
+    setSelectedTourGroupForGlobtix(tourGroup)
+    setConnectGlobtixModal(true)
   }
 
   const handleConnectKlook = (tourGroup) => {
@@ -518,10 +526,19 @@ function TourGroupTable() {
             {canEditTourGroup && (
               <button
                 className="btn p-0 border-0 bg-transparent"
-                title="Connect with External Provider"
+                title="Connect with Klook"
                 onClick={() => handleConnectKlook(row.original)}
               >
                 <i className="fas fa-plug font-size-18 text-success"></i>
+              </button>
+            )}
+            {canEditTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
+                title="Connect with Globaltix"
+                onClick={() => handleConnectGlobtix(row.original)}
+              >
+                <i className="bx bx-globe font-size-18 text-info"></i>
               </button>
             )}
             {canEditTourGroup && (
@@ -787,6 +804,20 @@ function TourGroupTable() {
                     }}
                     tourGroup={selectedTourGroupForConnection}
                     onSuccess={handleConnectionSuccess}
+                  />
+
+                  {/* Connect Globaltix Modal */}
+                  <ConnectGlobtixModal
+                    isOpen={connectGlobtixModal}
+                    toggle={() => {
+                      setConnectGlobtixModal(false)
+                      setSelectedTourGroupForGlobtix(null)
+                    }}
+                    tourGroup={selectedTourGroupForGlobtix}
+                    onSuccess={() => {
+                      setConnectGlobtixModal(false)
+                      setSelectedTourGroupForGlobtix(null)
+                    }}
                   />
 
                   {/* Connect Klook Modal */}

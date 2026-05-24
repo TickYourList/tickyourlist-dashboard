@@ -1,0 +1,79 @@
+import {
+  FETCH_GLOBALTIX_PRODUCTS_REQUEST,
+  FETCH_GLOBALTIX_PRODUCTS_SUCCESS,
+  FETCH_GLOBALTIX_PRODUCTS_FAILURE,
+  SEARCH_GLOBALTIX_PRODUCTS_REQUEST,
+  SEARCH_GLOBALTIX_PRODUCTS_SUCCESS,
+  SEARCH_GLOBALTIX_PRODUCTS_FAILURE,
+  FETCH_GLOBALTIX_PRODUCT_DETAIL_REQUEST,
+  FETCH_GLOBALTIX_PRODUCT_DETAIL_SUCCESS,
+  FETCH_GLOBALTIX_PRODUCT_DETAIL_FAILURE,
+  LINK_GLOBALTIX_PRODUCT_REQUEST,
+  LINK_GLOBALTIX_PRODUCT_SUCCESS,
+  LINK_GLOBALTIX_PRODUCT_FAILURE,
+  GLOBALTIX_SYNC_FULL_REQUEST,
+  GLOBALTIX_SYNC_FULL_SUCCESS,
+  GLOBALTIX_SYNC_FULL_FAILURE,
+  GLOBALTIX_SYNC_PRODUCT_REQUEST,
+  GLOBALTIX_SYNC_PRODUCT_SUCCESS,
+  GLOBALTIX_SYNC_PRODUCT_FAILURE,
+  FETCH_GLOBALTIX_BOOKINGS_REQUEST,
+  FETCH_GLOBALTIX_BOOKINGS_SUCCESS,
+  FETCH_GLOBALTIX_BOOKINGS_FAILURE,
+  FETCH_GLOBALTIX_BOOKING_DETAIL_REQUEST,
+  FETCH_GLOBALTIX_BOOKING_DETAIL_SUCCESS,
+  FETCH_GLOBALTIX_BOOKING_DETAIL_FAILURE,
+  CANCEL_GLOBALTIX_BOOKING_REQUEST,
+  CANCEL_GLOBALTIX_BOOKING_SUCCESS,
+  CANCEL_GLOBALTIX_BOOKING_FAILURE,
+  FETCH_GLOBALTIX_TOKEN_REQUEST,
+  FETCH_GLOBALTIX_TOKEN_SUCCESS,
+  FETCH_GLOBALTIX_TOKEN_FAILURE,
+  AUTHENTICATE_GLOBALTIX_REQUEST,
+  AUTHENTICATE_GLOBALTIX_SUCCESS,
+  AUTHENTICATE_GLOBALTIX_FAILURE,
+} from "./actionTypes";
+
+export const fetchGlobtixProductsRequest = (params) => ({ type: FETCH_GLOBALTIX_PRODUCTS_REQUEST, payload: params });
+export const fetchGlobtixProductsSuccess = (data) => ({ type: FETCH_GLOBALTIX_PRODUCTS_SUCCESS, payload: data });
+export const fetchGlobtixProductsFailure = (error) => ({ type: FETCH_GLOBALTIX_PRODUCTS_FAILURE, payload: error });
+
+export const searchGlobtixProductsRequest = (query, environment) => ({ type: SEARCH_GLOBALTIX_PRODUCTS_REQUEST, payload: { query, environment } });
+export const searchGlobtixProductsSuccess = (data) => ({ type: SEARCH_GLOBALTIX_PRODUCTS_SUCCESS, payload: data });
+export const searchGlobtixProductsFailure = (error) => ({ type: SEARCH_GLOBALTIX_PRODUCTS_FAILURE, payload: error });
+
+export const fetchGlobtixProductDetailRequest = (productId, environment) => ({ type: FETCH_GLOBALTIX_PRODUCT_DETAIL_REQUEST, payload: { productId, environment } });
+export const fetchGlobtixProductDetailSuccess = (data) => ({ type: FETCH_GLOBALTIX_PRODUCT_DETAIL_SUCCESS, payload: data });
+export const fetchGlobtixProductDetailFailure = (error) => ({ type: FETCH_GLOBALTIX_PRODUCT_DETAIL_FAILURE, payload: error });
+
+export const linkGlobtixProductRequest = (globaltixProductId, tourGroupId, environment) => ({ type: LINK_GLOBALTIX_PRODUCT_REQUEST, payload: { globaltixProductId, tourGroupId, environment } });
+export const linkGlobtixProductSuccess = (data) => ({ type: LINK_GLOBALTIX_PRODUCT_SUCCESS, payload: data });
+export const linkGlobtixProductFailure = (error) => ({ type: LINK_GLOBALTIX_PRODUCT_FAILURE, payload: error });
+
+export const globaltixSyncFullRequest = (environment) => ({ type: GLOBALTIX_SYNC_FULL_REQUEST, payload: { environment } });
+export const globaltixSyncFullSuccess = (data) => ({ type: GLOBALTIX_SYNC_FULL_SUCCESS, payload: data });
+export const globaltixSyncFullFailure = (error) => ({ type: GLOBALTIX_SYNC_FULL_FAILURE, payload: error });
+
+export const globaltixSyncProductRequest = (globaltixProductId, environment) => ({ type: GLOBALTIX_SYNC_PRODUCT_REQUEST, payload: { globaltixProductId, environment } });
+export const globaltixSyncProductSuccess = (data) => ({ type: GLOBALTIX_SYNC_PRODUCT_SUCCESS, payload: data });
+export const globaltixSyncProductFailure = (error) => ({ type: GLOBALTIX_SYNC_PRODUCT_FAILURE, payload: error });
+
+export const fetchGlobtixBookingsRequest = (params) => ({ type: FETCH_GLOBALTIX_BOOKINGS_REQUEST, payload: params });
+export const fetchGlobtixBookingsSuccess = (data) => ({ type: FETCH_GLOBALTIX_BOOKINGS_SUCCESS, payload: data });
+export const fetchGlobtixBookingsFailure = (error) => ({ type: FETCH_GLOBALTIX_BOOKINGS_FAILURE, payload: error });
+
+export const fetchGlobtixBookingDetailRequest = (referenceNumber) => ({ type: FETCH_GLOBALTIX_BOOKING_DETAIL_REQUEST, payload: { referenceNumber } });
+export const fetchGlobtixBookingDetailSuccess = (data) => ({ type: FETCH_GLOBALTIX_BOOKING_DETAIL_SUCCESS, payload: data });
+export const fetchGlobtixBookingDetailFailure = (error) => ({ type: FETCH_GLOBALTIX_BOOKING_DETAIL_FAILURE, payload: error });
+
+export const cancelGlobtixBookingRequest = (referenceNumber, environment, reason) => ({ type: CANCEL_GLOBALTIX_BOOKING_REQUEST, payload: { referenceNumber, environment, reason } });
+export const cancelGlobtixBookingSuccess = (data) => ({ type: CANCEL_GLOBALTIX_BOOKING_SUCCESS, payload: data });
+export const cancelGlobtixBookingFailure = (error) => ({ type: CANCEL_GLOBALTIX_BOOKING_FAILURE, payload: error });
+
+export const fetchGlobtixTokenRequest = (environment) => ({ type: FETCH_GLOBALTIX_TOKEN_REQUEST, payload: { environment } });
+export const fetchGlobtixTokenSuccess = (data) => ({ type: FETCH_GLOBALTIX_TOKEN_SUCCESS, payload: data });
+export const fetchGlobtixTokenFailure = (error) => ({ type: FETCH_GLOBALTIX_TOKEN_FAILURE, payload: error });
+
+export const authenticateGlobtixRequest = (environment) => ({ type: AUTHENTICATE_GLOBALTIX_REQUEST, payload: { environment } });
+export const authenticateGlobtixSuccess = (data) => ({ type: AUTHENTICATE_GLOBALTIX_SUCCESS, payload: data });
+export const authenticateGlobtixFailure = (error) => ({ type: AUTHENTICATE_GLOBALTIX_FAILURE, payload: error });

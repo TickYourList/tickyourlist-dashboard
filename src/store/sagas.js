@@ -44,6 +44,7 @@ import UserPermissionsSaga from "./user-permissions/saga";
 import currencySaga from "./travelCurrency/saga";
 import travelCitySaga from "./travelCity/saga";
 import tourGroupSaga from "./tickyourlist/travelTourGroup/saga";
+import globaltixSaga from "./tickyourlist/globaltix/saga";
 import TravelPartnerSaga from "./travelPartner/saga";
 import couponSaga from "./coupon/saga";
 import customerSaga from "./customers/saga";
@@ -100,6 +101,7 @@ export default function* rootSaga() {
     fork(TravelPartnerSaga),
     fork(travelCitySaga),
     fork(tourGroupSaga),
+    fork(globaltixSaga),
     fork(couponSaga),
     fork(customerSaga),
     fork(collectionsSaga),

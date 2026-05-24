@@ -223,6 +223,25 @@ const SidebarContent = props => {
               </ul>
             </li>
 
+            {/* ── GLOBALTIX INTEGRATION ── */}
+            <li>
+              <Link to="/#" className="has-arrow">
+                <i className="bx bx-globe"></i>
+                <span>{props.t("Globaltix")}</span>
+              </Link>
+              <ul className="sub-menu">
+                <li>
+                  <Link to="/globaltix/products">{props.t("Products")}</Link>
+                </li>
+                <li>
+                  <Link to="/globaltix/bookings">{props.t("Bookings")}</Link>
+                </li>
+                <li>
+                  <Link to="/globaltix/credentials">{props.t("Credentials")}</Link>
+                </li>
+              </ul>
+            </li>
+
             <li>
               <Link to="/#" className="has-arrow">
                 <i className="bx bx-cog"></i>
