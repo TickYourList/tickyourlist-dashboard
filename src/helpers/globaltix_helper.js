@@ -7,6 +7,11 @@ export const getGlobtixToken = (environment = "staging") =>
 
 // ─── Meta ─────────────────────────────────────────────────────────────────────
 
+// Distinct filter values derived from synced products (only what you actually have)
+export const getGlobtixProductFilters = (environment = "staging") =>
+  get(`/v1/globaltix/products/distinct-filters`, { params: { environment } });
+
+// Full Globaltix reference data (235 countries, all categories — use sparingly)
 export const getGlobtixCountries = (environment = "staging") =>
   get(`/v1/globaltix/meta/countries`, { params: { environment } });
 

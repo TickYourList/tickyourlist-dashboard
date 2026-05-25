@@ -12,7 +12,7 @@ import {
   globaltixSyncProductRequest,
   fetchGlobtixProductDetailRequest,
 } from "store/tickyourlist/globaltix/action";
-import { getGlobtixCountries, getGlobtixCategories } from "helpers/globaltix_helper";
+import { getGlobtixProductFilters } from "helpers/globaltix_helper";
 import ConnectGlobtixModal from "../TravelTourGroup/ConnectGlobtixModal";
 
 const SYNC_STATUS_COLORS = { synced: "success", pending: "warning", error: "danger" };
@@ -29,6 +29,7 @@ const GlobtixProductsPage = () => {
 
   const [environment] = useState("staging");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchSubmitted, setSearchSubmitted] = useState(false);
   const [page, setPage] = useState(1);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
@@ -44,19 +45,20 @@ const GlobtixProductsPage = () => {
   const [filterCancellable, setFilterCancellable] = useState("");
   const [filterOpenDated, setFilterOpenDated] = useState("");
 
-  // Meta data
+  // Meta data — derived from synced products (only countries/cities/categories you actually have)
   const [countries, setCountries] = useState([]);
   const [allCities, setAllCities] = useState([]);
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    getGlobtixCountries(environment).then((res) => {
-      const list = res?.data || [];
-      setCountries(list);
-      const cities = list.flatMap((c) => (c.cities || []).map((city) => ({ ...city, countryCode: c.code })));
-      setAllCities(cities);
-    }).catch(() => {});
-    getGlobtixCategories(environment).then((res) => setCategories(res?.data || [])).catch(() => {});
+    getGlobtixProductFilters(environment)
+      .then((res) => {
+        const { countries: c = [], cities: ci = [], categories: ca = [] } = res?.data || {};
+        setCountries(c);
+        setAllCities(ci);
+        setCategories(ca);
+      })
+      .catch(() => {});
   }, [environment]);
 
   const activeFilterCount = [filterCountry, filterCity, filterCategory, filterLinked, filterCancellable, filterOpenDated].filter(Boolean).length;
@@ -77,8 +79,10 @@ const GlobtixProductsPage = () => {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
+      setSearchSubmitted(true);
       dispatch(searchGlobtixProductsRequest(searchQuery, environment));
     } else {
+      setSearchSubmitted(false);
       fetchProducts();
     }
   };
@@ -93,11 +97,10 @@ const GlobtixProductsPage = () => {
   const handleSyncProduct = (productId) => dispatch(globaltixSyncProductRequest(productId, environment));
   const handleViewDetail = (productId) => { dispatch(fetchGlobtixProductDetailRequest(productId, environment)); setDetailModalOpen(true); };
 
-  const filteredCities = filterCountry
-    ? allCities.filter((c) => countries.find((co) => co.name === filterCountry)?.code === c.countryCode)
-    : allCities;
+  // allCities are flat strings; country+city both sent as independent MongoDB filters
+  const filteredCities = allCities;
 
-  const displayProducts = searchQuery.trim() && searchResults?.length >= 0 ? searchResults : products;
+  const displayProducts = searchSubmitted ? searchResults : products;
 
   return (
     <div className="page-content">
@@ -137,7 +140,7 @@ const GlobtixProductsPage = () => {
                         {searching ? <Spinner size="sm" /> : <i className="bx bx-search"></i>}
                       </Button>
                       {searchQuery && (
-                        <Button color="outline-secondary" onClick={() => { setSearchQuery(""); fetchProducts(); }}>Clear</Button>
+                        <Button color="outline-secondary" onClick={() => { setSearchQuery(""); setSearchSubmitted(false); fetchProducts(); }}>Clear</Button>
                       )}
                     </div>
                   </Col>
@@ -160,21 +163,21 @@ const GlobtixProductsPage = () => {
                       <Input type="select" bsSize="sm" value={filterCountry}
                         onChange={(e) => { setFilterCountry(e.target.value); setFilterCity(""); setPage(1); }}>
                         <option value="">All Countries</option>
-                        {countries.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                        {countries.map((c) => <option key={c} value={c}>{c}</option>)}
                       </Input>
                     </Col>
                     <Col md={2}>
                       <Input type="select" bsSize="sm" value={filterCity}
                         onChange={(e) => { setFilterCity(e.target.value); setPage(1); }}>
                         <option value="">All Cities</option>
-                        {filteredCities.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                        {filteredCities.map((c) => <option key={c} value={c}>{c}</option>)}
                       </Input>
                     </Col>
                     <Col md={2}>
                       <Input type="select" bsSize="sm" value={filterCategory}
                         onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}>
                         <option value="">All Categories</option>
-                        {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                        {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                       </Input>
                     </Col>
                     <Col md={2}>
@@ -278,13 +281,18 @@ const GlobtixProductsPage = () => {
               </CardBody>
             </Card>
 
-            {!searchQuery && productsPagination?.pages > 1 && (
+            {!searchSubmitted && productsPagination?.total > 0 && (
               <div className="d-flex justify-content-between align-items-center mt-3">
-                <span className="text-muted small">Page {page} of {productsPagination.pages} ({productsPagination.total} products)</span>
-                <div className="d-flex gap-2">
-                  <Button size="sm" color="outline-secondary" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
-                  <Button size="sm" color="outline-secondary" disabled={page >= productsPagination.pages} onClick={() => setPage(p => p + 1)}>Next</Button>
-                </div>
+                <span className="text-muted small">
+                  Showing {displayProducts?.length || 0} of {productsPagination.total} products
+                  {productsPagination.pages > 1 && ` · Page ${page} of ${productsPagination.pages}`}
+                </span>
+                {productsPagination.pages > 1 && (
+                  <div className="d-flex gap-2">
+                    <Button size="sm" color="outline-secondary" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+                    <Button size="sm" color="outline-secondary" disabled={page >= productsPagination.pages} onClick={() => setPage(p => p + 1)}>Next</Button>
+                  </div>
+                )}
               </div>
             )}
           </Col>
