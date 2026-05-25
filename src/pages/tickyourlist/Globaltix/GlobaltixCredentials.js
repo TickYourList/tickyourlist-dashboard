@@ -9,11 +9,14 @@ import {
   authenticateGlobtixRequest,
 } from "store/tickyourlist/globaltix/action";
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
+import { getGlobtixCredit } from "helpers/globaltix_helper";
 
 const GlobtixCredentialsPage = () => {
   const dispatch = useDispatch();
   const { tokenInfo, tokenLoading, authLoading, authError } = useSelector((state) => state.globaltix || {});
   const [environment, setEnvironment] = useState("staging");
+  const [creditInfo, setCreditInfo] = useState(null);
+  const [creditLoading, setCreditLoading] = useState(false);
   const prevAuthLoading = React.useRef(false);
 
   useEffect(() => {
@@ -27,6 +30,17 @@ const GlobtixCredentialsPage = () => {
     }
     prevAuthLoading.current = authLoading;
   }, [authLoading, authError, dispatch, environment]);
+
+  // Fetch credit balance when token is active
+  useEffect(() => {
+    if (tokenInfo?.hasActiveToken) {
+      setCreditLoading(true);
+      getGlobtixCredit(environment)
+        .then((res) => setCreditInfo(res?.data || null))
+        .catch(() => setCreditInfo(null))
+        .finally(() => setCreditLoading(false));
+    }
+  }, [environment, tokenInfo?.hasActiveToken]);
 
   const handleReAuthenticate = () => {
     dispatch(authenticateGlobtixRequest(environment));
@@ -126,6 +140,58 @@ const GlobtixCredentialsPage = () => {
                 )}
               </CardBody>
             </Card>
+
+            {tokenInfo?.hasActiveToken && (
+              <Card className="mt-3">
+                <CardHeader className="bg-transparent">
+                  <h6 className="mb-0"><i className="bx bx-wallet me-2"></i>Credit Balance</h6>
+                </CardHeader>
+                <CardBody>
+                  {creditLoading ? (
+                    <div className="text-center py-3"><Spinner /></div>
+                  ) : creditInfo ? (
+                    <div>
+                      {creditInfo.hasOutstandingDebt && (
+                        <Alert color="danger" className="mb-3 py-2">
+                          <i className="bx bx-error me-1"></i>
+                          Outstanding debt detected. Please settle your balance.
+                        </Alert>
+                      )}
+                      <div className="text-center mb-3">
+                        <div className="text-muted small mb-1">Available Credit</div>
+                        <div style={{ fontSize: 32, fontWeight: 700 }} className={creditInfo.creditBalance < 0 ? "text-danger" : "text-success"}>
+                          {creditInfo.currency || "SGD"} {typeof creditInfo.creditBalance === "number" ? creditInfo.creditBalance.toFixed(2) : "—"}
+                        </div>
+                      </div>
+                      <table className="table table-sm table-borderless mb-0">
+                        <tbody>
+                          {creditInfo.totalTopUp !== undefined && (
+                            <tr>
+                              <td className="text-muted" style={{ width: 160 }}>Total Top-Up</td>
+                              <td>{creditInfo.currency || "SGD"} {typeof creditInfo.totalTopUp === "number" ? creditInfo.totalTopUp.toFixed(2) : "—"}</td>
+                            </tr>
+                          )}
+                          {creditInfo.totalUsage !== undefined && (
+                            <tr>
+                              <td className="text-muted">Total Usage</td>
+                              <td>{creditInfo.currency || "SGD"} {typeof creditInfo.totalUsage === "number" ? creditInfo.totalUsage.toFixed(2) : "—"}</td>
+                            </tr>
+                          )}
+                          {creditInfo.lastMonthUsage !== undefined && (
+                            <tr>
+                              <td className="text-muted">Last Month Usage</td>
+                              <td>{creditInfo.currency || "SGD"} {typeof creditInfo.lastMonthUsage === "number" ? creditInfo.lastMonthUsage.toFixed(2) : "—"}</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-muted text-center py-2 mb-0">Credit information unavailable.</p>
+                  )}
+                </CardBody>
+              </Card>
+            )}
 
             <Card className="mt-3">
               <CardHeader className="bg-transparent">

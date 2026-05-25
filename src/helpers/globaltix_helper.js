@@ -5,14 +5,40 @@ import { get, post } from "./api_helper";
 export const getGlobtixToken = (environment = "staging") =>
   get(`/v1/globaltix/auth/token`, { params: { environment } });
 
+// ─── Meta ─────────────────────────────────────────────────────────────────────
+
+export const getGlobtixCountries = (environment = "staging") =>
+  get(`/v1/globaltix/meta/countries`, { params: { environment } });
+
+export const getGlobtixCities = (environment = "staging") =>
+  get(`/v1/globaltix/meta/cities`, { params: { environment } });
+
+export const getGlobtixCategories = (environment = "staging") =>
+  get(`/v1/globaltix/meta/categories`, { params: { environment } });
+
+export const getGlobtixCredit = (environment = "staging") =>
+  get(`/v1/globaltix/meta/credit`, { params: { environment } });
+
 export const authenticateGlobtix = (environment = "staging") =>
   post(`/v1/globaltix/auth/authenticate`, { environment });
 
 // ─── Products ────────────────────────────────────────────────────────────────
 
-export const getGlobtixProducts = ({ environment = "staging", isActive, syncStatus, page = 1, limit = 50 } = {}) =>
+export const getGlobtixProducts = ({ environment = "staging", isActive, syncStatus, country, city, category, isLinked, isCancellable, isOpenDated, page = 1, limit = 50 } = {}) =>
   get(`/v1/globaltix/products`, {
-    params: { environment, ...(isActive !== undefined && { isActive }), ...(syncStatus && { syncStatus }), page, limit },
+    params: {
+      environment,
+      ...(isActive !== undefined && { isActive }),
+      ...(syncStatus && { syncStatus }),
+      ...(country && { country }),
+      ...(city && { city }),
+      ...(category && { category }),
+      ...(isLinked !== undefined && { isLinked }),
+      ...(isCancellable !== undefined && { isCancellable }),
+      ...(isOpenDated !== undefined && { isOpenDated }),
+      page,
+      limit,
+    },
   });
 
 export const searchGlobtixProducts = (query, environment = "staging") =>
@@ -82,3 +108,9 @@ export const cancelGlobtixBooking = (referenceNumber, environment = "staging", r
 
 export const refreshGlobtixBooking = (referenceNumber, environment = "staging") =>
   get(`/v1/globaltix/bookings/${referenceNumber}/refresh`, { params: { environment } });
+
+export const resendGlobtixBookingEmail = (referenceNumber, environment = "staging") =>
+  post(`/v1/globaltix/bookings/${referenceNumber}/resend-email`, { environment });
+
+export const checkGlobtixAvailability = (ticketTypeID, dateFrom, dateTo, environment = "staging") =>
+  get(`/v1/globaltix/availability/check`, { params: { ticketTypeID, dateFrom, dateTo, environment } });
