@@ -1,4 +1,13 @@
 import {
+  RESERVE_GLOBALTIX_BOOKING_REQUEST,
+  RESERVE_GLOBALTIX_BOOKING_SUCCESS,
+  RESERVE_GLOBALTIX_BOOKING_FAILURE,
+  FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST,
+  FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_SUCCESS,
+  FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_FAILURE,
+  FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST,
+  FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_SUCCESS,
+  FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_FAILURE,
   FETCH_GLOBALTIX_PRODUCTS_REQUEST,
   FETCH_GLOBALTIX_PRODUCTS_SUCCESS,
   FETCH_GLOBALTIX_PRODUCTS_FAILURE,
@@ -84,6 +93,16 @@ const initialState = {
 
   authLoading: false,
   authError: null,
+
+  reserveLoading: false,
+  reservedBooking: null,
+  reserveError: null,
+
+  availabilityCalendar: null,
+  calendarLoading: false,
+
+  availabilityTimeslots: [],
+  timeslotsLoading: false,
 };
 
 const globaltixReducer = (state = initialState, action) => {
@@ -230,6 +249,27 @@ const globaltixReducer = (state = initialState, action) => {
       return { ...state, authLoading: false };
     case AUTHENTICATE_GLOBALTIX_FAILURE:
       return { ...state, authLoading: false, authError: action.payload };
+
+    case RESERVE_GLOBALTIX_BOOKING_REQUEST:
+      return { ...state, reserveLoading: true, reserveError: null, reservedBooking: null };
+    case RESERVE_GLOBALTIX_BOOKING_SUCCESS:
+      return { ...state, reserveLoading: false, reservedBooking: action.payload.data };
+    case RESERVE_GLOBALTIX_BOOKING_FAILURE:
+      return { ...state, reserveLoading: false, reserveError: action.payload };
+
+    case FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST:
+      return { ...state, calendarLoading: true, availabilityCalendar: null };
+    case FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_SUCCESS:
+      return { ...state, calendarLoading: false, availabilityCalendar: action.payload.data || action.payload };
+    case FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_FAILURE:
+      return { ...state, calendarLoading: false };
+
+    case FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST:
+      return { ...state, timeslotsLoading: true, availabilityTimeslots: [] };
+    case FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_SUCCESS:
+      return { ...state, timeslotsLoading: false, availabilityTimeslots: action.payload.data || action.payload || [] };
+    case FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_FAILURE:
+      return { ...state, timeslotsLoading: false };
 
     default:
       return state;

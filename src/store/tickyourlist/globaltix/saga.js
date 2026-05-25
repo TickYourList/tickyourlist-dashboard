@@ -1,6 +1,9 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 import {
+  RESERVE_GLOBALTIX_BOOKING_REQUEST,
+  FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST,
+  FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST,
   FETCH_GLOBALTIX_PRODUCTS_REQUEST,
   SEARCH_GLOBALTIX_PRODUCTS_REQUEST,
   FETCH_GLOBALTIX_PRODUCT_DETAIL_REQUEST,
@@ -18,6 +21,12 @@ import {
   AUTHENTICATE_GLOBALTIX_REQUEST,
 } from "./actionTypes";
 import {
+  reserveGlobtixBookingSuccess,
+  reserveGlobtixBookingFailure,
+  fetchGlobtixAvailabilityCalendarSuccess,
+  fetchGlobtixAvailabilityCalendarFailure,
+  fetchGlobtixAvailabilityTimeslotSuccess,
+  fetchGlobtixAvailabilityTimeslotFailure,
   fetchGlobtixProductsSuccess,
   fetchGlobtixProductsFailure,
   searchGlobtixProductsSuccess,
@@ -50,6 +59,9 @@ import {
   authenticateGlobtixFailure,
 } from "./action";
 import {
+  reserveGlobtixBooking,
+  getGlobtixAvailabilityCalendar,
+  getGlobtixAvailabilityTimeslot,
   getGlobtixProducts,
   searchGlobtixProducts,
   getGlobtixProductDetail,
@@ -213,6 +225,35 @@ function* authenticateGlobtixSaga({ payload }) {
   }
 }
 
+function* reserveGlobtixBookingSaga({ payload }) {
+  try {
+    const response = yield call(reserveGlobtixBooking, payload);
+    yield put(reserveGlobtixBookingSuccess(response));
+    showToastSuccess(`Booking reserved: ${response?.data?.referenceNumber || ""}`);
+  } catch (error) {
+    yield put(reserveGlobtixBookingFailure(error.message));
+    showToastError("Reserve failed: " + error.message);
+  }
+}
+
+function* fetchGlobtixAvailabilityCalendarSaga({ payload }) {
+  try {
+    const response = yield call(getGlobtixAvailabilityCalendar, payload.productId, payload.optionId, payload.month, payload.environment);
+    yield put(fetchGlobtixAvailabilityCalendarSuccess(response));
+  } catch (error) {
+    yield put(fetchGlobtixAvailabilityCalendarFailure(error.message));
+  }
+}
+
+function* fetchGlobtixAvailabilityTimeslotSaga({ payload }) {
+  try {
+    const response = yield call(getGlobtixAvailabilityTimeslot, payload.productId, payload.optionId, payload.date, payload.environment);
+    yield put(fetchGlobtixAvailabilityTimeslotSuccess(response));
+  } catch (error) {
+    yield put(fetchGlobtixAvailabilityTimeslotFailure(error.message));
+  }
+}
+
 function* globaltixSaga() {
   yield takeLatest(FETCH_GLOBALTIX_PRODUCTS_REQUEST, fetchGlobtixProductsSaga);
   yield takeLatest(SEARCH_GLOBALTIX_PRODUCTS_REQUEST, searchGlobtixProductsSaga);
@@ -227,6 +268,9 @@ function* globaltixSaga() {
   yield takeLatest(RELEASE_GLOBALTIX_BOOKING_REQUEST, releaseGlobtixBookingSaga);
   yield takeLatest(RESEND_GLOBALTIX_EMAIL_REQUEST, resendGlobtixEmailSaga);
   yield takeLatest(REFRESH_GLOBALTIX_BOOKING_REQUEST, refreshGlobtixBookingSaga);
+  yield takeLatest(RESERVE_GLOBALTIX_BOOKING_REQUEST, reserveGlobtixBookingSaga);
+  yield takeLatest(FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST, fetchGlobtixAvailabilityCalendarSaga);
+  yield takeLatest(FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST, fetchGlobtixAvailabilityTimeslotSaga);
   yield takeLatest(FETCH_GLOBALTIX_TOKEN_REQUEST, fetchGlobtixTokenSaga);
   yield takeLatest(AUTHENTICATE_GLOBALTIX_REQUEST, authenticateGlobtixSaga);
 }

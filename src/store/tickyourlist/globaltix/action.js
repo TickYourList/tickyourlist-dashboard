@@ -1,4 +1,13 @@
 import {
+  RESERVE_GLOBALTIX_BOOKING_REQUEST,
+  RESERVE_GLOBALTIX_BOOKING_SUCCESS,
+  RESERVE_GLOBALTIX_BOOKING_FAILURE,
+  FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST,
+  FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_SUCCESS,
+  FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_FAILURE,
+  FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST,
+  FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_SUCCESS,
+  FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_FAILURE,
   FETCH_GLOBALTIX_PRODUCTS_REQUEST,
   FETCH_GLOBALTIX_PRODUCTS_SUCCESS,
   FETCH_GLOBALTIX_PRODUCTS_FAILURE,
@@ -105,3 +114,15 @@ export const resendGlobtixEmailFailure = (error) => ({ type: RESEND_GLOBALTIX_EM
 export const refreshGlobtixBookingRequest = (referenceNumber, environment) => ({ type: REFRESH_GLOBALTIX_BOOKING_REQUEST, payload: { referenceNumber, environment } });
 export const refreshGlobtixBookingSuccess = (data) => ({ type: REFRESH_GLOBALTIX_BOOKING_SUCCESS, payload: data });
 export const refreshGlobtixBookingFailure = (error) => ({ type: REFRESH_GLOBALTIX_BOOKING_FAILURE, payload: error });
+
+export const reserveGlobtixBookingRequest = (payload) => ({ type: RESERVE_GLOBALTIX_BOOKING_REQUEST, payload });
+export const reserveGlobtixBookingSuccess = (data) => ({ type: RESERVE_GLOBALTIX_BOOKING_SUCCESS, payload: data });
+export const reserveGlobtixBookingFailure = (error) => ({ type: RESERVE_GLOBALTIX_BOOKING_FAILURE, payload: error });
+
+export const fetchGlobtixAvailabilityCalendarRequest = (productId, optionId, month, environment) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST, payload: { productId, optionId, month, environment } });
+export const fetchGlobtixAvailabilityCalendarSuccess = (data) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_SUCCESS, payload: data });
+export const fetchGlobtixAvailabilityCalendarFailure = (error) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_FAILURE, payload: error });
+
+export const fetchGlobtixAvailabilityTimeslotRequest = (productId, optionId, date, environment) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST, payload: { productId, optionId, date, environment } });
+export const fetchGlobtixAvailabilityTimeslotSuccess = (data) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_SUCCESS, payload: data });
+export const fetchGlobtixAvailabilityTimeslotFailure = (error) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_FAILURE, payload: error });
