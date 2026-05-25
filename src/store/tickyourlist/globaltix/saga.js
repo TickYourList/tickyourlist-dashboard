@@ -238,7 +238,7 @@ function* reserveGlobtixBookingSaga({ payload }) {
 
 function* fetchGlobtixAvailabilityCalendarSaga({ payload }) {
   try {
-    const response = yield call(getGlobtixAvailabilityCalendar, payload.productId, payload.optionId, payload.month, payload.environment);
+    const response = yield call(getGlobtixAvailabilityCalendar, payload.ticketTypeID, payload.month, payload.environment);
     yield put(fetchGlobtixAvailabilityCalendarSuccess(response));
   } catch (error) {
     yield put(fetchGlobtixAvailabilityCalendarFailure(error.message));
@@ -247,7 +247,7 @@ function* fetchGlobtixAvailabilityCalendarSaga({ payload }) {
 
 function* fetchGlobtixAvailabilityTimeslotSaga({ payload }) {
   try {
-    const response = yield call(getGlobtixAvailabilityTimeslot, payload.productId, payload.optionId, payload.date, payload.environment);
+    const response = yield call(getGlobtixAvailabilityTimeslot, payload.ticketTypeID, payload.date, payload.environment);
     yield put(fetchGlobtixAvailabilityTimeslotSuccess(response));
   } catch (error) {
     yield put(fetchGlobtixAvailabilityTimeslotFailure(error.message));

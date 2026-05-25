@@ -119,10 +119,10 @@ export const reserveGlobtixBookingRequest = (payload) => ({ type: RESERVE_GLOBAL
 export const reserveGlobtixBookingSuccess = (data) => ({ type: RESERVE_GLOBALTIX_BOOKING_SUCCESS, payload: data });
 export const reserveGlobtixBookingFailure = (error) => ({ type: RESERVE_GLOBALTIX_BOOKING_FAILURE, payload: error });
 
-export const fetchGlobtixAvailabilityCalendarRequest = (productId, optionId, month, environment) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST, payload: { productId, optionId, month, environment } });
+export const fetchGlobtixAvailabilityCalendarRequest = (ticketTypeID, month, environment) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST, payload: { ticketTypeID, month, environment } });
 export const fetchGlobtixAvailabilityCalendarSuccess = (data) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_SUCCESS, payload: data });
 export const fetchGlobtixAvailabilityCalendarFailure = (error) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_FAILURE, payload: error });
 
-export const fetchGlobtixAvailabilityTimeslotRequest = (productId, optionId, date, environment) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST, payload: { productId, optionId, date, environment } });
+export const fetchGlobtixAvailabilityTimeslotRequest = (ticketTypeID, date, environment) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST, payload: { ticketTypeID, date, environment } });
 export const fetchGlobtixAvailabilityTimeslotSuccess = (data) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_SUCCESS, payload: data });
 export const fetchGlobtixAvailabilityTimeslotFailure = (error) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_FAILURE, payload: error });

@@ -261,23 +261,28 @@ function StepTicketsDate({ product, option, form, onChange, environment }) {
   const dispatch = useDispatch();
   const { availabilityCalendar, calendarLoading, availabilityTimeslots, timeslotsLoading } = useSelector((s) => s.globaltix || {});
   const currency = product.currency || "SGD";
-  const needsDate = option.visitDateRequired || ["VisitDate", "DateAndTime"].includes(option.ticketValidity);
-  const needsTime = option.ticketValidity === "DateAndTime";
+  // visitDateRequired is synced from Globaltix visitDate.required; also check ticketValidity as fallback
+  const needsDate = option.visitDateRequired || option.ticketValidity === "VisitDate";
+  // hasTimeslots comes from the calendar response (seriesId present in any slot)
+  const hasTimeslots = availabilityCalendar?.hasTimeslots === true;
+  const needsTime = needsDate && hasTimeslots;
   const currentMonth = useRef(isoMonth(new Date()));
+  // Use the first ticketType id for availability queries (all share same availability)
+  const primaryTicketTypeId = (option.ticketTypes || [])[0]?.id;
 
   useEffect(() => {
-    if (needsDate) {
-      dispatch(fetchGlobtixAvailabilityCalendarRequest(product.globaltixProductId, option.id, currentMonth.current, environment));
+    if (needsDate && primaryTicketTypeId) {
+      dispatch(fetchGlobtixAvailabilityCalendarRequest(primaryTicketTypeId, currentMonth.current, environment));
     }
-  }, [dispatch, product.globaltixProductId, option.id, environment, needsDate]);
+  }, [dispatch, primaryTicketTypeId, environment, needsDate]);
 
   useEffect(() => {
-    if (needsTime && form.visitDate) {
-      dispatch(fetchGlobtixAvailabilityTimeslotRequest(product.globaltixProductId, option.id, form.visitDate, environment));
+    if (needsDate && primaryTicketTypeId && form.visitDate) {
+      dispatch(fetchGlobtixAvailabilityTimeslotRequest(primaryTicketTypeId, form.visitDate, environment));
     }
-  }, [dispatch, product.globaltixProductId, option.id, form.visitDate, environment, needsTime]);
+  }, [dispatch, primaryTicketTypeId, form.visitDate, environment, needsDate]);
 
-  const availableDates = availabilityCalendar?.available || availabilityCalendar?.dates || [];
+  const availableDates = availabilityCalendar?.available || [];
   const isDayAvailable = (d) => !availableDates.length || availableDates.includes(d);
 
   const priceTier = form.priceTier || "recommendedSellingPrice";
@@ -376,7 +381,7 @@ function StepTicketsDate({ product, option, form, onChange, environment }) {
         </div>
       )}
 
-      {/* Timeslots for DateAndTime */}
+      {/* Timeslots */}
       {needsTime && form.visitDate && (
         <div className="mb-4">
           <h6 className="fw-semibold mb-2">Select Time {timeslotsLoading && <Spinner size="sm" className="ms-1" />}</h6>
@@ -385,16 +390,16 @@ function StepTicketsDate({ product, option, form, onChange, environment }) {
           ) : (
             <div className="d-flex flex-wrap gap-2">
               {(availabilityTimeslots || []).map((slot, i) => {
-                const time = slot.time || slot.startTime || slot;
-                const sid = slot.seriesId || slot.id || i;
-                const avail = slot.availability ?? slot.available ?? "?";
-                const selected = form.visitTime === String(time) && form.seriesId === sid;
+                const time = slot.time;
+                const sid = slot.seriesId;
+                const avail = slot.available;
+                const selected = form.visitTime === time && form.seriesId === sid;
                 return (
                   <Button key={i} size="sm"
                     color={selected ? "primary" : "outline-secondary"}
-                    onClick={() => { onChange("visitTime", String(time)); onChange("seriesId", sid); }}
+                    onClick={() => { onChange("visitTime", time); onChange("seriesId", sid); }}
                     disabled={avail === 0}>
-                    {time}{avail !== "?" ? ` (${avail})` : ""}
+                    {time}{avail !== "∞" && avail != null ? ` (${avail} left)` : ""}
                   </Button>
                 );
               })}
@@ -742,9 +747,15 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
   const backFromReview = hasQuestions ? 3 : 2;
 
   const handleReserve = () => {
+    const priceTier = form.priceTier || "recommendedSellingPrice";
     const tickets = (selectedOption.ticketTypes || [])
       .filter((tt) => (form.quantities[tt.id] || 0) > 0)
-      .map((tt) => ({ ticketTypeId: tt.id, quantity: form.quantities[tt.id] }));
+      .map((tt) => ({
+        ticketTypeId: tt.id,
+        ticketTypeName: tt.name || "",
+        quantity: form.quantities[tt.id],
+        unitPrice: tt[priceTier] || tt.nettPrice || 0,
+      }));
 
     const answers = Object.entries(form.answers)
       .filter(([, v]) => v)
@@ -755,6 +766,7 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
       globaltixProductId: selectedProduct.globaltixProductId,
       optionId: selectedOption.id,
       tickets,
+      priceTier,
       customerName: form.customerName.trim(),
       customerEmail: form.customerEmail.trim(),
       mobileNumber: form.mobileNumber,
@@ -1202,7 +1214,14 @@ const GlobtixBookingsPage = () => {
               {/* Ticket breakdown */}
               {bookingDetail.ticketCodes?.length > 0 && (
                 <div className="mb-3">
-                  <Label className="fw-semibold">Ticket Breakdown</Label>
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <Label className="fw-semibold mb-0">Ticket Breakdown</Label>
+                    {bookingDetail.priceTier && (
+                      <Badge color={bookingDetail.priceTier === "nettPrice" ? "danger" : bookingDetail.priceTier === "minimumSellingPrice" ? "warning" : "success"} className="fw-normal small">
+                        {bookingDetail.priceTier === "recommendedSellingPrice" ? "Recommended Selling" : bookingDetail.priceTier === "minimumSellingPrice" ? "Minimum Selling" : "Nett / Cost Price"}
+                      </Badge>
+                    )}
+                  </div>
                   <table className="table table-sm table-bordered mb-0" style={{ fontSize: 13 }}>
                     <thead className="table-light">
                       <tr><th>Type</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
@@ -1212,10 +1231,14 @@ const GlobtixBookingsPage = () => {
                         <tr key={i}>
                           <td>{tc.ticketTypeName || `Type ${tc.ticketTypeId}`}</td>
                           <td>{tc.quantity}</td>
-                          <td>{bookingDetail.currency} {tc.unitPrice?.toFixed(2) || "—"}</td>
-                          <td><strong>{bookingDetail.currency} {tc.totalPrice?.toFixed(2) || "—"}</strong></td>
+                          <td>{tc.unitPrice > 0 ? `${bookingDetail.currency} ${tc.unitPrice.toFixed(2)}` : <span className="text-muted">—</span>}</td>
+                          <td><strong>{tc.totalPrice > 0 ? `${bookingDetail.currency} ${tc.totalPrice.toFixed(2)}` : <span className="text-muted">—</span>}</strong></td>
                         </tr>
                       ))}
+                      <tr className="table-light">
+                        <td colSpan={3} className="text-end fw-semibold">Total</td>
+                        <td><strong>{bookingDetail.currency} {(bookingDetail.totalAmount || 0).toFixed(2)}</strong></td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>

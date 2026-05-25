@@ -83,11 +83,11 @@ export const globaltixSyncProduct = (globaltixProductId, environment = "staging"
 
 // ─── Availability ─────────────────────────────────────────────────────────────
 
-export const getGlobtixAvailabilityCalendar = (productId, optionId, month, environment = "staging") =>
-  get(`/v1/globaltix/availability/calendar`, { params: { productId, optionId, month, environment } });
+export const getGlobtixAvailabilityCalendar = (ticketTypeID, month, environment = "staging") =>
+  get(`/v1/globaltix/availability/calendar`, { params: { ticketTypeID, month, environment } });
 
-export const getGlobtixAvailabilityTimeslot = (productId, optionId, date, environment = "staging") =>
-  get(`/v1/globaltix/availability/timeslot`, { params: { productId, optionId, date, environment } });
+export const getGlobtixAvailabilityTimeslot = (ticketTypeID, date, environment = "staging") =>
+  get(`/v1/globaltix/availability/timeslot`, { params: { ticketTypeID, date, environment } });
 
 // ─── Bookings ─────────────────────────────────────────────────────────────────
 
