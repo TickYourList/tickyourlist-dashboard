@@ -51,7 +51,7 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
       // Pre-select the product if one was passed in
       handleSelectProduct(initialProduct);
     }
-  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen]); // eslint-disable-line
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
