@@ -26,6 +26,18 @@ import {
   CANCEL_GLOBALTIX_BOOKING_REQUEST,
   CANCEL_GLOBALTIX_BOOKING_SUCCESS,
   CANCEL_GLOBALTIX_BOOKING_FAILURE,
+  CONFIRM_GLOBALTIX_BOOKING_REQUEST,
+  CONFIRM_GLOBALTIX_BOOKING_SUCCESS,
+  CONFIRM_GLOBALTIX_BOOKING_FAILURE,
+  RELEASE_GLOBALTIX_BOOKING_REQUEST,
+  RELEASE_GLOBALTIX_BOOKING_SUCCESS,
+  RELEASE_GLOBALTIX_BOOKING_FAILURE,
+  RESEND_GLOBALTIX_EMAIL_REQUEST,
+  RESEND_GLOBALTIX_EMAIL_SUCCESS,
+  RESEND_GLOBALTIX_EMAIL_FAILURE,
+  REFRESH_GLOBALTIX_BOOKING_REQUEST,
+  REFRESH_GLOBALTIX_BOOKING_SUCCESS,
+  REFRESH_GLOBALTIX_BOOKING_FAILURE,
   FETCH_GLOBALTIX_TOKEN_REQUEST,
   FETCH_GLOBALTIX_TOKEN_SUCCESS,
   FETCH_GLOBALTIX_TOKEN_FAILURE,
@@ -62,6 +74,10 @@ const initialState = {
   bookingDetailLoading: false,
 
   cancelLoading: false,
+  confirmLoading: false,
+  releaseLoading: false,
+  resendEmailLoading: false,
+  refreshBookingLoading: false,
 
   tokenInfo: null,
   tokenLoading: false,
@@ -154,6 +170,52 @@ const globaltixReducer = (state = initialState, action) => {
       };
     case CANCEL_GLOBALTIX_BOOKING_FAILURE:
       return { ...state, cancelLoading: false, cancelSuccess: false };
+
+    case CONFIRM_GLOBALTIX_BOOKING_REQUEST:
+      return { ...state, confirmLoading: true };
+    case CONFIRM_GLOBALTIX_BOOKING_SUCCESS: {
+      const updated = action.payload?.data;
+      return {
+        ...state,
+        confirmLoading: false,
+        bookings: updated
+          ? state.bookings.map((b) => b.referenceNumber === updated.referenceNumber ? { ...b, ...updated } : b)
+          : state.bookings,
+        bookingDetail: state.bookingDetail?.referenceNumber === updated?.referenceNumber ? updated : state.bookingDetail,
+      };
+    }
+    case CONFIRM_GLOBALTIX_BOOKING_FAILURE:
+      return { ...state, confirmLoading: false };
+
+    case RELEASE_GLOBALTIX_BOOKING_REQUEST:
+      return { ...state, releaseLoading: true };
+    case RELEASE_GLOBALTIX_BOOKING_SUCCESS: {
+      const updated = action.payload?.data;
+      return {
+        ...state,
+        releaseLoading: false,
+        bookings: updated
+          ? state.bookings.map((b) => b.referenceNumber === updated.referenceNumber ? { ...b, ...updated } : b)
+          : state.bookings,
+        bookingDetail: state.bookingDetail?.referenceNumber === updated?.referenceNumber ? updated : state.bookingDetail,
+      };
+    }
+    case RELEASE_GLOBALTIX_BOOKING_FAILURE:
+      return { ...state, releaseLoading: false };
+
+    case RESEND_GLOBALTIX_EMAIL_REQUEST:
+      return { ...state, resendEmailLoading: true };
+    case RESEND_GLOBALTIX_EMAIL_SUCCESS:
+      return { ...state, resendEmailLoading: false };
+    case RESEND_GLOBALTIX_EMAIL_FAILURE:
+      return { ...state, resendEmailLoading: false };
+
+    case REFRESH_GLOBALTIX_BOOKING_REQUEST:
+      return { ...state, refreshBookingLoading: true };
+    case REFRESH_GLOBALTIX_BOOKING_SUCCESS:
+      return { ...state, refreshBookingLoading: false, bookingDetail: action.payload?.data || state.bookingDetail };
+    case REFRESH_GLOBALTIX_BOOKING_FAILURE:
+      return { ...state, refreshBookingLoading: false };
 
     case FETCH_GLOBALTIX_TOKEN_REQUEST:
       return { ...state, tokenLoading: true };

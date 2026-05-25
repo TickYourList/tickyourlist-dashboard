@@ -26,6 +26,18 @@ import {
   CANCEL_GLOBALTIX_BOOKING_REQUEST,
   CANCEL_GLOBALTIX_BOOKING_SUCCESS,
   CANCEL_GLOBALTIX_BOOKING_FAILURE,
+  CONFIRM_GLOBALTIX_BOOKING_REQUEST,
+  CONFIRM_GLOBALTIX_BOOKING_SUCCESS,
+  CONFIRM_GLOBALTIX_BOOKING_FAILURE,
+  RELEASE_GLOBALTIX_BOOKING_REQUEST,
+  RELEASE_GLOBALTIX_BOOKING_SUCCESS,
+  RELEASE_GLOBALTIX_BOOKING_FAILURE,
+  RESEND_GLOBALTIX_EMAIL_REQUEST,
+  RESEND_GLOBALTIX_EMAIL_SUCCESS,
+  RESEND_GLOBALTIX_EMAIL_FAILURE,
+  REFRESH_GLOBALTIX_BOOKING_REQUEST,
+  REFRESH_GLOBALTIX_BOOKING_SUCCESS,
+  REFRESH_GLOBALTIX_BOOKING_FAILURE,
   FETCH_GLOBALTIX_TOKEN_REQUEST,
   FETCH_GLOBALTIX_TOKEN_SUCCESS,
   FETCH_GLOBALTIX_TOKEN_FAILURE,
@@ -77,3 +89,19 @@ export const fetchGlobtixTokenFailure = (error) => ({ type: FETCH_GLOBALTIX_TOKE
 export const authenticateGlobtixRequest = (environment) => ({ type: AUTHENTICATE_GLOBALTIX_REQUEST, payload: { environment } });
 export const authenticateGlobtixSuccess = (data) => ({ type: AUTHENTICATE_GLOBALTIX_SUCCESS, payload: data });
 export const authenticateGlobtixFailure = (error) => ({ type: AUTHENTICATE_GLOBALTIX_FAILURE, payload: error });
+
+export const confirmGlobtixBookingRequest = (referenceNumber, environment) => ({ type: CONFIRM_GLOBALTIX_BOOKING_REQUEST, payload: { referenceNumber, environment } });
+export const confirmGlobtixBookingSuccess = (data) => ({ type: CONFIRM_GLOBALTIX_BOOKING_SUCCESS, payload: data });
+export const confirmGlobtixBookingFailure = (error) => ({ type: CONFIRM_GLOBALTIX_BOOKING_FAILURE, payload: error });
+
+export const releaseGlobtixBookingRequest = (referenceNumber, environment) => ({ type: RELEASE_GLOBALTIX_BOOKING_REQUEST, payload: { referenceNumber, environment } });
+export const releaseGlobtixBookingSuccess = (data) => ({ type: RELEASE_GLOBALTIX_BOOKING_SUCCESS, payload: data });
+export const releaseGlobtixBookingFailure = (error) => ({ type: RELEASE_GLOBALTIX_BOOKING_FAILURE, payload: error });
+
+export const resendGlobtixEmailRequest = (referenceNumber, environment) => ({ type: RESEND_GLOBALTIX_EMAIL_REQUEST, payload: { referenceNumber, environment } });
+export const resendGlobtixEmailSuccess = (data) => ({ type: RESEND_GLOBALTIX_EMAIL_SUCCESS, payload: data });
+export const resendGlobtixEmailFailure = (error) => ({ type: RESEND_GLOBALTIX_EMAIL_FAILURE, payload: error });
+
+export const refreshGlobtixBookingRequest = (referenceNumber, environment) => ({ type: REFRESH_GLOBALTIX_BOOKING_REQUEST, payload: { referenceNumber, environment } });
+export const refreshGlobtixBookingSuccess = (data) => ({ type: REFRESH_GLOBALTIX_BOOKING_SUCCESS, payload: data });
+export const refreshGlobtixBookingFailure = (error) => ({ type: REFRESH_GLOBALTIX_BOOKING_FAILURE, payload: error });

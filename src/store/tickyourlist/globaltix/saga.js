@@ -10,6 +10,10 @@ import {
   FETCH_GLOBALTIX_BOOKINGS_REQUEST,
   FETCH_GLOBALTIX_BOOKING_DETAIL_REQUEST,
   CANCEL_GLOBALTIX_BOOKING_REQUEST,
+  CONFIRM_GLOBALTIX_BOOKING_REQUEST,
+  RELEASE_GLOBALTIX_BOOKING_REQUEST,
+  RESEND_GLOBALTIX_EMAIL_REQUEST,
+  REFRESH_GLOBALTIX_BOOKING_REQUEST,
   FETCH_GLOBALTIX_TOKEN_REQUEST,
   AUTHENTICATE_GLOBALTIX_REQUEST,
 } from "./actionTypes";
@@ -32,6 +36,14 @@ import {
   fetchGlobtixBookingDetailFailure,
   cancelGlobtixBookingSuccess,
   cancelGlobtixBookingFailure,
+  confirmGlobtixBookingSuccess,
+  confirmGlobtixBookingFailure,
+  releaseGlobtixBookingSuccess,
+  releaseGlobtixBookingFailure,
+  resendGlobtixEmailSuccess,
+  resendGlobtixEmailFailure,
+  refreshGlobtixBookingSuccess,
+  refreshGlobtixBookingFailure,
   fetchGlobtixTokenSuccess,
   fetchGlobtixTokenFailure,
   authenticateGlobtixSuccess,
@@ -47,6 +59,10 @@ import {
   getGlobtixBookings,
   getGlobtixBookingDetail,
   cancelGlobtixBooking,
+  confirmGlobtixBooking,
+  releaseGlobtixBooking,
+  resendGlobtixBookingEmail,
+  refreshGlobtixBooking,
   getGlobtixToken,
   authenticateGlobtix,
 } from "helpers/globaltix_helper";
@@ -134,6 +150,49 @@ function* cancelGlobtixBookingSaga({ payload }) {
   }
 }
 
+function* confirmGlobtixBookingSaga({ payload }) {
+  try {
+    const response = yield call(confirmGlobtixBooking, payload.referenceNumber, payload.environment);
+    yield put(confirmGlobtixBookingSuccess(response));
+    showToastSuccess(`Booking ${payload.referenceNumber} confirmed`);
+  } catch (error) {
+    yield put(confirmGlobtixBookingFailure(error.message));
+    showToastError("Confirm failed: " + error.message);
+  }
+}
+
+function* releaseGlobtixBookingSaga({ payload }) {
+  try {
+    const response = yield call(releaseGlobtixBooking, payload.referenceNumber, payload.environment);
+    yield put(releaseGlobtixBookingSuccess(response));
+    showToastSuccess(`Booking ${payload.referenceNumber} released`);
+  } catch (error) {
+    yield put(releaseGlobtixBookingFailure(error.message));
+    showToastError("Release failed: " + error.message);
+  }
+}
+
+function* resendGlobtixEmailSaga({ payload }) {
+  try {
+    const response = yield call(resendGlobtixBookingEmail, payload.referenceNumber, payload.environment);
+    yield put(resendGlobtixEmailSuccess(response));
+    showToastSuccess("Confirmation email resent");
+  } catch (error) {
+    yield put(resendGlobtixEmailFailure(error.message));
+    showToastError("Resend failed: " + error.message);
+  }
+}
+
+function* refreshGlobtixBookingSaga({ payload }) {
+  try {
+    const response = yield call(refreshGlobtixBooking, payload.referenceNumber, payload.environment);
+    yield put(refreshGlobtixBookingSuccess(response));
+  } catch (error) {
+    yield put(refreshGlobtixBookingFailure(error.message));
+    showToastError("Refresh failed: " + error.message);
+  }
+}
+
 function* fetchGlobtixTokenSaga({ payload }) {
   try {
     const response = yield call(getGlobtixToken, payload.environment);
@@ -164,6 +223,10 @@ function* globaltixSaga() {
   yield takeLatest(FETCH_GLOBALTIX_BOOKINGS_REQUEST, fetchGlobtixBookingsSaga);
   yield takeLatest(FETCH_GLOBALTIX_BOOKING_DETAIL_REQUEST, fetchGlobtixBookingDetailSaga);
   yield takeLatest(CANCEL_GLOBALTIX_BOOKING_REQUEST, cancelGlobtixBookingSaga);
+  yield takeLatest(CONFIRM_GLOBALTIX_BOOKING_REQUEST, confirmGlobtixBookingSaga);
+  yield takeLatest(RELEASE_GLOBALTIX_BOOKING_REQUEST, releaseGlobtixBookingSaga);
+  yield takeLatest(RESEND_GLOBALTIX_EMAIL_REQUEST, resendGlobtixEmailSaga);
+  yield takeLatest(REFRESH_GLOBALTIX_BOOKING_REQUEST, refreshGlobtixBookingSaga);
   yield takeLatest(FETCH_GLOBALTIX_TOKEN_REQUEST, fetchGlobtixTokenSaga);
   yield takeLatest(AUTHENTICATE_GLOBALTIX_REQUEST, authenticateGlobtixSaga);
 }
