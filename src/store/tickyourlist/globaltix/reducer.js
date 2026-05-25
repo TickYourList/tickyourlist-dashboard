@@ -109,8 +109,18 @@ const globaltixReducer = (state = initialState, action) => {
 
     case GLOBALTIX_SYNC_PRODUCT_REQUEST:
       return { ...state, syncProductLoading: true };
-    case GLOBALTIX_SYNC_PRODUCT_SUCCESS:
-      return { ...state, syncProductLoading: false };
+    case GLOBALTIX_SYNC_PRODUCT_SUCCESS: {
+      const updated = action.payload?.data;
+      return {
+        ...state,
+        syncProductLoading: false,
+        products: updated
+          ? state.products.map((p) =>
+              p.globaltixProductId === updated.globaltixProductId ? { ...p, ...updated } : p
+            )
+          : state.products,
+      };
+    }
     case GLOBALTIX_SYNC_PRODUCT_FAILURE:
       return { ...state, syncProductLoading: false };
 
@@ -131,9 +141,19 @@ const globaltixReducer = (state = initialState, action) => {
     case CANCEL_GLOBALTIX_BOOKING_REQUEST:
       return { ...state, cancelLoading: true };
     case CANCEL_GLOBALTIX_BOOKING_SUCCESS:
-      return { ...state, cancelLoading: false };
+      return {
+        ...state,
+        cancelLoading: false,
+        cancelSuccess: true,
+        // Update the cancelled booking's status in the list
+        bookings: state.bookings.map((b) =>
+          b.referenceNumber === action.payload?.referenceNumber
+            ? { ...b, status: "CANCELLED" }
+            : b
+        ),
+      };
     case CANCEL_GLOBALTIX_BOOKING_FAILURE:
-      return { ...state, cancelLoading: false };
+      return { ...state, cancelLoading: false, cancelSuccess: false };
 
     case FETCH_GLOBALTIX_TOKEN_REQUEST:
       return { ...state, tokenLoading: true };

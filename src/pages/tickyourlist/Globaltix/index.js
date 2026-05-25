@@ -322,6 +322,7 @@ const GlobtixProductsPage = () => {
         isOpen={connectModalOpen}
         toggle={() => { setConnectModalOpen(false); setSelectedProductForConnect(null); }}
         tourGroup={null}
+        initialProduct={selectedProductForConnect}
         onSuccess={() => {
           setConnectModalOpen(false);
           setSelectedProductForConnect(null);

@@ -14,14 +14,22 @@ const GlobtixCredentialsPage = () => {
   const dispatch = useDispatch();
   const { tokenInfo, tokenLoading, authLoading, authError } = useSelector((state) => state.globaltix || {});
   const [environment, setEnvironment] = useState("staging");
+  const prevAuthLoading = React.useRef(false);
 
   useEffect(() => {
     dispatch(fetchGlobtixTokenRequest(environment));
   }, [dispatch, environment]);
 
+  // Re-fetch token info after auth completes
+  useEffect(() => {
+    if (prevAuthLoading.current && !authLoading && !authError) {
+      dispatch(fetchGlobtixTokenRequest(environment));
+    }
+    prevAuthLoading.current = authLoading;
+  }, [authLoading, authError, dispatch, environment]);
+
   const handleReAuthenticate = () => {
     dispatch(authenticateGlobtixRequest(environment));
-    setTimeout(() => dispatch(fetchGlobtixTokenRequest(environment)), 2000);
   };
 
   const tokenExpiresSoon = tokenInfo?.expiresAt &&

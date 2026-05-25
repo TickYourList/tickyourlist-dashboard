@@ -28,7 +28,7 @@ const VALIDITY_LABELS = {
   DateAndTime: "Date & Time",
 };
 
-const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess }) => {
+const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProduct = null }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -47,8 +47,11 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess }) => {
       setSelectedProduct(null);
       setProductDetail(null);
       setActiveTab("detail");
+    } else if (initialProduct) {
+      // Pre-select the product if one was passed in
+      handleSelectProduct(initialProduct);
     }
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;

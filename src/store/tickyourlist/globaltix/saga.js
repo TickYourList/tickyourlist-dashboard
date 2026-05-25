@@ -1,4 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects";
+import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 import {
   FETCH_GLOBALTIX_PRODUCTS_REQUEST,
   SEARCH_GLOBALTIX_PRODUCTS_REQUEST,
@@ -125,9 +126,11 @@ function* fetchGlobtixBookingDetailSaga({ payload }) {
 function* cancelGlobtixBookingSaga({ payload }) {
   try {
     const response = yield call(cancelGlobtixBooking, payload.referenceNumber, payload.environment, payload.reason);
-    yield put(cancelGlobtixBookingSuccess(response));
+    yield put(cancelGlobtixBookingSuccess(response, payload.referenceNumber));
+    showToastSuccess(`Booking ${payload.referenceNumber} cancelled successfully`);
   } catch (error) {
     yield put(cancelGlobtixBookingFailure(error.message));
+    showToastError("Cancel failed: " + error.message);
   }
 }
 
@@ -144,8 +147,10 @@ function* authenticateGlobtixSaga({ payload }) {
   try {
     const response = yield call(authenticateGlobtix, payload.environment);
     yield put(authenticateGlobtixSuccess(response));
+    showToastSuccess("Globaltix authenticated successfully");
   } catch (error) {
     yield put(authenticateGlobtixFailure(error.message));
+    showToastError("Authentication failed: " + error.message);
   }
 }
 

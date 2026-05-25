@@ -25,7 +25,7 @@ const GlobtixBookingsPage = () => {
   const {
     bookings, bookingsPagination, bookingsLoading,
     bookingDetail, bookingDetailLoading,
-    cancelLoading,
+    cancelLoading, cancelSuccess,
   } = useSelector((state) => state.globaltix || {});
 
   const [environment] = useState("staging");
@@ -39,6 +39,14 @@ const GlobtixBookingsPage = () => {
     dispatch(fetchGlobtixBookingsRequest({ environment, status: statusFilter || undefined, page, limit: 20 }));
   }, [dispatch, environment, statusFilter, page]);
 
+  // Close cancel modal as soon as cancelLoading finishes
+  useEffect(() => {
+    if (cancelSuccess && !cancelLoading) {
+      setCancelConfirmRef(null);
+      setCancelReason("");
+    }
+  }, [cancelSuccess, cancelLoading]);
+
   const handleViewDetail = (referenceNumber) => {
     dispatch(fetchGlobtixBookingDetailRequest(referenceNumber));
     setDetailModalOpen(true);
@@ -47,8 +55,6 @@ const GlobtixBookingsPage = () => {
   const handleCancelConfirm = () => {
     if (!cancelConfirmRef) return;
     dispatch(cancelGlobtixBookingRequest(cancelConfirmRef, environment, cancelReason));
-    setCancelConfirmRef(null);
-    setCancelReason("");
   };
 
   return (
@@ -176,7 +182,21 @@ const GlobtixBookingsPage = () => {
 
       {/* Detail Modal */}
       <Modal isOpen={detailModalOpen} toggle={() => setDetailModalOpen(false)} size="lg" scrollable>
-        <ModalHeader toggle={() => setDetailModalOpen(false)}>Booking Detail</ModalHeader>
+        <ModalHeader toggle={() => setDetailModalOpen(false)}>
+          <span>Booking Detail</span>
+          {bookingDetail?.referenceNumber && (
+            <Button
+              size="sm"
+              color="outline-secondary"
+              className="ms-3"
+              onClick={() => dispatch(fetchGlobtixBookingDetailRequest(bookingDetail.referenceNumber))}
+              disabled={bookingDetailLoading}
+              title="Refresh from Globaltix"
+            >
+              {bookingDetailLoading ? <Spinner size="sm" /> : <i className="bx bx-refresh" />}
+            </Button>
+          )}
+        </ModalHeader>
         <ModalBody>
           {bookingDetailLoading ? (
             <div className="text-center py-4"><Spinner /></div>
@@ -221,11 +241,35 @@ const GlobtixBookingsPage = () => {
                   {bookingDetail.vouchers.map((v, i) => (
                     <Card key={i} className="mb-2">
                       <CardBody className="py-2">
-                        <div className="small">
-                          <strong>S/N:</strong> {v.serialNumber}<br />
-                          {v.eTicketUrl && <><strong>E-Ticket:</strong> <a href={v.eTicketUrl} target="_blank" rel="noreferrer">View</a><br /></>}
-                          {v.viewTicketUrl && <><strong>View:</strong> <a href={v.viewTicketUrl} target="_blank" rel="noreferrer">Open</a></>}
-                        </div>
+                        <Row>
+                          <Col>
+                            <div className="small">
+                              {v.serialNumber && <div><strong>S/N:</strong> {v.serialNumber}</div>}
+                              {v.barcode && <div><strong>Barcode:</strong> {v.barcode}</div>}
+                              {v.eTicketUrl && (
+                                <div>
+                                  <strong>E-Ticket:</strong>{" "}
+                                  <a href={v.eTicketUrl} target="_blank" rel="noreferrer">View</a>
+                                </div>
+                              )}
+                              {v.viewTicketUrl && (
+                                <div>
+                                  <strong>View Ticket:</strong>{" "}
+                                  <a href={v.viewTicketUrl} target="_blank" rel="noreferrer">Open</a>
+                                </div>
+                              )}
+                            </div>
+                          </Col>
+                          {v.qrcode && (
+                            <Col xs="auto">
+                              <img
+                                src={`data:image/png;base64,${v.qrcode}`}
+                                alt="QR Code"
+                                style={{ width: 100, height: 100, imageRendering: "pixelated" }}
+                              />
+                            </Col>
+                          )}
+                        </Row>
                       </CardBody>
                     </Card>
                   ))}

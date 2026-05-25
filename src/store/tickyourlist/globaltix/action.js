@@ -67,7 +67,7 @@ export const fetchGlobtixBookingDetailSuccess = (data) => ({ type: FETCH_GLOBALT
 export const fetchGlobtixBookingDetailFailure = (error) => ({ type: FETCH_GLOBALTIX_BOOKING_DETAIL_FAILURE, payload: error });
 
 export const cancelGlobtixBookingRequest = (referenceNumber, environment, reason) => ({ type: CANCEL_GLOBALTIX_BOOKING_REQUEST, payload: { referenceNumber, environment, reason } });
-export const cancelGlobtixBookingSuccess = (data) => ({ type: CANCEL_GLOBALTIX_BOOKING_SUCCESS, payload: data });
+export const cancelGlobtixBookingSuccess = (data, referenceNumber) => ({ type: CANCEL_GLOBALTIX_BOOKING_SUCCESS, payload: { ...(data || {}), referenceNumber } });
 export const cancelGlobtixBookingFailure = (error) => ({ type: CANCEL_GLOBALTIX_BOOKING_FAILURE, payload: error });
 
 export const fetchGlobtixTokenRequest = (environment) => ({ type: FETCH_GLOBALTIX_TOKEN_REQUEST, payload: { environment } });
