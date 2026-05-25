@@ -28,6 +28,21 @@ function globaltixImageUrl(path, environment) {
 const fmt = (n) => (typeof n === "number" ? n.toFixed(2) : "—");
 const fmtCur = (currency, n) => (typeof n === "number" ? `${currency} ${n.toFixed(2)}` : "—");
 
+const VALIDITY_LABELS = {
+  VisitDate: "Fixed Visit Date",
+  OpenDated: "Open Dated (flexible)",
+  DateAndTime: "Specific Date & Time",
+  Duration: "Timed Entry (duration-based)",
+};
+const FORMAT_LABELS = {
+  QRCODE: "QR Code",
+  BARCODE: "Barcode",
+  PDF: "PDF Voucher",
+  SEPARATEEMAIL: "Sent via Separate Email",
+};
+const validityLabel = (v) => VALIDITY_LABELS[v] || v || "—";
+const formatLabel = (v) => FORMAT_LABELS[v] || v || "—";
+
 const ProductDetailPanel = ({ product, environment }) => {
   const [showTnC, setShowTnC] = useState(false);
   const [showWhatToExpect, setShowWhatToExpect] = useState(false);
@@ -112,6 +127,18 @@ const ProductDetailPanel = ({ product, environment }) => {
         </div>
       )}
 
+      {/* ── How to Use ───────────────────────────────────────── */}
+      {product.howToUse?.length > 0 && (
+        <div className="mb-4">
+          <h6 className="fw-semibold">How to Use</h6>
+          <ol className="ps-3 mb-0" style={{ fontSize: 13 }}>
+            {product.howToUse.map((step, i) => (
+              <li key={i} className="mb-1">{step}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       {/* ── What to Expect ────────────────────────────────────── */}
       {product.whatToExpect && (
         <div className="mb-4">
@@ -154,8 +181,8 @@ const ProductDetailPanel = ({ product, environment }) => {
                 <strong style={{ fontSize: 14 }}>{opt.name}</strong>
                 <span className="text-muted small ms-2">(ID {opt.id})</span>
                 <div className="d-flex flex-wrap gap-1 mt-1">
-                  <Badge color="secondary" style={{ fontSize: 10 }}>{opt.ticketValidity}</Badge>
-                  <Badge color={opt.ticketFormat === "PDF" ? "warning" : "primary"} style={{ fontSize: 10 }}>{opt.ticketFormat}</Badge>
+                  <Badge color="secondary" style={{ fontSize: 10 }} title={opt.ticketValidity}>{validityLabel(opt.ticketValidity)}</Badge>
+                  <Badge color={opt.ticketFormat === "PDF" ? "warning" : "primary"} style={{ fontSize: 10 }} title={opt.ticketFormat}>{formatLabel(opt.ticketFormat)}</Badge>
                   {opt.isCancellable ? <Badge color="success" style={{ fontSize: 10 }}>Cancellable</Badge> : <Badge color="danger" style={{ fontSize: 10 }}>Non-cancellable</Badge>}
                   {opt.isOpenDated && <Badge color="info" style={{ fontSize: 10 }}>Open Dated</Badge>}
                   {opt.visitDateRequired && <Badge color="secondary" style={{ fontSize: 10 }}>Visit Date Required</Badge>}
