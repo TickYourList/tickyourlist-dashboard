@@ -1179,6 +1179,28 @@ const GlobtixBookingsPage = () => {
                 </div>
               </div>
 
+              {/* Customer details */}
+              {(bookingDetail.customerName || bookingDetail.customerEmail) && (
+                <div className="mb-3 p-2 rounded" style={{ background: "#f8f9fa", border: "1px solid #dee2e6" }}>
+                  <div className="fw-semibold small text-muted mb-1" style={{ letterSpacing: "0.03em" }}>CUSTOMER</div>
+                  <div className="d-flex flex-wrap gap-3" style={{ fontSize: 13 }}>
+                    {bookingDetail.customerName && (
+                      <span><i className="bx bx-user me-1 text-muted" /><strong>{bookingDetail.customerName}</strong></span>
+                    )}
+                    {bookingDetail.customerEmail && (
+                      <span><i className="bx bx-envelope me-1 text-muted" />
+                        <a href={`mailto:${bookingDetail.customerEmail}`}>{bookingDetail.customerEmail}</a>
+                      </span>
+                    )}
+                    {bookingDetail.mobileNumber && (
+                      <span><i className="bx bx-phone me-1 text-muted" />
+                        {bookingDetail.mobilePrefix || ""}{bookingDetail.mobileNumber}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Booking info */}
               <Row className="mb-3 g-3">
                 <Col md={6}>
