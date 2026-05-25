@@ -43,7 +43,7 @@ const FORMAT_LABELS = {
   SEPARATEEMAIL: "Sent via Email",
 };
 
-const STEP_LABELS = ["Select Product", "Tickets & Date", "Questions", "Review", "Done"];
+const STEP_LABELS = ["Select Product", "Customer", "Tickets & Date", "Questions", "Review", "Done"];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -192,7 +192,70 @@ function StepSelectProduct({ onSelect, environment }) {
   );
 }
 
-// ─── Step 2: Tickets & Date ───────────────────────────────────────────────────
+// ─── Step 2: Customer Info ────────────────────────────────────────────────────
+
+function StepCustomerInfo({ form, onChange }) {
+  return (
+    <div>
+      <p className="text-muted small mb-3">
+        Globaltix requires customer details to issue the ticket. The confirmation email with vouchers is sent to the customer's email address.
+      </p>
+      <FormGroup className="mb-3">
+        <Label className="fw-semibold small">Full Name <span className="text-danger">*</span></Label>
+        <Input type="text" placeholder="e.g. John Doe"
+          value={form.customerName}
+          onChange={(e) => onChange("customerName", e.target.value)}
+          invalid={form.customerName === "" && form._touched?.customerName} />
+        <FormFeedback>Required</FormFeedback>
+      </FormGroup>
+      <FormGroup className="mb-3">
+        <Label className="fw-semibold small">Email Address <span className="text-danger">*</span></Label>
+        <Input type="email" placeholder="e.g. customer@example.com"
+          value={form.customerEmail}
+          onChange={(e) => onChange("customerEmail", e.target.value)}
+          invalid={form.customerEmail === "" && form._touched?.customerEmail} />
+        <div className="text-muted" style={{ fontSize: 11 }}>Globaltix will send ticket vouchers to this address.</div>
+        <FormFeedback>Required</FormFeedback>
+      </FormGroup>
+      <Row className="g-2">
+        <Col xs={3}>
+          <Label className="fw-semibold small">Prefix</Label>
+          <Input type="select" value={form.mobilePrefix} onChange={(e) => onChange("mobilePrefix", e.target.value)}>
+            <option value="+65">+65 (SG)</option>
+            <option value="+60">+60 (MY)</option>
+            <option value="+62">+62 (ID)</option>
+            <option value="+63">+63 (PH)</option>
+            <option value="+66">+66 (TH)</option>
+            <option value="+84">+84 (VN)</option>
+            <option value="+91">+91 (IN)</option>
+            <option value="+44">+44 (UK)</option>
+            <option value="+1">+1 (US/CA)</option>
+          </Input>
+        </Col>
+        <Col>
+          <Label className="fw-semibold small">Mobile Number <span className="text-muted">(optional)</span></Label>
+          <Input type="tel" placeholder="91234567"
+            value={form.mobileNumber}
+            onChange={(e) => onChange("mobileNumber", e.target.value)} />
+        </Col>
+      </Row>
+      <FormGroup className="mb-0 mt-3">
+        <Label className="fw-semibold small">Remarks <span className="text-muted">(optional — internal note)</span></Label>
+        <Input type="textarea" rows={2} placeholder="e.g. Corporate booking, group tour..."
+          value={form.remarks}
+          onChange={(e) => onChange("remarks", e.target.value)} maxLength={200} />
+      </FormGroup>
+    </div>
+  );
+}
+
+// ─── Step 3: Tickets & Date ───────────────────────────────────────────────────
+
+const PRICE_TIERS = [
+  { key: "recommendedSellingPrice", label: "Recommended Selling", desc: "Globaltix-suggested retail price", color: "success" },
+  { key: "minimumSellingPrice", label: "Minimum Selling", desc: "Floor price — do not go below", color: "warning" },
+  { key: "nettPrice", label: "Nett / Cost Price", desc: "Your cost from Globaltix — no margin", color: "danger" },
+];
 
 function StepTicketsDate({ product, option, form, onChange, environment }) {
   const dispatch = useDispatch();
@@ -217,18 +280,48 @@ function StepTicketsDate({ product, option, form, onChange, environment }) {
   const availableDates = availabilityCalendar?.available || availabilityCalendar?.dates || [];
   const isDayAvailable = (d) => !availableDates.length || availableDates.includes(d);
 
+  const priceTier = form.priceTier || "recommendedSellingPrice";
+  const activeTierMeta = PRICE_TIERS.find((t) => t.key === priceTier) || PRICE_TIERS[0];
+
   const totalAmount = (option.ticketTypes || []).reduce((sum, tt) => {
     const qty = form.quantities[tt.id] || 0;
-    return sum + qty * (tt.recommendedSellingPrice || tt.nettPrice || 0);
+    return sum + qty * (tt[priceTier] || tt.nettPrice || 0);
   }, 0);
 
   return (
     <div>
+      {/* Pricing tier selector */}
+      <div className="mb-4">
+        <h6 className="fw-semibold mb-1">Selling Price Tier</h6>
+        <p className="text-muted small mb-2">Choose what price you're selling to the customer. Globaltix charges your account the <strong>nett price</strong> regardless.</p>
+        <div className="d-flex gap-2 flex-wrap">
+          {PRICE_TIERS.map((tier) => {
+            const selected = priceTier === tier.key;
+            return (
+              <div key={tier.key}
+                className={`border rounded p-2 flex-grow-1 ${selected ? `border-${tier.color} bg-light` : "border-secondary"}`}
+                style={{ cursor: "pointer", minWidth: 150 }}
+                onClick={() => onChange("priceTier", tier.key)}>
+                <div className="d-flex align-items-start gap-2">
+                  <input type="radio" readOnly checked={selected} style={{ marginTop: 3 }} />
+                  <div>
+                    <div className={`fw-semibold text-${tier.color}`} style={{ fontSize: 12 }}>{tier.label}</div>
+                    <div className="text-muted" style={{ fontSize: 10 }}>{tier.desc}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Ticket quantities */}
       <div className="mb-4">
-        <h6 className="fw-semibold mb-2">Ticket Types</h6>
+        <h6 className="fw-semibold mb-2">Ticket Quantities</h6>
         {(option.ticketTypes || []).map((tt) => {
-          const price = tt.recommendedSellingPrice || tt.nettPrice || 0;
+          const sellingPrice = tt[priceTier] || tt.nettPrice || 0;
+          const nett = tt.nettPrice || 0;
+          const margin = sellingPrice - nett;
           const qty = form.quantities[tt.id] || 0;
           const min = tt.minPurchaseQty || 0;
           const max = tt.maxPurchaseQty || 99;
@@ -239,7 +332,12 @@ function StepTicketsDate({ product, option, form, onChange, environment }) {
                 {(tt.ageFrom != null || tt.ageTo != null) && (
                   <div className="text-muted" style={{ fontSize: 11 }}>Age {tt.ageFrom ?? "?"}–{tt.ageTo ?? "?"}yr</div>
                 )}
-                <div className="text-success fw-semibold">{fmtCur(currency, price)}</div>
+                <div className={`fw-semibold text-${activeTierMeta.color}`}>
+                  {fmtCur(currency, sellingPrice)}
+                  <span className="text-muted fw-normal ms-1" style={{ fontSize: 11 }}>
+                    (cost {fmtCur(currency, nett)}{margin > 0 ? `, +${fmtCur(currency, margin)} margin` : ""})
+                  </span>
+                </div>
                 {(min > 0 || max < 99) && <div className="text-muted" style={{ fontSize: 11 }}>Min {min} / Max {max}</div>}
               </div>
               <div className="d-flex align-items-center gap-2">
@@ -254,7 +352,7 @@ function StepTicketsDate({ product, option, form, onChange, environment }) {
         })}
         {totalAmount > 0 && (
           <div className="text-end fw-semibold mt-2">
-            Subtotal: <span className="text-success">{fmtCur(currency, totalAmount)}</span>
+            Total ({activeTierMeta.label}): <span className={`text-${activeTierMeta.color}`}>{fmtCur(currency, totalAmount)}</span>
           </div>
         )}
       </div>
@@ -394,8 +492,11 @@ function StepQuestions({ option, form, onChange }) {
 
 function StepReview({ product, option, form }) {
   const currency = product.currency || "SGD";
+  const priceTier = form.priceTier || "recommendedSellingPrice";
+  const tierMeta = PRICE_TIERS.find((t) => t.key === priceTier) || PRICE_TIERS[0];
   const tickets = (option.ticketTypes || []).filter((tt) => (form.quantities[tt.id] || 0) > 0);
-  const total = tickets.reduce((s, tt) => s + (form.quantities[tt.id] || 0) * (tt.recommendedSellingPrice || tt.nettPrice || 0), 0);
+  const total = tickets.reduce((s, tt) => s + (form.quantities[tt.id] || 0) * (tt[priceTier] || tt.nettPrice || 0), 0);
+  const nettTotal = tickets.reduce((s, tt) => s + (form.quantities[tt.id] || 0) * (tt.nettPrice || 0), 0);
   const answers = Object.entries(form.answers || {}).filter(([, v]) => v);
 
   return (
@@ -405,37 +506,72 @@ function StepReview({ product, option, form }) {
         <div className="text-muted small">{product.country}{product.city ? ` · ${product.city}` : ""}</div>
       </div>
 
-      <table className="table table-sm table-borderless mb-3" style={{ fontSize: 13 }}>
-        <tbody>
-          <tr><td className="text-muted" style={{ width: 130 }}>Option</td><td className="fw-medium">{option.name}</td></tr>
-          <tr><td className="text-muted">Ticket Type</td><td>{VALIDITY_LABELS[option.ticketValidity] || option.ticketValidity} · {FORMAT_LABELS[option.ticketFormat] || option.ticketFormat}</td></tr>
-          {form.visitDate && <tr><td className="text-muted">Visit Date</td><td className="fw-medium">{form.visitDate}{form.visitTime ? ` at ${form.visitTime}` : ""}</td></tr>}
-          {form.partnerReference && <tr><td className="text-muted">Partner Ref</td><td><code>{form.partnerReference}</code></td></tr>}
-          <tr><td className="text-muted">Cancellable</td><td>{option.isCancellable ? <span className="text-success">Yes — {option.cancellationPolicy?.percentReturn}% refund / {option.cancellationPolicy?.refundDuration}h before</span> : <span className="text-danger">No</span>}</td></tr>
-        </tbody>
-      </table>
+      <Row className="mb-3 g-3">
+        <Col md={6}>
+          <div className="fw-semibold small mb-1">Customer</div>
+          <table className="table table-sm table-borderless mb-0" style={{ fontSize: 13 }}>
+            <tbody>
+              <tr><td className="text-muted" style={{ width: 100 }}>Name</td><td className="fw-medium">{form.customerName}</td></tr>
+              <tr><td className="text-muted">Email</td><td>{form.customerEmail}</td></tr>
+              {form.mobileNumber && <tr><td className="text-muted">Mobile</td><td>{form.mobilePrefix} {form.mobileNumber}</td></tr>}
+              {form.remarks && <tr><td className="text-muted">Remarks</td><td className="text-muted small">{form.remarks}</td></tr>}
+            </tbody>
+          </table>
+        </Col>
+        <Col md={6}>
+          <div className="fw-semibold small mb-1">Booking</div>
+          <table className="table table-sm table-borderless mb-0" style={{ fontSize: 13 }}>
+            <tbody>
+              <tr><td className="text-muted" style={{ width: 100 }}>Option</td><td className="fw-medium">{option.name}</td></tr>
+              <tr><td className="text-muted">Validity</td><td>{VALIDITY_LABELS[option.ticketValidity] || option.ticketValidity}</td></tr>
+              <tr><td className="text-muted">Format</td><td>{FORMAT_LABELS[option.ticketFormat] || option.ticketFormat}</td></tr>
+              {form.visitDate && <tr><td className="text-muted">Visit Date</td><td className="fw-medium">{form.visitDate}{form.visitTime ? ` · ${form.visitTime}` : ""}</td></tr>}
+              {form.partnerReference && <tr><td className="text-muted">Partner Ref</td><td><code>{form.partnerReference}</code></td></tr>}
+              <tr><td className="text-muted">Cancellable</td><td>{option.isCancellable ? <span className="text-success">Yes</span> : <span className="text-danger">No</span>}</td></tr>
+            </tbody>
+          </table>
+        </Col>
+      </Row>
 
       {tickets.length > 0 && (
         <div className="mb-3">
-          <div className="fw-semibold small mb-1">Ticket Breakdown</div>
+          <div className="d-flex justify-content-between align-items-center mb-1">
+            <div className="fw-semibold small">Ticket Breakdown</div>
+            <Badge color={tierMeta.color} style={{ fontSize: 10 }}>Pricing: {tierMeta.label}</Badge>
+          </div>
           <table className="table table-sm table-bordered mb-0" style={{ fontSize: 13 }}>
-            <thead className="table-light"><tr><th>Type</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr></thead>
+            <thead className="table-light">
+              <tr><th>Type</th><th>Selling Price</th><th>Nett Cost</th><th>Margin</th><th>Qty</th><th>Subtotal</th></tr>
+            </thead>
             <tbody>
               {tickets.map((tt) => {
                 const qty = form.quantities[tt.id] || 0;
-                const price = tt.recommendedSellingPrice || tt.nettPrice || 0;
+                const price = tt[priceTier] || tt.nettPrice || 0;
+                const nett = tt.nettPrice || 0;
+                const margin = price - nett;
+                const marginPct = nett > 0 ? Math.round((margin / nett) * 100) : 0;
                 return (
                   <tr key={tt.id}>
                     <td>{tt.name}</td>
-                    <td>{fmtCur(currency, price)}</td>
+                    <td className={`fw-semibold text-${tierMeta.color}`}>{fmtCur(currency, price)}</td>
+                    <td className="text-danger">{fmtCur(currency, nett)}</td>
+                    <td>
+                      {margin >= 0
+                        ? <span className="text-success">+{fmtCur(currency, margin)} ({marginPct}%)</span>
+                        : <span className="text-danger">{fmtCur(currency, margin)}</span>}
+                    </td>
                     <td>{qty}</td>
                     <td className="fw-semibold">{fmtCur(currency, qty * price)}</td>
                   </tr>
                 );
               })}
               <tr className="table-light">
-                <td colSpan={3} className="fw-bold text-end">Total</td>
-                <td className="fw-bold text-success">{fmtCur(currency, total)}</td>
+                <td colSpan={4} className="fw-bold text-end">Total charged to customer</td>
+                <td colSpan={2}>
+                  <div className={`fw-bold text-${tierMeta.color}`}>{fmtCur(currency, total)}</div>
+                  <div className="text-muted small">Your cost: {fmtCur(currency, nettTotal)}</div>
+                  {total - nettTotal > 0 && <div className="text-success small">Margin: +{fmtCur(currency, total - nettTotal)}</div>}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -532,22 +668,32 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
   const { reserveLoading, reservedBooking, reserveError, confirmLoading, releaseLoading } = useSelector((s) => s.globaltix || {});
   const prevReserveLoading = useRef(false);
 
+  // Steps: 0=Select Product, 1=Customer, 2=Tickets&Date, 3=Questions, 4=Review, 5=Reserved
   const [step, setStep] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [form, setForm] = useState({
+    // Customer
+    customerName: "",
+    customerEmail: "",
+    mobileNumber: "",
+    mobilePrefix: "+65",
+    remarks: "",
+    // Tickets
     quantities: {},
     visitDate: "",
     visitTime: "",
     seriesId: null,
     partnerReference: "",
+    priceTier: "recommendedSellingPrice",
+    // Q&A
     answers: {},
   });
 
-  // Move to Done step once reserve succeeds
+  // Advance to "Done" step when reserve succeeds
   useEffect(() => {
     if (prevReserveLoading.current && !reserveLoading && reservedBooking) {
-      setStep(4);
+      setStep(5);
     }
     prevReserveLoading.current = reserveLoading;
   }, [reserveLoading, reservedBooking]);
@@ -556,34 +702,44 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
     setStep(0);
     setSelectedProduct(null);
     setSelectedOption(null);
-    setForm({ quantities: {}, visitDate: "", visitTime: "", seriesId: null, partnerReference: "", answers: {} });
+    setForm({
+      customerName: "", customerEmail: "", mobileNumber: "", mobilePrefix: "+65", remarks: "",
+      quantities: {}, visitDate: "", visitTime: "", seriesId: null, partnerReference: "",
+      priceTier: "recommendedSellingPrice", answers: {},
+    });
   };
 
   const handleToggle = () => { resetModal(); toggle(); };
-
   const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
   const handleProductSelected = (product, option) => {
     setSelectedProduct(product);
     setSelectedOption(option);
-    // Init quantities to 0
     const init = {};
     (option.ticketTypes || []).forEach((tt) => { init[tt.id] = 0; });
-    setForm({ quantities: init, visitDate: "", visitTime: "", seriesId: null, partnerReference: "", answers: {} });
+    setForm((f) => ({ ...f, quantities: init, visitDate: "", visitTime: "", seriesId: null, partnerReference: "", answers: {} }));
     setStep(1);
   };
 
-  const totalQty = selectedOption ? (selectedOption.ticketTypes || []).reduce((s, tt) => s + (form.quantities[tt.id] || 0), 0) : 0;
+  // Validation helpers
+  const isCustomerValid = form.customerName.trim() !== "" && /\S+@\S+\.\S+/.test(form.customerEmail.trim());
 
-  const canProceedStep1 = step === 1 && totalQty > 0 &&
-    (!selectedOption?.visitDateRequired && !["VisitDate", "DateAndTime"].includes(selectedOption?.ticketValidity) || form.visitDate) &&
-    (selectedOption?.ticketValidity !== "DateAndTime" || form.visitTime);
+  const totalQty = selectedOption
+    ? (selectedOption.ticketTypes || []).reduce((s, tt) => s + (form.quantities[tt.id] || 0), 0)
+    : 0;
 
-  const requiredAnswers = (selectedOption?.questions || []).filter((q) => {
-    // All questions are implicitly required unless we know otherwise
-    return true;
-  });
-  const canProceedStep2 = step === 2 && requiredAnswers.every((q) => form.answers[q.id]);
+  const needsDate = selectedOption &&
+    (selectedOption.visitDateRequired || ["VisitDate", "DateAndTime"].includes(selectedOption.ticketValidity));
+  const needsTime = selectedOption?.ticketValidity === "DateAndTime";
+
+  const isTicketsValid = totalQty > 0 &&
+    (!needsDate || form.visitDate) &&
+    (!needsTime || form.visitTime);
+
+  // Questions step — skip if no questions
+  const hasQuestions = (selectedOption?.questions || []).length > 0;
+  const nextAfterTickets = hasQuestions ? 3 : 4;
+  const backFromReview = hasQuestions ? 3 : 2;
 
   const handleReserve = () => {
     const tickets = (selectedOption.ticketTypes || [])
@@ -599,6 +755,11 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
       globaltixProductId: selectedProduct.globaltixProductId,
       optionId: selectedOption.id,
       tickets,
+      customerName: form.customerName.trim(),
+      customerEmail: form.customerEmail.trim(),
+      mobileNumber: form.mobileNumber,
+      mobilePrefix: form.mobilePrefix,
+      ...(form.remarks && { remarks: form.remarks }),
       ...(form.visitDate && { visitDate: form.visitDate }),
       ...(form.visitTime && { visitTime: form.visitTime }),
       ...(form.seriesId && { seriesId: form.seriesId }),
@@ -610,36 +771,51 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
   const handleConfirm = (ref) => dispatch(confirmGlobtixBookingRequest(ref, environment));
   const handleRelease = (ref) => dispatch(releaseGlobtixBookingRequest(ref, environment));
 
+  const VISIBLE_STEPS = STEP_LABELS.slice(0, -1); // all except "Done"
+
   return (
     <Modal isOpen={isOpen} toggle={handleToggle} size="lg" scrollable>
       <ModalHeader toggle={handleToggle}>
         Create Globaltix Booking
-        {step > 0 && step < 4 && selectedProduct && (
+        {step > 0 && step < 5 && selectedProduct && (
           <span className="ms-2 text-muted fw-normal small">{selectedProduct.name}</span>
         )}
       </ModalHeader>
       <ModalBody>
         {/* Step indicator */}
-        {step < 4 && (
-          <div className="d-flex align-items-center mb-4 gap-1" style={{ fontSize: 12 }}>
-            {STEP_LABELS.slice(0, -1).map((label, i) => (
+        {step < 5 && (
+          <div className="d-flex align-items-center mb-4 gap-1 flex-wrap" style={{ fontSize: 11 }}>
+            {VISIBLE_STEPS.map((label, i) => (
               <React.Fragment key={i}>
                 <div className={`px-2 py-1 rounded ${i === step ? "bg-primary text-white fw-semibold" : i < step ? "bg-success text-white" : "bg-light text-muted"}`}>
                   {i < step ? "✓" : i + 1} {label}
                 </div>
-                {i < STEP_LABELS.length - 2 && <div className="text-muted">›</div>}
+                {i < VISIBLE_STEPS.length - 1 && <div className="text-muted">›</div>}
               </React.Fragment>
             ))}
           </div>
         )}
 
-        {/* Step 0: Select product */}
+        {/* Step 0: Select product + option */}
         {step === 0 && (
           <StepSelectProduct onSelect={handleProductSelected} environment={environment} />
         )}
 
-        {/* Step 1: Tickets & Date */}
-        {step === 1 && selectedProduct && selectedOption && (
+        {/* Step 1: Customer info */}
+        {step === 1 && (
+          <div>
+            <StepCustomerInfo form={form} onChange={setField} />
+            <div className="d-flex gap-2 mt-3">
+              <Button color="outline-secondary" onClick={() => { setStep(0); setSelectedProduct(null); setSelectedOption(null); }}>Back</Button>
+              <Button color="primary" disabled={!isCustomerValid} onClick={() => setStep(2)}>
+                Next: Tickets & Date
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Tickets & Date */}
+        {step === 2 && selectedProduct && selectedOption && (
           <div>
             <StepTicketsDate
               product={selectedProduct}
@@ -649,28 +825,27 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
               environment={environment}
             />
             <div className="d-flex gap-2 mt-3">
-              <Button color="outline-secondary" onClick={() => { setStep(0); setSelectedProduct(null); setSelectedOption(null); }}>Back</Button>
-              <Button color="primary" disabled={!canProceedStep1}
-                onClick={() => setStep((selectedOption.questions || []).length > 0 ? 2 : 3)}>
-                {(selectedOption.questions || []).length > 0 ? "Next: Questions" : "Next: Review"}
+              <Button color="outline-secondary" onClick={() => setStep(1)}>Back</Button>
+              <Button color="primary" disabled={!isTicketsValid} onClick={() => setStep(nextAfterTickets)}>
+                {hasQuestions ? "Next: Questions" : "Next: Review"}
               </Button>
             </div>
           </div>
         )}
 
-        {/* Step 2: Questions */}
-        {step === 2 && selectedOption && (
+        {/* Step 3: Questions */}
+        {step === 3 && selectedOption && (
           <div>
             <StepQuestions option={selectedOption} form={form} onChange={setField} />
             <div className="d-flex gap-2 mt-3">
-              <Button color="outline-secondary" onClick={() => setStep(1)}>Back</Button>
-              <Button color="primary" onClick={() => setStep(3)}>Next: Review</Button>
+              <Button color="outline-secondary" onClick={() => setStep(2)}>Back</Button>
+              <Button color="primary" onClick={() => setStep(4)}>Next: Review</Button>
             </div>
           </div>
         )}
 
-        {/* Step 3: Review */}
-        {step === 3 && selectedProduct && selectedOption && (
+        {/* Step 4: Review */}
+        {step === 4 && selectedProduct && selectedOption && (
           <div>
             <StepReview product={selectedProduct} option={selectedOption} form={form} />
             {reserveError && (
@@ -679,18 +854,18 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
               </Alert>
             )}
             <div className="d-flex gap-2 mt-3">
-              <Button color="outline-secondary" onClick={() => setStep((selectedOption.questions || []).length > 0 ? 2 : 1)}>Back</Button>
+              <Button color="outline-secondary" onClick={() => setStep(backFromReview)}>Back</Button>
               <Button color="success" className="flex-grow-1" onClick={handleReserve} disabled={reserveLoading}>
                 {reserveLoading
-                  ? <><Spinner size="sm" className="me-1" />Reserving...</>
+                  ? <><Spinner size="sm" className="me-1" />Reserving with Globaltix...</>
                   : <><i className="bx bx-lock-alt me-1" />Reserve (15-min hold)</>}
               </Button>
             </div>
           </div>
         )}
 
-        {/* Step 4: Reserved result */}
-        {step === 4 && (
+        {/* Step 5: Reserved result */}
+        {step === 5 && (
           <StepReserved
             booking={reservedBooking}
             onConfirm={handleConfirm}
