@@ -16,6 +16,7 @@ import {
   reserveGlobtixBookingRequest,
   fetchGlobtixAvailabilityCalendarRequest,
   fetchGlobtixAvailabilityTimeslotRequest,
+  fetchGlobtixTicketUrlsRequest,
 } from "store/tickyourlist/globaltix/action";
 import { fetchGlobtixProductsRequest, searchGlobtixProductsRequest } from "store/tickyourlist/globaltix/action";
 
@@ -723,6 +724,171 @@ function StepReserved({ booking, onConfirm, onRelease, confirmLoading, confirmEr
   );
 }
 
+// ─── Ticket Access Panel ──────────────────────────────────────────────────────
+// Shown inside booking detail modal for CONFIRMED bookings.
+// Fetches fresh eTicketUrl (PDF, time-limited) + stable viewTicketUrl from Globaltix.
+
+const TICKET_FORMAT_COLORS = { QRCODE: "primary", BARCODE: "secondary", PDF: "info", SEPARATEEMAIL: "warning" };
+const TICKET_STATUS_COLORS = { VALID: "success", REDEEMED: "secondary", EXPIRED: "danger", REVOKED: "danger" };
+
+function TicketAccessPanel({ referenceNumber, environment, storedVouchers }) {
+  const dispatch = useDispatch();
+  const { ticketUrls, ticketUrlsLoading, ticketUrlsError } = useSelector((s) => s.globaltix || {});
+  const [copiedUrl, setCopiedUrl] = useState(null);
+
+  const fetchUrls = () => dispatch(fetchGlobtixTicketUrlsRequest(referenceNumber, environment));
+
+  const copyToClipboard = (text, key) => {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopiedUrl(key);
+      setTimeout(() => setCopiedUrl(null), 2000);
+    });
+  };
+
+  const formatDate = (d) => d ? new Date(d).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" }) : null;
+
+  // Merge fresh API tickets with stored vouchers for the most complete display
+  const mergedTickets = ticketUrls?.tickets || [];
+  const hasStoredQRCodes = (storedVouchers || []).some((v) => v.qrCode);
+
+  return (
+    <div className="mb-3">
+      <div className="d-flex align-items-center justify-content-between mb-2">
+        <Label className="fw-semibold mb-0">
+          <i className="bx bx-ticket me-1" />Ticket Access
+        </Label>
+        <Button color="outline-primary" size="sm" onClick={fetchUrls} disabled={ticketUrlsLoading}>
+          {ticketUrlsLoading
+            ? <><Spinner size="sm" className="me-1" />Fetching...</>
+            : <><i className="bx bx-refresh me-1" />Get Fresh Links</>}
+        </Button>
+      </div>
+
+      {ticketUrlsError && (
+        <Alert color="danger" className="py-2 small mb-2">
+          <strong>Error:</strong> {ticketUrlsError}
+        </Alert>
+      )}
+
+      {!ticketUrls && !ticketUrlsLoading && (
+        <div className="p-3 rounded border text-center text-muted small" style={{ background: "#f8f9fa" }}>
+          <i className="bx bx-info-circle me-1" />
+          Click <strong>Get Fresh Links</strong> to fetch the latest ticket download URLs from Globaltix.
+          {hasStoredQRCodes && " QR codes from the confirmation are shown below."}
+        </div>
+      )}
+
+      {ticketUrls && (
+        <div>
+          {/* isTicketsReady banner */}
+          {!ticketUrls.isTicketsReady && (
+            <Alert color="warning" className="py-2 small mb-2">
+              <i className="bx bx-time me-1" />
+              <strong>Tickets still processing</strong> — Globaltix has not issued the tickets yet. Wait a few minutes and try again.
+            </Alert>
+          )}
+
+          {/* Top-level download buttons */}
+          {ticketUrls.isTicketsReady && (ticketUrls.eTicketUrl || ticketUrls.viewTicketUrl) && (
+            <div className="p-2 rounded border mb-3" style={{ background: "#f0f4ff" }}>
+              <div className="fw-semibold small mb-2">
+                <i className="bx bx-cloud-download me-1" />All Tickets
+              </div>
+              <div className="d-flex gap-2 flex-wrap">
+                {ticketUrls.eTicketUrl && (
+                  <a href={ticketUrls.eTicketUrl} target="_blank" rel="noreferrer"
+                    className="btn btn-sm btn-primary">
+                    <i className="bx bx-download me-1" />Download PDF
+                  </a>
+                )}
+                {ticketUrls.viewTicketUrl && (
+                  <>
+                    <a href={ticketUrls.viewTicketUrl} target="_blank" rel="noreferrer"
+                      className="btn btn-sm btn-outline-secondary">
+                      <i className="bx bx-link-external me-1" />Customer View
+                    </a>
+                    <Button size="sm" color={copiedUrl === "view" ? "success" : "outline-secondary"}
+                      onClick={() => copyToClipboard(ticketUrls.viewTicketUrl, "view")}>
+                      <i className={`bx ${copiedUrl === "view" ? "bx-check" : "bx-copy"} me-1`} />
+                      {copiedUrl === "view" ? "Copied!" : "Copy Link"}
+                    </Button>
+                  </>
+                )}
+              </div>
+              <div className="text-muted mt-1" style={{ fontSize: 10 }}>
+                PDF link expires after a few hours. Customer view link is stable — safe to share anytime.
+              </div>
+            </div>
+          )}
+
+          {/* Per-ticket breakdown */}
+          {mergedTickets.length > 0 && (
+            <div>
+              <div className="fw-semibold small mb-2">Individual Tickets ({mergedTickets.length})</div>
+              {mergedTickets.map((t, i) => {
+                const storedVoucher = (storedVouchers || []).find((v) => v.serialNumber === t.code);
+                const qrBase64 = t.qrCode || storedVoucher?.qrCode;
+                const statusColor = TICKET_STATUS_COLORS[t.statusName] || "secondary";
+                const formatColor = TICKET_FORMAT_COLORS[t.ticketFormat] || "secondary";
+                const redeemEnd = formatDate(t.redeemEnd);
+                return (
+                  <Card key={i} className="mb-2 border">
+                    <CardBody className="py-2 px-3">
+                      <div className="d-flex align-items-start gap-3">
+                        {qrBase64 && (
+                          <img src={`data:image/png;base64,${qrBase64}`} alt="QR"
+                            style={{ width: 80, height: 80, border: "1px solid #dee2e6", borderRadius: 4, flexShrink: 0 }} />
+                        )}
+                        <div className="flex-grow-1 min-width-0">
+                          <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                            {t.ticketTypeName && <span className="fw-semibold small">{t.ticketTypeName}</span>}
+                            <Badge color={formatColor} className="fw-normal" style={{ fontSize: 10 }}>{t.ticketFormat}</Badge>
+                            <Badge color={statusColor} className="fw-normal" style={{ fontSize: 10 }}>{t.statusName}</Badge>
+                          </div>
+                          <div className="small mb-1">
+                            <span className="text-muted me-1">Code:</span>
+                            <code className="fw-semibold">{t.code}</code>
+                            <Button size="sm" color="link" className="p-0 ms-1" style={{ fontSize: 11 }}
+                              onClick={() => copyToClipboard(t.code, `code-${i}`)}>
+                              <i className={`bx ${copiedUrl === `code-${i}` ? "bx-check text-success" : "bx-copy text-muted"}`} />
+                            </Button>
+                          </div>
+                          {t.attractionTitle && <div className="text-muted small">{t.attractionTitle}</div>}
+                          {redeemEnd && (
+                            <div className="small text-muted">
+                              Valid until <strong>{redeemEnd}</strong>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardBody>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Always show stored QR codes even before fetching fresh links */}
+      {!ticketUrls && hasStoredQRCodes && (
+        <div className="mt-2">
+          <div className="fw-semibold small mb-1 text-muted">Stored QR Codes (from confirmation)</div>
+          <div className="d-flex flex-wrap gap-2">
+            {(storedVouchers || []).filter((v) => v.qrCode).map((v, i) => (
+              <div key={i} className="text-center">
+                <img src={`data:image/png;base64,${v.qrCode}`} alt="QR"
+                  style={{ width: 90, height: 90, border: "1px solid #dee2e6", borderRadius: 4 }} />
+                {v.serialNumber && <div className="text-muted mt-1" style={{ fontSize: 10 }}><code>{v.serialNumber}</code></div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Create Booking Modal ─────────────────────────────────────────────────────
 
 function CreateBookingModal({ isOpen, toggle, environment, onBookingConfirmed }) {
@@ -1360,47 +1526,22 @@ const GlobtixBookingsPage = () => {
                 </div>
               )}
 
-              {/* Vouchers / QR codes */}
-              {bookingDetail.vouchers?.length > 0 && (
+              {/* Ticket Access — CONFIRMED: full download panel; others: simple list */}
+              {bookingDetail.status === "CONFIRMED" ? (
+                <TicketAccessPanel
+                  referenceNumber={bookingDetail.referenceNumber}
+                  environment={environment}
+                  storedVouchers={bookingDetail.vouchers}
+                />
+              ) : bookingDetail.vouchers?.length > 0 && (
                 <div className="mb-3">
                   <Label className="fw-semibold">Vouchers ({bookingDetail.vouchers.length})</Label>
                   {bookingDetail.vouchers.map((v, i) => (
-                    <Card key={i} className="mb-2 border">
-                      <CardBody className="py-2">
-                        <Row className="align-items-start">
-                          <Col>
-                            {v.ticketTypeName && <div className="fw-semibold mb-1">{v.ticketTypeName}</div>}
-                            <div className="small">
-                              {v.serialNumber && <div><strong>Serial #:</strong> <code>{v.serialNumber}</code></div>}
-                              {v.barcode && <div><strong>Barcode:</strong> <code>{v.barcode}</code></div>}
-                              {v.status && <div><strong>Status:</strong> <Badge color={v.status === "ACTIVE" ? "success" : "secondary"}>{v.status}</Badge></div>}
-                              {v.validFrom && <div className="text-muted">Valid: {v.validFrom} → {v.validTo || "—"}</div>}
-                              <div className="d-flex gap-2 mt-2 flex-wrap">
-                                {v.eTicketUrl && (
-                                  <a href={v.eTicketUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary">
-                                    <i className="bx bx-download me-1" />Download E-Ticket
-                                  </a>
-                                )}
-                                {v.viewTicketUrl && (
-                                  <a href={v.viewTicketUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-secondary">
-                                    <i className="bx bx-link-external me-1" />Customer View
-                                  </a>
-                                )}
-                              </div>
-                            </div>
-                          </Col>
-                          {v.qrCode && (
-                            <Col xs="auto">
-                              <img
-                                src={`data:image/png;base64,${v.qrCode}`}
-                                alt="QR Code"
-                                style={{ width: 100, height: 100, border: "1px solid #dee2e6", borderRadius: 4 }}
-                              />
-                            </Col>
-                          )}
-                        </Row>
-                      </CardBody>
-                    </Card>
+                    <div key={i} className="small border rounded p-2 mb-1">
+                      {v.ticketTypeName && <div className="fw-semibold">{v.ticketTypeName}</div>}
+                      {v.serialNumber && <div><span className="text-muted">Serial #:</span> <code>{v.serialNumber}</code></div>}
+                      {v.status && <Badge color={v.status === "ACTIVE" ? "success" : "secondary"} className="mt-1">{v.status}</Badge>}
+                    </div>
                   ))}
                 </div>
               )}

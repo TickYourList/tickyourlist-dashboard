@@ -119,3 +119,6 @@ export const resendGlobtixBookingEmail = (referenceNumber, environment = "stagin
 
 export const checkGlobtixAvailability = (ticketTypeID, dateFrom, dateTo, environment = "staging") =>
   get(`/v1/globaltix/availability/check`, { params: { ticketTypeID, dateFrom, dateTo, environment } });
+
+export const getGlobtixTicketUrls = (referenceNumber, environment = "staging") =>
+  get(`/v1/globaltix/bookings/${referenceNumber}/ticket-urls`, { params: { environment } });

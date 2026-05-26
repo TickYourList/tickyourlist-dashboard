@@ -1,4 +1,7 @@
 import {
+  FETCH_GLOBALTIX_TICKET_URLS_REQUEST,
+  FETCH_GLOBALTIX_TICKET_URLS_SUCCESS,
+  FETCH_GLOBALTIX_TICKET_URLS_FAILURE,
   RESERVE_GLOBALTIX_BOOKING_REQUEST,
   RESERVE_GLOBALTIX_BOOKING_SUCCESS,
   RESERVE_GLOBALTIX_BOOKING_FAILURE,
@@ -106,6 +109,10 @@ const initialState = {
 
   availabilityTimeslots: [],
   timeslotsLoading: false,
+
+  ticketUrls: null,
+  ticketUrlsLoading: false,
+  ticketUrlsError: null,
 };
 
 const globaltixReducer = (state = initialState, action) => {
@@ -170,7 +177,7 @@ const globaltixReducer = (state = initialState, action) => {
       return { ...state, bookingsLoading: false, bookingsError: action.payload };
 
     case FETCH_GLOBALTIX_BOOKING_DETAIL_REQUEST:
-      return { ...state, bookingDetailLoading: true };
+      return { ...state, bookingDetailLoading: true, ticketUrls: null, ticketUrlsError: null };
     case FETCH_GLOBALTIX_BOOKING_DETAIL_SUCCESS:
       return { ...state, bookingDetailLoading: false, bookingDetail: action.payload.data };
     case FETCH_GLOBALTIX_BOOKING_DETAIL_FAILURE:
@@ -275,6 +282,13 @@ const globaltixReducer = (state = initialState, action) => {
       return { ...state, timeslotsLoading: false, availabilityTimeslots: action.payload.data || action.payload || [] };
     case FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_FAILURE:
       return { ...state, timeslotsLoading: false };
+
+    case FETCH_GLOBALTIX_TICKET_URLS_REQUEST:
+      return { ...state, ticketUrlsLoading: true, ticketUrlsError: null, ticketUrls: null };
+    case FETCH_GLOBALTIX_TICKET_URLS_SUCCESS:
+      return { ...state, ticketUrlsLoading: false, ticketUrls: action.payload.data || action.payload };
+    case FETCH_GLOBALTIX_TICKET_URLS_FAILURE:
+      return { ...state, ticketUrlsLoading: false, ticketUrlsError: action.payload };
 
     default:
       return state;

@@ -1,4 +1,7 @@
 import {
+  FETCH_GLOBALTIX_TICKET_URLS_REQUEST,
+  FETCH_GLOBALTIX_TICKET_URLS_SUCCESS,
+  FETCH_GLOBALTIX_TICKET_URLS_FAILURE,
   RESERVE_GLOBALTIX_BOOKING_REQUEST,
   RESERVE_GLOBALTIX_BOOKING_SUCCESS,
   RESERVE_GLOBALTIX_BOOKING_FAILURE,
@@ -126,3 +129,7 @@ export const fetchGlobtixAvailabilityCalendarFailure = (error) => ({ type: FETCH
 export const fetchGlobtixAvailabilityTimeslotRequest = (ticketTypeID, date, environment) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST, payload: { ticketTypeID, date, environment } });
 export const fetchGlobtixAvailabilityTimeslotSuccess = (data) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_SUCCESS, payload: data });
 export const fetchGlobtixAvailabilityTimeslotFailure = (error) => ({ type: FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_FAILURE, payload: error });
+
+export const fetchGlobtixTicketUrlsRequest = (referenceNumber, environment) => ({ type: FETCH_GLOBALTIX_TICKET_URLS_REQUEST, payload: { referenceNumber, environment } });
+export const fetchGlobtixTicketUrlsSuccess = (data) => ({ type: FETCH_GLOBALTIX_TICKET_URLS_SUCCESS, payload: data });
+export const fetchGlobtixTicketUrlsFailure = (error) => ({ type: FETCH_GLOBALTIX_TICKET_URLS_FAILURE, payload: error });

@@ -19,10 +19,13 @@ import {
   REFRESH_GLOBALTIX_BOOKING_REQUEST,
   FETCH_GLOBALTIX_TOKEN_REQUEST,
   AUTHENTICATE_GLOBALTIX_REQUEST,
+  FETCH_GLOBALTIX_TICKET_URLS_REQUEST,
 } from "./actionTypes";
 import {
   reserveGlobtixBookingSuccess,
   reserveGlobtixBookingFailure,
+  fetchGlobtixTicketUrlsSuccess,
+  fetchGlobtixTicketUrlsFailure,
   fetchGlobtixAvailabilityCalendarSuccess,
   fetchGlobtixAvailabilityCalendarFailure,
   fetchGlobtixAvailabilityTimeslotSuccess,
@@ -77,6 +80,7 @@ import {
   refreshGlobtixBooking,
   getGlobtixToken,
   authenticateGlobtix,
+  getGlobtixTicketUrls,
 } from "helpers/globaltix_helper";
 
 function* fetchGlobtixProductsSaga({ payload }) {
@@ -254,6 +258,15 @@ function* fetchGlobtixAvailabilityTimeslotSaga({ payload }) {
   }
 }
 
+function* fetchGlobtixTicketUrlsSaga({ payload }) {
+  try {
+    const response = yield call(getGlobtixTicketUrls, payload.referenceNumber, payload.environment);
+    yield put(fetchGlobtixTicketUrlsSuccess(response));
+  } catch (error) {
+    yield put(fetchGlobtixTicketUrlsFailure(error.message));
+  }
+}
+
 function* globaltixSaga() {
   yield takeLatest(FETCH_GLOBALTIX_PRODUCTS_REQUEST, fetchGlobtixProductsSaga);
   yield takeLatest(SEARCH_GLOBALTIX_PRODUCTS_REQUEST, searchGlobtixProductsSaga);
@@ -273,6 +286,7 @@ function* globaltixSaga() {
   yield takeLatest(FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST, fetchGlobtixAvailabilityTimeslotSaga);
   yield takeLatest(FETCH_GLOBALTIX_TOKEN_REQUEST, fetchGlobtixTokenSaga);
   yield takeLatest(AUTHENTICATE_GLOBALTIX_REQUEST, authenticateGlobtixSaga);
+  yield takeLatest(FETCH_GLOBALTIX_TICKET_URLS_REQUEST, fetchGlobtixTicketUrlsSaga);
 }
 
 export default globaltixSaga;
