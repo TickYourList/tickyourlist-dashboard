@@ -11,6 +11,7 @@ import {
   globaltixSyncFullRequest,
   globaltixSyncProductRequest,
   fetchGlobtixProductDetailRequest,
+  globaltixSyncIncrementalRequest,
 } from "store/tickyourlist/globaltix/action";
 import { getGlobtixProductFilters } from "helpers/globaltix_helper";
 import ConnectGlobtixModal from "../TravelTourGroup/ConnectGlobtixModal";
@@ -308,6 +309,7 @@ const GlobtixProductsPage = () => {
     searchResults, searching,
     syncLoading, syncResult,
     syncProductLoading,
+    syncIncrementalLoading, syncIncrementalResult,
     productDetail, productDetailLoading,
   } = useSelector((state) => state.globaltix || {});
 
@@ -398,16 +400,31 @@ const GlobtixProductsPage = () => {
                   Cached Globaltix product catalog &bull; {productsPagination?.total || 0} products
                 </p>
               </div>
-              <Button color="primary" onClick={() => setSyncConfirmOpen(true)} disabled={syncLoading}>
-                {syncLoading ? <><Spinner size="sm" className="me-2" />Syncing...</> : <><i className="bx bx-refresh me-2"></i>Full Sync</>}
-              </Button>
+              <div className="d-flex gap-2">
+                <Button color="outline-primary"
+                  onClick={() => dispatch(globaltixSyncIncrementalRequest(environment, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]))}
+                  disabled={syncIncrementalLoading || syncLoading}
+                  title="Sync products changed in the last 7 days">
+                  {syncIncrementalLoading ? <><Spinner size="sm" className="me-2" />Syncing...</> : <><i className="bx bx-revision me-2" />Quick Sync (7d)</>}
+                </Button>
+                <Button color="primary" onClick={() => setSyncConfirmOpen(true)} disabled={syncLoading || syncIncrementalLoading}>
+                  {syncLoading ? <><Spinner size="sm" className="me-2" />Syncing...</> : <><i className="bx bx-refresh me-2"></i>Full Sync</>}
+                </Button>
+              </div>
             </div>
 
-            {syncResult && (
-              <Alert color={syncResult.failed > 0 ? "warning" : "success"} className="mb-3">
-                Sync complete: <strong>{syncResult.synced}</strong> synced, <strong>{syncResult.failed}</strong> failed.
-                {syncResult.errors?.length > 0 && (
-                  <ul className="mb-0 mt-1">{syncResult.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}</ul>
+            {(syncResult || syncIncrementalResult) && (
+              <Alert
+                color={(syncResult || syncIncrementalResult).failed > 0 ? "warning" : "success"}
+                className="mb-3"
+              >
+                {syncIncrementalResult && !syncResult ? "Quick sync" : "Full sync"} complete:{" "}
+                <strong>{(syncResult || syncIncrementalResult).synced}</strong> synced,{" "}
+                <strong>{(syncResult || syncIncrementalResult).failed}</strong> failed.
+                {(syncResult || syncIncrementalResult).errors?.length > 0 && (
+                  <ul className="mb-0 mt-1">
+                    {(syncResult || syncIncrementalResult).errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
+                  </ul>
                 )}
               </Alert>
             )}

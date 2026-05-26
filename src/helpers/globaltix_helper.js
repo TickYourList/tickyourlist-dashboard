@@ -1,4 +1,4 @@
-import { get, post } from "./api_helper";
+import { get, post, del } from "./api_helper";
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ export const globaltixCreateTourGroup = (globaltixProductId, environment = "stag
   post(`/v1/globaltix/sync/create-tour-group`, { globaltixProductId, environment });
 
 export const globaltixSyncIncremental = (environment = "staging", since) =>
-  post(`/v1/globaltix/sync/incremental`, { environment, since });
+  post(`/v1/globaltix/sync/incremental`, { environment, ...(since && { since }) });
 
 export const globaltixSyncProduct = (globaltixProductId, environment = "staging") =>
   post(`/v1/globaltix/sync/product`, { globaltixProductId, environment });
@@ -91,10 +91,37 @@ export const getGlobtixAvailabilityTimeslot = (ticketTypeID, date, environment =
 
 // ─── Bookings ─────────────────────────────────────────────────────────────────
 
-export const getGlobtixBookings = ({ environment = "staging", status, globaltixProductId, page = 1, limit = 20 } = {}) =>
+export const getGlobtixBookings = ({ environment = "staging", status, globaltixProductId, customerEmail, partnerReference, referenceNumber, dateFrom, dateTo, page = 1, limit = 20 } = {}) =>
   get(`/v1/globaltix/bookings`, {
-    params: { environment, ...(status && { status }), ...(globaltixProductId && { globaltixProductId }), page, limit },
+    params: {
+      environment,
+      ...(status && { status }),
+      ...(globaltixProductId && { globaltixProductId }),
+      ...(customerEmail && { customerEmail }),
+      ...(partnerReference && { partnerReference }),
+      ...(referenceNumber && { referenceNumber }),
+      ...(dateFrom && { dateFrom }),
+      ...(dateTo && { dateTo }),
+      page,
+      limit,
+    },
   });
+
+export const exportGlobtixBookings = (params = {}) => {
+  const { environment = "staging", status, customerEmail, partnerReference, referenceNumber, dateFrom, dateTo } = params;
+  return get(`/v1/globaltix/bookings/export.csv`, {
+    params: {
+      environment,
+      ...(status && { status }),
+      ...(customerEmail && { customerEmail }),
+      ...(partnerReference && { partnerReference }),
+      ...(referenceNumber && { referenceNumber }),
+      ...(dateFrom && { dateFrom }),
+      ...(dateTo && { dateTo }),
+    },
+    responseType: "blob",
+  });
+};
 
 export const getGlobtixBookingDetail = (referenceNumber) =>
   get(`/v1/globaltix/bookings/${referenceNumber}`);
@@ -114,11 +141,35 @@ export const cancelGlobtixBooking = (referenceNumber, environment = "staging", r
 export const refreshGlobtixBooking = (referenceNumber, environment = "staging") =>
   get(`/v1/globaltix/bookings/${referenceNumber}/refresh`, { params: { environment } });
 
-export const resendGlobtixBookingEmail = (referenceNumber, environment = "staging") =>
-  post(`/v1/globaltix/bookings/${referenceNumber}/resend-email`, { environment });
+export const resendGlobtixBookingEmail = (referenceNumber, environment = "staging", toEmail) =>
+  post(`/v1/globaltix/bookings/${referenceNumber}/resend-email`, { environment, ...(toEmail && { toEmail }) });
 
 export const checkGlobtixAvailability = (ticketTypeID, dateFrom, dateTo, environment = "staging") =>
   get(`/v1/globaltix/availability/check`, { params: { ticketTypeID, dateFrom, dateTo, environment } });
 
 export const getGlobtixTicketUrls = (referenceNumber, environment = "staging") =>
   get(`/v1/globaltix/bookings/${referenceNumber}/ticket-urls`, { params: { environment } });
+
+export const triggerGlobtixSweep = (environment = "staging") =>
+  post(`/v1/globaltix/bookings/sweep-expired`, { environment });
+
+// ─── Webhook Events ────────────────────────────────────────────────────────────
+
+export const getGlobtixWebhookEvents = ({ environment = "staging", eventType, processed, page = 1, limit = 30 } = {}) =>
+  get(`/v1/globaltix/webhooks/events`, {
+    params: {
+      environment,
+      ...(eventType && { eventType }),
+      ...(processed !== undefined && { processed }),
+      page,
+      limit,
+    },
+  });
+
+// ─── Link / Unlink Booking to TYL Tour Booking ───────────────────────────────
+
+export const linkGlobtixBookingToTour = (referenceNumber, tourBookingId) =>
+  post(`/v1/globaltix/bookings/${referenceNumber}/link`, { tourBookingId });
+
+export const unlinkGlobtixBookingFromTour = (referenceNumber) =>
+  del(`/v1/globaltix/bookings/${referenceNumber}/link`);

@@ -4,6 +4,7 @@ import {
   Container, Row, Col, Card, CardBody, CardHeader,
   Button, Input, Badge, Table, Spinner, Alert,
   Modal, ModalHeader, ModalBody, Label, FormGroup, FormFeedback,
+  Nav, NavItem, NavLink, TabContent, TabPane,
 } from "reactstrap";
 import {
   fetchGlobtixBookingsRequest,
@@ -17,6 +18,12 @@ import {
   fetchGlobtixAvailabilityCalendarRequest,
   fetchGlobtixAvailabilityTimeslotRequest,
   fetchGlobtixTicketUrlsRequest,
+  fetchGlobtixWebhookEventsRequest,
+  fetchGlobtixCreditRequest,
+  triggerGlobtixSweepRequest,
+  exportGlobtixBookingsRequest,
+  linkGlobtixBookingRequest,
+  unlinkGlobtixBookingRequest,
 } from "store/tickyourlist/globaltix/action";
 import { fetchGlobtixProductsRequest, searchGlobtixProductsRequest } from "store/tickyourlist/globaltix/action";
 
@@ -29,6 +36,18 @@ const STATUS_COLORS = {
   CANCELLED: "danger",
   ERROR: "danger",
 };
+
+const EVENT_TYPE_COLORS = {
+  "booking-ticket-revoke": "danger",
+  "booking-ticket-update": "info",
+  "booking-transaction-update": "primary",
+  "booking-ticket-redeem": "success",
+  "ticket-type-price-update": "warning",
+  "product-info-update": "secondary",
+  "ticket-expired": "secondary",
+};
+
+const WEBHOOK_URL = "https://api.univolenitsolutions.com/v1/globaltix/webhooks/event";
 
 const VALIDITY_LABELS = {
   VisitDate: "Fixed Visit Date",
@@ -1130,6 +1149,244 @@ function CreateBookingModal({ isOpen, toggle, environment, onBookingConfirmed })
   );
 }
 
+// ─── Webhook Events Tab ───────────────────────────────────────────────────────
+
+function WebhookEventsTab({ environment }) {
+  const dispatch = useDispatch();
+  const {
+    webhookEvents,
+    webhookEventsPagination,
+    webhookEventsLoading,
+    webhookEventsError,
+  } = useSelector((s) => s.globaltix || {});
+
+  const [eventTypeFilter, setEventTypeFilter] = useState("");
+  const [processedFilter, setProcessedFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [expandedPayloads, setExpandedPayloads] = useState({});
+
+  const fetchEvents = useCallback(() => {
+    const params = {
+      environment,
+      page,
+      limit: 30,
+      ...(eventTypeFilter && { eventType: eventTypeFilter }),
+      ...(processedFilter === "true" && { processed: true }),
+      ...(processedFilter === "false" && { processed: false }),
+    };
+    dispatch(fetchGlobtixWebhookEventsRequest(params));
+  }, [dispatch, environment, eventTypeFilter, processedFilter, page]);
+
+  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+
+  const togglePayload = (id) =>
+    setExpandedPayloads((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const formatRelativeTime = (dateStr) => {
+    if (!dateStr) return "—";
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const secs = Math.floor(diff / 1000);
+    if (secs < 60) return `${secs}s ago`;
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  const getStatusBadge = (event) => {
+    if (event.processed) return <Badge color="success" style={{ fontSize: 11 }}>Processed</Badge>;
+    if (event.processingError) return <Badge color="danger" style={{ fontSize: 11 }}>Failed</Badge>;
+    return <Badge color="secondary" style={{ fontSize: 11 }}>Pending</Badge>;
+  };
+
+  return (
+    <div>
+      {/* Info banner */}
+      <Alert color="info" className="py-2 mb-3" style={{ fontSize: 13 }}>
+        <i className="bx bx-link me-1" />
+        <strong>Webhook URL to register in Globaltix partner portal:</strong>{" "}
+        <code style={{ userSelect: "all" }}>POST {WEBHOOK_URL}</code>
+      </Alert>
+
+      {/* Filter bar */}
+      <Card className="mb-3">
+        <CardHeader className="bg-transparent border-bottom py-2">
+          <Row className="align-items-center g-2">
+            <Col md={4}>
+              <Input
+                type="select"
+                bsSize="sm"
+                value={eventTypeFilter}
+                onChange={(e) => { setEventTypeFilter(e.target.value); setPage(1); }}
+              >
+                <option value="">All Event Types</option>
+                <option value="booking-ticket-revoke">booking-ticket-revoke</option>
+                <option value="booking-ticket-update">booking-ticket-update</option>
+                <option value="booking-transaction-update">booking-transaction-update</option>
+                <option value="booking-ticket-redeem">booking-ticket-redeem</option>
+                <option value="ticket-type-price-update">ticket-type-price-update</option>
+                <option value="product-info-update">product-info-update</option>
+                <option value="ticket-expired">ticket-expired</option>
+              </Input>
+            </Col>
+            <Col md={3}>
+              <Input
+                type="select"
+                bsSize="sm"
+                value={processedFilter}
+                onChange={(e) => { setProcessedFilter(e.target.value); setPage(1); }}
+              >
+                <option value="">All Status</option>
+                <option value="true">Processed</option>
+                <option value="false">Failed / Pending</option>
+              </Input>
+            </Col>
+            <Col className="d-flex justify-content-end">
+              <Button color="outline-secondary" size="sm" onClick={fetchEvents} disabled={webhookEventsLoading}>
+                <i className="bx bx-refresh me-1" />Refresh
+              </Button>
+            </Col>
+          </Row>
+        </CardHeader>
+
+        <CardBody className="p-0">
+          {webhookEventsLoading ? (
+            <div className="text-center py-5"><Spinner /></div>
+          ) : webhookEventsError ? (
+            <Alert color="danger" className="m-3">Failed to load webhook events: {webhookEventsError}</Alert>
+          ) : !webhookEvents?.length ? (
+            <div className="text-center py-5 text-muted">
+              <i className="bx bx-webhook" style={{ fontSize: 48, opacity: 0.3 }} />
+              <p className="mt-2 mb-1 fw-semibold">No webhook events yet.</p>
+              <p className="small">Register your webhook URL in the Globaltix partner portal.</p>
+              <code className="small d-block mt-2" style={{ background: "#f8f9fa", padding: "4px 8px", borderRadius: 4 }}>
+                POST {WEBHOOK_URL}
+              </code>
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <Table hover responsive className="mb-0 table-nowrap align-middle" style={{ fontSize: 12 }}>
+                <thead className="table-light">
+                  <tr>
+                    <th style={{ minWidth: 130 }}>Time</th>
+                    <th style={{ minWidth: 180 }}>Event Type</th>
+                    <th style={{ minWidth: 130 }}>Reference #</th>
+                    <th style={{ minWidth: 120 }}>Ticket Code</th>
+                    <th style={{ minWidth: 100 }}>Status</th>
+                    <th style={{ minWidth: 200 }}>Error</th>
+                    <th style={{ minWidth: 100 }}>Raw Payload</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {webhookEvents.map((evt) => (
+                    <React.Fragment key={evt._id}>
+                      <tr>
+                        <td>
+                          <span title={new Date(evt.createdAt).toLocaleString()}>
+                            {formatRelativeTime(evt.createdAt)}
+                          </span>
+                          <div className="text-muted" style={{ fontSize: 10 }}>
+                            {new Date(evt.createdAt).toLocaleTimeString()}
+                          </div>
+                        </td>
+                        <td>
+                          <Badge
+                            color={EVENT_TYPE_COLORS[evt.eventType] || "light"}
+                            className="fw-normal"
+                            style={{ fontSize: 11, whiteSpace: "normal", textAlign: "left" }}
+                          >
+                            {evt.eventType}
+                          </Badge>
+                        </td>
+                        <td>
+                          {evt.referenceNumber
+                            ? <code style={{ fontSize: 11 }}>{evt.referenceNumber}</code>
+                            : <span className="text-muted">—</span>}
+                        </td>
+                        <td>
+                          {evt.ticketCode
+                            ? <code style={{ fontSize: 11 }}>{evt.ticketCode}</code>
+                            : <span className="text-muted">—</span>}
+                        </td>
+                        <td>{getStatusBadge(evt)}</td>
+                        <td>
+                          {evt.processingError
+                            ? <span className="text-danger small" title={evt.processingError}>
+                                {evt.processingError.length > 60
+                                  ? evt.processingError.slice(0, 60) + "…"
+                                  : evt.processingError}
+                              </span>
+                            : <span className="text-muted">—</span>}
+                        </td>
+                        <td>
+                          <Button
+                            color="outline-secondary"
+                            size="sm"
+                            style={{ fontSize: 11 }}
+                            onClick={() => togglePayload(evt._id)}
+                          >
+                            {expandedPayloads[evt._id] ? "Hide" : "Show"}
+                          </Button>
+                        </td>
+                      </tr>
+                      {expandedPayloads[evt._id] && (
+                        <tr>
+                          <td colSpan={7} style={{ background: "#f8f9fa" }}>
+                            <pre
+                              style={{
+                                fontSize: 11,
+                                maxHeight: 300,
+                                overflowY: "auto",
+                                margin: 0,
+                                padding: "8px",
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-all",
+                              }}
+                            >
+                              {JSON.stringify(evt.rawPayload, null, 2)}
+                            </pre>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Pagination */}
+      {webhookEventsPagination?.total > 0 && (
+        <div className="d-flex justify-content-between align-items-center">
+          <span className="text-muted small">
+            Showing {webhookEvents?.length || 0} of {webhookEventsPagination.total} events
+            {webhookEventsPagination.pages > 1 && ` · Page ${page} of ${webhookEventsPagination.pages}`}
+          </span>
+          {webhookEventsPagination.pages > 1 && (
+            <div className="d-flex gap-2">
+              <Button size="sm" color="outline-secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                Previous
+              </Button>
+              <Button
+                size="sm"
+                color="outline-secondary"
+                disabled={page >= webhookEventsPagination.pages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Bookings Page ───────────────────────────────────────────────────────
 
 const GlobtixBookingsPage = () => {
@@ -1142,19 +1399,84 @@ const GlobtixBookingsPage = () => {
     releaseLoading,
     resendEmailLoading,
     refreshBookingLoading,
+    creditBalance,
+    creditLoading,
+    sweepLoading,
+    exportLoading,
+    linkBookingLoading,
+    unlinkBookingLoading,
+    linkBookingError,
   } = useSelector((state) => state.globaltix || {});
 
   const [environment] = useState("staging");
+  const [activeTab, setActiveTab] = useState("bookings");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelConfirmRef, setCancelConfirmRef] = useState(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [resendModalOpen, setResendModalOpen] = useState(false);
+  const [resendTarget, setResendTarget] = useState(null);
+  const [resendCustomEmail, setResendCustomEmail] = useState("");
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkTarget, setLinkTarget] = useState(null);
+  const [linkTourBookingId, setLinkTourBookingId] = useState("");
+
+  // Search filter state
+  const [searchEmail, setSearchEmail] = useState("");
+  const [searchPartnerRef, setSearchPartnerRef] = useState("");
+  const [searchDateFrom, setSearchDateFrom] = useState("");
+  const [searchDateTo, setSearchDateTo] = useState("");
+  // Applied filter state (committed on Search click)
+  const [appliedEmail, setAppliedEmail] = useState("");
+  const [appliedPartnerRef, setAppliedPartnerRef] = useState("");
+  const [appliedDateFrom, setAppliedDateFrom] = useState("");
+  const [appliedDateTo, setAppliedDateTo] = useState("");
 
   const fetchBookings = useCallback(() => {
-    dispatch(fetchGlobtixBookingsRequest({ environment, status: statusFilter || undefined, page, limit: 20 }));
-  }, [dispatch, environment, statusFilter, page]);
+    dispatch(fetchGlobtixBookingsRequest({
+      environment,
+      status: statusFilter || undefined,
+      customerEmail: appliedEmail || undefined,
+      partnerReference: appliedPartnerRef || undefined,
+      dateFrom: appliedDateFrom || undefined,
+      dateTo: appliedDateTo || undefined,
+      page,
+      limit: 20,
+    }));
+  }, [dispatch, environment, statusFilter, appliedEmail, appliedPartnerRef, appliedDateFrom, appliedDateTo, page]);
+
+  const handleSearchApply = () => {
+    setAppliedEmail(searchEmail);
+    setAppliedPartnerRef(searchPartnerRef);
+    setAppliedDateFrom(searchDateFrom);
+    setAppliedDateTo(searchDateTo);
+    setPage(1);
+  };
+
+  const handleSearchClear = () => {
+    setSearchEmail("");
+    setSearchPartnerRef("");
+    setSearchDateFrom("");
+    setSearchDateTo("");
+    setAppliedEmail("");
+    setAppliedPartnerRef("");
+    setAppliedDateFrom("");
+    setAppliedDateTo("");
+    setPage(1);
+  };
+
+  const handleExportCsv = () => {
+    dispatch(exportGlobtixBookingsRequest({
+      environment,
+      status: statusFilter || undefined,
+      customerEmail: appliedEmail || undefined,
+      partnerReference: appliedPartnerRef || undefined,
+      dateFrom: appliedDateFrom || undefined,
+      dateTo: appliedDateTo || undefined,
+    }));
+  };
 
   useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
@@ -1165,6 +1487,17 @@ const GlobtixBookingsPage = () => {
       fetchBookings();
     }
   }, [cancelSuccess, cancelLoading]); // eslint-disable-line
+
+  // Auto-fetch credit balance on page load
+  useEffect(() => {
+    dispatch(fetchGlobtixCreditRequest(environment));
+  }, [dispatch, environment]); // eslint-disable-line
+
+  const handleSweep = () => {
+    dispatch(triggerGlobtixSweepRequest(environment));
+    // Refresh bookings list after a short delay to reflect status changes
+    setTimeout(() => fetchBookings(), 2000);
+  };
 
   const handleViewDetail = (referenceNumber) => {
     dispatch(fetchGlobtixBookingDetailRequest(referenceNumber));
@@ -1178,32 +1511,119 @@ const GlobtixBookingsPage = () => {
 
   const handleConfirm = (ref) => dispatch(confirmGlobtixBookingRequest(ref, environment));
   const handleRelease = (ref) => dispatch(releaseGlobtixBookingRequest(ref, environment));
-  const handleResendEmail = (ref) => dispatch(resendGlobtixEmailRequest(ref, environment));
+  const handleResendEmail = (ref, toEmail) => dispatch(resendGlobtixEmailRequest(ref, environment, toEmail));
   const handleRefreshFromApi = (ref) => dispatch(refreshGlobtixBookingRequest(ref, environment));
+  const openResendModal = (ref) => { setResendTarget(ref); setResendCustomEmail(""); setResendModalOpen(true); };
+  const handleResendCustomSubmit = () => {
+    if (!resendTarget || !resendCustomEmail.trim()) return;
+    handleResendEmail(resendTarget, resendCustomEmail.trim());
+    setResendModalOpen(false);
+  };
+  const openLinkModal = (ref) => { setLinkTarget(ref); setLinkTourBookingId(""); setLinkModalOpen(true); };
+  const handleLinkSubmit = () => {
+    if (!linkTarget || !linkTourBookingId.trim()) return;
+    dispatch(linkGlobtixBookingRequest(linkTarget, linkTourBookingId.trim()));
+    setLinkModalOpen(false);
+  };
+  const handleUnlink = (ref) => dispatch(unlinkGlobtixBookingRequest(ref));
 
   return (
     <div className="page-content">
       <Container fluid>
         <Row>
           <Col>
-            <div className="d-flex align-items-center justify-content-between mb-4">
+            <div className="d-flex align-items-center justify-content-between mb-3">
               <div>
                 <h4 className="mb-1">Globaltix Bookings</h4>
                 <p className="text-muted mb-0">
                   All booking records &bull; {bookingsPagination?.total || 0} total
                 </p>
               </div>
-              <div className="d-flex gap-2 align-items-center">
+              <div className="d-flex gap-2 align-items-center flex-wrap">
+                {/* Credit Balance Widget */}
+                <div
+                  className="d-flex align-items-center gap-2 border rounded px-3 py-2"
+                  style={{ background: "#f8f9fa", fontSize: 13, minWidth: 180 }}
+                >
+                  <div>
+                    <div className="text-muted" style={{ fontSize: 10, lineHeight: 1 }}>Credit Balance</div>
+                    {creditLoading ? (
+                      <Spinner size="sm" className="mt-1" />
+                    ) : creditBalance ? (
+                      <span
+                        className="fw-semibold"
+                        style={{
+                          color:
+                            typeof creditBalance.creditBalance === "number" && creditBalance.creditBalance < 200
+                              ? "#dc3545"
+                              : "#212529",
+                        }}
+                      >
+                        {typeof creditBalance.creditBalance === "number" && creditBalance.creditBalance < 200 && (
+                          <i className="bx bx-error-circle me-1 text-danger" style={{ fontSize: 12 }} />
+                        )}
+                        {creditBalance.currencyCode || creditBalance.currency || "SGD"}{" "}
+                        {typeof creditBalance.creditBalance === "number"
+                          ? creditBalance.creditBalance.toLocaleString("en-SG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                          : "—"}
+                      </span>
+                    ) : (
+                      <span className="text-muted" style={{ fontSize: 12 }}>—</span>
+                    )}
+                  </div>
+                  <Button
+                    color="link"
+                    size="sm"
+                    className="p-0 ms-1"
+                    title="Refresh credit balance"
+                    onClick={() => dispatch(fetchGlobtixCreditRequest(environment))}
+                    disabled={creditLoading}
+                  >
+                    <i className={`bx bx-refresh${creditLoading ? " bx-spin" : ""}`} style={{ fontSize: 16 }} />
+                  </Button>
+                </div>
+
                 <Badge color="secondary">{environment}</Badge>
-                <Button color="primary" onClick={() => setCreateModalOpen(true)}>
-                  <i className="bx bx-plus me-1" />Create Booking
-                </Button>
+                {activeTab === "bookings" && (
+                  <Button color="primary" onClick={() => setCreateModalOpen(true)}>
+                    <i className="bx bx-plus me-1" />Create Booking
+                  </Button>
+                )}
               </div>
             </div>
 
+            {/* Tabs */}
+            <Nav tabs className="mb-3">
+              <NavItem>
+                <NavLink
+                  className={activeTab === "bookings" ? "active" : ""}
+                  onClick={() => setActiveTab("bookings")}
+                  style={{ cursor: "pointer" }}
+                >
+                  <i className="bx bx-list-ul me-1" />Bookings
+                </NavLink>
+              </NavItem>
+              <NavItem>
+                <NavLink
+                  className={activeTab === "webhooks" ? "active" : ""}
+                  onClick={() => setActiveTab("webhooks")}
+                  style={{ cursor: "pointer" }}
+                >
+                  <i className="bx bx-transfer me-1" />Webhook Events
+                </NavLink>
+              </NavItem>
+            </Nav>
+
+            <TabContent activeTab={activeTab}>
+              <TabPane tabId="webhooks">
+                <WebhookEventsTab environment={environment} />
+              </TabPane>
+              <TabPane tabId="bookings">
+
             <Card>
               <CardHeader className="bg-transparent border-bottom">
-                <Row className="align-items-center g-2">
+                {/* Row 1: Status filter + action buttons */}
+                <Row className="align-items-center g-2 mb-2">
                   <Col md={3}>
                     <Input type="select" value={statusFilter}
                       onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
@@ -1215,9 +1635,80 @@ const GlobtixBookingsPage = () => {
                       <option value="ERROR">Error</option>
                     </Input>
                   </Col>
-                  <Col className="d-flex justify-content-end">
+                  <Col className="d-flex justify-content-end gap-2">
+                    <Button
+                      color="outline-warning"
+                      size="sm"
+                      onClick={handleSweep}
+                      disabled={sweepLoading}
+                      title="Mark all expired RESERVED bookings as RELEASED"
+                    >
+                      {sweepLoading
+                        ? <><Spinner size="sm" className="me-1" />Sweeping...</>
+                        : <><i className="bx bx-timer me-1" />Sweep Expired</>}
+                    </Button>
                     <Button color="outline-secondary" size="sm" onClick={fetchBookings}>
                       <i className="bx bx-refresh me-1" />Refresh
+                    </Button>
+                  </Col>
+                </Row>
+                {/* Row 2: Advanced search filters + export */}
+                <Row className="align-items-center g-2">
+                  <Col md={3}>
+                    <Input
+                      type="email"
+                      placeholder="Search by customer email..."
+                      value={searchEmail}
+                      onChange={(e) => setSearchEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearchApply()}
+                      bsSize="sm"
+                    />
+                  </Col>
+                  <Col md={3}>
+                    <Input
+                      type="text"
+                      placeholder="Partner ref / reference #..."
+                      value={searchPartnerRef}
+                      onChange={(e) => setSearchPartnerRef(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearchApply()}
+                      bsSize="sm"
+                    />
+                  </Col>
+                  <Col md={2}>
+                    <Input
+                      type="date"
+                      value={searchDateFrom}
+                      onChange={(e) => setSearchDateFrom(e.target.value)}
+                      bsSize="sm"
+                      title="Reserved from date"
+                    />
+                  </Col>
+                  <Col md={2}>
+                    <Input
+                      type="date"
+                      value={searchDateTo}
+                      onChange={(e) => setSearchDateTo(e.target.value)}
+                      bsSize="sm"
+                      title="Reserved to date"
+                    />
+                  </Col>
+                  <Col className="d-flex gap-2 flex-wrap">
+                    <Button color="primary" size="sm" onClick={handleSearchApply}>
+                      Search
+                    </Button>
+                    <Button color="outline-secondary" size="sm" onClick={handleSearchClear}>
+                      Clear
+                    </Button>
+                    <Button
+                      color="outline-success"
+                      size="sm"
+                      onClick={handleExportCsv}
+                      disabled={exportLoading}
+                      title="Export current filters to CSV"
+                    >
+                      {exportLoading
+                        ? <><Spinner size="sm" className="me-1" />Exporting...</>
+                        : <><i className="bx bx-download me-1" />Export CSV</>}
                     </Button>
                   </Col>
                 </Row>
@@ -1287,9 +1778,14 @@ const GlobtixBookingsPage = () => {
                               </td>
                               <td>
                                 {b.tourBookingId ? (
-                                  <Badge color="info" style={{ fontSize: 10 }}>Linked</Badge>
+                                  <Badge color="info" style={{ fontSize: 10 }} title={typeof b.tourBookingId === "string" ? b.tourBookingId : String(b.tourBookingId)}>
+                                    Linked
+                                  </Badge>
                                 ) : (
-                                  <span className="text-muted small">—</span>
+                                  <Button size="sm" color="outline-secondary" style={{ fontSize: 10, padding: "1px 5px" }}
+                                    onClick={() => openLinkModal(b.referenceNumber)} title="Link to TYL booking">
+                                    <i className="bx bx-link" />
+                                  </Button>
                                 )}
                               </td>
                               <td>
@@ -1319,11 +1815,18 @@ const GlobtixBookingsPage = () => {
                                     </Button>
                                   )}
                                   {b.status === "CONFIRMED" && (
-                                    <Button size="sm" color="outline-secondary"
-                                      onClick={() => handleResendEmail(b.referenceNumber)}
-                                      disabled={resendEmailLoading} title="Resend email">
-                                      <i className="bx bx-envelope" />
-                                    </Button>
+                                    <>
+                                      <Button size="sm" color="outline-secondary"
+                                        onClick={() => handleResendEmail(b.referenceNumber)}
+                                        disabled={resendEmailLoading} title="Resend to customer email">
+                                        <i className="bx bx-envelope" />
+                                      </Button>
+                                      <Button size="sm" color="outline-info"
+                                        onClick={() => openResendModal(b.referenceNumber)}
+                                        disabled={resendEmailLoading} title="Resend to custom email">
+                                        <i className="bx bx-envelope-open" />
+                                      </Button>
+                                    </>
                                   )}
                                 </div>
                               </td>
@@ -1351,6 +1854,10 @@ const GlobtixBookingsPage = () => {
                 )}
               </div>
             )}
+
+              </TabPane>
+            </TabContent>
+
           </Col>
         </Row>
       </Container>
@@ -1403,10 +1910,18 @@ const GlobtixBookingsPage = () => {
                     </>
                   )}
                   {bookingDetail.status === "CONFIRMED" && (
-                    <Button color="outline-secondary" size="sm"
-                      onClick={() => handleResendEmail(bookingDetail.referenceNumber)} disabled={resendEmailLoading}>
-                      {resendEmailLoading ? <Spinner size="sm" /> : <><i className="bx bx-envelope me-1" />Resend Email</>}
-                    </Button>
+                    <>
+                      <Button color="outline-secondary" size="sm"
+                        onClick={() => handleResendEmail(bookingDetail.referenceNumber)} disabled={resendEmailLoading}
+                        title="Resend to original customer email">
+                        {resendEmailLoading ? <Spinner size="sm" /> : <><i className="bx bx-envelope me-1" />Resend Email</>}
+                      </Button>
+                      <Button color="outline-info" size="sm"
+                        onClick={() => openResendModal(bookingDetail.referenceNumber)} disabled={resendEmailLoading}
+                        title="Resend to a different email address">
+                        <i className="bx bx-envelope-open me-1" />Resend to...
+                      </Button>
+                    </>
                   )}
                   {bookingDetail.status === "CONFIRMED" && bookingDetail.isCancellable && (
                     <Button color="outline-danger" size="sm"
@@ -1450,7 +1965,45 @@ const GlobtixBookingsPage = () => {
                       {bookingDetail.visitDate && <tr><td className="text-muted">Visit Date</td><td>{bookingDetail.visitDate}{bookingDetail.visitTime ? ` · ${bookingDetail.visitTime}` : ""}</td></tr>}
                       {bookingDetail.seriesId && <tr><td className="text-muted">Series ID</td><td><code>{bookingDetail.seriesId}</code></td></tr>}
                       {bookingDetail.partnerReference && <tr><td className="text-muted">Partner Ref</td><td><code>{bookingDetail.partnerReference}</code></td></tr>}
-                      {bookingDetail.tourBookingId && <tr><td className="text-muted">TYL Booking</td><td><code className="small">{typeof bookingDetail.tourBookingId === "object" ? bookingDetail.tourBookingId._id || String(bookingDetail.tourBookingId) : bookingDetail.tourBookingId}</code></td></tr>}
+                      <tr>
+                        <td className="text-muted">TYL Booking</td>
+                        <td>
+                          {bookingDetail.tourBookingId ? (
+                            <div className="d-flex align-items-center gap-2 flex-wrap">
+                              <div>
+                                <code className="small">
+                                  {typeof bookingDetail.tourBookingId === "object"
+                                    ? bookingDetail.tourBookingId._id || String(bookingDetail.tourBookingId)
+                                    : bookingDetail.tourBookingId}
+                                </code>
+                                {typeof bookingDetail.tourBookingId === "object" && bookingDetail.tourBookingId.nonCustomerFirstName && (
+                                  <div className="text-muted" style={{ fontSize: 11 }}>
+                                    {bookingDetail.tourBookingId.nonCustomerFirstName} {bookingDetail.tourBookingId.nonCustomerLastName}
+                                    {bookingDetail.tourBookingId.email ? ` · ${bookingDetail.tourBookingId.email}` : ""}
+                                  </div>
+                                )}
+                              </div>
+                              <Button size="sm" color="outline-secondary"
+                                onClick={() => openLinkModal(bookingDetail.referenceNumber)}
+                                disabled={linkBookingLoading} title="Change linked booking">
+                                <i className="bx bx-link-alt" />
+                              </Button>
+                              <Button size="sm" color="outline-danger"
+                                onClick={() => handleUnlink(bookingDetail.referenceNumber)}
+                                disabled={unlinkBookingLoading} title="Remove link">
+                                {unlinkBookingLoading ? <Spinner size="sm" /> : <i className="bx bx-unlink" />}
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button size="sm" color="outline-primary"
+                              onClick={() => openLinkModal(bookingDetail.referenceNumber)}
+                              disabled={linkBookingLoading}>
+                              {linkBookingLoading ? <Spinner size="sm" /> : <><i className="bx bx-link me-1" />Link TYL Booking</>}
+                            </Button>
+                          )}
+                          {linkBookingError && <div className="text-danger small mt-1">{linkBookingError}</div>}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </Col>
@@ -1484,21 +2037,60 @@ const GlobtixBookingsPage = () => {
                   </div>
                   <table className="table table-sm table-bordered mb-0" style={{ fontSize: 13 }}>
                     <thead className="table-light">
-                      <tr><th>Type</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
+                      <tr>
+                        <th>Type</th><th>Qty</th><th>Unit Price</th>
+                        {bookingDetail.ticketCodes.some((tc) => tc.nettPrice != null) && <th>Nett Cost</th>}
+                        {bookingDetail.ticketCodes.some((tc) => tc.nettPrice != null) && <th>Margin</th>}
+                        <th>Total</th>
+                      </tr>
                     </thead>
                     <tbody>
-                      {bookingDetail.ticketCodes.map((tc, i) => (
-                        <tr key={i}>
-                          <td>{tc.ticketTypeName || `Type ${tc.ticketTypeId}`}</td>
-                          <td>{tc.quantity}</td>
-                          <td>{tc.unitPrice > 0 ? `${bookingDetail.currency} ${tc.unitPrice.toFixed(2)}` : <span className="text-muted">—</span>}</td>
-                          <td><strong>{tc.totalPrice > 0 ? `${bookingDetail.currency} ${tc.totalPrice.toFixed(2)}` : <span className="text-muted">—</span>}</strong></td>
-                        </tr>
-                      ))}
+                      {bookingDetail.ticketCodes.map((tc, i) => {
+                        const hasNett = tc.nettPrice != null;
+                        const showMarginCols = bookingDetail.ticketCodes.some((c) => c.nettPrice != null);
+                        const margin = hasNett ? (tc.unitPrice || 0) - tc.nettPrice : null;
+                        const marginTotal = hasNett ? margin * tc.quantity : null;
+                        const marginPct = hasNett && tc.nettPrice > 0 ? Math.round((margin / tc.nettPrice) * 100) : null;
+                        return (
+                          <tr key={i}>
+                            <td>{tc.ticketTypeName || `Type ${tc.ticketTypeId}`}</td>
+                            <td>{tc.quantity}</td>
+                            <td>{tc.unitPrice > 0 ? `${bookingDetail.currency} ${tc.unitPrice.toFixed(2)}` : <span className="text-muted">—</span>}</td>
+                            {showMarginCols && (
+                              <td>{hasNett ? `${bookingDetail.currency} ${tc.nettPrice.toFixed(2)}` : <span className="text-muted">—</span>}</td>
+                            )}
+                            {showMarginCols && (
+                              <td>
+                                {margin !== null
+                                  ? margin >= 0
+                                    ? <span className="text-success">+{bookingDetail.currency} {marginTotal.toFixed(2)}{marginPct !== null ? ` (${marginPct}%)` : ""}</span>
+                                    : <span className="text-danger">{bookingDetail.currency} {marginTotal.toFixed(2)}</span>
+                                  : <span className="text-muted">—</span>}
+                              </td>
+                            )}
+                            <td><strong>{tc.totalPrice > 0 ? `${bookingDetail.currency} ${tc.totalPrice.toFixed(2)}` : <span className="text-muted">—</span>}</strong></td>
+                          </tr>
+                        );
+                      })}
                       <tr className="table-light">
-                        <td colSpan={3} className="text-end fw-semibold">Total</td>
+                        <td colSpan={bookingDetail.ticketCodes.some((tc) => tc.nettPrice != null) ? 5 : 3} className="text-end fw-semibold">Total</td>
                         <td><strong>{bookingDetail.currency} {(bookingDetail.totalAmount || 0).toFixed(2)}</strong></td>
                       </tr>
+                      {bookingDetail.ticketCodes.some((tc) => tc.nettPrice != null) && (() => {
+                        const nettTotal = bookingDetail.ticketCodes.reduce((s, tc) => s + (tc.nettPrice != null ? tc.nettPrice * tc.quantity : 0), 0);
+                        const grossMargin = (bookingDetail.totalAmount || 0) - nettTotal;
+                        const marginPct = nettTotal > 0 ? Math.round((grossMargin / nettTotal) * 100) : null;
+                        return (
+                          <tr className="table-light">
+                            <td colSpan={4} className="text-end fw-semibold text-muted small">Total Margin</td>
+                            <td colSpan={2}>
+                              {grossMargin >= 0
+                                ? <span className="text-success fw-semibold">+{bookingDetail.currency} {grossMargin.toFixed(2)}{marginPct !== null ? ` (${marginPct}%)` : ""}</span>
+                                : <span className="text-danger fw-semibold">{bookingDetail.currency} {grossMargin.toFixed(2)}</span>}
+                            </td>
+                          </tr>
+                        );
+                      })()}
                     </tbody>
                   </table>
                 </div>
@@ -1571,6 +2163,62 @@ const GlobtixBookingsPage = () => {
           <Button color="secondary" onClick={() => setCancelConfirmRef(null)}>No</Button>
           <Button color="danger" onClick={handleCancelConfirm} disabled={cancelLoading}>
             {cancelLoading ? <Spinner size="sm" /> : "Yes, Cancel Booking"}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* ── Link TYL Booking Modal ───────────────────────────── */}
+      <Modal isOpen={linkModalOpen} toggle={() => setLinkModalOpen(false)} size="sm">
+        <ModalHeader toggle={() => setLinkModalOpen(false)}>Link to TYL Tour Booking</ModalHeader>
+        <ModalBody>
+          <p className="small text-muted mb-3">
+            Enter the TYL tour booking ID (<code>ObjectId</code>) to link to Globaltix booking <code>{linkTarget}</code>.
+          </p>
+          <FormGroup>
+            <Label className="fw-semibold small">TYL Tour Booking ID</Label>
+            <Input
+              type="text"
+              placeholder="e.g. 6643abc1d2e3f4567890abcd"
+              value={linkTourBookingId}
+              onChange={(e) => setLinkTourBookingId(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLinkSubmit()}
+            />
+            <div className="text-muted mt-1" style={{ fontSize: 11 }}>24-character MongoDB ObjectId</div>
+          </FormGroup>
+          {linkBookingError && <Alert color="danger" className="py-2 small">{linkBookingError}</Alert>}
+        </ModalBody>
+        <div className="modal-footer">
+          <Button color="secondary" onClick={() => setLinkModalOpen(false)}>Cancel</Button>
+          <Button color="primary" onClick={handleLinkSubmit}
+            disabled={!linkTourBookingId.trim() || linkBookingLoading}>
+            {linkBookingLoading ? <Spinner size="sm" /> : <><i className="bx bx-link me-1" />Link</>}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* ── Resend to Custom Email Modal ─────────────────────── */}
+      <Modal isOpen={resendModalOpen} toggle={() => setResendModalOpen(false)} size="sm">
+        <ModalHeader toggle={() => setResendModalOpen(false)}>Resend Confirmation Email</ModalHeader>
+        <ModalBody>
+          <p className="small text-muted mb-3">
+            Send the ticket confirmation for <code>{resendTarget}</code> to a different email address.
+          </p>
+          <FormGroup>
+            <Label className="fw-semibold small">Email Address</Label>
+            <Input
+              type="email"
+              placeholder="e.g. agent@example.com"
+              value={resendCustomEmail}
+              onChange={(e) => setResendCustomEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleResendCustomSubmit()}
+            />
+          </FormGroup>
+        </ModalBody>
+        <div className="modal-footer">
+          <Button color="secondary" onClick={() => setResendModalOpen(false)}>Cancel</Button>
+          <Button color="primary" onClick={handleResendCustomSubmit}
+            disabled={!resendCustomEmail.trim() || resendEmailLoading}>
+            {resendEmailLoading ? <Spinner size="sm" /> : <><i className="bx bx-send me-1" />Send</>}
           </Button>
         </div>
       </Modal>

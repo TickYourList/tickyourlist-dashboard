@@ -1,6 +1,10 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 import {
+  FETCH_GLOBALTIX_CREDIT_REQUEST,
+  TRIGGER_GLOBALTIX_SWEEP_REQUEST,
+  EXPORT_GLOBALTIX_BOOKINGS_REQUEST,
+  FETCH_GLOBALTIX_WEBHOOK_EVENTS_REQUEST,
   RESERVE_GLOBALTIX_BOOKING_REQUEST,
   FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST,
   FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST,
@@ -20,8 +24,19 @@ import {
   FETCH_GLOBALTIX_TOKEN_REQUEST,
   AUTHENTICATE_GLOBALTIX_REQUEST,
   FETCH_GLOBALTIX_TICKET_URLS_REQUEST,
+  LINK_GLOBALTIX_BOOKING_REQUEST,
+  UNLINK_GLOBALTIX_BOOKING_REQUEST,
+  GLOBALTIX_SYNC_INCREMENTAL_REQUEST,
 } from "./actionTypes";
 import {
+  fetchGlobtixCreditSuccess,
+  fetchGlobtixCreditFailure,
+  triggerGlobtixSweepSuccess,
+  triggerGlobtixSweepFailure,
+  exportGlobtixBookingsSuccess,
+  exportGlobtixBookingsFailure,
+  fetchGlobtixWebhookEventsSuccess,
+  fetchGlobtixWebhookEventsFailure,
   reserveGlobtixBookingSuccess,
   reserveGlobtixBookingFailure,
   fetchGlobtixTicketUrlsSuccess,
@@ -60,8 +75,18 @@ import {
   fetchGlobtixTokenFailure,
   authenticateGlobtixSuccess,
   authenticateGlobtixFailure,
+  linkGlobtixBookingSuccess,
+  linkGlobtixBookingFailure,
+  unlinkGlobtixBookingSuccess,
+  unlinkGlobtixBookingFailure,
+  globaltixSyncIncrementalSuccess,
+  globaltixSyncIncrementalFailure,
 } from "./action";
 import {
+  getGlobtixCredit,
+  triggerGlobtixSweep,
+  exportGlobtixBookings,
+  getGlobtixWebhookEvents,
   reserveGlobtixBooking,
   getGlobtixAvailabilityCalendar,
   getGlobtixAvailabilityTimeslot,
@@ -81,6 +106,9 @@ import {
   getGlobtixToken,
   authenticateGlobtix,
   getGlobtixTicketUrls,
+  linkGlobtixBookingToTour,
+  unlinkGlobtixBookingFromTour,
+  globaltixSyncIncremental,
 } from "helpers/globaltix_helper";
 
 function* fetchGlobtixProductsSaga({ payload }) {
@@ -190,9 +218,9 @@ function* releaseGlobtixBookingSaga({ payload }) {
 
 function* resendGlobtixEmailSaga({ payload }) {
   try {
-    const response = yield call(resendGlobtixBookingEmail, payload.referenceNumber, payload.environment);
+    const response = yield call(resendGlobtixBookingEmail, payload.referenceNumber, payload.environment, payload.toEmail);
     yield put(resendGlobtixEmailSuccess(response));
-    showToastSuccess("Confirmation email resent");
+    showToastSuccess(payload.toEmail ? `Email resent to ${payload.toEmail}` : "Confirmation email resent");
   } catch (error) {
     yield put(resendGlobtixEmailFailure(error.message));
     showToastError("Resend failed: " + error.message);
@@ -267,6 +295,89 @@ function* fetchGlobtixTicketUrlsSaga({ payload }) {
   }
 }
 
+function* fetchGlobtixWebhookEventsSaga({ payload }) {
+  try {
+    const response = yield call(getGlobtixWebhookEvents, payload);
+    yield put(fetchGlobtixWebhookEventsSuccess(response));
+  } catch (error) {
+    yield put(fetchGlobtixWebhookEventsFailure(error.message));
+  }
+}
+
+function* fetchGlobtixCreditSaga({ payload }) {
+  try {
+    const response = yield call(getGlobtixCredit, payload.environment);
+    yield put(fetchGlobtixCreditSuccess(response));
+  } catch (error) {
+    yield put(fetchGlobtixCreditFailure(error.message));
+  }
+}
+
+function* triggerGlobtixSweepSaga({ payload }) {
+  try {
+    const response = yield call(triggerGlobtixSweep, payload.environment);
+    yield put(triggerGlobtixSweepSuccess(response));
+    const expired = response?.data?.expired ?? 0;
+    showToastSuccess(`${expired} expired reservation${expired !== 1 ? "s" : ""} cleaned up`);
+  } catch (error) {
+    yield put(triggerGlobtixSweepFailure(error.message));
+    showToastError("Sweep failed: " + error.message);
+  }
+}
+
+function* exportGlobtixBookingsSaga({ payload }) {
+  try {
+    const response = yield call(exportGlobtixBookings, payload);
+    // Trigger browser download from blob
+    const blob = new Blob([response], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `globaltix-bookings-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    yield put(exportGlobtixBookingsSuccess({}));
+    showToastSuccess("Bookings exported successfully");
+  } catch (error) {
+    yield put(exportGlobtixBookingsFailure(error.message));
+    showToastError("Export failed: " + error.message);
+  }
+}
+
+function* globaltixSyncIncrementalSaga({ payload }) {
+  try {
+    const response = yield call(globaltixSyncIncremental, payload.environment, payload.since);
+    yield put(globaltixSyncIncrementalSuccess(response));
+    const synced = response?.data?.synced ?? 0;
+    showToastSuccess(`Quick sync done: ${synced} product${synced !== 1 ? "s" : ""} updated`);
+  } catch (error) {
+    yield put(globaltixSyncIncrementalFailure(error.message));
+    showToastError("Quick sync failed: " + error.message);
+  }
+}
+
+function* linkGlobtixBookingSaga({ payload }) {
+  try {
+    const response = yield call(linkGlobtixBookingToTour, payload.referenceNumber, payload.tourBookingId);
+    yield put(linkGlobtixBookingSuccess(response));
+    showToastSuccess(`Booking ${payload.referenceNumber} linked to TYL booking`);
+  } catch (error) {
+    yield put(linkGlobtixBookingFailure(error.message));
+    showToastError("Link failed: " + error.message);
+  }
+}
+
+function* unlinkGlobtixBookingSaga({ payload }) {
+  try {
+    const response = yield call(unlinkGlobtixBookingFromTour, payload.referenceNumber);
+    yield put(unlinkGlobtixBookingSuccess(response));
+    showToastSuccess(`Booking ${payload.referenceNumber} unlinked`);
+  } catch (error) {
+    yield put(unlinkGlobtixBookingFailure(error.message));
+    showToastError("Unlink failed: " + error.message);
+  }
+}
+
 function* globaltixSaga() {
   yield takeLatest(FETCH_GLOBALTIX_PRODUCTS_REQUEST, fetchGlobtixProductsSaga);
   yield takeLatest(SEARCH_GLOBALTIX_PRODUCTS_REQUEST, searchGlobtixProductsSaga);
@@ -287,6 +398,13 @@ function* globaltixSaga() {
   yield takeLatest(FETCH_GLOBALTIX_TOKEN_REQUEST, fetchGlobtixTokenSaga);
   yield takeLatest(AUTHENTICATE_GLOBALTIX_REQUEST, authenticateGlobtixSaga);
   yield takeLatest(FETCH_GLOBALTIX_TICKET_URLS_REQUEST, fetchGlobtixTicketUrlsSaga);
+  yield takeLatest(FETCH_GLOBALTIX_WEBHOOK_EVENTS_REQUEST, fetchGlobtixWebhookEventsSaga);
+  yield takeLatest(FETCH_GLOBALTIX_CREDIT_REQUEST, fetchGlobtixCreditSaga);
+  yield takeLatest(TRIGGER_GLOBALTIX_SWEEP_REQUEST, triggerGlobtixSweepSaga);
+  yield takeLatest(EXPORT_GLOBALTIX_BOOKINGS_REQUEST, exportGlobtixBookingsSaga);
+  yield takeLatest(LINK_GLOBALTIX_BOOKING_REQUEST, linkGlobtixBookingSaga);
+  yield takeLatest(UNLINK_GLOBALTIX_BOOKING_REQUEST, unlinkGlobtixBookingSaga);
+  yield takeLatest(GLOBALTIX_SYNC_INCREMENTAL_REQUEST, globaltixSyncIncrementalSaga);
 }
 
 export default globaltixSaga;

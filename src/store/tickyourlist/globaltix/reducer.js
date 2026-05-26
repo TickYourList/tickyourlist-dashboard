@@ -1,4 +1,16 @@
 import {
+  FETCH_GLOBALTIX_CREDIT_REQUEST,
+  FETCH_GLOBALTIX_CREDIT_SUCCESS,
+  FETCH_GLOBALTIX_CREDIT_FAILURE,
+  TRIGGER_GLOBALTIX_SWEEP_REQUEST,
+  TRIGGER_GLOBALTIX_SWEEP_SUCCESS,
+  TRIGGER_GLOBALTIX_SWEEP_FAILURE,
+  EXPORT_GLOBALTIX_BOOKINGS_REQUEST,
+  EXPORT_GLOBALTIX_BOOKINGS_SUCCESS,
+  EXPORT_GLOBALTIX_BOOKINGS_FAILURE,
+  FETCH_GLOBALTIX_WEBHOOK_EVENTS_REQUEST,
+  FETCH_GLOBALTIX_WEBHOOK_EVENTS_SUCCESS,
+  FETCH_GLOBALTIX_WEBHOOK_EVENTS_FAILURE,
   FETCH_GLOBALTIX_TICKET_URLS_REQUEST,
   FETCH_GLOBALTIX_TICKET_URLS_SUCCESS,
   FETCH_GLOBALTIX_TICKET_URLS_FAILURE,
@@ -56,6 +68,15 @@ import {
   AUTHENTICATE_GLOBALTIX_REQUEST,
   AUTHENTICATE_GLOBALTIX_SUCCESS,
   AUTHENTICATE_GLOBALTIX_FAILURE,
+  LINK_GLOBALTIX_BOOKING_REQUEST,
+  LINK_GLOBALTIX_BOOKING_SUCCESS,
+  LINK_GLOBALTIX_BOOKING_FAILURE,
+  UNLINK_GLOBALTIX_BOOKING_REQUEST,
+  UNLINK_GLOBALTIX_BOOKING_SUCCESS,
+  UNLINK_GLOBALTIX_BOOKING_FAILURE,
+  GLOBALTIX_SYNC_INCREMENTAL_REQUEST,
+  GLOBALTIX_SYNC_INCREMENTAL_SUCCESS,
+  GLOBALTIX_SYNC_INCREMENTAL_FAILURE,
 } from "./actionTypes";
 
 const initialState = {
@@ -113,6 +134,26 @@ const initialState = {
   ticketUrls: null,
   ticketUrlsLoading: false,
   ticketUrlsError: null,
+
+  webhookEvents: [],
+  webhookEventsPagination: {},
+  webhookEventsLoading: false,
+  webhookEventsError: null,
+
+  creditBalance: null,
+  creditLoading: false,
+
+  sweepLoading: false,
+  sweepResult: null,
+
+  exportLoading: false,
+
+  linkBookingLoading: false,
+  linkBookingError: null,
+  unlinkBookingLoading: false,
+
+  syncIncrementalLoading: false,
+  syncIncrementalResult: null,
 };
 
 const globaltixReducer = (state = initialState, action) => {
@@ -289,6 +330,78 @@ const globaltixReducer = (state = initialState, action) => {
       return { ...state, ticketUrlsLoading: false, ticketUrls: action.payload.data || action.payload };
     case FETCH_GLOBALTIX_TICKET_URLS_FAILURE:
       return { ...state, ticketUrlsLoading: false, ticketUrlsError: action.payload };
+
+    case FETCH_GLOBALTIX_WEBHOOK_EVENTS_REQUEST:
+      return { ...state, webhookEventsLoading: true, webhookEventsError: null };
+    case FETCH_GLOBALTIX_WEBHOOK_EVENTS_SUCCESS:
+      return {
+        ...state,
+        webhookEventsLoading: false,
+        webhookEvents: action.payload.data || [],
+        webhookEventsPagination: action.payload.pagination || {},
+      };
+    case FETCH_GLOBALTIX_WEBHOOK_EVENTS_FAILURE:
+      return { ...state, webhookEventsLoading: false, webhookEventsError: action.payload };
+
+    case FETCH_GLOBALTIX_CREDIT_REQUEST:
+      return { ...state, creditLoading: true };
+    case FETCH_GLOBALTIX_CREDIT_SUCCESS:
+      return { ...state, creditLoading: false, creditBalance: action.payload.data || action.payload };
+    case FETCH_GLOBALTIX_CREDIT_FAILURE:
+      return { ...state, creditLoading: false };
+
+    case TRIGGER_GLOBALTIX_SWEEP_REQUEST:
+      return { ...state, sweepLoading: true, sweepResult: null };
+    case TRIGGER_GLOBALTIX_SWEEP_SUCCESS:
+      return { ...state, sweepLoading: false, sweepResult: action.payload.data || action.payload };
+    case TRIGGER_GLOBALTIX_SWEEP_FAILURE:
+      return { ...state, sweepLoading: false };
+
+    case EXPORT_GLOBALTIX_BOOKINGS_REQUEST:
+      return { ...state, exportLoading: true };
+    case EXPORT_GLOBALTIX_BOOKINGS_SUCCESS:
+      return { ...state, exportLoading: false };
+    case EXPORT_GLOBALTIX_BOOKINGS_FAILURE:
+      return { ...state, exportLoading: false };
+
+    case LINK_GLOBALTIX_BOOKING_REQUEST:
+      return { ...state, linkBookingLoading: true, linkBookingError: null };
+    case LINK_GLOBALTIX_BOOKING_SUCCESS: {
+      const updated = action.payload?.data;
+      return {
+        ...state,
+        linkBookingLoading: false,
+        bookingDetail: updated && state.bookingDetail?.referenceNumber === updated.referenceNumber ? updated : state.bookingDetail,
+        bookings: updated
+          ? state.bookings.map((b) => b.referenceNumber === updated.referenceNumber ? { ...b, tourBookingId: updated.tourBookingId } : b)
+          : state.bookings,
+      };
+    }
+    case LINK_GLOBALTIX_BOOKING_FAILURE:
+      return { ...state, linkBookingLoading: false, linkBookingError: action.payload };
+
+    case UNLINK_GLOBALTIX_BOOKING_REQUEST:
+      return { ...state, unlinkBookingLoading: true };
+    case UNLINK_GLOBALTIX_BOOKING_SUCCESS: {
+      const updated = action.payload?.data;
+      return {
+        ...state,
+        unlinkBookingLoading: false,
+        bookingDetail: updated && state.bookingDetail?.referenceNumber === updated.referenceNumber ? updated : state.bookingDetail,
+        bookings: updated
+          ? state.bookings.map((b) => b.referenceNumber === updated.referenceNumber ? { ...b, tourBookingId: null } : b)
+          : state.bookings,
+      };
+    }
+    case UNLINK_GLOBALTIX_BOOKING_FAILURE:
+      return { ...state, unlinkBookingLoading: false };
+
+    case GLOBALTIX_SYNC_INCREMENTAL_REQUEST:
+      return { ...state, syncIncrementalLoading: true, syncIncrementalResult: null };
+    case GLOBALTIX_SYNC_INCREMENTAL_SUCCESS:
+      return { ...state, syncIncrementalLoading: false, syncIncrementalResult: action.payload.data || action.payload };
+    case GLOBALTIX_SYNC_INCREMENTAL_FAILURE:
+      return { ...state, syncIncrementalLoading: false };
 
     default:
       return state;
