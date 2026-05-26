@@ -609,14 +609,58 @@ function StepReview({ product, option, form }) {
 
 // ─── Step 5: Reserved Result ──────────────────────────────────────────────────
 
-function StepReserved({ booking, onConfirm, onRelease, confirmLoading, releaseLoading, onClose }) {
+function StepReserved({ booking, onConfirm, onRelease, confirmLoading, confirmError, releaseLoading, onClose, isConfirmed }) {
   if (!booking) return null;
+
+  // ── CONFIRMED state ─────────────────────────────────────────────────────
+  if (isConfirmed) {
+    return (
+      <div className="text-center py-3">
+        <div style={{ fontSize: 56 }}>✅</div>
+        <h5 className="text-success fw-bold mt-2">Booking Confirmed!</h5>
+        <p className="text-muted small mb-3">Credit has been deducted. A confirmation email with tickets has been sent to the customer.</p>
+        <div className="p-3 rounded border mb-3 text-start" style={{ background: "#f0fff4" }}>
+          <div className="d-flex justify-content-between mb-1">
+            <span className="text-muted small">Reference</span>
+            <code className="fw-bold">{booking.referenceNumber}</code>
+          </div>
+          <div className="d-flex justify-content-between mb-1">
+            <span className="text-muted small">Customer</span>
+            <span className="small fw-medium">{booking.customerName} &lt;{booking.customerEmail}&gt;</span>
+          </div>
+          <div className="d-flex justify-content-between mb-1">
+            <span className="text-muted small">Product</span>
+            <span className="small">{booking.globaltixProductName}</span>
+          </div>
+          {booking.visitDate && (
+            <div className="d-flex justify-content-between mb-1">
+              <span className="text-muted small">Visit Date</span>
+              <span className="small">{booking.visitDate}{booking.visitTime ? ` · ${booking.visitTime}` : ""}</span>
+            </div>
+          )}
+          <div className="d-flex justify-content-between">
+            <span className="text-muted small">Total Charged</span>
+            <strong>{booking.currency} {booking.totalAmount?.toFixed(2)}</strong>
+          </div>
+        </div>
+        <Alert color="info" className="py-2 small text-start">
+          <i className="bx bx-envelope me-1" />
+          Confirmation email sent to <strong>{booking.customerEmail}</strong>
+        </Alert>
+        <Button color="success" onClick={onClose} className="w-100">
+          <i className="bx bx-list-ul me-1" />View in Bookings List
+        </Button>
+      </div>
+    );
+  }
+
+  // ── RESERVED state ──────────────────────────────────────────────────────
   return (
     <div>
       <div className="text-center mb-4">
         <div className="fs-1">🎫</div>
         <h5 className="text-warning fw-bold">Booking Reserved!</h5>
-        <p className="text-muted small">You have 15 minutes to confirm this booking before the hold expires and credit is returned.</p>
+        <p className="text-muted small">You have 15 minutes to confirm. Confirming deducts credit and sends the customer their tickets.</p>
       </div>
 
       <div className="p-3 rounded border mb-3" style={{ background: "#fffbf0" }}>
@@ -636,30 +680,43 @@ function StepReserved({ booking, onConfirm, onRelease, confirmLoading, releaseLo
         </div>
       </div>
 
-      <table className="table table-sm table-borderless mb-4" style={{ fontSize: 13 }}>
+      <table className="table table-sm table-borderless mb-3" style={{ fontSize: 13 }}>
         <tbody>
           <tr><td className="text-muted" style={{ width: 130 }}>Product</td><td>{booking.globaltixProductName}</td></tr>
           <tr><td className="text-muted">Option</td><td>{booking.optionName}</td></tr>
           {booking.visitDate && <tr><td className="text-muted">Visit Date</td><td>{booking.visitDate}{booking.visitTime ? ` · ${booking.visitTime}` : ""}</td></tr>}
           {booking.partnerReference && <tr><td className="text-muted">Partner Ref</td><td><code>{booking.partnerReference}</code></td></tr>}
-          <tr><td className="text-muted">Hold Expires</td><td className="text-warning fw-semibold">{booking.holdExpiresAt ? new Date(booking.holdExpiresAt).toLocaleString() : "—"}</td></tr>
+          <tr><td className="text-muted">Customer</td><td>{booking.customerName} &lt;{booking.customerEmail}&gt;</td></tr>
         </tbody>
       </table>
 
+      <Alert color="info" className="py-2 small">
+        <i className="bx bx-envelope me-1" />
+        Confirming will send tickets to <strong>{booking.customerEmail}</strong>
+      </Alert>
+
+      {confirmError && (
+        <Alert color="danger" className="py-2 small">
+          <strong>Confirm failed:</strong> {confirmError}
+        </Alert>
+      )}
+
       <div className="d-flex gap-3">
         <Button color="success" className="flex-grow-1"
-          onClick={() => onConfirm(booking.referenceNumber)} disabled={confirmLoading}>
-          {confirmLoading ? <><Spinner size="sm" className="me-1" />Confirming...</> : <><i className="bx bx-check-circle me-1" />Confirm Booking (deducts credit)</>}
+          onClick={() => onConfirm(booking.referenceNumber)} disabled={confirmLoading || releaseLoading}>
+          {confirmLoading
+            ? <><Spinner size="sm" className="me-1" />Confirming & sending email...</>
+            : <><i className="bx bx-check-circle me-1" />Confirm &amp; Send Email</>}
         </Button>
         <Button color="outline-danger"
-          onClick={() => onRelease(booking.referenceNumber)} disabled={releaseLoading}>
+          onClick={() => onRelease(booking.referenceNumber)} disabled={releaseLoading || confirmLoading}>
           {releaseLoading ? <Spinner size="sm" /> : "Release"}
         </Button>
       </div>
 
       <div className="text-center mt-3">
         <Button color="link" size="sm" className="text-muted" onClick={onClose}>
-          Close and view in bookings list
+          Close and handle later from bookings list
         </Button>
       </div>
     </div>
@@ -668,9 +725,9 @@ function StepReserved({ booking, onConfirm, onRelease, confirmLoading, releaseLo
 
 // ─── Create Booking Modal ─────────────────────────────────────────────────────
 
-function CreateBookingModal({ isOpen, toggle, environment }) {
+function CreateBookingModal({ isOpen, toggle, environment, onBookingConfirmed }) {
   const dispatch = useDispatch();
-  const { reserveLoading, reservedBooking, reserveError, confirmLoading, releaseLoading } = useSelector((s) => s.globaltix || {});
+  const { reserveLoading, reservedBooking, reserveError, confirmLoading, confirmSuccess, confirmError, releaseLoading, availabilityCalendar } = useSelector((s) => s.globaltix || {});
   const prevReserveLoading = useRef(false);
 
   // Steps: 0=Select Product, 1=Customer, 2=Tickets&Date, 3=Questions, 4=Review, 5=Reserved
@@ -695,6 +752,9 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
     answers: {},
   });
 
+  const prevConfirmLoading = useRef(false);
+  const [confirmedRef, setConfirmedRef] = useState(null);
+
   // Advance to "Done" step when reserve succeeds
   useEffect(() => {
     if (prevReserveLoading.current && !reserveLoading && reservedBooking) {
@@ -702,6 +762,15 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
     }
     prevReserveLoading.current = reserveLoading;
   }, [reserveLoading, reservedBooking]);
+
+  // Track confirm success to show confirmed state (only fires on success, not error)
+  useEffect(() => {
+    if (prevConfirmLoading.current && !confirmLoading && confirmSuccess && step === 5 && reservedBooking) {
+      setConfirmedRef(reservedBooking.referenceNumber);
+      if (onBookingConfirmed) onBookingConfirmed();
+    }
+    prevConfirmLoading.current = confirmLoading;
+  }, [confirmLoading, confirmSuccess, step, reservedBooking, onBookingConfirmed]);
 
   const resetModal = () => {
     setStep(0);
@@ -733,9 +802,10 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
     ? (selectedOption.ticketTypes || []).reduce((s, tt) => s + (form.quantities[tt.id] || 0), 0)
     : 0;
 
+  // Mirror the same logic used in StepTicketsDate
   const needsDate = selectedOption &&
-    (selectedOption.visitDateRequired || ["VisitDate", "DateAndTime"].includes(selectedOption.ticketValidity));
-  const needsTime = selectedOption?.ticketValidity === "DateAndTime";
+    (selectedOption.visitDateRequired || selectedOption.ticketValidity === "VisitDate");
+  const needsTime = needsDate && availabilityCalendar?.hasTimeslots === true;
 
   const isTicketsValid = totalQty > 0 &&
     (!needsDate || form.visitDate) &&
@@ -883,8 +953,10 @@ function CreateBookingModal({ isOpen, toggle, environment }) {
             onConfirm={handleConfirm}
             onRelease={handleRelease}
             confirmLoading={confirmLoading}
+            confirmError={confirmError}
             releaseLoading={releaseLoading}
             onClose={handleToggle}
+            isConfirmed={!!confirmedRef}
           />
         )}
       </ModalBody>
@@ -1367,6 +1439,7 @@ const GlobtixBookingsPage = () => {
         isOpen={createModalOpen}
         toggle={() => { setCreateModalOpen(false); fetchBookings(); }}
         environment={environment}
+        onBookingConfirmed={fetchBookings}
       />
     </div>
   );

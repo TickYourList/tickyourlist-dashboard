@@ -83,7 +83,10 @@ const initialState = {
   bookingDetailLoading: false,
 
   cancelLoading: false,
+  cancelSuccess: false,
   confirmLoading: false,
+  confirmSuccess: false,
+  confirmError: null,
   releaseLoading: false,
   resendEmailLoading: false,
   refreshBookingLoading: false,
@@ -174,7 +177,7 @@ const globaltixReducer = (state = initialState, action) => {
       return { ...state, bookingDetailLoading: false };
 
     case CANCEL_GLOBALTIX_BOOKING_REQUEST:
-      return { ...state, cancelLoading: true };
+      return { ...state, cancelLoading: true, cancelSuccess: false };
     case CANCEL_GLOBALTIX_BOOKING_SUCCESS:
       return {
         ...state,
@@ -191,12 +194,14 @@ const globaltixReducer = (state = initialState, action) => {
       return { ...state, cancelLoading: false, cancelSuccess: false };
 
     case CONFIRM_GLOBALTIX_BOOKING_REQUEST:
-      return { ...state, confirmLoading: true };
+      return { ...state, confirmLoading: true, confirmError: null, confirmSuccess: false };
     case CONFIRM_GLOBALTIX_BOOKING_SUCCESS: {
       const updated = action.payload?.data;
       return {
         ...state,
         confirmLoading: false,
+        confirmSuccess: true,
+        confirmError: null,
         bookings: updated
           ? state.bookings.map((b) => b.referenceNumber === updated.referenceNumber ? { ...b, ...updated } : b)
           : state.bookings,
@@ -204,7 +209,7 @@ const globaltixReducer = (state = initialState, action) => {
       };
     }
     case CONFIRM_GLOBALTIX_BOOKING_FAILURE:
-      return { ...state, confirmLoading: false };
+      return { ...state, confirmLoading: false, confirmSuccess: false, confirmError: action.payload };
 
     case RELEASE_GLOBALTIX_BOOKING_REQUEST:
       return { ...state, releaseLoading: true };
