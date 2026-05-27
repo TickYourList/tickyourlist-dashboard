@@ -74,7 +74,8 @@ function LocationManagement() {
   })
   const dispatch = useDispatch()
   const [wasAdding, setWasAdding] = useState(false)
-  const [wasEditing, setWasEditing] = useState(false);
+  const [wasEditing, setWasEditing] = useState(false)
+  const [imagePreview, setImagePreview] = useState(null)
 
   // 1. Add state for edit modal
   const [selectedCountryCode, setSelectedCountryCode] = useState(null)
@@ -123,6 +124,8 @@ function LocationManagement() {
       displayName: "",
       currency: "",
       status: true,
+      urlSlug: "",
+      image: null,
     },
     validationSchema: Yup.object({
       code: Yup.string()
@@ -134,25 +137,28 @@ function LocationManagement() {
         .min(2, "Country name must be at least 2 characters"),
       currency: Yup.string().required("Currency is required"),
       status: Yup.boolean().required("Status is required"),
+      urlSlug: Yup.string().optional(),
+      image: Yup.mixed().optional(),
     }),
     onSubmit: (values, { resetForm }) => {
-      // Prepare payload for API
-      const payload = {
-        code: values.code,
-        displayName: values.displayName,
-        currency: values.currency, // _id
-        status: values.status,
-      }
-      // Call the add country API (my_api)
+      const formData = new FormData()
+      formData.append("code", values.code)
+      formData.append("displayName", values.displayName)
+      formData.append("currency", values.currency)
+      formData.append("status", values.status)
+      if (values.urlSlug) formData.append("urlSlug", values.urlSlug)
+      if (values.image) formData.append("image", values.image)
+
       if (isEdit && selectedCountry) {
         const countryData = selectedCountry.country || selectedCountry
-        dispatch(updateCountry(countryData.code, payload))
+        dispatch(updateCountry(countryData.code, formData))
         setWasEditing(true)
       } else {
-        dispatch(addCountry(payload))
+        dispatch(addCountry(formData))
         setWasAdding(true)
       }
       resetForm()
+      setImagePreview(null)
       setoggleTabVertical(1)
       setPassedStepsVertical([])
       setModal(false)
@@ -196,14 +202,18 @@ function LocationManagement() {
         displayName: countryData.displayName || "",
         currency: (countryData.currency && countryData.currency._id) || "",
         status: countryData.status,
+        urlSlug: countryData.urlSlug || "",
+        image: null,
       }
-      // console.log('Setting form values:', formValues)
-      // console.log('Current form values before setValues:', validation.values)
-      // console.log('Status value from API:', countryData.status, 'Type:', typeof countryData.status)
-      
+
       validation.setValues(formValues)
       formPopulatedRef.current = true
-      console.log('Form values set successfully')
+
+      if (countryData.imageURL && countryData.imageURL.url) {
+        setImagePreview(countryData.imageURL.url)
+      } else {
+        setImagePreview(null)
+      }
 
       // Debug: Check if values are actually set
       // setTimeout(() => {
@@ -312,7 +322,8 @@ function LocationManagement() {
     setPassedStepsVertical([])
     setIsEdit(false)
     setSelectedCountryCode(null)
-    formPopulatedRef.current = false // Reset the flag when closing modal
+    formPopulatedRef.current = false
+    setImagePreview(null)
   }
 
   function toggleTabVertical(tab) {
@@ -800,6 +811,74 @@ function LocationManagement() {
                                         {validation.errors.status}{" "}
                                       </FormFeedback>
                                     ) : null}{" "}
+                                  </FormGroup>{" "}
+                                </Col>{" "}
+                              </Row>{" "}
+                              <Row>
+                                <Col lg="12">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="url-slug">
+                                      URL Slug
+                                    </Label>{" "}
+                                    <Input
+                                      name="urlSlug"
+                                      type="text"
+                                      className="form-control"
+                                      id="url-slug"
+                                      placeholder="e.g., things-to-do-in-india"
+                                      value={validation.values.urlSlug}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                    />{" "}
+                                  </FormGroup>{" "}
+                                </Col>{" "}
+                              </Row>{" "}
+                              <Row>
+                                <Col lg="12">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="country-image">
+                                      Country Image
+                                    </Label>{" "}
+                                    <Input
+                                      name="image"
+                                      type="file"
+                                      className="form-control"
+                                      id="country-image"
+                                      accept="image/*"
+                                      onChange={e => {
+                                        const file = e.target.files[0]
+                                        if (file) {
+                                          validation.setFieldValue("image", file)
+                                          setImagePreview(URL.createObjectURL(file))
+                                        }
+                                      }}
+                                    />{" "}
+                                    {imagePreview && (
+                                      <div className="mt-2 d-flex align-items-center gap-2">
+                                        <img
+                                          src={imagePreview}
+                                          alt="Preview"
+                                          style={{
+                                            width: 120,
+                                            height: 80,
+                                            objectFit: "cover",
+                                            borderRadius: 4,
+                                            border: "1px solid #dee2e6",
+                                          }}
+                                        />
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          color="danger"
+                                          onClick={() => {
+                                            validation.setFieldValue("image", null)
+                                            setImagePreview(null)
+                                          }}
+                                        >
+                                          Remove
+                                        </Button>
+                                      </div>
+                                    )}{" "}
                                   </FormGroup>{" "}
                                 </Col>{" "}
                               </Row>{" "}

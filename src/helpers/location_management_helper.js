@@ -5,7 +5,7 @@ import * as url from "./locationManagement_url_helpers";
 const getCountriesList = () => get(url.GET_COUNTRIES_LIST);
 const getCurrencyList = () => get(url.GET_CURRENCY_LIST);
 const getCountryByCode = (code) => get(url.GET_COUNTRY_BY_CODE.replace('{code}', code));
-const addCountry = (data) => post(url.ADD_COUNTRY, data);
+const addCountry = (data) => postFormData(url.ADD_COUNTRY, data);
 const getCountryById = (id) => get(url.GET_COUNTRY_BY_CODE.replace('{code}', id));
 
 const getToursByCountryId = (countryId) => get(url.GET_TOURS_BY_COUNTRY_ID.replace('{country_id}', countryId));
@@ -24,7 +24,7 @@ const getBookingByCountryId = (countryId, { page, limit } = {}) => {
 const getSubcategoriesByCountryId = (countryId) => get(url.GET_SUBCATEGORIES_BY_COUNTRY_ID.replace('{country_id}', countryId));
 
 
-const updateCountry = (countryCode, data) => put(url.UPDATE_COUNTRY.replace('{code}', countryCode), data);
+const updateCountry = (countryCode, data) => putFormData(url.UPDATE_COUNTRY.replace('{code}', countryCode), data);
 
 const deleteCountryApi = (countryCode) => {
   // Placeholder for actual API call
