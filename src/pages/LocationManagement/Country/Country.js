@@ -469,6 +469,19 @@ function LocationManagement() {
         Cell: cellProps => <Status {...cellProps} />,
       },
       {
+        Header: "URL Slug (EN)",
+        accessor: "urlSlugs",
+        filterable: false,
+        Cell: cellProps => {
+          const slug = cellProps.value?.EN
+          return slug ? (
+            <span className="text-truncate d-inline-block" style={{ maxWidth: 180, fontSize: 12 }} title={slug}>{slug}</span>
+          ) : (
+            <span className="text-muted">—</span>
+          )
+        },
+      },
+      {
         Header: "Sort Order",
         accessor: "sortOrder",
         filterable: false,
