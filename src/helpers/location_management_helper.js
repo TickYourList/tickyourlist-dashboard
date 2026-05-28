@@ -6,6 +6,7 @@ const getCountriesList = () => get(url.GET_COUNTRIES_LIST);
 const getCurrencyList = () => get(url.GET_CURRENCY_LIST);
 const getCountryByCode = (code) => get(url.GET_COUNTRY_BY_CODE.replace('{code}', code));
 const addCountry = (data) => postFormData(url.ADD_COUNTRY, data);
+const reorderCountries = (orders) => put(url.REORDER_COUNTRIES, { orders });
 const getCountryById = (id) => get(url.GET_COUNTRY_BY_CODE.replace('{code}', id));
 
 const getToursByCountryId = (countryId) => get(url.GET_TOURS_BY_COUNTRY_ID.replace('{country_id}', countryId));
@@ -854,6 +855,7 @@ export {
   getCountryByCode,
   getCountryById,
   addCountry,
+  reorderCountries,
   updateCountry,
   deleteCountryApi,
   getCitiesList,

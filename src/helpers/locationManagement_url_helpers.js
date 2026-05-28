@@ -3,6 +3,7 @@ export const UPDATE_COUNTRY = "v1/tyltravelcountry/update/travel-country/{code}"
 export const GET_COUNTRY_BY_CODE = "v1/tyltravelcountry/get/travelcountry/{code}";
 export const ADD_COUNTRY = "v1/tyltravelcountry/add/travel-country";
 export const DELETE_COUNTRY = "v1/tyltravelcountry/delete/travel-country/{code}";
+export const REORDER_COUNTRIES = "v1/tyltravelcountry/update/countries/reorder";
 export const GET_CITIES_LIST = "v1/tyltravelcity/get/travelcity/submitted/all";
 export const GET_CITY_DATA = "v1/tyltravelcity/get/travelcity";
 export const GET_COUNTRIES_LIST = "v1/tyltravelcountry/get/travelcountry/submitted/all";

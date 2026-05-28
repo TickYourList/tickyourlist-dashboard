@@ -25,9 +25,12 @@ import {
     getCountryByIdFailure,
     DELETE_COUNTRY,
     deleteCountrySuccess,
-    deleteCountryFailure
+    deleteCountryFailure,
+    REORDER_COUNTRIES,
+    reorderCountriesSuccess,
+    reorderCountriesFailure,
 } from "./actions";
-import { getCountriesList, getCurrencyList as getCurrencyListApi, getCountryByCode as getCountryByCodeApi, getCountryById as getCountryByIdApi, addCountry as addCountryApi } from "../../helpers/location_management_helper";
+import { getCountriesList, getCurrencyList as getCurrencyListApi, getCountryByCode as getCountryByCodeApi, getCountryById as getCountryByIdApi, addCountry as addCountryApi, reorderCountries as reorderCountriesApi } from "../../helpers/location_management_helper";
 import { post } from "../../helpers/api_helper";
 import { updateCountry as updateCountryApi } from "../../helpers/location_management_helper";
 import { deleteCountryApi } from "../../helpers/location_management_helper";
@@ -111,6 +114,16 @@ function* deleteCountrySaga(action) {
   }
 }
 
+function* reorderCountriesSaga(action) {
+    try {
+        yield call(reorderCountriesApi, action.payload);
+        yield put(reorderCountriesSuccess());
+        yield put(getCountries());
+    } catch (error) {
+        yield put(reorderCountriesFailure(error.message || 'Failed to reorder countries'));
+    }
+}
+
 function* countriesSaga() {
     yield takeEvery(GET_COUNTRIES, getCountriesSaga);
     yield takeEvery(ADD_COUNTRY, addCountrySaga);
@@ -119,6 +132,7 @@ function* countriesSaga() {
     yield takeEvery(UPDATE_COUNTRY, updateCountrySaga);
     yield takeEvery(GET_COUNTRY_BY_CODE, getCountryByCodeSaga);
     yield takeEvery(DELETE_COUNTRY, deleteCountrySaga);
+    yield takeEvery(REORDER_COUNTRIES, reorderCountriesSaga);
 }
 
 export default countriesSaga;

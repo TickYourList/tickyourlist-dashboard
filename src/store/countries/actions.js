@@ -131,3 +131,11 @@ export const deleteCountryFailure = (error) => ({
     type: DELETE_COUNTRY_FAILURE,
     payload: error,
 });
+
+export const REORDER_COUNTRIES = "REORDER_COUNTRIES";
+export const REORDER_COUNTRIES_SUCCESS = "REORDER_COUNTRIES_SUCCESS";
+export const REORDER_COUNTRIES_FAILURE = "REORDER_COUNTRIES_FAILURE";
+
+export const reorderCountries = (orders) => ({ type: REORDER_COUNTRIES, payload: orders });
+export const reorderCountriesSuccess = () => ({ type: REORDER_COUNTRIES_SUCCESS });
+export const reorderCountriesFailure = (error) => ({ type: REORDER_COUNTRIES_FAILURE, payload: error });

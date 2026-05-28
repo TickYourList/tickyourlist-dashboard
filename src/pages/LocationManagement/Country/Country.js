@@ -35,6 +35,7 @@ import {
   getCountryByCode,
   getCountryById,
   deleteCountry,
+  reorderCountries,
 } from "../../../store/countries/actions"
 import { useFormik } from "formik"
 import * as Yup from "yup"
@@ -124,7 +125,15 @@ function LocationManagement() {
       displayName: "",
       currency: "",
       status: true,
-      urlSlug: "",
+      urlSlug_EN: "",
+      urlSlug_ES: "",
+      urlSlug_FR: "",
+      urlSlug_IT: "",
+      urlSlug_DE: "",
+      urlSlug_PT: "",
+      urlSlug_NL: "",
+      urlSlug_PL: "",
+      sortOrder: "",
       image: null,
     },
     validationSchema: Yup.object({
@@ -137,7 +146,15 @@ function LocationManagement() {
         .min(2, "Country name must be at least 2 characters"),
       currency: Yup.string().required("Currency is required"),
       status: Yup.boolean().required("Status is required"),
-      urlSlug: Yup.string().optional(),
+      urlSlug_EN: Yup.string().optional(),
+      urlSlug_ES: Yup.string().optional(),
+      urlSlug_FR: Yup.string().optional(),
+      urlSlug_IT: Yup.string().optional(),
+      urlSlug_DE: Yup.string().optional(),
+      urlSlug_PT: Yup.string().optional(),
+      urlSlug_NL: Yup.string().optional(),
+      urlSlug_PL: Yup.string().optional(),
+      sortOrder: Yup.number().optional(),
       image: Yup.mixed().optional(),
     }),
     onSubmit: (values, { resetForm }) => {
@@ -146,7 +163,15 @@ function LocationManagement() {
       formData.append("displayName", values.displayName)
       formData.append("currency", values.currency)
       formData.append("status", values.status)
-      if (values.urlSlug) formData.append("urlSlug", values.urlSlug)
+      if (values.urlSlug_EN) formData.append("urlSlug_EN", values.urlSlug_EN)
+      if (values.urlSlug_ES) formData.append("urlSlug_ES", values.urlSlug_ES)
+      if (values.urlSlug_FR) formData.append("urlSlug_FR", values.urlSlug_FR)
+      if (values.urlSlug_IT) formData.append("urlSlug_IT", values.urlSlug_IT)
+      if (values.urlSlug_DE) formData.append("urlSlug_DE", values.urlSlug_DE)
+      if (values.urlSlug_PT) formData.append("urlSlug_PT", values.urlSlug_PT)
+      if (values.urlSlug_NL) formData.append("urlSlug_NL", values.urlSlug_NL)
+      if (values.urlSlug_PL) formData.append("urlSlug_PL", values.urlSlug_PL)
+      if (values.sortOrder !== "" && values.sortOrder !== undefined) formData.append("sortOrder", values.sortOrder)
       if (values.image) formData.append("image", values.image)
 
       if (isEdit && selectedCountry) {
@@ -197,12 +222,21 @@ function LocationManagement() {
       // console.log('Extracted countryData:', countryData)
       // console.log('Country currency object:', countryData.currency)
 
+      const slugs = countryData.urlSlugs || {}
       const formValues = {
         code: countryData.code || "",
         displayName: countryData.displayName || "",
         currency: (countryData.currency && countryData.currency._id) || "",
         status: countryData.status,
-        urlSlug: countryData.urlSlug || "",
+        urlSlug_EN: slugs.EN || "",
+        urlSlug_ES: slugs.ES || "",
+        urlSlug_FR: slugs.FR || "",
+        urlSlug_IT: slugs.IT || "",
+        urlSlug_DE: slugs.DE || "",
+        urlSlug_PT: slugs.PT || "",
+        urlSlug_NL: slugs.NL || "",
+        urlSlug_PL: slugs.PL || "",
+        sortOrder: countryData.sortOrder !== undefined ? countryData.sortOrder : "",
         image: null,
       }
 
@@ -374,6 +408,19 @@ function LocationManagement() {
     // eslint-disable-next-line
   }, [deleteLoading]);
 
+  const handleReorderCountry = (country, direction) => {
+    const sorted = [...(countries || [])].sort((a, b) => (a.sortOrder ?? 9999) - (b.sortOrder ?? 9999))
+    const idx = sorted.findIndex(c => c._id === country._id)
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= sorted.length) return
+    const current = sorted[idx]
+    const swap = sorted[swapIdx]
+    dispatch(reorderCountries([
+      { id: current._id, sortOrder: swap.sortOrder ?? 9999 },
+      { id: swap._id, sortOrder: current.sortOrder ?? 9999 },
+    ]))
+  }
+
   const columns = useMemo(
     () => [
       {
@@ -422,6 +469,12 @@ function LocationManagement() {
         Cell: cellProps => <Status {...cellProps} />,
       },
       {
+        Header: "Sort Order",
+        accessor: "sortOrder",
+        filterable: false,
+        Cell: cellProps => <span>{cellProps.value ?? "—"}</span>,
+      },
+      {
         Header: "Country Detail",
         accessor: "countryDetail",
         disableFilters: true,
@@ -446,36 +499,60 @@ function LocationManagement() {
         Header: "Action",
         accessor: "action",
         disableFilters: true,
-        Cell: cellProps => (
-          <div className="d-flex gap-3">
-            {canEditCountry && (
-              <Button
-                color="success"
-                size="sm"
-                className="btn-rounded"
-                onClick={() => handleCountryEditClick(cellProps.row.original)}
-              >
-                <i className="mdi mdi-pencil font-size-14" />
-              </Button>
-            )}
-            {canDeleteCountry && (
-              <Button
-                color="danger"
-                size="sm"
-                className="btn-rounded"
-                onClick={() => {
-                  setCountryToDelete(cellProps.row.original);
-                  setDeleteModalOpen(true);
-                }}
-              >
-                <i className="mdi mdi-delete font-size-14" />
-              </Button>
-            )}
-          </div>
-        ),
+        Cell: cellProps => {
+          const sorted = [...(countries || [])].sort((a, b) => (a.sortOrder ?? 9999) - (b.sortOrder ?? 9999))
+          const idx = sorted.findIndex(c => c._id === cellProps.row.original._id)
+          return (
+            <div className="d-flex gap-2 flex-wrap align-items-center">
+              {canEditCountry && (
+                <>
+                  <Button
+                    color="light"
+                    size="sm"
+                    title="Move Up"
+                    disabled={idx <= 0}
+                    onClick={() => handleReorderCountry(cellProps.row.original, "up")}
+                  >
+                    <i className="mdi mdi-arrow-up font-size-14" />
+                  </Button>
+                  <Button
+                    color="light"
+                    size="sm"
+                    title="Move Down"
+                    disabled={idx >= sorted.length - 1}
+                    onClick={() => handleReorderCountry(cellProps.row.original, "down")}
+                  >
+                    <i className="mdi mdi-arrow-down font-size-14" />
+                  </Button>
+                  <Button
+                    color="success"
+                    size="sm"
+                    className="btn-rounded"
+                    onClick={() => handleCountryEditClick(cellProps.row.original)}
+                  >
+                    <i className="mdi mdi-pencil font-size-14" />
+                  </Button>
+                </>
+              )}
+              {canDeleteCountry && (
+                <Button
+                  color="danger"
+                  size="sm"
+                  className="btn-rounded"
+                  onClick={() => {
+                    setCountryToDelete(cellProps.row.original);
+                    setDeleteModalOpen(true);
+                  }}
+                >
+                  <i className="mdi mdi-delete font-size-14" />
+                </Button>
+              )}
+            </div>
+          )
+        },
       },
     ],
-    [canViewCountry, canEditCountry, canDeleteCountry]
+    [canViewCountry, canEditCountry, canDeleteCountry, countries]
   )
 
   // Show loading while permissions are being fetched
@@ -814,22 +891,179 @@ function LocationManagement() {
                                   </FormGroup>{" "}
                                 </Col>{" "}
                               </Row>{" "}
+                              {/* ── URL Slugs (multi-language) ── */}
+                              <Row>
+                                <Col lg="12">
+                                  <h6 className="mb-2 mt-1 text-muted fw-semibold" style={{ fontSize: 13, letterSpacing: '0.02em' }}>
+                                    URL Slugs
+                                  </h6>
+                                  <p className="text-muted mb-3" style={{ fontSize: 12 }}>
+                                    Used in the country page URL: <code>/country/things-to-do-in-india</code>
+                                  </p>
+                                </Col>
+                              </Row>
+                              <Row>
+                                <Col lg="6">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="urlSlug_EN">
+                                      English <span className="badge bg-primary ms-1" style={{ fontSize: 10 }}>EN</span>
+                                    </Label>
+                                    <Input
+                                      name="urlSlug_EN"
+                                      type="text"
+                                      className="form-control"
+                                      id="urlSlug_EN"
+                                      placeholder="things-to-do-in-india"
+                                      value={validation.values.urlSlug_EN}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                    />
+                                  </FormGroup>
+                                </Col>
+                                <Col lg="6">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="urlSlug_ES">
+                                      Spanish <span className="badge bg-secondary ms-1" style={{ fontSize: 10 }}>ES</span>
+                                    </Label>
+                                    <Input
+                                      name="urlSlug_ES"
+                                      type="text"
+                                      className="form-control"
+                                      id="urlSlug_ES"
+                                      placeholder="cosas-que-hacer-en-india"
+                                      value={validation.values.urlSlug_ES}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                    />
+                                  </FormGroup>
+                                </Col>
+                              </Row>
+                              <Row>
+                                <Col lg="6">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="urlSlug_FR">
+                                      French <span className="badge bg-secondary ms-1" style={{ fontSize: 10 }}>FR</span>
+                                    </Label>
+                                    <Input
+                                      name="urlSlug_FR"
+                                      type="text"
+                                      className="form-control"
+                                      id="urlSlug_FR"
+                                      placeholder="choses-a-faire-en-inde"
+                                      value={validation.values.urlSlug_FR}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                    />
+                                  </FormGroup>
+                                </Col>
+                                <Col lg="6">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="urlSlug_IT">
+                                      Italian <span className="badge bg-secondary ms-1" style={{ fontSize: 10 }}>IT</span>
+                                    </Label>
+                                    <Input
+                                      name="urlSlug_IT"
+                                      type="text"
+                                      className="form-control"
+                                      id="urlSlug_IT"
+                                      placeholder="cosa-fare-in-india"
+                                      value={validation.values.urlSlug_IT}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                    />
+                                  </FormGroup>
+                                </Col>
+                              </Row>
+                              <Row>
+                                <Col lg="6">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="urlSlug_DE">
+                                      German <span className="badge bg-secondary ms-1" style={{ fontSize: 10 }}>DE</span>
+                                    </Label>
+                                    <Input
+                                      name="urlSlug_DE"
+                                      type="text"
+                                      className="form-control"
+                                      id="urlSlug_DE"
+                                      placeholder="aktivitaeten-in-indien"
+                                      value={validation.values.urlSlug_DE}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                    />
+                                  </FormGroup>
+                                </Col>
+                                <Col lg="6">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="urlSlug_PT">
+                                      Portuguese <span className="badge bg-secondary ms-1" style={{ fontSize: 10 }}>PT</span>
+                                    </Label>
+                                    <Input
+                                      name="urlSlug_PT"
+                                      type="text"
+                                      className="form-control"
+                                      id="urlSlug_PT"
+                                      placeholder="o-que-fazer-na-india"
+                                      value={validation.values.urlSlug_PT}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                    />
+                                  </FormGroup>
+                                </Col>
+                              </Row>
+                              <Row>
+                                <Col lg="6">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="urlSlug_NL">
+                                      Dutch <span className="badge bg-secondary ms-1" style={{ fontSize: 10 }}>NL</span>
+                                    </Label>
+                                    <Input
+                                      name="urlSlug_NL"
+                                      type="text"
+                                      className="form-control"
+                                      id="urlSlug_NL"
+                                      placeholder="dingen-te-doen-in-india"
+                                      value={validation.values.urlSlug_NL}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                    />
+                                  </FormGroup>
+                                </Col>
+                                <Col lg="6">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="urlSlug_PL">
+                                      Polish <span className="badge bg-secondary ms-1" style={{ fontSize: 10 }}>PL</span>
+                                    </Label>
+                                    <Input
+                                      name="urlSlug_PL"
+                                      type="text"
+                                      className="form-control"
+                                      id="urlSlug_PL"
+                                      placeholder="co-robic-w-indiach"
+                                      value={validation.values.urlSlug_PL}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                    />
+                                  </FormGroup>
+                                </Col>
+                              </Row>{" "}
                               <Row>
                                 <Col lg="12">
                                   <FormGroup className="mb-3">
-                                    <Label htmlFor="url-slug">
-                                      URL Slug
+                                    <Label htmlFor="sort-order">
+                                      Sort Order
                                     </Label>{" "}
                                     <Input
-                                      name="urlSlug"
-                                      type="text"
+                                      name="sortOrder"
+                                      type="number"
                                       className="form-control"
-                                      id="url-slug"
-                                      placeholder="e.g., things-to-do-in-india"
-                                      value={validation.values.urlSlug}
+                                      id="sort-order"
+                                      placeholder="e.g., 10, 20, 30 (lower = first)"
+                                      value={validation.values.sortOrder}
                                       onChange={validation.handleChange}
                                       onBlur={validation.handleBlur}
+                                      min={0}
                                     />{" "}
+                                    <small className="text-muted">Lower number appears first. Default is 9999.</small>
                                   </FormGroup>{" "}
                                 </Col>{" "}
                               </Row>{" "}
