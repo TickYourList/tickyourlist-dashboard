@@ -134,6 +134,8 @@ function LocationManagement() {
       urlSlug_NL: "",
       urlSlug_PL: "",
       sortOrder: "",
+      metaTitle: "",
+      metaDescription: "",
       image: null,
     },
     validationSchema: Yup.object({
@@ -155,6 +157,8 @@ function LocationManagement() {
       urlSlug_NL: Yup.string().optional(),
       urlSlug_PL: Yup.string().optional(),
       sortOrder: Yup.number().optional(),
+      metaTitle: Yup.string().optional(),
+      metaDescription: Yup.string().optional(),
       image: Yup.mixed().optional(),
     }),
     onSubmit: (values, { resetForm }) => {
@@ -172,6 +176,8 @@ function LocationManagement() {
       if (values.urlSlug_NL) formData.append("urlSlug_NL", values.urlSlug_NL)
       if (values.urlSlug_PL) formData.append("urlSlug_PL", values.urlSlug_PL)
       if (values.sortOrder !== "" && values.sortOrder !== undefined) formData.append("sortOrder", values.sortOrder)
+      if (values.metaTitle) formData.append("metaTitle", values.metaTitle)
+      if (values.metaDescription) formData.append("metaDescription", values.metaDescription)
       if (values.image) formData.append("image", values.image)
 
       if (isEdit && selectedCountry) {
@@ -237,6 +243,8 @@ function LocationManagement() {
         urlSlug_NL: slugs.NL || "",
         urlSlug_PL: slugs.PL || "",
         sortOrder: countryData.sortOrder !== undefined ? countryData.sortOrder : "",
+        metaTitle: countryData.metaTitle || "",
+        metaDescription: countryData.metaDescription || "",
         image: null,
       }
 
@@ -1080,6 +1088,69 @@ function LocationManagement() {
                                   </FormGroup>{" "}
                                 </Col>{" "}
                               </Row>{" "}
+                              {/* ── SEO Meta ── */}
+                              <Row>
+                                <Col lg="12">
+                                  <hr className="my-3" />
+                                  <h6 className="text-muted fw-semibold mb-3" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>
+                                    <i className="bx bx-search-alt me-1" />SEO Meta
+                                  </h6>
+                                </Col>
+                              </Row>
+                              <Row>
+                                <Col lg="12">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="metaTitle">
+                                      Meta Title{" "}
+                                      <small className="text-muted">(recommended: 50–60 chars)</small>
+                                    </Label>
+                                    <Input
+                                      name="metaTitle"
+                                      type="text"
+                                      className="form-control"
+                                      id="metaTitle"
+                                      placeholder="e.g., Things to Do in India | Tours & Experiences"
+                                      value={validation.values.metaTitle}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                      maxLength={120}
+                                    />
+                                    {validation.values.metaTitle && (
+                                      <small className={`mt-1 d-block ${validation.values.metaTitle.length > 60 ? "text-warning" : "text-muted"}`}>
+                                        {validation.values.metaTitle.length} / 60 chars
+                                      </small>
+                                    )}
+                                  </FormGroup>
+                                </Col>
+                              </Row>
+                              <Row>
+                                <Col lg="12">
+                                  <FormGroup className="mb-3">
+                                    <Label htmlFor="metaDescription">
+                                      Meta Description{" "}
+                                      <small className="text-muted">(recommended: 150–160 chars)</small>
+                                    </Label>
+                                    <Input
+                                      name="metaDescription"
+                                      type="textarea"
+                                      className="form-control"
+                                      id="metaDescription"
+                                      placeholder="e.g., Discover the best tours, attractions, and activities in India with TickYourList."
+                                      value={validation.values.metaDescription}
+                                      onChange={validation.handleChange}
+                                      onBlur={validation.handleBlur}
+                                      rows={3}
+                                      maxLength={320}
+                                    />
+                                    {validation.values.metaDescription && (
+                                      <small className={`mt-1 d-block ${validation.values.metaDescription.length > 160 ? "text-warning" : "text-muted"}`}>
+                                        {validation.values.metaDescription.length} / 160 chars
+                                      </small>
+                                    )}
+                                  </FormGroup>
+                                </Col>
+                              </Row>
+
                               <Row>
                                 <Col lg="12">
                                   <FormGroup className="mb-3">
