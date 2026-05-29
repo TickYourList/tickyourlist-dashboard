@@ -197,6 +197,7 @@ import PricingManagement from "../pages/tickyourlist/PricingManagement";
 import GlobtixProductsPage from "../pages/tickyourlist/Globaltix/index";
 import GlobtixBookingsPage from "../pages/tickyourlist/Globaltix/GlobaltixBookings";
 import GlobtixCredentialsPage from "../pages/tickyourlist/Globaltix/GlobaltixCredentials";
+import GlobaltixAuthGuard from "../components/GlobaltixAuthGuard";
 
 // Email Templates
 import EmailTemplates from "../pages/EmailTemplates/index";
@@ -435,10 +436,10 @@ const authProtectedRoutes = [
   { path: "/pricing-management/:variantId", component: <PricingManagement /> },
   { path: "/pricing-management", component: <PricingManagement /> },
 
-  // Globaltix Integration
-  { path: "/globaltix/products", component: <GlobtixProductsPage /> },
-  { path: "/globaltix/bookings", component: <GlobtixBookingsPage /> },
-  { path: "/globaltix/credentials", component: <GlobtixCredentialsPage /> },
+  // Globaltix Integration (password-gated — hidden from employees)
+  { path: "/globaltix/products", component: <GlobaltixAuthGuard><GlobtixProductsPage /></GlobaltixAuthGuard> },
+  { path: "/globaltix/bookings", component: <GlobaltixAuthGuard><GlobtixBookingsPage /></GlobaltixAuthGuard> },
+  { path: "/globaltix/credentials", component: <GlobaltixAuthGuard><GlobtixCredentialsPage /></GlobaltixAuthGuard> },
 
   // Email Templates
   { path: "/email-templates", component: <EmailTemplates /> },

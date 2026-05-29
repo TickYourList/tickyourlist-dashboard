@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 
@@ -11,6 +11,7 @@ import MetisMenu from "metismenujs";
 import withRouter from "components/Common/withRouter";
 import { Link } from "react-router-dom";
 import { usePermissions, MODULES, ACTIONS } from "../../helpers/permissions";
+import { isGlobtixUnlocked } from "../GlobaltixAuthGuard";
 
 //i18n
 import { withTranslation } from "react-i18next";
@@ -18,7 +19,8 @@ import { withTranslation } from "react-i18next";
 const SidebarContent = props => {
   const ref = useRef();
   const { can, isPermissionsReady, loading: permissionsLoading } = usePermissions();
-  
+  const [globaltixVisible, setGlobtixVisible] = useState(() => isGlobtixUnlocked());
+
   // Use centralized permission system for permissions
   const canViewSubcategory = isPermissionsReady ? can(ACTIONS.CAN_VIEW, MODULES.SUBCATEGORY_PERMS) : false;
   const canViewCategory = isPermissionsReady ? can(ACTIONS.CAN_VIEW, MODULES.CATEGORY_PERMS) : false;
@@ -137,6 +139,8 @@ const SidebarContent = props => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     activeMenu();
+    // Sync Globaltix visibility when navigating (unlock may have happened on another route)
+    setGlobtixVisible(isGlobtixUnlocked());
   }, [activeMenu]);
 
   function scrollElement(item) {
@@ -223,24 +227,33 @@ const SidebarContent = props => {
               </ul>
             </li>
 
-            {/* ── GLOBALTIX INTEGRATION ── */}
-            <li>
-              <Link to="/#" className="has-arrow">
-                <i className="bx bx-globe"></i>
-                <span>{props.t("Globaltix")}</span>
-              </Link>
-              <ul className="sub-menu">
-                <li>
-                  <Link to="/globaltix/products">{props.t("Products")}</Link>
-                </li>
-                <li>
-                  <Link to="/globaltix/bookings">{props.t("Bookings")}</Link>
-                </li>
-                <li>
-                  <Link to="/globaltix/credentials">{props.t("Credentials")}</Link>
-                </li>
-              </ul>
-            </li>
+            {/* ── PROVIDER PORTAL (hidden from employees — password-gated) ── */}
+            {globaltixVisible && (
+              <li>
+                <Link to="/#" className="has-arrow">
+                  <i className="bx bx-plug"></i>
+                  <span>{props.t("Provider Portal")}</span>
+                </Link>
+                <ul className="sub-menu">
+                  <li>
+                    <Link to="/#" className="has-arrow">
+                      <span>{props.t("Globaltix")}</span>
+                    </Link>
+                    <ul className="sub-menu">
+                      <li>
+                        <Link to="/globaltix/products">{props.t("Products")}</Link>
+                      </li>
+                      <li>
+                        <Link to="/globaltix/bookings">{props.t("Bookings")}</Link>
+                      </li>
+                      <li>
+                        <Link to="/globaltix/credentials">{props.t("Credentials")}</Link>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            )}
 
             <li>
               <Link to="/#" className="has-arrow">
