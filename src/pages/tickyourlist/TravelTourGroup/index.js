@@ -535,7 +535,7 @@ function TourGroupTable() {
             {canEditTourGroup && (
               <button
                 className="btn p-0 border-0 bg-transparent"
-                title="Connect with Globaltix"
+                title="⚡ Power Link"
                 onClick={() => handleConnectGlobtix(row.original)}
               >
                 <i className="bx bx-globe font-size-18 text-info"></i>
@@ -806,7 +806,7 @@ function TourGroupTable() {
                     onSuccess={handleConnectionSuccess}
                   />
 
-                  {/* Connect Globaltix Modal */}
+                  {/* ⚡ Power Link Modal */}
                   <ConnectGlobtixModal
                     isOpen={connectGlobtixModal}
                     toggle={() => {

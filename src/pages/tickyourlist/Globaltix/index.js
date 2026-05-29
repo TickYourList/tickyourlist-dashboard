@@ -395,9 +395,9 @@ const GlobtixProductsPage = () => {
           <Col>
             <div className="d-flex align-items-center justify-content-between mb-4">
               <div>
-                <h4 className="mb-1">Globaltix Products</h4>
+                <h4 className="mb-1">⚡ Power Catalog</h4>
                 <p className="text-muted mb-0">
-                  Cached Globaltix product catalog &bull; {productsPagination?.total || 0} products
+                  Provider product catalog &bull; {productsPagination?.total || 0} products
                 </p>
               </div>
               <div className="d-flex gap-2">
@@ -576,9 +576,9 @@ const GlobtixProductsPage = () => {
                                     <i className="bx bx-refresh"></i>
                                   </Button>
                                   <Button size="sm" color={p.tourGroupId ? "outline-info" : "outline-success"}
-                                    title={p.tourGroupId ? "Re-link tour group" : "Link or create tour group"}
+                                    title={p.tourGroupId ? "⚡ Re-power link" : "⚡ Power Link"}
                                     onClick={() => { setSelectedProductForConnect(p); setConnectModalOpen(true); }}>
-                                    <i className={`bx ${p.tourGroupId ? "bx-link-alt" : "bx-plus"}`}></i>
+                                    <i className={`bx ${p.tourGroupId ? "bx-zap" : "bx-zap"}`}></i>
                                   </Button>
                                 </div>
                               </td>
@@ -639,7 +639,7 @@ const GlobtixProductsPage = () => {
         </div>
       </Modal>
 
-      {/* Connect / Create Tour Group Modal */}
+      {/* ⚡ Power Link Modal */}
       <ConnectGlobtixModal
         isOpen={connectModalOpen}
         toggle={() => { setConnectModalOpen(false); setSelectedProductForConnect(null); }}

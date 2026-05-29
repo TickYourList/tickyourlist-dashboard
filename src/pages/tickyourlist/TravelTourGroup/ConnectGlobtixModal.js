@@ -143,8 +143,8 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
   return (
     <Modal isOpen={isOpen} toggle={toggle} size="xl" scrollable>
       <ModalHeader toggle={toggle}>
-        <i className="bx bx-link me-2"></i>
-        Connect Globaltix Product — {tourGroup?.name}
+        <i className="bx bx-zap me-2"></i>
+        ⚡ Power Link — {tourGroup?.name}
       </ModalHeader>
 
       <ModalBody>
