@@ -173,3 +173,24 @@ export const linkGlobtixBookingToTour = (referenceNumber, tourBookingId) =>
 
 export const unlinkGlobtixBookingFromTour = (referenceNumber) =>
   del(`/v1/globaltix/bookings/${referenceNumber}/link`);
+
+// ─── Pricing Calendar (6-month daily price grid) ──────────────────────────────
+
+export const getGlobtixPricingCalendar = ({
+  ticketTypeID,
+  fromMonth,
+  months = 3,
+  environment = "staging",
+  currency = "SGD",
+  productId,
+} = {}) =>
+  get(`/v1/globaltix/pricing-calendar`, {
+    params: {
+      ticketTypeID,
+      ...(fromMonth && { fromMonth }),
+      months,
+      environment,
+      currency,
+      ...(productId && { productId }),
+    },
+  });

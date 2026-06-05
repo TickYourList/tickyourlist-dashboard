@@ -15,6 +15,7 @@ import {
 } from "store/tickyourlist/globaltix/action";
 import { getGlobtixProductFilters } from "helpers/globaltix_helper";
 import ConnectGlobtixModal from "../TravelTourGroup/ConnectGlobtixModal";
+import GlobtixPricingCalendar from "./GlobtixPricingCalendar";
 
 const SYNC_STATUS_COLORS = { synced: "success", pending: "warning", error: "danger" };
 
@@ -624,7 +625,21 @@ const GlobtixProductsPage = () => {
           {productDetailLoading ? (
             <div className="text-center py-5"><Spinner /></div>
           ) : productDetail ? (
-            <ProductDetailPanel product={productDetail} environment={environment} />
+            <>
+              <ProductDetailPanel product={productDetail} environment={environment} />
+              {/* Pricing Calendar — shows 6 months of daily prices for first ticket type */}
+              {productDetail.options?.length > 0 &&
+               productDetail.options[0].ticketTypes?.length > 0 && (
+                <div className="mt-3 border-top pt-3">
+                  <GlobtixPricingCalendar
+                    ticketTypeID={productDetail.options[0].ticketTypes[0].id}
+                    productId={productDetail.globaltixProductId}
+                    ticketTypeName={productDetail.options[0].ticketTypes[0].name}
+                    environment={environment}
+                  />
+                </div>
+              )}
+            </>
           ) : null}
         </ModalBody>
       </Modal>
