@@ -77,6 +77,7 @@ import travelCurrency from "./travelCurrency/reducer";
 import travelCity from "./travelCity/reducer";
 import tourGroupReducer from "./tickyourlist/travelTourGroup/reducer";
 import globaltixReducer from "./tickyourlist/globaltix/reducer";
+import providerConfigReducer from "./tickyourlist/providerConfig/reducer";
 import travelPartner from "./travelPartner/reducers";
 import Coupon from "./coupon/reducer";
 import customerReducer from "./customers/reducer";
@@ -141,6 +142,7 @@ const rootReducer = combineReducers({
   travelCity,
   tourGroup: tourGroupReducer,
   globaltix: globaltixReducer,
+  providerConfig: providerConfigReducer,
   coupons: Coupon,
   customers: customerReducer,
   pmCollection: pmCollectionReducer,

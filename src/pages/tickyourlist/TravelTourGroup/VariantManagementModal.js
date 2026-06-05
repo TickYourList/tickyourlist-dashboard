@@ -51,6 +51,7 @@ import {
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 import ImportKlookPackagesModal from "./ImportKlookPackagesModal";
 import CreateVariantManualModal from "./CreateVariantManualModal";
+import VariantProviderConfig from "./VariantProviderConfig";
 
 const VariantManagementModal = ({
     isOpen,
@@ -397,6 +398,21 @@ const VariantManagementModal = ({
                                 </NavLink>
                             </NavItem>
                         )}
+                        {selectedVariant && (
+                            <NavItem>
+                                <NavLink
+                                    style={{ cursor: "pointer" }}
+                                    className={classnames({ active: activeTab === "providers" })}
+                                    onClick={() => setActiveTab("providers")}
+                                >
+                                    <i className="bx bx-plug me-1"></i>
+                                    Providers
+                                    <Badge color="primary" pill className="ms-1" style={{ fontSize: "0.65em" }}>
+                                        NEW
+                                    </Badge>
+                                </NavLink>
+                            </NavItem>
+                        )}
                         {previewMode && previewData && (
                             <NavItem>
                                 <NavLink
@@ -425,6 +441,17 @@ const VariantManagementModal = ({
                                 {renderPreview()}
                             </TabPane>
                         )}
+                        <TabPane tabId="providers">
+                            {selectedVariant && activeTab === "providers" && (
+                                <div className="p-3">
+                                    <VariantProviderConfig
+                                        variantId={selectedVariant._id}
+                                        tourGroupId={tourGroup?._id}
+                                        variantName={selectedVariant.name}
+                                    />
+                                </div>
+                            )}
+                        </TabPane>
                     </TabContent>
                 </ModalBody>
                 <ModalFooter>
