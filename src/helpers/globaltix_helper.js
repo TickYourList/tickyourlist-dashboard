@@ -174,6 +174,15 @@ export const linkGlobtixBookingToTour = (referenceNumber, tourBookingId) =>
 export const unlinkGlobtixBookingFromTour = (referenceNumber) =>
   del(`/v1/globaltix/bookings/${referenceNumber}/link`);
 
+// ─── Questions (Q&A) ──────────────────────────────────────────────────────────
+
+// Returns questions for an option including id, type, optionList, and applyToAllQna per ticket type.
+// Pass these question IDs in answers[] when calling reserveGlobtixBooking.
+export const getGlobtixOptionQuestions = (productId, optionId, environment = "staging") =>
+  get(`/v1/globaltix/products/${productId}/options/${optionId}/questions`, {
+    params: { environment },
+  });
+
 // ─── Pricing Calendar (6-month daily price grid) ──────────────────────────────
 
 export const getGlobtixPricingCalendar = ({
