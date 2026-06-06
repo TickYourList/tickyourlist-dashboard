@@ -372,6 +372,10 @@ function* unlinkGlobtixBookingSaga({ payload }) {
     const response = yield call(unlinkGlobtixBookingFromTour, payload.referenceNumber);
     yield put(unlinkGlobtixBookingSuccess(response));
     showToastSuccess(`Booking ${payload.referenceNumber} unlinked`);
+    // Refresh booking list so the UI reflects the updated tourBookingId
+    if (payload.environment) {
+      yield put({ type: "FETCH_GLOBALTIX_BOOKINGS_REQUEST", payload: { environment: payload.environment } });
+    }
   } catch (error) {
     yield put(unlinkGlobtixBookingFailure(error.message));
     showToastError("Unlink failed: " + error.message);

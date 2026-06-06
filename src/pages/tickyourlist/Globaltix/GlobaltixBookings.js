@@ -1525,7 +1525,7 @@ const GlobtixBookingsPage = () => {
     dispatch(linkGlobtixBookingRequest(linkTarget, linkTourBookingId.trim()));
     setLinkModalOpen(false);
   };
-  const handleUnlink = (ref) => dispatch(unlinkGlobtixBookingRequest(ref));
+  const handleUnlink = (ref) => dispatch(unlinkGlobtixBookingRequest({ referenceNumber: ref, environment }));
 
   return (
     <div className="page-content">

@@ -37,7 +37,7 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [linking, setLinking] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [environment] = useState("staging");
+  const [environment, setEnvironment] = useState("staging");
   const [activeTab, setActiveTab] = useState("detail");
 
   useEffect(() => {
@@ -143,8 +143,21 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
   return (
     <Modal isOpen={isOpen} toggle={toggle} size="xl" scrollable>
       <ModalHeader toggle={toggle}>
-        <i className="bx bx-zap me-2"></i>
-        ⚡ Power Link — {tourGroup?.name}
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          <span><i className="bx bx-zap me-2"></i>⚡ Power Link — {tourGroup?.name}</span>
+          <div className="d-flex align-items-center gap-1 ms-2">
+            <span className="small text-muted">Env:</span>
+            <select
+              className="form-select form-select-sm"
+              style={{ width: 110, fontSize: "0.75rem" }}
+              value={environment}
+              onChange={(e) => setEnvironment(e.target.value)}
+            >
+              <option value="staging">Staging</option>
+              <option value="production">Production</option>
+            </select>
+          </div>
+        </div>
       </ModalHeader>
 
       <ModalBody>

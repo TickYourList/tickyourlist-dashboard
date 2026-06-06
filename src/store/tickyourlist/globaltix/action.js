@@ -179,6 +179,6 @@ export const linkGlobtixBookingRequest = (referenceNumber, tourBookingId) => ({ 
 export const linkGlobtixBookingSuccess = (data) => ({ type: LINK_GLOBALTIX_BOOKING_SUCCESS, payload: data });
 export const linkGlobtixBookingFailure = (error) => ({ type: LINK_GLOBALTIX_BOOKING_FAILURE, payload: error });
 
-export const unlinkGlobtixBookingRequest = (referenceNumber) => ({ type: UNLINK_GLOBALTIX_BOOKING_REQUEST, payload: { referenceNumber } });
+export const unlinkGlobtixBookingRequest = ({ referenceNumber, environment = "staging" } = {}) => ({ type: UNLINK_GLOBALTIX_BOOKING_REQUEST, payload: { referenceNumber, environment } });
 export const unlinkGlobtixBookingSuccess = (data) => ({ type: UNLINK_GLOBALTIX_BOOKING_SUCCESS, payload: data });
 export const unlinkGlobtixBookingFailure = (error) => ({ type: UNLINK_GLOBALTIX_BOOKING_FAILURE, payload: error });
