@@ -1,7 +1,69 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Table, Spinner, Button, Alert, Badge, Input } from "reactstrap";
-import { getGlobtixCustomPricing, setGlobtixCustomPricing } from "helpers/globaltix_helper";
+import { getGlobtixCustomPricing, setGlobtixCustomPricing, setGlobtixAutoDiscount } from "helpers/globaltix_helper";
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
+
+/** Per-variant automatic discount editor (no coupon code; floored at nett/min by the backend). */
+const AutoDiscountRow = ({ tourGroupId, variant, onSaved }) => {
+  const ad = variant.autoDiscount;
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [type, setType] = useState(ad?.discountType || "PERCENTAGE");
+  const [value, setValue] = useState(ad?.value ?? "");
+
+  const save = async (payload) => {
+    setSaving(true);
+    try {
+      await setGlobtixAutoDiscount(tourGroupId, variant.variantId, payload);
+      showToastSuccess(payload ? "Auto discount saved" : "Auto discount removed");
+      setEditing(false);
+      onSaved();
+    } catch (e) {
+      showToastError(e?.response?.data?.message || "Failed to save auto discount");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <div className="d-flex align-items-center gap-2 mb-1" style={{ fontSize: 12 }}>
+        {ad && ad.isActive ? (
+          <>
+            <Badge color="success" style={{ fontSize: 10 }}>
+              AUTO DISCOUNT: {ad.discountType === "PERCENTAGE" ? `${ad.value}% off` : `SGD ${ad.value} off`}
+            </Badge>
+            <Button color="link" size="sm" className="p-0" style={{ fontSize: 12 }} onClick={() => setEditing(true)}>edit</Button>
+            <Button color="link" size="sm" className="p-0 text-danger" style={{ fontSize: 12 }} disabled={saving} onClick={() => save(null)}>remove</Button>
+          </>
+        ) : (
+          <Button color="link" size="sm" className="p-0" style={{ fontSize: 12 }} onClick={() => setEditing(true)}>
+            <i className="bx bx-purchase-tag me-1" />Add auto discount (no code needed)
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="d-flex align-items-center gap-2 mb-1">
+      <Input type="select" bsSize="sm" style={{ width: 130, fontSize: 12 }} value={type} onChange={(e) => setType(e.target.value)}>
+        <option value="PERCENTAGE">% off</option>
+        <option value="FIXED">SGD off</option>
+      </Input>
+      <Input
+        type="number" bsSize="sm" min="0" step="0.5" style={{ width: 90, fontSize: 12 }}
+        placeholder="value" value={value} onChange={(e) => setValue(e.target.value)}
+      />
+      <Button color="primary" size="sm" disabled={saving || !(Number(value) > 0)}
+        onClick={() => save({ discountType: type, value: Number(value), isActive: true })}>
+        {saving ? <Spinner size="sm" /> : "Save"}
+      </Button>
+      <Button color="light" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
+      <small className="text-muted">floored at nett/min — can never sell below cost</small>
+    </div>
+  );
+};
 
 /**
  * Per-ticket-type custom selling price manager.
@@ -110,6 +172,7 @@ const GlobaltixCustomPricing = ({ tourGroupId, environment = "staging" }) => {
       {variants.map((v) => (
         <div key={v.variantId} className="mb-3">
           <div className="fw-bold mb-1" style={{ fontSize: 13 }}>{v.variantName}</div>
+          <AutoDiscountRow tourGroupId={tourGroupId} variant={v} onSaved={load} />
           <Table size="sm" bordered className="mb-0" style={{ fontSize: 12 }}>
             <thead className="table-light">
               <tr>

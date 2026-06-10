@@ -73,6 +73,10 @@ export const getGlobtixCustomPricing = (tourGroupId, environment = "staging") =>
 export const setGlobtixCustomPricing = (tourGroupId, updates, environment = "staging") =>
   put(`/v1/globaltix/pricing/${tourGroupId}`, { environment, updates });
 
+// Per-variant automatic discount (no coupon code); autoDiscount=null clears it.
+export const setGlobtixAutoDiscount = (tourGroupId, variantId, autoDiscount) =>
+  put(`/v1/globaltix/pricing/${tourGroupId}/auto-discount`, { variantId, autoDiscount });
+
 // ─── Ops: needs-attention queue, retry delivery, manual refund ────────────────
 export const getGlobtixNeedsAttention = ({ page = 1, limit = 50, includeResolved = false } = {}) =>
   get(`/v1/globaltix/bookings/needs-attention`, { params: { page, limit, includeResolved } });
