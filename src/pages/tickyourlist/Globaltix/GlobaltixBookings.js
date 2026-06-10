@@ -26,6 +26,7 @@ import {
   unlinkGlobtixBookingRequest,
 } from "store/tickyourlist/globaltix/action";
 import { fetchGlobtixProductsRequest, searchGlobtixProductsRequest } from "store/tickyourlist/globaltix/action";
+import GlobaltixNeedsAttention from "./GlobaltixNeedsAttention";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -1605,6 +1606,15 @@ const GlobtixBookingsPage = () => {
               </NavItem>
               <NavItem>
                 <NavLink
+                  className={activeTab === "needsattention" ? "active" : ""}
+                  onClick={() => setActiveTab("needsattention")}
+                  style={{ cursor: "pointer" }}
+                >
+                  <i className="bx bx-error-circle me-1 text-danger" />Needs Attention
+                </NavLink>
+              </NavItem>
+              <NavItem>
+                <NavLink
                   className={activeTab === "webhooks" ? "active" : ""}
                   onClick={() => setActiveTab("webhooks")}
                   style={{ cursor: "pointer" }}
@@ -1615,6 +1625,9 @@ const GlobtixBookingsPage = () => {
             </Nav>
 
             <TabContent activeTab={activeTab}>
+              <TabPane tabId="needsattention">
+                <GlobaltixNeedsAttention environment={environment} />
+              </TabPane>
               <TabPane tabId="webhooks">
                 <WebhookEventsTab environment={environment} />
               </TabPane>

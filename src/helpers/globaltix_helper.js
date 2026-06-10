@@ -73,6 +73,18 @@ export const getGlobtixCustomPricing = (tourGroupId, environment = "staging") =>
 export const setGlobtixCustomPricing = (tourGroupId, updates, environment = "staging") =>
   put(`/v1/globaltix/pricing/${tourGroupId}`, { environment, updates });
 
+// ─── Ops: needs-attention queue, retry delivery, manual refund ────────────────
+export const getGlobtixNeedsAttention = ({ page = 1, limit = 50, includeResolved = false } = {}) =>
+  get(`/v1/globaltix/bookings/needs-attention`, { params: { page, limit, includeResolved } });
+
+// Retry reserve+confirm+ticket delivery for a paid TYL booking
+export const retryGlobtixDelivery = (tourBookingId, environment = "staging") =>
+  post(`/v1/globaltix/bookings/deliver/${tourBookingId}`, { environment });
+
+// Manual refund (admin decision — never automatic). amount omitted = full refund.
+export const refundGlobtixBooking = (tourBookingId, { amount, reason, releaseReservation = true, environment = "staging" } = {}) =>
+  post(`/v1/globaltix/bookings/refund/${tourBookingId}`, { amount, reason, releaseReservation, environment });
+
 export const linkGlobtixProduct = (globaltixProductId, tourGroupId, environment = "staging") =>
   post(`/v1/globaltix/sync/link`, { globaltixProductId, tourGroupId, environment });
 
