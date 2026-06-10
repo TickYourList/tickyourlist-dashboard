@@ -252,6 +252,18 @@ const SidebarContent = props => {
                       <li>
                         <Link to="/margin-analytics">{props.t("Margin Analytics")}</Link>
                       </li>
+                      <li>
+                        <Link to="/admin-ops/audit-log">{props.t("Audit Log")}</Link>
+                      </li>
+                      <li>
+                        <Link to="/admin-ops/agents">{props.t("Agents (B2B)")}</Link>
+                      </li>
+                      <li>
+                        <Link to="/admin-ops/gift-cards">{props.t("Gift Cards")}</Link>
+                      </li>
+                      <li>
+                        <Link to="/admin-ops/waitlist">{props.t("Waitlist")}</Link>
+                      </li>
                     </ul>
                   </li>
                 </ul>

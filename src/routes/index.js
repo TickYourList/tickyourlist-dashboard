@@ -199,6 +199,10 @@ import GlobtixBookingsPage from "../pages/tickyourlist/Globaltix/GlobaltixBookin
 import GlobtixCredentialsPage from "../pages/tickyourlist/Globaltix/GlobaltixCredentials";
 import GlobaltixAuthGuard from "../components/GlobaltixAuthGuard";
 import MarginAnalytics from "../pages/tickyourlist/MarginAnalytics";
+import AuditLog from "../pages/tickyourlist/AdminOps/AuditLog";
+import Agents from "../pages/tickyourlist/AdminOps/Agents";
+import GiftCardsAdmin from "../pages/tickyourlist/AdminOps/GiftCards";
+import WaitlistAdmin from "../pages/tickyourlist/AdminOps/Waitlist";
 
 // Email Templates
 import EmailTemplates from "../pages/EmailTemplates/index";
@@ -437,6 +441,10 @@ const authProtectedRoutes = [
   { path: "/pricing-management/:variantId", component: <PricingManagement /> },
   { path: "/pricing-management", component: <PricingManagement /> },
   { path: "/margin-analytics", component: <GlobaltixAuthGuard><MarginAnalytics /></GlobaltixAuthGuard> },
+  { path: "/admin-ops/audit-log", component: <GlobaltixAuthGuard><AuditLog /></GlobaltixAuthGuard> },
+  { path: "/admin-ops/agents", component: <GlobaltixAuthGuard><Agents /></GlobaltixAuthGuard> },
+  { path: "/admin-ops/gift-cards", component: <GlobaltixAuthGuard><GiftCardsAdmin /></GlobaltixAuthGuard> },
+  { path: "/admin-ops/waitlist", component: <GlobaltixAuthGuard><WaitlistAdmin /></GlobaltixAuthGuard> },
 
   // Globaltix Integration (password-gated — hidden from employees)
   { path: "/globaltix/products", component: <GlobaltixAuthGuard><GlobtixProductsPage /></GlobaltixAuthGuard> },

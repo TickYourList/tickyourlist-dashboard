@@ -199,6 +199,7 @@ const MarkupConfigModal = ({
         },
         isActive: true,
         isDefault: false,
+        conditions: { weekdays: [], dateRanges: [] },
     });
 
     // Fetch variant details to get tour group ID
@@ -789,6 +790,13 @@ const MarkupConfigModal = ({
                 },
                 isActive: editingConfig.isActive !== undefined ? editingConfig.isActive : true,
                 isDefault: editingConfig.isDefault || false,
+                conditions: {
+                    weekdays: editingConfig.conditions?.weekdays || [],
+                    dateRanges: (editingConfig.conditions?.dateRanges || []).map(r => ({
+                        startDate: r.startDate ? String(r.startDate).slice(0, 10) : "",
+                        endDate: r.endDate ? String(r.endDate).slice(0, 10) : "",
+                    })),
+                },
             });
         } else {
             // Reset to defaults
@@ -813,6 +821,7 @@ const MarkupConfigModal = ({
                 },
                 isActive: true,
                 isDefault: false,
+                conditions: { weekdays: [], dateRanges: [] },
             });
         }
     }, [editingConfig, level, selectedProvider, tourGroupId, variantId]);
@@ -868,8 +877,20 @@ const MarkupConfigModal = ({
         }
 
         // Prepare form data with selected tour group and variant
+        // Conditions: only send what's actually set, so an empty form means "always applies"
+        const cleanRanges = (formData.conditions?.dateRanges || []).filter(r => r.startDate && r.endDate);
+        const cleanWeekdays = formData.conditions?.weekdays || [];
+        const conditions =
+            cleanWeekdays.length || cleanRanges.length
+                ? {
+                    ...(cleanWeekdays.length ? { weekdays: cleanWeekdays } : {}),
+                    ...(cleanRanges.length ? { dateRanges: cleanRanges } : {}),
+                }
+                : undefined;
+
         const submitData = {
             ...formData,
+            conditions,
             tourGroupId: selectedTourGroup || formData.tourGroupId || tourGroupId,
             variantId: applyToAllVariants ? null : (selectedVariant || formData.variantId || variantId),
         };
@@ -1543,6 +1564,77 @@ const MarkupConfigModal = ({
                                         />
                                         <small className="text-muted">
                                             Higher number = higher priority (1-100). Higher priority configs are evaluated first.
+                                        </small>
+                                    </FormGroup>
+                                </Col>
+                            </Row>
+
+                            {/* ── When does this rule apply? (demand-based pricing) ── */}
+                            <Row>
+                                <Col md={12}>
+                                    <FormGroup>
+                                        <Label className="fw-semibold">When does this rule apply? <span className="text-muted fw-normal">(leave empty = always)</span></Label>
+                                        <div className="mb-2">
+                                            <small className="text-muted d-block mb-1">Days of week (e.g. weekends for peak pricing)</small>
+                                            <div className="d-flex gap-1 flex-wrap">
+                                                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, idx) => {
+                                                    const selected = (formData.conditions?.weekdays || []).includes(idx);
+                                                    return (
+                                                        <Button
+                                                            key={d}
+                                                            type="button"
+                                                            size="sm"
+                                                            color={selected ? "primary" : "outline-secondary"}
+                                                            onClick={() => {
+                                                                const cur = formData.conditions?.weekdays || [];
+                                                                const weekdays = selected ? cur.filter(x => x !== idx) : [...cur, idx].sort();
+                                                                setFormData({ ...formData, conditions: { ...formData.conditions, weekdays } });
+                                                            }}
+                                                        >
+                                                            {d}
+                                                        </Button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <small className="text-muted d-block mb-1">Date ranges (e.g. peak season, holidays)</small>
+                                            {(formData.conditions?.dateRanges || []).map((r, i) => (
+                                                <div key={i} className="d-flex gap-2 align-items-center mb-1">
+                                                    <Input type="date" bsSize="sm" style={{ maxWidth: 170 }} value={r.startDate}
+                                                        onChange={(e) => {
+                                                            const dateRanges = [...formData.conditions.dateRanges];
+                                                            dateRanges[i] = { ...dateRanges[i], startDate: e.target.value };
+                                                            setFormData({ ...formData, conditions: { ...formData.conditions, dateRanges } });
+                                                        }} />
+                                                    <span className="text-muted small">to</span>
+                                                    <Input type="date" bsSize="sm" style={{ maxWidth: 170 }} value={r.endDate}
+                                                        onChange={(e) => {
+                                                            const dateRanges = [...formData.conditions.dateRanges];
+                                                            dateRanges[i] = { ...dateRanges[i], endDate: e.target.value };
+                                                            setFormData({ ...formData, conditions: { ...formData.conditions, dateRanges } });
+                                                        }} />
+                                                    <Button type="button" size="sm" color="outline-danger"
+                                                        onClick={() => {
+                                                            const dateRanges = formData.conditions.dateRanges.filter((_, j) => j !== i);
+                                                            setFormData({ ...formData, conditions: { ...formData.conditions, dateRanges } });
+                                                        }}>×</Button>
+                                                </div>
+                                            ))}
+                                            <Button type="button" size="sm" color="outline-secondary"
+                                                onClick={() => setFormData({
+                                                    ...formData,
+                                                    conditions: {
+                                                        ...formData.conditions,
+                                                        dateRanges: [...(formData.conditions?.dateRanges || []), { startDate: "", endDate: "" }],
+                                                    },
+                                                })}>
+                                                + Add date range
+                                            </Button>
+                                        </div>
+                                        <small className="text-muted d-block mt-1">
+                                            Rules are matched against the customer's <strong>travel date</strong>. Combine with a higher
+                                            priority than your default rule to charge weekend/peak premiums.
                                         </small>
                                     </FormGroup>
                                 </Col>

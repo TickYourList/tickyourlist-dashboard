@@ -28,6 +28,8 @@ import {
 } from "store/tickyourlist/globaltix/action";
 import { fetchGlobtixProductsRequest, searchGlobtixProductsRequest } from "store/tickyourlist/globaltix/action";
 import GlobaltixNeedsAttention from "./GlobaltixNeedsAttention";
+import { amendBooking } from "helpers/admin_ops_helper";
+import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -1722,11 +1724,37 @@ const GlobtixBookingsPage = () => {
   const [resendModalOpen, setResendModalOpen] = useState(false);
   const [resendTarget, setResendTarget] = useState(null);
   const [resendCustomEmail, setResendCustomEmail] = useState("");
+  const [amendTarget, setAmendTarget] = useState(null); // { tourBookingId, productName, visitDate }
+  const [amendDate, setAmendDate] = useState("");
+  const [amendTime, setAmendTime] = useState("");
+  const [amendLoading, setAmendLoading] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkTarget, setLinkTarget] = useState(null);
   const [linkTourBookingId, setLinkTourBookingId] = useState("");
 
   // Search filter state
+  const handleAmend = async () => {
+    if (!amendTarget?.tourBookingId || !amendDate) return;
+    setAmendLoading(true);
+    try {
+      const res = await amendBooking(amendTarget.tourBookingId, {
+        newDate: amendDate,
+        ...(amendTime ? { newStartTime: amendTime } : {}),
+      });
+      showToastSuccess(
+        `Moved to ${res?.data?.newDate}${res?.data?.newStartTime ? ` at ${res.data.newStartTime}` : ""}. New ticket issued; old one cancelled.`,
+        "Booking amended"
+      );
+      setAmendTarget(null);
+      setAmendDate("");
+      setAmendTime("");
+    } catch (e) {
+      showToastError(e?.response?.data?.message || "Amendment failed");
+    } finally {
+      setAmendLoading(false);
+    }
+  };
+
   const [searchEmail, setSearchEmail] = useState("");
   const [searchPartnerRef, setSearchPartnerRef] = useState("");
   const [searchDateFrom, setSearchDateFrom] = useState("");
@@ -2135,6 +2163,21 @@ const GlobtixBookingsPage = () => {
                                       </Button>
                                     </>
                                   )}
+                                  {b.status === "CONFIRMED" && b.tourBookingId && (
+                                    <Button size="sm" color="outline-info"
+                                      onClick={() => {
+                                        setAmendTarget({
+                                          tourBookingId: typeof b.tourBookingId === "string" ? b.tourBookingId : String(b.tourBookingId),
+                                          productName: b.globaltixProductName,
+                                          visitDate: b.visitDate,
+                                        });
+                                        setAmendDate("");
+                                        setAmendTime("");
+                                      }}
+                                      title="Change visit date (re-reserve, no penalty)">
+                                      <i className="bx bx-calendar-edit" />
+                                    </Button>
+                                  )}
                                   {b.status === "CONFIRMED" && b.isCancellable && (
                                     <Button size="sm" color="outline-danger"
                                       onClick={() => setCancelConfirmRef(b.referenceNumber)} title="Cancel booking">
@@ -2477,6 +2520,34 @@ const GlobtixBookingsPage = () => {
       </Modal>
 
       {/* ── Cancel Confirmation Modal ─────────────────────────── */}
+      <Modal isOpen={!!amendTarget} toggle={() => !amendLoading && setAmendTarget(null)}>
+        <ModalHeader toggle={() => setAmendTarget(null)}>Change visit date</ModalHeader>
+        <ModalBody>
+          <div className="small text-muted mb-1">{amendTarget?.productName}</div>
+          <div className="small mb-3">Current date: <strong>{amendTarget?.visitDate || "—"}</strong></div>
+          <FormGroup>
+            <Label className="small">New date</Label>
+            <Input type="date" value={amendDate} min={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setAmendDate(e.target.value)} />
+          </FormGroup>
+          <FormGroup>
+            <Label className="small">New time (optional — keeps the current slot time if blank)</Label>
+            <Input type="time" value={amendTime} onChange={(e) => setAmendTime(e.target.value)} />
+          </FormGroup>
+          <Alert color="info" className="small mb-0">
+            Availability is re-checked, a <strong>new ticket is reserved first</strong>, then the old
+            one is cancelled — the customer always holds a valid ticket. No cancellation penalty.
+            The customer gets a confirmation email automatically.
+          </Alert>
+          <div className="d-flex gap-2 mt-3">
+            <Button color="primary" className="flex-grow-1" onClick={handleAmend} disabled={amendLoading || !amendDate}>
+              {amendLoading ? <Spinner size="sm" /> : "Confirm date change"}
+            </Button>
+            <Button color="light" onClick={() => setAmendTarget(null)} disabled={amendLoading}>Close</Button>
+          </div>
+        </ModalBody>
+      </Modal>
+
       <Modal isOpen={!!cancelConfirmRef} toggle={() => setCancelConfirmRef(null)} size="sm">
         <ModalHeader toggle={() => setCancelConfirmRef(null)}>Confirm Cancellation</ModalHeader>
         <ModalBody>
