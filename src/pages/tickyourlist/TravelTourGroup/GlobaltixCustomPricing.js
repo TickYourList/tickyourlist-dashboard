@@ -1,7 +1,109 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Table, Spinner, Button, Alert, Badge, Input } from "reactstrap";
-import { getGlobtixCustomPricing, setGlobtixCustomPricing, setGlobtixAutoDiscount } from "helpers/globaltix_helper";
+import {
+  getGlobtixCustomPricing, setGlobtixCustomPricing, setGlobtixAutoDiscount,
+  setGlobtixMarkupRule, setGlobtixAvailabilityOverride,
+} from "helpers/globaltix_helper";
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
+
+/** Per-variant markup rule editor (sell at nett + X%; used when no absolute custom price is set). */
+const MarkupRuleRow = ({ tourGroupId, variant, onSaved }) => {
+  const mr = variant.markupRule;
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [value, setValue] = useState(mr?.value ?? "");
+
+  const save = async (payload) => {
+    setSaving(true);
+    try {
+      await setGlobtixMarkupRule(tourGroupId, variant.variantId, payload);
+      showToastSuccess(payload ? "Markup rule saved" : "Markup rule removed");
+      setEditing(false);
+      onSaved();
+    } catch (e) {
+      showToastError(e?.response?.data?.message || "Failed to save markup rule");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <div className="d-flex align-items-center gap-2 mb-1" style={{ fontSize: 12 }}>
+        {mr && mr.isActive ? (
+          <>
+            <Badge color="dark" style={{ fontSize: 10 }}>MARKUP: nett + {mr.value}%</Badge>
+            <Button color="link" size="sm" className="p-0" style={{ fontSize: 12 }} onClick={() => setEditing(true)}>edit</Button>
+            <Button color="link" size="sm" className="p-0 text-danger" style={{ fontSize: 12 }} disabled={saving} onClick={() => save(null)}>remove</Button>
+          </>
+        ) : (
+          <Button color="link" size="sm" className="p-0" style={{ fontSize: 12 }} onClick={() => setEditing(true)}>
+            <i className="bx bx-trending-up me-1" />Set markup % over nett
+          </Button>
+        )}
+      </div>
+    );
+  }
+  return (
+    <div className="d-flex align-items-center gap-2 mb-1">
+      <span style={{ fontSize: 12 }}>nett +</span>
+      <Input type="number" bsSize="sm" min="0" step="1" style={{ width: 90, fontSize: 12 }} placeholder="%" value={value} onChange={(e) => setValue(e.target.value)} />
+      <span style={{ fontSize: 12 }}>%</span>
+      <Button color="primary" size="sm" disabled={saving || !(Number(value) > 0)} onClick={() => save({ value: Number(value), isActive: true })}>
+        {saving ? <Spinner size="sm" /> : "Save"}
+      </Button>
+      <Button color="light" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
+      <small className="text-muted">overridden by absolute custom prices; floored at nett/min</small>
+    </div>
+  );
+};
+
+/** Per-variant availability overrides: manual blocked dates + our own daily capacity cap. */
+const AvailabilityOverrideRow = ({ tourGroupId, variant, onSaved }) => {
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [dates, setDates] = useState((variant.manualBlockedDates || []).join(", "));
+  const [cap, setCap] = useState(variant.dailyCapacity ?? "");
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const manualBlockedDates = dates.split(",").map((s) => s.trim()).filter(Boolean);
+      await setGlobtixAvailabilityOverride(tourGroupId, variant.variantId, {
+        manualBlockedDates,
+        dailyCapacity: cap === "" ? null : Number(cap),
+      });
+      showToastSuccess("Availability override saved");
+      setEditing(false);
+      onSaved();
+    } catch (e) {
+      showToastError(e?.response?.data?.message || "Failed to save availability");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const blocked = variant.manualBlockedDates || [];
+  if (!editing) {
+    return (
+      <div className="d-flex align-items-center gap-2 mb-2 flex-wrap" style={{ fontSize: 12 }}>
+        {blocked.length > 0 && <Badge color="danger" style={{ fontSize: 10 }}>{blocked.length} blocked date(s)</Badge>}
+        {variant.dailyCapacity != null && <Badge color="warning" style={{ fontSize: 10 }}>cap {variant.dailyCapacity}/day</Badge>}
+        <Button color="link" size="sm" className="p-0" style={{ fontSize: 12 }} onClick={() => setEditing(true)}>
+          <i className="bx bx-calendar-x me-1" />{blocked.length || variant.dailyCapacity != null ? "Edit availability override" : "Block dates / cap capacity"}
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="d-flex align-items-center gap-2 mb-2 flex-wrap">
+      <Input type="text" bsSize="sm" style={{ minWidth: 240, fontSize: 12 }} placeholder="Blocked dates: YYYY-MM-DD, YYYY-MM-DD" value={dates} onChange={(e) => setDates(e.target.value)} />
+      <Input type="number" bsSize="sm" min="0" style={{ width: 110, fontSize: 12 }} placeholder="cap/day" value={cap} onChange={(e) => setCap(e.target.value)} />
+      <Button color="primary" size="sm" disabled={saving} onClick={save}>{saving ? <Spinner size="sm" /> : "Save"}</Button>
+      <Button color="light" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
+    </div>
+  );
+};
 
 /** Per-variant automatic discount editor (no coupon code; floored at nett/min by the backend). */
 const AutoDiscountRow = ({ tourGroupId, variant, onSaved }) => {
@@ -173,6 +275,8 @@ const GlobaltixCustomPricing = ({ tourGroupId, environment = "staging" }) => {
         <div key={v.variantId} className="mb-3">
           <div className="fw-bold mb-1" style={{ fontSize: 13 }}>{v.variantName}</div>
           <AutoDiscountRow tourGroupId={tourGroupId} variant={v} onSaved={load} />
+          <MarkupRuleRow tourGroupId={tourGroupId} variant={v} onSaved={load} />
+          <AvailabilityOverrideRow tourGroupId={tourGroupId} variant={v} onSaved={load} />
           <Table size="sm" bordered className="mb-0" style={{ fontSize: 12 }}>
             <thead className="table-light">
               <tr>

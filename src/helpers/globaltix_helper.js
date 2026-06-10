@@ -77,6 +77,14 @@ export const setGlobtixCustomPricing = (tourGroupId, updates, environment = "sta
 export const setGlobtixAutoDiscount = (tourGroupId, variantId, autoDiscount) =>
   put(`/v1/globaltix/pricing/${tourGroupId}/auto-discount`, { variantId, autoDiscount });
 
+// Per-variant markup rule (sell at nett + value%); markupRule=null clears it.
+export const setGlobtixMarkupRule = (tourGroupId, variantId, markupRule) =>
+  put(`/v1/globaltix/pricing/${tourGroupId}/markup-rule`, { variantId, markupRule });
+
+// Per-variant manual availability: blocked dates + our own daily capacity cap.
+export const setGlobtixAvailabilityOverride = (tourGroupId, variantId, { manualBlockedDates, dailyCapacity } = {}) =>
+  put(`/v1/globaltix/pricing/${tourGroupId}/availability-override`, { variantId, manualBlockedDates, dailyCapacity });
+
 // ─── Ops: needs-attention queue, retry delivery, manual refund ────────────────
 export const getGlobtixNeedsAttention = ({ page = 1, limit = 50, includeResolved = false } = {}) =>
   get(`/v1/globaltix/bookings/needs-attention`, { params: { page, limit, includeResolved } });
