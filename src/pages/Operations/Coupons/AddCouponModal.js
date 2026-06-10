@@ -5,11 +5,18 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useDispatch, useSelector } from "react-redux";
 import { addNewCoupon } from "store/coupon/actions";
+import CouponProductScope from "./CouponProductScope";
 
-const AddCouponModal = ({ isOpen, toggle }) => {
+const AddCouponModal = ({ isOpen, toggle, presetTourGroup = null }) => {
   const dispatch = useDispatch();
   const [formError, setFormError] = useState("");
   const today = new Date().toISOString().split('T')[0];
+  // Per-product scoping (tourGroupIds/variantIds). Pre-seeded when opened from a tour-group page.
+  const [productScope, setProductScope] = useState(() =>
+    presetTourGroup
+      ? { tourGroupIds: [presetTourGroup.id], variantIds: [], selectedGroups: [{ id: presetTourGroup.id, name: presetTourGroup.name, variants: null, loadingVariants: false }] }
+      : { tourGroupIds: [], variantIds: [], selectedGroups: [] }
+  );
 
   const validation = useFormik({
     initialValues: {
@@ -74,6 +81,9 @@ const AddCouponModal = ({ isOpen, toggle }) => {
       if (discountType === 'PERCENTAGE') {
         couponPayload.maxDiscountAmount = Number(values.maxDiscountAmount);
       }
+      // Per-product scoping — empty arrays mean "all products", so omit them.
+      if (productScope.tourGroupIds.length) couponPayload.tourGroupIds = productScope.tourGroupIds;
+      if (productScope.variantIds.length) couponPayload.variantIds = productScope.variantIds;
       try {
         await dispatch(addNewCoupon(couponPayload));
         resetForm();
@@ -256,6 +266,13 @@ const AddCouponModal = ({ isOpen, toggle }) => {
                   invalid={validation.touched.endDate && !!validation.errors.endDate}
                 />
                 <FormFeedback>{validation.errors.endDate}</FormFeedback>
+              </div>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={12}>
+              <div className="mb-3">
+                <CouponProductScope value={productScope} onChange={setProductScope} />
               </div>
             </Col>
           </Row>

@@ -5,12 +5,20 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { updateCoupon } from "store/coupon/actions";
+import CouponProductScope from "./CouponProductScope";
 
 const EditCouponModal = ({ isOpen, toggle, coupon }) => {
   const dispatch = useDispatch();
   const [formError, setFormError] = useState("");
   const today = new Date().toISOString().split('T')[0];
   const currentUsage = coupon?.currentUsage || 0;
+  // Product scope: untouched = keep the coupon's existing assignment.
+  const [productScope, setProductScope] = useState({ tourGroupIds: [], variantIds: [], selectedGroups: [] });
+  const [scopeTouched, setScopeTouched] = useState(false);
+  const existingScopeSummary =
+    (coupon?.tourGroupIds?.length || coupon?.variantIds?.length)
+      ? `Currently scoped to ${coupon?.tourGroupIds?.length || 0} tour group(s) / ${coupon?.variantIds?.length || 0} variant(s). Selecting below REPLACES the assignment; leave untouched to keep it.`
+      : "Currently applies to all products. Selecting below scopes it.";
 
   const validation = useFormik({
     enableReinitialize: true,
@@ -78,6 +86,11 @@ const EditCouponModal = ({ isOpen, toggle, coupon }) => {
         couponPayload.maxDiscountAmount = Number(values.maxDiscountAmount);
       } else {
         delete couponPayload.maxDiscountAmount;
+      }
+      // Replace product scope only if the admin touched the selector.
+      if (scopeTouched) {
+        couponPayload.tourGroupIds = productScope.tourGroupIds;
+        couponPayload.variantIds = productScope.variantIds;
       }
       try {
         await dispatch(updateCoupon(couponPayload));
@@ -262,6 +275,17 @@ const EditCouponModal = ({ isOpen, toggle, coupon }) => {
                   invalid={validation.touched.endDate && !!validation.errors.endDate}
                 />
                 <FormFeedback>{validation.errors.endDate}</FormFeedback>
+              </div>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={12}>
+              <div className="mb-3">
+                <CouponProductScope
+                  value={productScope}
+                  onChange={(s) => { setProductScope(s); setScopeTouched(true); }}
+                  initialSummary={existingScopeSummary}
+                />
               </div>
             </Col>
           </Row>

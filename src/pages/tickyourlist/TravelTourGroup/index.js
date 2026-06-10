@@ -37,6 +37,7 @@ import ViewTourGroup from "./ViewTourGroup"
 import ConnectCategoriesModal from "./ConnectCategoriesModal"
 import ConnectKlookModal from "./ConnectKlookModal"
 import ConnectGlobtixModal from "./ConnectGlobtixModal"
+import TourGroupCouponsModal from "./TourGroupCouponsModal"
 import VariantsPricingModal from "./VariantsPricingModal"
 import VariantManagementModal from "./VariantManagementModal"
 import { showToastSuccess } from "helpers/toastBuilder"
@@ -65,6 +66,8 @@ function TourGroupTable() {
   const [connectKlookModal, setConnectKlookModal] = useState(false)
   const [connectGlobtixModal, setConnectGlobtixModal] = useState(false)
   const [selectedTourGroupForGlobtix, setSelectedTourGroupForGlobtix] = useState(null)
+  const [tourGroupCouponsModal, setTourGroupCouponsModal] = useState(false)
+  const [selectedTourGroupForCoupons, setSelectedTourGroupForCoupons] = useState(null)
   const [selectedTourGroupForKlook, setSelectedTourGroupForKlook] = useState(null)
   const [variantsPricingModal, setVariantsPricingModal] = useState(false)
   const [selectedTourGroupForPricing, setSelectedTourGroupForPricing] = useState(null)
@@ -295,6 +298,11 @@ function TourGroupTable() {
   const handleConnectGlobtix = (tourGroup) => {
     setSelectedTourGroupForGlobtix(tourGroup)
     setConnectGlobtixModal(true)
+  }
+
+  const handleTourGroupCoupons = (tourGroup) => {
+    setSelectedTourGroupForCoupons(tourGroup)
+    setTourGroupCouponsModal(true)
   }
 
   const handleConnectKlook = (tourGroup) => {
@@ -539,6 +547,15 @@ function TourGroupTable() {
                 onClick={() => handleConnectGlobtix(row.original)}
               >
                 <i className="bx bx-globe font-size-18 text-info"></i>
+              </button>
+            )}
+            {canEditTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
+                title="Coupons & Discounts for this product"
+                onClick={() => handleTourGroupCoupons(row.original)}
+              >
+                <i className="bx bx-purchase-tag-alt font-size-18 text-pink"></i>
               </button>
             )}
             {canEditTourGroup && (
@@ -830,6 +847,18 @@ function TourGroupTable() {
                     tourGroup={selectedTourGroupForKlook}
                     onSuccess={handleKlookConnectionSuccess}
                   />
+
+                  {/* Coupons & Discounts per product */}
+                  {tourGroupCouponsModal && selectedTourGroupForCoupons && (
+                    <TourGroupCouponsModal
+                      isOpen={tourGroupCouponsModal}
+                      toggle={() => {
+                        setTourGroupCouponsModal(false)
+                        setSelectedTourGroupForCoupons(null)
+                      }}
+                      tourGroup={selectedTourGroupForCoupons}
+                    />
+                  )}
 
                   {/* Variants Pricing Modal */}
                   <VariantsPricingModal
