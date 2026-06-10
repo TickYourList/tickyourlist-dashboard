@@ -249,6 +249,9 @@ const SidebarContent = props => {
                       <li>
                         <Link to="/globaltix/credentials">{props.t("Credentials")}</Link>
                       </li>
+                      <li>
+                        <Link to="/margin-analytics">{props.t("Margin Analytics")}</Link>
+                      </li>
                     </ul>
                   </li>
                 </ul>
