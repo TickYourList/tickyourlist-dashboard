@@ -11,6 +11,9 @@ import {
   FETCH_GLOBALTIX_WEBHOOK_EVENTS_REQUEST,
   FETCH_GLOBALTIX_WEBHOOK_EVENTS_SUCCESS,
   FETCH_GLOBALTIX_WEBHOOK_EVENTS_FAILURE,
+  FETCH_RAZORPAY_WEBHOOK_EVENTS_REQUEST,
+  FETCH_RAZORPAY_WEBHOOK_EVENTS_SUCCESS,
+  FETCH_RAZORPAY_WEBHOOK_EVENTS_FAILURE,
   FETCH_GLOBALTIX_TICKET_URLS_REQUEST,
   FETCH_GLOBALTIX_TICKET_URLS_SUCCESS,
   FETCH_GLOBALTIX_TICKET_URLS_FAILURE,
@@ -139,6 +142,11 @@ const initialState = {
   webhookEventsPagination: {},
   webhookEventsLoading: false,
   webhookEventsError: null,
+
+  razorpayWebhookEvents: [],
+  razorpayWebhookEventsPagination: {},
+  razorpayWebhookEventsLoading: false,
+  razorpayWebhookEventsError: null,
 
   creditBalance: null,
   creditLoading: false,
@@ -342,6 +350,18 @@ const globaltixReducer = (state = initialState, action) => {
       };
     case FETCH_GLOBALTIX_WEBHOOK_EVENTS_FAILURE:
       return { ...state, webhookEventsLoading: false, webhookEventsError: action.payload };
+
+    case FETCH_RAZORPAY_WEBHOOK_EVENTS_REQUEST:
+      return { ...state, razorpayWebhookEventsLoading: true, razorpayWebhookEventsError: null };
+    case FETCH_RAZORPAY_WEBHOOK_EVENTS_SUCCESS:
+      return {
+        ...state,
+        razorpayWebhookEventsLoading: false,
+        razorpayWebhookEvents: action.payload.data || [],
+        razorpayWebhookEventsPagination: action.payload.pagination || {},
+      };
+    case FETCH_RAZORPAY_WEBHOOK_EVENTS_FAILURE:
+      return { ...state, razorpayWebhookEventsLoading: false, razorpayWebhookEventsError: action.payload };
 
     case FETCH_GLOBALTIX_CREDIT_REQUEST:
       return { ...state, creditLoading: true };

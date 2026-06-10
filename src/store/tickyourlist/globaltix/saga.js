@@ -5,6 +5,7 @@ import {
   TRIGGER_GLOBALTIX_SWEEP_REQUEST,
   EXPORT_GLOBALTIX_BOOKINGS_REQUEST,
   FETCH_GLOBALTIX_WEBHOOK_EVENTS_REQUEST,
+  FETCH_RAZORPAY_WEBHOOK_EVENTS_REQUEST,
   RESERVE_GLOBALTIX_BOOKING_REQUEST,
   FETCH_GLOBALTIX_AVAILABILITY_CALENDAR_REQUEST,
   FETCH_GLOBALTIX_AVAILABILITY_TIMESLOT_REQUEST,
@@ -37,6 +38,8 @@ import {
   exportGlobtixBookingsFailure,
   fetchGlobtixWebhookEventsSuccess,
   fetchGlobtixWebhookEventsFailure,
+  fetchRazorpayWebhookEventsSuccess,
+  fetchRazorpayWebhookEventsFailure,
   reserveGlobtixBookingSuccess,
   reserveGlobtixBookingFailure,
   fetchGlobtixTicketUrlsSuccess,
@@ -87,6 +90,7 @@ import {
   triggerGlobtixSweep,
   exportGlobtixBookings,
   getGlobtixWebhookEvents,
+  getRazorpayWebhookEvents,
   reserveGlobtixBooking,
   getGlobtixAvailabilityCalendar,
   getGlobtixAvailabilityTimeslot,
@@ -304,6 +308,15 @@ function* fetchGlobtixWebhookEventsSaga({ payload }) {
   }
 }
 
+function* fetchRazorpayWebhookEventsSaga({ payload }) {
+  try {
+    const response = yield call(getRazorpayWebhookEvents, payload);
+    yield put(fetchRazorpayWebhookEventsSuccess(response));
+  } catch (error) {
+    yield put(fetchRazorpayWebhookEventsFailure(error.message));
+  }
+}
+
 function* fetchGlobtixCreditSaga({ payload }) {
   try {
     const response = yield call(getGlobtixCredit, payload.environment);
@@ -403,6 +416,7 @@ function* globaltixSaga() {
   yield takeLatest(AUTHENTICATE_GLOBALTIX_REQUEST, authenticateGlobtixSaga);
   yield takeLatest(FETCH_GLOBALTIX_TICKET_URLS_REQUEST, fetchGlobtixTicketUrlsSaga);
   yield takeLatest(FETCH_GLOBALTIX_WEBHOOK_EVENTS_REQUEST, fetchGlobtixWebhookEventsSaga);
+  yield takeLatest(FETCH_RAZORPAY_WEBHOOK_EVENTS_REQUEST, fetchRazorpayWebhookEventsSaga);
   yield takeLatest(FETCH_GLOBALTIX_CREDIT_REQUEST, fetchGlobtixCreditSaga);
   yield takeLatest(TRIGGER_GLOBALTIX_SWEEP_REQUEST, triggerGlobtixSweepSaga);
   yield takeLatest(EXPORT_GLOBALTIX_BOOKINGS_REQUEST, exportGlobtixBookingsSaga);

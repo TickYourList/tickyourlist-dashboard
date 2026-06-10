@@ -199,6 +199,20 @@ export const getGlobtixWebhookEvents = ({ environment = "staging", eventType, pr
     },
   });
 
+export const getRazorpayWebhookEvents = ({ eventType, processed, signatureValid, paymentId, orderId, bookingId, page = 1, limit = 30 } = {}) =>
+  get(`/v1/tyltourcustomerbooking/razorpay/webhooks/events`, {
+    params: {
+      ...(eventType && { eventType }),
+      ...(processed !== undefined && { processed }),
+      ...(signatureValid !== undefined && { signatureValid }),
+      ...(paymentId && { paymentId }),
+      ...(orderId && { orderId }),
+      ...(bookingId && { bookingId }),
+      page,
+      limit,
+    },
+  });
+
 // ─── Link / Unlink Booking to TYL Tour Booking ───────────────────────────────
 
 export const linkGlobtixBookingToTour = (referenceNumber, tourBookingId) =>

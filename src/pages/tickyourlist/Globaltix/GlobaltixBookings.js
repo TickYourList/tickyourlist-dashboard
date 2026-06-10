@@ -19,6 +19,7 @@ import {
   fetchGlobtixAvailabilityTimeslotRequest,
   fetchGlobtixTicketUrlsRequest,
   fetchGlobtixWebhookEventsRequest,
+  fetchRazorpayWebhookEventsRequest,
   fetchGlobtixCreditRequest,
   triggerGlobtixSweepRequest,
   exportGlobtixBookingsRequest,
@@ -49,6 +50,7 @@ const EVENT_TYPE_COLORS = {
 };
 
 const WEBHOOK_URL = "https://api.univolenitsolutions.com/v1/globaltix/webhooks/event";
+const RAZORPAY_WEBHOOK_URL = "https://api.univolenitsolutions.com/v1/tyltourcustomerbooking/razorpay/webhook";
 
 const VALIDITY_LABELS = {
   VisitDate: "Fixed Visit Date",
@@ -1388,6 +1390,306 @@ function WebhookEventsTab({ environment }) {
   );
 }
 
+// ─── Razorpay Webhook Events Tab ─────────────────────────────────────────────
+
+function RazorpayWebhookEventsTab() {
+  const dispatch = useDispatch();
+  const {
+    razorpayWebhookEvents,
+    razorpayWebhookEventsPagination,
+    razorpayWebhookEventsLoading,
+    razorpayWebhookEventsError,
+  } = useSelector((s) => s.globaltix || {});
+
+  const [eventTypeFilter, setEventTypeFilter] = useState("");
+  const [processedFilter, setProcessedFilter] = useState("");
+  const [signatureFilter, setSignatureFilter] = useState("");
+  const [paymentIdFilter, setPaymentIdFilter] = useState("");
+  const [orderIdFilter, setOrderIdFilter] = useState("");
+  const [bookingIdFilter, setBookingIdFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [expandedPayloads, setExpandedPayloads] = useState({});
+
+  const fetchEvents = useCallback(() => {
+    dispatch(fetchRazorpayWebhookEventsRequest({
+      page,
+      limit: 30,
+      ...(eventTypeFilter && { eventType: eventTypeFilter }),
+      ...(processedFilter === "true" && { processed: true }),
+      ...(processedFilter === "false" && { processed: false }),
+      ...(signatureFilter === "true" && { signatureValid: true }),
+      ...(signatureFilter === "false" && { signatureValid: false }),
+      ...(paymentIdFilter.trim() && { paymentId: paymentIdFilter.trim() }),
+      ...(orderIdFilter.trim() && { orderId: orderIdFilter.trim() }),
+      ...(bookingIdFilter.trim() && { bookingId: bookingIdFilter.trim() }),
+    }));
+  }, [dispatch, page, eventTypeFilter, processedFilter, signatureFilter, paymentIdFilter, orderIdFilter, bookingIdFilter]);
+
+  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+
+  const togglePayload = (id) =>
+    setExpandedPayloads((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const formatRelativeTime = (dateStr) => {
+    if (!dateStr) return "—";
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const secs = Math.floor(diff / 1000);
+    if (secs < 60) return `${secs}s ago`;
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  const getStatusBadge = (event) => {
+    if (event.processed) return <Badge color="success" style={{ fontSize: 11 }}>Processed</Badge>;
+    if (event.processingError) return <Badge color="danger" style={{ fontSize: 11 }}>Failed</Badge>;
+    return <Badge color="secondary" style={{ fontSize: 11 }}>Pending</Badge>;
+  };
+
+  const getSignatureBadge = (event) =>
+    event.signatureValid
+      ? <Badge color="success" style={{ fontSize: 11 }}>Valid</Badge>
+      : <Badge color="danger" style={{ fontSize: 11 }}>Invalid</Badge>;
+
+  const resetFilters = () => {
+    setEventTypeFilter("");
+    setProcessedFilter("");
+    setSignatureFilter("");
+    setPaymentIdFilter("");
+    setOrderIdFilter("");
+    setBookingIdFilter("");
+    setPage(1);
+  };
+
+  return (
+    <div>
+      <Alert color="info" className="py-2 mb-3" style={{ fontSize: 13 }}>
+        <i className="bx bx-link me-1" />
+        <strong>Webhook URL to register in Razorpay dashboard:</strong>{" "}
+        <code style={{ userSelect: "all" }}>POST {RAZORPAY_WEBHOOK_URL}</code>
+        <span className="d-block mt-1 text-muted">
+          Enable <code>payment.captured</code>. Optional events such as <code>payment.failed</code> are stored for audit and ignored safely.
+        </span>
+      </Alert>
+
+      <Card className="mb-3">
+        <CardHeader className="bg-transparent border-bottom py-2">
+          <Row className="align-items-center g-2">
+            <Col md={3}>
+              <Input
+                type="select"
+                bsSize="sm"
+                value={eventTypeFilter}
+                onChange={(e) => { setEventTypeFilter(e.target.value); setPage(1); }}
+              >
+                <option value="">All Event Types</option>
+                <option value="payment.captured">payment.captured</option>
+                <option value="payment.failed">payment.failed</option>
+                <option value="order.paid">order.paid</option>
+              </Input>
+            </Col>
+            <Col md={2}>
+              <Input
+                type="select"
+                bsSize="sm"
+                value={processedFilter}
+                onChange={(e) => { setProcessedFilter(e.target.value); setPage(1); }}
+              >
+                <option value="">All Status</option>
+                <option value="true">Processed</option>
+                <option value="false">Failed / Pending</option>
+              </Input>
+            </Col>
+            <Col md={2}>
+              <Input
+                type="select"
+                bsSize="sm"
+                value={signatureFilter}
+                onChange={(e) => { setSignatureFilter(e.target.value); setPage(1); }}
+              >
+                <option value="">All Signatures</option>
+                <option value="true">Valid Signature</option>
+                <option value="false">Invalid Signature</option>
+              </Input>
+            </Col>
+            <Col className="d-flex justify-content-end gap-2">
+              <Button color="outline-secondary" size="sm" onClick={resetFilters}>
+                Clear
+              </Button>
+              <Button color="outline-secondary" size="sm" onClick={fetchEvents} disabled={razorpayWebhookEventsLoading}>
+                <i className="bx bx-refresh me-1" />Refresh
+              </Button>
+            </Col>
+          </Row>
+          <Row className="align-items-center g-2 mt-2">
+            <Col md={4}>
+              <Input
+                bsSize="sm"
+                placeholder="Payment ID"
+                value={paymentIdFilter}
+                onChange={(e) => { setPaymentIdFilter(e.target.value); setPage(1); }}
+              />
+            </Col>
+            <Col md={4}>
+              <Input
+                bsSize="sm"
+                placeholder="Order ID"
+                value={orderIdFilter}
+                onChange={(e) => { setOrderIdFilter(e.target.value); setPage(1); }}
+              />
+            </Col>
+            <Col md={4}>
+              <Input
+                bsSize="sm"
+                placeholder="Booking ID"
+                value={bookingIdFilter}
+                onChange={(e) => { setBookingIdFilter(e.target.value); setPage(1); }}
+              />
+            </Col>
+          </Row>
+        </CardHeader>
+
+        <CardBody className="p-0">
+          {razorpayWebhookEventsLoading ? (
+            <div className="text-center py-5"><Spinner /></div>
+          ) : razorpayWebhookEventsError ? (
+            <Alert color="danger" className="m-3">Failed to load Razorpay webhook events: {razorpayWebhookEventsError}</Alert>
+          ) : !razorpayWebhookEvents?.length ? (
+            <div className="text-center py-5 text-muted">
+              <i className="bx bx-credit-card" style={{ fontSize: 48, opacity: 0.3 }} />
+              <p className="mt-2 mb-1 fw-semibold">No Razorpay webhook events yet.</p>
+              <p className="small">Register the webhook URL in Razorpay and wait for a payment event.</p>
+              <code className="small d-block mt-2" style={{ background: "#f8f9fa", padding: "4px 8px", borderRadius: 4 }}>
+                POST {RAZORPAY_WEBHOOK_URL}
+              </code>
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <Table hover responsive className="mb-0 table-nowrap align-middle" style={{ fontSize: 12 }}>
+                <thead className="table-light">
+                  <tr>
+                    <th style={{ minWidth: 130 }}>Time</th>
+                    <th style={{ minWidth: 150 }}>Event Type</th>
+                    <th style={{ minWidth: 100 }}>Signature</th>
+                    <th style={{ minWidth: 100 }}>Status</th>
+                    <th style={{ minWidth: 260 }}>Payment / Order</th>
+                    <th style={{ minWidth: 180 }}>Booking</th>
+                    <th style={{ minWidth: 220 }}>Note / Error</th>
+                    <th style={{ minWidth: 100 }}>Raw Payload</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {razorpayWebhookEvents.map((evt) => {
+                    const rowId = evt._id || `${evt.paymentId}-${evt.createdAt}`;
+                    const message = evt.processingError || evt.processingNote;
+                    return (
+                      <React.Fragment key={rowId}>
+                        <tr>
+                          <td>
+                            <span title={new Date(evt.createdAt).toLocaleString()}>
+                              {formatRelativeTime(evt.createdAt)}
+                            </span>
+                            <div className="text-muted" style={{ fontSize: 10 }}>
+                              {new Date(evt.createdAt).toLocaleTimeString()}
+                            </div>
+                          </td>
+                          <td>
+                            <Badge color={evt.eventType === "payment.captured" ? "success" : "secondary"} className="fw-normal" style={{ fontSize: 11 }}>
+                              {evt.eventType || "unknown"}
+                            </Badge>
+                          </td>
+                          <td>{getSignatureBadge(evt)}</td>
+                          <td>{getStatusBadge(evt)}</td>
+                          <td>
+                            {evt.paymentId
+                              ? <div><span className="text-muted me-1">pay</span><code style={{ fontSize: 11 }}>{evt.paymentId}</code></div>
+                              : <div className="text-muted">No payment id</div>}
+                            {evt.orderId
+                              ? <div className="mt-1"><span className="text-muted me-1">ord</span><code style={{ fontSize: 11 }}>{evt.orderId}</code></div>
+                              : null}
+                          </td>
+                          <td>
+                            {evt.bookingId
+                              ? <code style={{ fontSize: 11 }}>{evt.bookingId}</code>
+                              : <span className="text-muted">—</span>}
+                          </td>
+                          <td>
+                            {message
+                              ? <span className={evt.processingError ? "text-danger small" : "text-muted small"} title={message}>
+                                  {message.length > 70 ? message.slice(0, 70) + "…" : message}
+                                </span>
+                              : <span className="text-muted">—</span>}
+                          </td>
+                          <td>
+                            <Button
+                              color="outline-secondary"
+                              size="sm"
+                              style={{ fontSize: 11 }}
+                              onClick={() => togglePayload(rowId)}
+                            >
+                              {expandedPayloads[rowId] ? "Hide" : "Show"}
+                            </Button>
+                          </td>
+                        </tr>
+                        {expandedPayloads[rowId] && (
+                          <tr>
+                            <td colSpan={8} style={{ background: "#f8f9fa" }}>
+                              <pre
+                                style={{
+                                  fontSize: 11,
+                                  maxHeight: 300,
+                                  overflowY: "auto",
+                                  margin: 0,
+                                  padding: "8px",
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-all",
+                                }}
+                              >
+                                {JSON.stringify(evt.rawPayload, null, 2)}
+                              </pre>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      {razorpayWebhookEventsPagination?.total > 0 && (
+        <div className="d-flex justify-content-between align-items-center">
+          <span className="text-muted small">
+            Showing {razorpayWebhookEvents?.length || 0} of {razorpayWebhookEventsPagination.total} events
+            {razorpayWebhookEventsPagination.pages > 1 && ` · Page ${page} of ${razorpayWebhookEventsPagination.pages}`}
+          </span>
+          {razorpayWebhookEventsPagination.pages > 1 && (
+            <div className="d-flex gap-2">
+              <Button size="sm" color="outline-secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                Previous
+              </Button>
+              <Button
+                size="sm"
+                color="outline-secondary"
+                disabled={page >= razorpayWebhookEventsPagination.pages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Bookings Page ───────────────────────────────────────────────────────
 
 const GlobtixBookingsPage = () => {
@@ -1622,6 +1924,15 @@ const GlobtixBookingsPage = () => {
                   <i className="bx bx-transfer me-1" />Webhook Events
                 </NavLink>
               </NavItem>
+              <NavItem>
+                <NavLink
+                  className={activeTab === "razorpay-webhooks" ? "active" : ""}
+                  onClick={() => setActiveTab("razorpay-webhooks")}
+                  style={{ cursor: "pointer" }}
+                >
+                  <i className="bx bx-credit-card me-1" />Razorpay Webhooks
+                </NavLink>
+              </NavItem>
             </Nav>
 
             <TabContent activeTab={activeTab}>
@@ -1630,6 +1941,9 @@ const GlobtixBookingsPage = () => {
               </TabPane>
               <TabPane tabId="webhooks">
                 <WebhookEventsTab environment={environment} />
+              </TabPane>
+              <TabPane tabId="razorpay-webhooks">
+                <RazorpayWebhookEventsTab />
               </TabPane>
               <TabPane tabId="bookings">
 

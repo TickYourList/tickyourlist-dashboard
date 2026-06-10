@@ -11,6 +11,9 @@ import {
   FETCH_GLOBALTIX_WEBHOOK_EVENTS_REQUEST,
   FETCH_GLOBALTIX_WEBHOOK_EVENTS_SUCCESS,
   FETCH_GLOBALTIX_WEBHOOK_EVENTS_FAILURE,
+  FETCH_RAZORPAY_WEBHOOK_EVENTS_REQUEST,
+  FETCH_RAZORPAY_WEBHOOK_EVENTS_SUCCESS,
+  FETCH_RAZORPAY_WEBHOOK_EVENTS_FAILURE,
   FETCH_GLOBALTIX_TICKET_URLS_REQUEST,
   FETCH_GLOBALTIX_TICKET_URLS_SUCCESS,
   FETCH_GLOBALTIX_TICKET_URLS_FAILURE,
@@ -158,6 +161,10 @@ export const fetchGlobtixTicketUrlsFailure = (error) => ({ type: FETCH_GLOBALTIX
 export const fetchGlobtixWebhookEventsRequest = (params) => ({ type: FETCH_GLOBALTIX_WEBHOOK_EVENTS_REQUEST, payload: params });
 export const fetchGlobtixWebhookEventsSuccess = (data) => ({ type: FETCH_GLOBALTIX_WEBHOOK_EVENTS_SUCCESS, payload: data });
 export const fetchGlobtixWebhookEventsFailure = (error) => ({ type: FETCH_GLOBALTIX_WEBHOOK_EVENTS_FAILURE, payload: error });
+
+export const fetchRazorpayWebhookEventsRequest = (params) => ({ type: FETCH_RAZORPAY_WEBHOOK_EVENTS_REQUEST, payload: params });
+export const fetchRazorpayWebhookEventsSuccess = (data) => ({ type: FETCH_RAZORPAY_WEBHOOK_EVENTS_SUCCESS, payload: data });
+export const fetchRazorpayWebhookEventsFailure = (error) => ({ type: FETCH_RAZORPAY_WEBHOOK_EVENTS_FAILURE, payload: error });
 
 export const fetchGlobtixCreditRequest = (environment) => ({ type: FETCH_GLOBALTIX_CREDIT_REQUEST, payload: { environment } });
 export const fetchGlobtixCreditSuccess = (data) => ({ type: FETCH_GLOBALTIX_CREDIT_SUCCESS, payload: data });
