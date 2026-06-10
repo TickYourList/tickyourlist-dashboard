@@ -15,6 +15,7 @@ import {
   globaltixCreateTourGroup,
 } from "helpers/globaltix_helper";
 import LiveGlobtixPricing from "./LiveGlobtixPricing";
+import GlobaltixCustomPricing from "./GlobaltixCustomPricing";
 
 const STATUS_COLORS = {
   synced: "success",
@@ -237,14 +238,18 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
           <Card className="border border-primary">
             <div className="px-3 pt-2">
               <Nav tabs className="border-0">
-                {["detail", "pricing"].map((tab) => (
+                {["detail", "pricing", ...(tourGroup?._id ? ["custompricing"] : [])].map((tab) => (
                   <NavItem key={tab}>
                     <NavLink
                       className={classnames({ active: activeTab === tab }, "py-1 px-3 cursor-pointer")}
                       style={{ fontSize: 13 }}
                       onClick={() => setActiveTab(tab)}
                     >
-                      {tab === "detail" ? "Product Detail" : <><i className="bx bx-dollar-circle me-1" />Pricing</>}
+                      {tab === "detail"
+                        ? "Product Detail"
+                        : tab === "pricing"
+                          ? <><i className="bx bx-dollar-circle me-1" />Live Pricing</>
+                          : <><i className="bx bx-edit me-1" />Custom Pricing</>}
                     </NavLink>
                   </NavItem>
                 ))}
@@ -341,6 +346,13 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
               {activeTab === "pricing" && (
                 <LiveGlobtixPricing
                   globaltixProductId={selectedProduct.globaltixProductId}
+                  environment={environment}
+                />
+              )}
+
+              {activeTab === "custompricing" && tourGroup?._id && (
+                <GlobaltixCustomPricing
+                  tourGroupId={tourGroup._id}
                   environment={environment}
                 />
               )}

@@ -1,4 +1,4 @@
-import { get, post, del } from "./api_helper";
+import { get, post, del, put } from "./api_helper";
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
@@ -63,6 +63,15 @@ export const getGlobtixProductPricing = (productId, { environment = "staging", c
 
 export const getGlobtixProductByTourGroup = (tourGroupId, environment = "staging") =>
   get(`/v1/globaltix/products/by-tour-group/${tourGroupId}`, { params: { environment } });
+
+// ─── Custom selling-price management (per ticket type) ────────────────────────
+// Returns nett/min/recommended/floor/custom/effective per variant & ticket type.
+export const getGlobtixCustomPricing = (tourGroupId, environment = "staging") =>
+  get(`/v1/globaltix/pricing/${tourGroupId}`, { params: { environment } });
+
+// updates: [{ variantId, ticketTypeId, sellingPriceSGD }] (null/0 clears the override)
+export const setGlobtixCustomPricing = (tourGroupId, updates, environment = "staging") =>
+  put(`/v1/globaltix/pricing/${tourGroupId}`, { environment, updates });
 
 export const linkGlobtixProduct = (globaltixProductId, tourGroupId, environment = "staging") =>
   post(`/v1/globaltix/sync/link`, { globaltixProductId, tourGroupId, environment });
