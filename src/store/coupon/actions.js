@@ -50,10 +50,11 @@ export const deleteCouponFail = (error, couponCode) => ({
 export const getCouponUsage = (couponId) => async (dispatch) => {
   try {
     dispatch({ type: 'GET_COUPON_USAGE_LOADING' });
-    const response = await get(`/v1/tyltravelcoupon/usage/${couponId}`);
-    dispatch({ 
-      type: 'GET_COUPON_USAGE_SUCCESS', 
-      payload: response 
+    const response = await get(`/v1/tyltravelcoupon/usage/${couponId}?limit=100`);
+    // SuccessResponse wraps the payload in .data — the modal needs {usage, total, coupon}
+    dispatch({
+      type: 'GET_COUPON_USAGE_SUCCESS',
+      payload: response?.data || response
     });
     return response;
   } catch (error) {

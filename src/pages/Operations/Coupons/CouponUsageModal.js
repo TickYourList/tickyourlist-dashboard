@@ -79,14 +79,15 @@ const CouponUsageModal = ({ isOpen, toggle, couponId, couponCode }) => {
       };
     }
 
-    const totalUsers = usage.length;
-    const totalDiscount = usage.reduce((sum, item) => sum + (item.discount || 0), 0);
-    const totalOrderValue = usage.reduce((sum, item) => sum + (item.orderValue || 0), 0);
-    const avgOrderValue = totalUsers > 0 ? totalOrderValue / totalUsers : 0;
-    
-    // Calculate usage rate based on max usage if available
-    const maxUsage = data.maxUsage || 0;
-    const usageRate = maxUsage > 0 ? (totalUsers / maxUsage) * 100 : 0;
+    // Usage docs are CouponUsage records written at payment confirmation:
+    // discountAmount / orderAmount / email / usedAt (not discount/orderValue).
+    const totalUsers = new Set(usage.map((u) => u.email || u.userId)).size;
+    const totalDiscount = usage.reduce((sum, item) => sum + (item.discountAmount || 0), 0);
+    const totalOrderValue = usage.reduce((sum, item) => sum + (item.orderAmount || item.finalPrice || 0), 0);
+    const avgOrderValue = usage.length > 0 ? totalOrderValue / usage.length : 0;
+
+    const maxUsage = data.coupon?.maxUsage || 0;
+    const usageRate = maxUsage > 0 ? ((data.total || usage.length) / maxUsage) * 100 : 0;
 
     return {
       totalUsers,
@@ -165,17 +166,31 @@ const CouponUsageModal = ({ isOpen, toggle, couponId, couponCode }) => {
                        <tr>
                          <th>Date</th>
                          <th>Customer</th>
+                         <th>Booking</th>
                          <th>Order Value</th>
                          <th>Discount</th>
+                         <th>Payment</th>
                        </tr>
                      </thead>
                      <tbody>
                        {usageData.usage.map((item, index) => (
-                         <tr key={index}>
-                           <td>{formatDate(item.date)}</td>
-                           <td>{item.customer || 'N/A'}</td>
-                           <td>{formatCurrency(item.orderValue)}</td>
-                           <td>{formatCurrency(item.discount)}</td>
+                         <tr key={item._id || index}>
+                           <td>{formatDate(item.usedAt || item.date)}</td>
+                           <td>{item.email || item.customer || item.userId || 'N/A'}</td>
+                           <td>
+                             {item.bookingId ? (
+                               <code style={{ fontSize: '0.75rem' }}>…{String(item.bookingId).slice(-8)}</code>
+                             ) : '—'}
+                           </td>
+                           <td>{item.currency ? `${item.currency} ${(item.orderAmount || item.finalPrice || 0).toFixed(2)}` : formatCurrency(item.orderAmount || item.finalPrice || 0)}</td>
+                           <td>{item.currency ? `${item.currency} ${(item.discountAmount || 0).toFixed(2)}` : formatCurrency(item.discountAmount || 0)}</td>
+                           <td>
+                             {item.metadata?.confirmed ? (
+                               <span className="badge bg-success">Confirmed</span>
+                             ) : (
+                               <span className="badge bg-warning text-dark">Pending</span>
+                             )}
+                           </td>
                          </tr>
                        ))}
                      </tbody>
