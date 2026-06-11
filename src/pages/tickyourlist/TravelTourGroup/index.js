@@ -21,6 +21,7 @@ import {
 } from "reactstrap"
 import TableContainerWithServerSidePagination from "components/Common/TableContainerWithServerSidePagination"
 import NewTourModel from "./NewTourModel"
+import ProductSetupHub from "./ProductSetupHub"
 
 import {
   deleteTourGroupRequest,
@@ -72,6 +73,13 @@ function TourGroupTable() {
   const [variantsPricingModal, setVariantsPricingModal] = useState(false)
   const [selectedTourGroupForPricing, setSelectedTourGroupForPricing] = useState(null)
   const [variantManagementModal, setVariantManagementModal] = useState(false)
+  const [setupHubOpen, setSetupHubOpen] = useState(false)
+  const [selectedTourGroupForSetup, setSelectedTourGroupForSetup] = useState(null)
+
+  const openSetupHub = (tourGroup) => {
+    setSelectedTourGroupForSetup(tourGroup)
+    setSetupHubOpen(true)
+  }
   const [selectedTourGroupForVariantManagement, setSelectedTourGroupForVariantManagement] = useState(null)
   const [pricingDetailsModal, setPricingDetailsModal] = useState(false)
   const [selectedTourGroupForPricingDetails, setSelectedTourGroupForPricingDetails] = useState(null)
@@ -101,8 +109,7 @@ function TourGroupTable() {
     if (!id || lastHandledCreateRef.current === id) return
     lastHandledCreateRef.current = id
     setModal(false)
-    setSelectedTourGroupForGlobtix(lastCreated)
-    setConnectGlobtixModal(true)
+    openSetupHub(lastCreated)
   }, [lastCreated])
 
   const toggle = () => {
@@ -538,6 +545,15 @@ function TourGroupTable() {
             {canEditTourGroup && (
               <button
                 className="btn p-0 border-0 bg-transparent"
+                title="🚀 Product Setup — guided checklist"
+                onClick={() => openSetupHub(row.original)}
+              >
+                <i className="bx bx-rocket font-size-18 text-primary"></i>
+              </button>
+            )}
+            {canEditTourGroup && (
+              <button
+                className="btn p-0 border-0 bg-transparent"
                 title="Connect Categories"
                 onClick={() => handleConnectCategories(row.original)}
               >
@@ -834,6 +850,21 @@ function TourGroupTable() {
                     }}
                     tourGroup={selectedTourGroupForConnection}
                     onSuccess={handleConnectionSuccess}
+                  />
+
+                  {/* 🚀 Product Setup Hub */}
+                  <ProductSetupHub
+                    isOpen={setupHubOpen}
+                    toggle={() => {
+                      setSetupHubOpen(false)
+                      setSelectedTourGroupForSetup(null)
+                    }}
+                    tourGroup={selectedTourGroupForSetup}
+                    onEditContent={(tg) => { setSetupHubOpen(false); handleEdit(tg._id) }}
+                    onManageVariants={(tg) => { setSetupHubOpen(false); handleManageVariants(tg) }}
+                    onConnectSupplier={(tg) => { setSetupHubOpen(false); handleConnectGlobtix(tg) }}
+                    onPricing={(tg) => { setSetupHubOpen(false); handleViewVariantsPricing(tg) }}
+                    onCoupons={(tg) => { setSetupHubOpen(false); handleTourGroupCoupons(tg) }}
                   />
 
                   {/* ⚡ Power Link Modal */}

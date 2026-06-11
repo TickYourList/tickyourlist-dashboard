@@ -34,3 +34,8 @@ export const setVariantVisibility = (variantId, status) =>
   axiosApi.patch(`/v1/tyltraveltourgroupvariant/variant/${variantId}/availability`, { status }).then((r) => r.data);
 export const globaltixImportContent = ({ globaltixProductId, tourGroupId, environment = "staging", fields }) =>
   post(`/v1/globaltix/sync/import-content`, { globaltixProductId, tourGroupId, environment, fields });
+
+// ─── Product Setup Hub ───────────────────────────────────────────────────────
+export const getProductSetup = (tourGroupId) => get(`/v1/admin/ops/product-setup/${tourGroupId}`);
+export const setTourGroupLive = (tourGroupId, status) =>
+  axiosApi.patch(`/v1/tyltraveltourgroup/tour-group/${tourGroupId}/availability`, { status }).then((r) => r.data);
