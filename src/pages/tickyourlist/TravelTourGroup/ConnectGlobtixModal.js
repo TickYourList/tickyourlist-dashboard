@@ -92,8 +92,7 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
     if (!isOpen || searchQuery.trim().length < 3) return;
     const t = setTimeout(() => handleSearch(), 450);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, environment, isOpen]);
+  }, [searchQuery, environment, isOpen]); // eslint-disable-line
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
