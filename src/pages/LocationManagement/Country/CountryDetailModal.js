@@ -23,7 +23,15 @@ import {
 import classnames from "classnames";
 import TableContainer from '../../../components/Common/TableContainer';
 import axios from 'axios';
-import { getCitiesByCountryId } from '../../../helpers/location_management_helper';
+import { useNavigate } from 'react-router-dom';
+import {
+    getCitiesByCountryId,
+    deleteTourGroupById,
+    deleteCategory,
+    deleteSubcategoryApi,
+    deletePMCollection,
+} from '../../../helpers/location_management_helper';
+import { showToastSuccess, showToastError } from '../../../helpers/toastBuilder';
 import { useSelector, useDispatch } from 'react-redux';
 import { usePermissions, MODULES, ACTIONS } from 'helpers/permissions';
 import { getCities } from '../../../store/countries/cities/actions';
@@ -37,6 +45,28 @@ import './CountryDetailModal.scss'; // Add this import for custom modal styling
 const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => {
     const [activeTab, setActiveTab] = useState("1");
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const [deletingRowId, setDeletingRowId] = useState(null);
+
+    // Close the overview modal and jump to the entity's dedicated edit page.
+    const goTo = (path) => {
+        toggle();
+        navigate(path);
+    };
+
+    const confirmAndDelete = async (label, id, apiCall, refreshAction) => {
+        if (!window.confirm(`Permanently delete ${label}?\n\nThis cannot be undone.`)) return;
+        setDeletingRowId(id);
+        try {
+            await apiCall();
+            showToastSuccess(`${label} deleted`);
+            if (refreshAction) dispatch(refreshAction);
+        } catch (e) {
+            showToastError(e?.response?.data?.message || `Failed to delete ${label}`);
+        } finally {
+            setDeletingRowId(null);
+        }
+    };
 
     // Use global permission system
     const { can } = usePermissions()
@@ -205,27 +235,16 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                             color="success"
                             size="sm"
                             className="btn-rounded"
-                            title="Edit"
-                            onClick={() => { /* TODO: Implement edit handler */ }}
+                            title="Edit city"
+                            onClick={() => goTo(`/edit-city/${row.original.cityCode}`)}
                         >
                             <i className="mdi mdi-pencil font-size-14" />
-                        </Button>
-                    )}
-                    {canDeleteCity && (
-                        <Button
-                            color="danger"
-                            size="sm"
-                            className="btn-rounded"
-                            title="Delete"
-                            onClick={() => { /* TODO: Implement delete handler */ }}
-                        >
-                            <i className="mdi mdi-delete font-size-14" />
                         </Button>
                     )}
                 </div>
             )
         },
-    ], [canEditCity, canDeleteCity]);
+    ], [canEditCity, countryData]);
 
     // Tours table columns
     const toursColumns = React.useMemo(() => [
@@ -266,8 +285,8 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                             color="success"
                             size="sm"
                             className="btn-rounded"
-                            title="Edit"
-                            onClick={() => { /* TODO: Implement edit handler */ }}
+                            title="Open in Tours & Experiences"
+                            onClick={() => goTo("/tours-&-experience")}
                         >
                             <i className="mdi mdi-pencil font-size-14" />
                         </Button>
@@ -277,8 +296,14 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                             color="danger"
                             size="sm"
                             className="btn-rounded"
-                            title="Delete"
-                            onClick={() => { /* TODO: Implement delete handler */ }}
+                            title="Delete tour group"
+                            disabled={deletingRowId === row.original._id}
+                            onClick={() => confirmAndDelete(
+                                `tour "${row.original.name}"`,
+                                row.original._id,
+                                () => deleteTourGroupById(row.original._id),
+                                getTours(countryData._id),
+                            )}
                         >
                             <i className="mdi mdi-delete font-size-14" />
                         </Button>
@@ -286,7 +311,7 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                 </div>
             )
         },
-    ], [canEditTour, canDeleteTour]);
+    ], [canEditTour, canDeleteTour, countryData, deletingRowId]);
     
     // Categories table columns
     const categoriesColumns = React.useMemo(() => [
@@ -325,8 +350,8 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                             color="success"
                             size="sm"
                             className="btn-rounded"
-                            title="Edit"
-                            onClick={() => { /* TODO: Implement edit handler */ }}
+                            title="Edit category"
+                            onClick={() => goTo(`/edit-travel-category/${row.original._id}`)}
                         >
                             <i className="mdi mdi-pencil font-size-14" />
                         </Button>
@@ -336,8 +361,14 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                             color="danger"
                             size="sm"
                             className="btn-rounded"
-                            title="Delete"
-                            onClick={() => { /* TODO: Implement delete handler */ }}
+                            title="Delete category"
+                            disabled={deletingRowId === row.original._id}
+                            onClick={() => confirmAndDelete(
+                                `category "${row.original.displayName}"`,
+                                row.original._id,
+                                () => deleteCategory(row.original._id),
+                                getCategories(countryData._id),
+                            )}
                         >
                             <i className="mdi mdi-delete font-size-14" />
                         </Button>
@@ -345,7 +376,7 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                 </div>
             )
         },
-    ], [canEditCategory, canDeleteCategory]);
+    ], [canEditCategory, canDeleteCategory, countryData, deletingRowId]);
 
     // Subcategories table columns
     const subcategoriesColumns = React.useMemo(() => [
@@ -377,8 +408,8 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                             color="success"
                             size="sm"
                             className="btn-rounded"
-                            title="Edit"
-                            onClick={() => { /* TODO: Implement edit handler */ }}
+                            title="Edit subcategory"
+                            onClick={() => goTo(`/edit-subCategory/${row.original._id}`)}
                         >
                             <i className="mdi mdi-pencil font-size-14" />
                         </Button>
@@ -388,8 +419,14 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                             color="danger"
                             size="sm"
                             className="btn-rounded"
-                            title="Delete"
-                            onClick={() => { /* TODO: Implement delete handler */ }}
+                            title="Delete subcategory"
+                            disabled={deletingRowId === row.original._id}
+                            onClick={() => confirmAndDelete(
+                                `subcategory "${row.original.displayName}"`,
+                                row.original._id,
+                                () => deleteSubcategoryApi(row.original._id),
+                                getSubcategories(countryData._id),
+                            )}
                         >
                             <i className="mdi mdi-delete font-size-14" />
                         </Button>
@@ -397,7 +434,7 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                 </div>
             )
         },
-    ], [canEditSubcategory, canDeleteSubcategory]);
+    ], [canEditSubcategory, canDeleteSubcategory, countryData, deletingRowId]);
 
     // Collections table columns
     const collectionsColumns = React.useMemo(() => [{
@@ -440,8 +477,8 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                             color="success"
                             size="sm"
                             className="btn-rounded"
-                            title="Edit"
-                            onClick={() => { /* TODO: Implement edit handler */ }}
+                            title="Edit collection"
+                            onClick={() => goTo(`/collections/edit-collection/${row.original._id}/EN`)}
                         >
                             <i className="mdi mdi-pencil font-size-14" />
                         </Button>
@@ -451,8 +488,14 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                             color="danger"
                             size="sm"
                             className="btn-rounded"
-                            title="Delete"
-                            onClick={() => { /* TODO: Implement delete handler */ }}
+                            title="Delete collection"
+                            disabled={deletingRowId === row.original._id}
+                            onClick={() => confirmAndDelete(
+                                `collection "${row.original.displayName}"`,
+                                row.original._id,
+                                () => deletePMCollection({ collectionId: row.original._id }),
+                                getCollections(countryData._id),
+                            )}
                         >
                             <i className="mdi mdi-delete font-size-14" />
                         </Button>
@@ -460,7 +503,7 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
                 </div>
             )
         },
-    ], [canEditCollection, canDeleteCollection]);
+    ], [canEditCollection, canDeleteCollection, countryData, deletingRowId]);
 
     // Bookings table columns
     const bookingsColumns = React.useMemo(() => [
@@ -526,34 +569,23 @@ const CountryDetailModal = ({ isOpen, toggle, countryData, loading, error }) => 
         {
             Header: 'Action',
             accessor: 'action',
-            Cell: () => (
+            Cell: ({ row }) => (
                 <div className="d-flex gap-3">
                     {canEditBooking && (
                         <Button
-                            color="success"
+                            color="info"
                             size="sm"
                             className="btn-rounded"
-                            title="Edit"
-                            onClick={() => { /* TODO: Implement edit handler */ }}
+                            title="Open in Customer Console (resend/amend)"
+                            onClick={() => goTo("/admin-ops/customer-console")}
                         >
-                            <i className="mdi mdi-pencil font-size-14" />
-                        </Button>
-                    )}
-                    {canDeleteBooking && (
-                        <Button
-                            color="danger"
-                            size="sm"
-                            className="btn-rounded"
-                            title="Delete"
-                            onClick={() => { /* TODO: Implement delete handler */ }}
-                        >
-                            <i className="mdi mdi-delete font-size-14" />
+                            <i className="mdi mdi-account-search font-size-14" />
                         </Button>
                     )}
                 </div>
             )
         },
-    ], [countryData, canEditBooking, canDeleteBooking]);
+    ], [countryData, canEditBooking]);
 
     return (
         <Modal

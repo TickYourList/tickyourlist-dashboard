@@ -35,6 +35,7 @@ import {
     Form,
 } from "reactstrap";
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
+import { createProviderConfig } from "helpers/provider_helper";
 import {
     searchKlookActivitiesRequest,
     fetchKlookActivityRequest,
@@ -266,20 +267,22 @@ const ImportKlookPackagesModal = ({
     };
 
     // Handle final import after preview
-    const handleFinalImport = () => {
+    const handleFinalImport = async () => {
         const activityId = getActivityId();
 
         // Import each selected package
-        selectedPackages.forEach((packageId) => {
+        for (const packageId of selectedPackages) {
             const action = packageActions[packageId];
 
             if (!action) {
                 showToastError(`No action specified for package ${packageId}`);
-                return;
+                continue;
             }
 
-            if (action.action === "add") {
-                // Create new variant - saga will handle success/error toasts
+            if (action.action === "add" || action.action === "replace") {
+                // Same backend call for both: the sync service upserts — it finds
+                // an existing variant by externalVariantId and refreshes it from
+                // Klook, or creates a new one. Saga handles success/error toasts.
                 dispatch(
                     createVariantFromKlookRequest(
                         tourGroup._id,
@@ -287,14 +290,29 @@ const ImportKlookPackagesModal = ({
                         packageId
                     )
                 );
-            } else if (action.action === "replace") {
-                // Replace existing variant - TODO: Implement replace logic
-                showToastError(`Replace functionality for package ${packageId} will be implemented`);
             } else if (action.action === "connect") {
-                // Connect with existing variant - TODO: Implement connect mapping logic
-                showToastError(`Connect functionality for package ${packageId} will be implemented`);
+                // Link the chosen existing TYL variant to this Klook package
+                // without overwriting its content.
+                if (!action.existingVariantId) {
+                    showToastError(`Pick a variant to connect package ${packageId} to`);
+                    continue;
+                }
+                try {
+                    await createProviderConfig({
+                        tourGroupId: tourGroup._id,
+                        variantId: action.existingVariantId,
+                        provider: "KLOOK_AGENT",
+                        environment: "production",
+                        roles: ["AVAILABILITY", "PRICING", "BOOKING"],
+                        externalProductId: activityId,
+                        externalVariantId: packageId,
+                    });
+                    showToastSuccess(`Package ${packageId} connected to existing variant`);
+                } catch (e) {
+                    showToastError(e?.response?.data?.message || `Failed to connect package ${packageId}`);
+                }
             }
-        });
+        }
 
         // Close modal after a short delay to allow dispatches to complete
         setTimeout(() => {

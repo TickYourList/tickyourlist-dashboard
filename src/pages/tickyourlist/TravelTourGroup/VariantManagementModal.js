@@ -43,6 +43,7 @@ import {
     getTourGroupVariantsAPI,
     addTourGroupVariantAPI,
     updateTourGroupVariantAPI,
+    deleteTourGroupVariantAPI,
     getTourGroupVariantDetailAPI,
     createVariantFromKlookPackage,
     getKlookActivity,
@@ -86,6 +87,11 @@ const VariantManagementModal = ({
     const [previewData, setPreviewData] = useState(null);
     const [createFromKlookModal, setCreateFromKlookModal] = useState(false);
     const [createManualModal, setCreateManualModal] = useState(false);
+    const [editFields, setEditFields] = useState({});
+    const [advancedMode, setAdvancedMode] = useState(false);
+    const [jsonText, setJsonText] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
 
     // Fetch variants when modal opens
     useEffect(() => {
@@ -147,7 +153,22 @@ const VariantManagementModal = ({
         try {
             setLoading(true);
             const response = await getTourGroupVariantDetailAPI(variant._id);
-            setSelectedVariant(response?.data || variant);
+            const doc = response?.data?.variant || response?.data || variant;
+            setSelectedVariant(doc);
+            setEditFields({
+                name: doc.name || "",
+                externalVariantId: doc.externalVariantId || "",
+                status: !!doc.status,
+                openDated: !!doc.openDated,
+                hasTimeSlots: !!doc.hasTimeSlots,
+                slotDurationMinutes: doc.slotDurationMinutes || "",
+                whatsappOnly: !!doc.whatsappOnly,
+                notAvailable: !!doc.notAvailable,
+                isPrivate: !!doc.isPrivate,
+                isHotelPickup: !!doc.isHotelPickup,
+            });
+            setJsonText(JSON.stringify(doc, null, 2));
+            setAdvancedMode(false);
             setEditMode(true);
             setActiveTab("edit");
         } catch (error) {
@@ -155,6 +176,42 @@ const VariantManagementModal = ({
             showToastError("Failed to load variant details");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Save edits — the update route replaces all editable fields from the body,
+    // so always send the full doc merged with the changed fields.
+    const handleSaveVariant = async () => {
+        const doc = selectedVariant;
+        if (!doc?._id) return;
+        let payload;
+        if (advancedMode) {
+            try {
+                payload = JSON.parse(jsonText);
+            } catch (e) {
+                showToastError("Invalid JSON: " + e.message);
+                return;
+            }
+        } else {
+            payload = {
+                ...doc,
+                ...editFields,
+                slotDurationMinutes: editFields.slotDurationMinutes === "" ? undefined : Number(editFields.slotDurationMinutes),
+            };
+        }
+        payload.productId = payload.productId?._id || payload.productId || tourGroup?._id;
+        setSaving(true);
+        try {
+            await updateTourGroupVariantAPI(doc._id, payload);
+            showToastSuccess(`"${payload.name || doc.name}" saved`);
+            setEditMode(false);
+            setActiveTab("list");
+            fetchVariants();
+            if (onSuccess) onSuccess();
+        } catch (e) {
+            showToastError(e?.response?.data?.message || "Failed to save variant");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -174,11 +231,23 @@ const VariantManagementModal = ({
         }
     };
 
-    // Handle delete variant (placeholder - implement based on your API)
-    const handleDeleteVariant = (variant) => {
-        if (window.confirm(`Are you sure you want to delete variant "${variant.name}"?`)) {
-            // TODO: Implement delete API call
-            showToastError("Delete functionality not yet implemented");
+    // Permanently deletes the variant and its tours (cascade on the backend).
+    // For temporarily taking a variant off the site, use the visibility toggle instead.
+    const handleDeleteVariant = async (variant) => {
+        if (!window.confirm(
+            `Permanently delete variant "${variant.name}" and all its tour data?\n\n` +
+            `This cannot be undone. If you only want to take it off the site, use the Visible/Hidden toggle instead.`
+        )) return;
+        setDeletingId(variant._id);
+        try {
+            await deleteTourGroupVariantAPI(variant._id);
+            showToastSuccess(`"${variant.name}" deleted`);
+            setVariants((prev) => prev.filter((v) => v._id !== variant._id));
+            if (onSuccess) onSuccess();
+        } catch (e) {
+            showToastError(e?.response?.data?.message || "Failed to delete variant");
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -286,10 +355,11 @@ const VariantManagementModal = ({
                                             <Button
                                                 color="danger"
                                                 size="sm"
+                                                disabled={deletingId === variant._id}
                                                 onClick={() => handleDeleteVariant(variant)}
-                                                title="Delete Variant"
+                                                title="Delete Variant (permanent)"
                                             >
-                                                <i className="mdi mdi-delete"></i>
+                                                {deletingId === variant._id ? <Spinner size="sm" /> : <i className="mdi mdi-delete"></i>}
                                             </Button>
                                         </div>
                                     </td>
@@ -302,27 +372,101 @@ const VariantManagementModal = ({
         </div>
     );
 
-    // Render edit form (placeholder - implement based on your variant schema)
     const renderEditForm = () => {
         if (!selectedVariant) return <Alert color="warning">No variant selected</Alert>;
 
+        const setField = (k, v) => setEditFields((prev) => ({ ...prev, [k]: v }));
+        const flag = (key, label, hint) => (
+            <Col md={4} key={key}>
+                <div className="form-check form-switch mb-2">
+                    <Input
+                        type="switch"
+                        className="form-check-input"
+                        id={`vm-flag-${key}`}
+                        checked={!!editFields[key]}
+                        onChange={(e) => setField(key, e.target.checked)}
+                    />
+                    <Label className="form-check-label" for={`vm-flag-${key}`} title={hint}>{label}</Label>
+                </div>
+            </Col>
+        );
+
         return (
             <div>
-                <Alert color="info">
-                    Edit form will be implemented based on variant schema. Currently showing preview.
-                </Alert>
-                <pre style={{ maxHeight: "500px", overflow: "auto", backgroundColor: "#f8f9fa", padding: "1rem" }}>
-                    {JSON.stringify(selectedVariant, null, 2)}
-                </pre>
+                <div className="form-check form-switch mb-3">
+                    <Input
+                        type="switch"
+                        className="form-check-input"
+                        id="vm-advanced"
+                        checked={advancedMode}
+                        onChange={(e) => setAdvancedMode(e.target.checked)}
+                    />
+                    <Label className="form-check-label" for="vm-advanced">
+                        Advanced mode — edit the full variant JSON
+                    </Label>
+                </div>
+
+                {advancedMode ? (
+                    <>
+                        <Alert color="warning" className="py-2">
+                            The whole document below is sent as the update payload. Pricing edits here trigger currency re-conversion.
+                        </Alert>
+                        <Input
+                            type="textarea"
+                            rows={20}
+                            style={{ fontFamily: "monospace", fontSize: "0.8rem" }}
+                            value={jsonText}
+                            onChange={(e) => setJsonText(e.target.value)}
+                        />
+                    </>
+                ) : (
+                    <>
+                        <Row>
+                            <Col md={6} className="mb-3">
+                                <Label>Name</Label>
+                                <Input
+                                    value={editFields.name}
+                                    onChange={(e) => setField("name", e.target.value)}
+                                />
+                            </Col>
+                            <Col md={3} className="mb-3">
+                                <Label>External Variant ID</Label>
+                                <Input
+                                    value={editFields.externalVariantId}
+                                    onChange={(e) => setField("externalVariantId", e.target.value)}
+                                />
+                            </Col>
+                            <Col md={3} className="mb-3">
+                                <Label>Slot duration (min)</Label>
+                                <Input
+                                    type="number"
+                                    value={editFields.slotDurationMinutes}
+                                    onChange={(e) => setField("slotDurationMinutes", e.target.value)}
+                                />
+                            </Col>
+                        </Row>
+                        <Row>
+                            {flag("status", "Visible on site")}
+                            {flag("openDated", "Open dated")}
+                            {flag("hasTimeSlots", "Has time slots")}
+                            {flag("whatsappOnly", "WhatsApp only")}
+                            {flag("notAvailable", "Not available")}
+                            {flag("isPrivate", "Private tour")}
+                            {flag("isHotelPickup", "Hotel pickup")}
+                        </Row>
+                        <Alert color="light" className="py-2 mt-2 mb-0">
+                            Pricing, tour content and delivery info aren't editable here — use Advanced mode
+                            or the dedicated pricing pages.
+                        </Alert>
+                    </>
+                )}
+
                 <div className="mt-3">
-                    <Button color="secondary" onClick={() => { setEditMode(false); setActiveTab("list"); }}>
+                    <Button color="secondary" disabled={saving} onClick={() => { setEditMode(false); setActiveTab("list"); }}>
                         Cancel
                     </Button>
-                    <Button color="primary" className="ms-2" onClick={() => {
-                        // TODO: Implement save
-                        showToastSuccess("Save functionality will be implemented");
-                    }}>
-                        Save Changes
+                    <Button color="primary" className="ms-2" disabled={saving} onClick={handleSaveVariant}>
+                        {saving ? <><Spinner size="sm" className="me-1" />Saving…</> : "Save Changes"}
                     </Button>
                 </div>
             </div>

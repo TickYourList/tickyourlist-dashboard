@@ -668,10 +668,6 @@ function LocationManagement() {
                     isGlobalFilter={true}
                     isAddCountryOptions={canAddCountry}
                     handleAddCountryClicks={toggle}
-                    handleDeleteAllCountriesClicks={() => {
-                      // TODO: Implement delete all countries functionality
-                      console.log('Delete all countries clicked');
-                    }}
                     customPageSize={10}
                   />{" "}
                 </CardBody>{" "}

@@ -479,17 +479,6 @@ const TableContainer = ({
                 Add New Country
               </Button>
             </div>
-            <div className="text-sm-end">
-              <Button
-                type="button"
-                color="danger"
-                className="btn-rounded  mb-2 me-2"
-                onClick={handleDeleteAllCountriesClicks}
-              >
-                <i className="mdi mdi-minus me-1" />
-                Delete All Countries
-              </Button>
-            </div>
           </Col>
         )}
         
