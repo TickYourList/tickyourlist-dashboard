@@ -33,6 +33,7 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productDetail, setProductDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -45,6 +46,7 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
     if (!isOpen) {
       setSearchQuery("");
       setSearchResults([]);
+      setSearched(false);
       setSelectedProduct(null);
       setProductDetail(null);
       setActiveTab("detail");
@@ -54,9 +56,18 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
     }
   }, [isOpen]); // eslint-disable-line
 
+  // Auto-search while typing (3+ chars) — no need to press the button.
+  useEffect(() => {
+    if (!isOpen || searchQuery.trim().length < 3) return;
+    const t = setTimeout(() => handleSearch(), 450);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, environment, isOpen]);
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
+    setSearched(true);
     try {
       const res = await searchGlobtixProducts(searchQuery, environment);
       setSearchResults(res?.data || []);
@@ -179,6 +190,15 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
             </Button>
           </Col>
         </Row>
+
+        {/* Empty state: make "no results" explicit instead of silent */}
+        {searched && !searching && searchResults.length === 0 && (
+          <div className="alert alert-warning py-2 small mb-3">
+            No Globaltix products matched “{searchQuery}”. The search covers the <strong>synced {environment} catalog</strong> first,
+            then live Globaltix (Singapore region). If the product you need isn’t synced yet, run a sync from
+            <a href="/globaltix/products" className="ms-1">Globaltix → Products</a> and try again.
+          </div>
+        )}
 
         {/* Search Results */}
         {searchResults.length > 0 && (

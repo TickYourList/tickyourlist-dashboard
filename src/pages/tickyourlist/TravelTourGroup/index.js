@@ -91,6 +91,19 @@ function TourGroupTable() {
   const { tourGroup, currPage, totalCount, error, searchedTourGroups, loading, klookMappings: providerMappings } = useSelector(
     state => state.tourGroup
   )
+  const lastCreated = useSelector(state => state.tourGroup?.lastCreated)
+
+  // Chained flow: as soon as a product is created, offer the supplier link —
+  // no hunting for the row + globe icon afterwards.
+  const lastHandledCreateRef = React.useRef(null)
+  useEffect(() => {
+    const id = lastCreated?._id || lastCreated?.id
+    if (!id || lastHandledCreateRef.current === id) return
+    lastHandledCreateRef.current = id
+    setModal(false)
+    setSelectedTourGroupForGlobtix(lastCreated)
+    setConnectGlobtixModal(true)
+  }, [lastCreated])
 
   const toggle = () => {
     setModal(!modal)

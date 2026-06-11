@@ -194,6 +194,7 @@ export default function tourGroupReducer(state = initialState, action) {
         ...state,
         loading: false,
         tourGroup: [...state.tourGroup, { ...(action.payload || []) }],
+        lastCreated: action.payload || null, // drives the create → connect-supplier chained flow
       }
     }
     case ADD_TOUR_GROUP_FAILURE: {
