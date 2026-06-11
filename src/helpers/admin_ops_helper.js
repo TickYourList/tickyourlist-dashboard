@@ -22,3 +22,9 @@ export const getCustomer360 = (email) => get(`/v1/admin/ops/customer`, { params:
 export const getAutomationsHealth = () => get(`/v1/admin/ops/automations`);
 export const resendConfirmationEmail = (bookingId) =>
   post(`/v1/tyltourcustomerbooking/booking/${bookingId}/resend-confirmation-email`, {});
+
+// ─── Tracking: overview + product journey ────────────────────────────────────
+export const getOpsOverview = (days = 30) => get(`/v1/admin/ops/overview`, { params: { days } });
+export const searchProducts = (q) => get(`/v1/admin/ops/product-search`, { params: { q } });
+export const getProductJourney = (tourGroupId, days = 60) =>
+  get(`/v1/admin/ops/product-journey`, { params: { tourGroupId, days } });
