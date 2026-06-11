@@ -251,6 +251,9 @@ const SidebarContent = props => {
                       </li>
                     </ul>
                   </li>
+                  <li>
+                    <Link to="/admin-ops/provider-credentials">{props.t("All Provider Credentials")}</Link>
+                  </li>
                 </ul>
               </li>
             )}
@@ -288,7 +291,12 @@ const SidebarContent = props => {
                     <Link to="/admin-ops/automations">{props.t("Automations")}</Link>
                   </li>
                   <li>
+                    <Link to="/admin-ops/reviews">{props.t("Reviews")}</Link>
+                  </li>                  <li>
                     <Link to="/admin-ops/audit-log">{props.t("Audit Log")}</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin-ops/settings">{props.t("Settings")}</Link>
                   </li>
                 </ul>
               </li>

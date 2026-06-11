@@ -1,4 +1,4 @@
-import { get, post, axiosApi } from "./api_helper";
+import { get, post, put, axiosApi } from "./api_helper";
 
 // ─── Audit log ───────────────────────────────────────────────────────────────
 export const getAuditLog = (params = {}) => get(`/v1/admin/audit-log`, { params });
@@ -39,3 +39,12 @@ export const globaltixImportContent = ({ globaltixProductId, tourGroupId, enviro
 export const getProductSetup = (tourGroupId) => get(`/v1/admin/ops/product-setup/${tourGroupId}`);
 export const setTourGroupLive = (tourGroupId, status) =>
   axiosApi.patch(`/v1/tyltraveltourgroup/tour-group/${tourGroupId}/availability`, { status }).then((r) => r.data);
+
+// ─── Ops settings / credentials / reviews ────────────────────────────────────
+export const getOpsConfigSettings = () => get(`/v1/admin/ops/config`);
+export const updateOpsConfigSettings = (patch) => put(`/v1/admin/ops/config`, patch);
+export const getProviderCredentials = () => get(`/v1/admin/ops/provider-credentials`);
+export const saveProviderCredentials = (payload) => post(`/v1/admin/ops/provider-credentials`, payload);
+export const toggleProviderCredentials = (id) => post(`/v1/admin/ops/provider-credentials/${id}/toggle`, {});
+export const getModerationReviews = (show = "hidden") => get(`/v1/admin/ops/reviews`, { params: { show } });
+export const moderateReview = (id, active) => post(`/v1/admin/ops/reviews/${id}/moderate`, { active });

@@ -207,6 +207,9 @@ import CustomerConsole from "../pages/tickyourlist/AdminOps/CustomerConsole";
 import AutomationsHealth from "../pages/tickyourlist/AdminOps/AutomationsHealth";
 import OpsOverview from "../pages/tickyourlist/AdminOps/OpsOverview";
 import ProductJourney from "../pages/tickyourlist/AdminOps/ProductJourney";
+import OpsSettings from "../pages/tickyourlist/AdminOps/OpsSettings";
+import ProviderCredentials from "../pages/tickyourlist/AdminOps/ProviderCredentials";
+import ReviewsModeration from "../pages/tickyourlist/AdminOps/ReviewsModeration";
 
 // Email Templates
 import EmailTemplates from "../pages/EmailTemplates/index";
@@ -453,6 +456,9 @@ const authProtectedRoutes = [
   { path: "/admin-ops/automations", component: <GlobaltixAuthGuard><AutomationsHealth /></GlobaltixAuthGuard> },
   { path: "/admin-ops/overview", component: <GlobaltixAuthGuard><OpsOverview /></GlobaltixAuthGuard> },
   { path: "/admin-ops/product-journey", component: <GlobaltixAuthGuard><ProductJourney /></GlobaltixAuthGuard> },
+  { path: "/admin-ops/settings", component: <GlobaltixAuthGuard><OpsSettings /></GlobaltixAuthGuard> },
+  { path: "/admin-ops/provider-credentials", component: <GlobaltixAuthGuard><ProviderCredentials /></GlobaltixAuthGuard> },
+  { path: "/admin-ops/reviews", component: <GlobaltixAuthGuard><ReviewsModeration /></GlobaltixAuthGuard> },
 
   // Globaltix Integration (password-gated — hidden from employees)
   { path: "/globaltix/products", component: <GlobaltixAuthGuard><GlobtixProductsPage /></GlobaltixAuthGuard> },
