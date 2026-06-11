@@ -85,14 +85,15 @@ const EmailTemplates = () => {
 
   // Quick customization for built-in template preview
   const [quickCustomization, setQuickCustomization] = useState({
-    primaryColor: "#4CAF50",
-    secondaryColor: "#45a049",
+    primaryColor: "#FF007E",
+    secondaryColor: "#E0006F",
     textColor: "#333333",
     backgroundColor: "#f4f7fa",
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   });
 
   const QUICK_PRESETS = [
+    { name: "TYL Pink", primary: "#FF007E", secondary: "#E0006F" },
     { name: "Green", primary: "#4CAF50", secondary: "#45a049" },
     { name: "Blue", primary: "#2196F3", secondary: "#1976D2" },
     { name: "Purple", primary: "#9C27B0", secondary: "#7B1FA2" },

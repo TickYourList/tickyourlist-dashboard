@@ -75,8 +75,8 @@ const CreateCampaign = () => {
     isABTest: false,
     abTestSubjectB: "",
     customization: {
-      primaryColor: "#4CAF50",
-      secondaryColor: "#45a049",
+      primaryColor: "#FF007E",
+      secondaryColor: "#E0006F",
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     },
     enableTracking: true,
@@ -296,7 +296,7 @@ const CreateCampaign = () => {
                       style={{
                         width: "32px",
                         height: "32px",
-                        backgroundColor: step >= s.num ? "#4CAF50" : "#e9ecef",
+                        backgroundColor: step >= s.num ? "#FF007E" : "#e9ecef",
                         color: step >= s.num ? "#fff" : "#6c757d",
                       }}
                     >

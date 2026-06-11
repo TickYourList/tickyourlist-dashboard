@@ -83,13 +83,13 @@ const CreateEditTemplate = () => {
 
   // Customization state
   const [customization, setCustomization] = useState({
-    primaryColor: "#4CAF50",
-    secondaryColor: "#45a049",
+    primaryColor: "#FF007E",
+    secondaryColor: "#E0006F",
     accentColor: "#27ae60",
     textColor: "#333333",
     backgroundColor: "#f4f7fa",
-    headerBgColor: "#4CAF50",
-    buttonColor: "#4CAF50",
+    headerBgColor: "#FF007E",
+    buttonColor: "#FF007E",
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     logoUrl: "https://tickyourlist-images.s3.ap-south-1.amazonaws.com/tyllogo-white.png",
   });
@@ -110,7 +110,7 @@ const CreateEditTemplate = () => {
 
   // Color presets
   const COLOR_PRESETS = [
-    { name: "TickYourList Green", primary: "#4CAF50", secondary: "#45a049", accent: "#27ae60" },
+    { name: "TickYourList Pink", primary: "#FF007E", secondary: "#E0006F", accent: "#FF338F" },
     { name: "Ocean Blue", primary: "#2196F3", secondary: "#1976D2", accent: "#03A9F4" },
     { name: "Royal Purple", primary: "#9C27B0", secondary: "#7B1FA2", accent: "#E040FB" },
     { name: "Sunset Orange", primary: "#FF5722", secondary: "#E64A19", accent: "#FF9800" },

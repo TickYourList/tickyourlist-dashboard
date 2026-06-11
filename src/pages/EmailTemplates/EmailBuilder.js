@@ -41,7 +41,7 @@ const getDefaultContent = (type) => {
     header: { text: "Your Email Headline", size: "h1", align: "center" },
     text: { text: "Enter your text content here. You can use {{customerName}} to personalize.", align: "left" },
     image: { src: "https://via.placeholder.com/600x200", alt: "Image", width: "100%" },
-    button: { text: "Click Here", url: "https://www.tickyourlist.com", color: "#4CAF50", align: "center" },
+    button: { text: "Click Here", url: "https://www.tickyourlist.com", color: "#FF007E", align: "center" },
     divider: { style: "solid", color: "#e0e0e0" },
     spacer: { height: "20px" },
     columns: { left: "Left column content", right: "Right column content" },
@@ -98,7 +98,7 @@ const EmailBuilder = () => {
   const [blocks, setBlocks] = useState([
     { id: "1", type: "header", content: { text: "Welcome to TickYourList!", size: "h1", align: "center" } },
     { id: "2", type: "text", content: { text: "Hello {{customerName}},\n\nThank you for being a valued customer!", align: "left" } },
-    { id: "3", type: "button", content: { text: "Explore Tours", url: "https://www.tickyourlist.com", color: "#4CAF50", align: "center" } },
+    { id: "3", type: "button", content: { text: "Explore Tours", url: "https://www.tickyourlist.com", color: "#FF007E", align: "center" } },
   ]);
   
   const [selectedBlock, setSelectedBlock] = useState(null);
@@ -110,7 +110,7 @@ const EmailBuilder = () => {
 
   // Customization
   const [customization, setCustomization] = useState({
-    primaryColor: "#4CAF50",
+    primaryColor: "#FF007E",
     backgroundColor: "#f4f7fa",
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   });
