@@ -16,3 +16,9 @@ export const getWaitlist = (params = {}) => get(`/v1/admin/ops/waitlist`, { para
 // ─── Booking amendment (admin) ───────────────────────────────────────────────
 export const amendBooking = (bookingId, { newDate, newStartTime }) =>
   post(`/v1/tyltourcustomerbooking/booking/${bookingId}/amend`, { newDate, newStartTime });
+
+// ─── Customer 360 / automations health ──────────────────────────────────────
+export const getCustomer360 = (email) => get(`/v1/admin/ops/customer`, { params: { email } });
+export const getAutomationsHealth = () => get(`/v1/admin/ops/automations`);
+export const resendConfirmationEmail = (bookingId) =>
+  post(`/v1/tyltourcustomerbooking/booking/${bookingId}/resend-confirmation-email`, {});

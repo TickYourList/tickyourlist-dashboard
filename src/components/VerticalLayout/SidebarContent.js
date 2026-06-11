@@ -264,6 +264,12 @@ const SidebarContent = props => {
                       <li>
                         <Link to="/admin-ops/waitlist">{props.t("Waitlist")}</Link>
                       </li>
+                      <li>
+                        <Link to="/admin-ops/customer-console">{props.t("Customer Console")}</Link>
+                      </li>
+                      <li>
+                        <Link to="/admin-ops/automations">{props.t("Automations")}</Link>
+                      </li>
                     </ul>
                   </li>
                 </ul>
