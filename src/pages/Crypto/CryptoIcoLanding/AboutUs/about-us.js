@@ -12,8 +12,8 @@ import client6 from "../../../../assets/images/clients/6.png";
 
 //swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Navigation, Autoplay } from "swiper";
-import "../../../../../node_modules/swiper/swiper.scss";
+import { Pagination, Navigation, Autoplay } from "swiper/modules";
+import "swiper/swiper-bundle.css";
 
 const AboutUs = () => {
 

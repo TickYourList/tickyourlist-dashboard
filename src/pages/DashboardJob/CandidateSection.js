@@ -11,8 +11,8 @@ import avatar4 from "../../assets/images/users/avatar-4.jpg";
 
 //swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Navigation, Autoplay } from "swiper";
-import "../../../node_modules/swiper/swiper.scss";
+import { Pagination, Navigation, Autoplay } from "swiper/modules";
+import "swiper/swiper-bundle.css";
 
 const CandidateSection = () => {
     return (

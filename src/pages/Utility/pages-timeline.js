@@ -6,8 +6,8 @@ import Breadcrumbs from "../../components/Common/Breadcrumb"
 
 //swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Navigation } from "swiper";
-import "../../../node_modules/swiper/swiper.scss";
+import { Pagination, Navigation } from "swiper/modules";
+import "swiper/swiper-bundle.css";
 
 const PagesTimeline = () => { 
   const statuses = [
