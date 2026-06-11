@@ -48,3 +48,14 @@ export const saveProviderCredentials = (payload) => post(`/v1/admin/ops/provider
 export const toggleProviderCredentials = (id) => post(`/v1/admin/ops/provider-credentials/${id}/toggle`, {});
 export const getModerationReviews = (show = "hidden") => get(`/v1/admin/ops/reviews`, { params: { show } });
 export const moderateReview = (id, active) => post(`/v1/admin/ops/reviews/${id}/moderate`, { active });
+
+// ─── TylCash management ──────────────────────────────────────────────────────
+export const getTylCashConfig = () => get(`/v1/admin/tylcash/config`);
+export const updateTylCashConfig = (data) => put(`/v1/admin/tylcash/config`, data);
+export const getTylCashAnalytics = (params = {}) => get(`/v1/admin/tylcash/analytics`, { params });
+export const getCustomerTylCash = (customerId, page = 1, limit = 20) =>
+  get(`/v1/admin/tylcash/customer/${customerId}?page=${page}&limit=${limit}`);
+export const adjustCustomerTylCash = (customerId, amount, reason) =>
+  post(`/v1/admin/tylcash/customer/${customerId}/adjust`, { amount, reason });
+export const recalculateCustomerTylCash = (customerId) =>
+  post(`/v1/admin/tylcash/customer/${customerId}/recalculate`, {});

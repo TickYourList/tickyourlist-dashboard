@@ -279,6 +279,9 @@ const SidebarContent = props => {
                     <Link to="/admin-ops/customer-console">{props.t("Customer Console")}</Link>
                   </li>
                   <li>
+                    <Link to="/admin-ops/tylcash">{props.t("TylCash Management")}</Link>
+                  </li>
+                  <li>
                     <Link to="/admin-ops/waitlist">{props.t("Waitlist")}</Link>
                   </li>
                   <li>
