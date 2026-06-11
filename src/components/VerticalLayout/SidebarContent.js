@@ -249,34 +249,46 @@ const SidebarContent = props => {
                       <li>
                         <Link to="/globaltix/credentials">{props.t("Credentials")}</Link>
                       </li>
-                      <li>
-                        <Link to="/admin-ops/overview">{props.t("Overview")}</Link>
-                      </li>
-                      <li>
-                        <Link to="/admin-ops/product-journey">{props.t("Product Journey")}</Link>
-                      </li>
-                      <li>
-                        <Link to="/margin-analytics">{props.t("Margin Analytics")}</Link>
-                      </li>
-                      <li>
-                        <Link to="/admin-ops/audit-log">{props.t("Audit Log")}</Link>
-                      </li>
-                      <li>
-                        <Link to="/admin-ops/agents">{props.t("Agents (B2B)")}</Link>
-                      </li>
-                      <li>
-                        <Link to="/admin-ops/gift-cards">{props.t("Gift Cards")}</Link>
-                      </li>
-                      <li>
-                        <Link to="/admin-ops/waitlist">{props.t("Waitlist")}</Link>
-                      </li>
-                      <li>
-                        <Link to="/admin-ops/customer-console">{props.t("Customer Console")}</Link>
-                      </li>
-                      <li>
-                        <Link to="/admin-ops/automations">{props.t("Automations")}</Link>
-                      </li>
                     </ul>
+                  </li>
+                </ul>
+              </li>
+            )}
+
+            {/* ── BUSINESS OPS (cross-provider tracking & admin — same gate) ── */}
+            {globaltixVisible && (
+              <li>
+                <Link to="/#" className="has-arrow">
+                  <i className="bx bx-line-chart"></i>
+                  <span>{props.t("Business Ops")}</span>
+                </Link>
+                <ul className="sub-menu">
+                  <li>
+                    <Link to="/admin-ops/overview">{props.t("Overview")}</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin-ops/product-journey">{props.t("Product Journey")}</Link>
+                  </li>
+                  <li>
+                    <Link to="/margin-analytics">{props.t("Margin Analytics")}</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin-ops/customer-console">{props.t("Customer Console")}</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin-ops/waitlist">{props.t("Waitlist")}</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin-ops/gift-cards">{props.t("Gift Cards")}</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin-ops/agents">{props.t("Agents (B2B)")}</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin-ops/automations">{props.t("Automations")}</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin-ops/audit-log">{props.t("Audit Log")}</Link>
                   </li>
                 </ul>
               </li>
