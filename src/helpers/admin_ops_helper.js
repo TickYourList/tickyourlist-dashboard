@@ -1,4 +1,4 @@
-import { get, post } from "./api_helper";
+import { get, post, axiosApi } from "./api_helper";
 
 // ─── Audit log ───────────────────────────────────────────────────────────────
 export const getAuditLog = (params = {}) => get(`/v1/admin/audit-log`, { params });
@@ -28,3 +28,9 @@ export const getOpsOverview = (days = 30) => get(`/v1/admin/ops/overview`, { par
 export const searchProducts = (q) => get(`/v1/admin/ops/product-search`, { params: { q } });
 export const getProductJourney = (tourGroupId, days = 60) =>
   get(`/v1/admin/ops/product-journey`, { params: { tourGroupId, days } });
+
+// ─── Variant visibility + provider content import ───────────────────────────
+export const setVariantVisibility = (variantId, status) =>
+  axiosApi.patch(`/v1/tyltraveltourgroupvariant/variant/${variantId}/availability`, { status }).then((r) => r.data);
+export const globaltixImportContent = ({ globaltixProductId, tourGroupId, environment = "staging", fields }) =>
+  post(`/v1/globaltix/sync/import-content`, { globaltixProductId, tourGroupId, environment, fields });

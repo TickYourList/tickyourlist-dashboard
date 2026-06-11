@@ -52,6 +52,7 @@ import { showToastSuccess, showToastError } from "helpers/toastBuilder";
 import ImportKlookPackagesModal from "./ImportKlookPackagesModal";
 import CreateVariantManualModal from "./CreateVariantManualModal";
 import VariantProviderConfig from "./VariantProviderConfig";
+import { setVariantVisibility } from "helpers/admin_ops_helper";
 
 const VariantManagementModal = ({
     isOpen,
@@ -60,6 +61,22 @@ const VariantManagementModal = ({
     onSuccess,
 }) => {
     const [variants, setVariants] = useState([]);
+    const [togglingId, setTogglingId] = useState(null);
+
+    const handleToggleVisibility = async (variant) => {
+        setTogglingId(variant._id);
+        try {
+            await setVariantVisibility(variant._id, !variant.status);
+            setVariants((prev) => prev.map((v) => (v._id === variant._id ? { ...v, status: !variant.status } : v)));
+            showToastSuccess(!variant.status
+                ? `"${variant.name}" is now visible on the site`
+                : `"${variant.name}" is hidden from the site (bookings/data kept)`);
+        } catch (e) {
+            showToastError(e?.response?.data?.message || "Could not change visibility");
+        } finally {
+            setTogglingId(null);
+        }
+    };
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("list");
     const [searchQuery, setSearchQuery] = useState("");
@@ -227,11 +244,18 @@ const VariantManagementModal = ({
                                         )}
                                     </td>
                                     <td>
-                                        {variant.status ? (
-                                            <Badge color="success">Active</Badge>
-                                        ) : (
-                                            <Badge color="secondary">Inactive</Badge>
-                                        )}
+                                        <Button
+                                            size="sm"
+                                            color={variant.status ? "success" : "secondary"}
+                                            outline={!variant.status}
+                                            title={variant.status ? "Visible on the site — click to hide" : "Hidden from the site — click to show"}
+                                            disabled={togglingId === variant._id}
+                                            onClick={() => handleToggleVisibility(variant)}
+                                        >
+                                            {togglingId === variant._id
+                                                ? <Spinner size="sm" />
+                                                : variant.status ? <><i className="mdi mdi-eye me-1" />Visible</> : <><i className="mdi mdi-eye-off me-1" />Hidden</>}
+                                        </Button>
                                     </td>
                                     <td>
                                         <div className="d-flex gap-1">

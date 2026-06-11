@@ -7,6 +7,7 @@ import {
 } from "reactstrap";
 import classnames from "classnames";
 import { showToastSuccess, showToastError } from "helpers/toastBuilder";
+import { globaltixImportContent } from "helpers/admin_ops_helper";
 import {
   searchGlobtixProducts,
   getGlobtixProductDetail,
@@ -34,6 +35,36 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [importFields, setImportFields] = useState(["images", "description"]);
+  const [importing, setImporting] = useState(false);
+
+  const IMPORT_FIELD_OPTIONS = [
+    { key: "name", label: "Name" },
+    { key: "description", label: "Description / summary" },
+    { key: "images", label: "Images" },
+    { key: "highlights", label: "Highlights" },
+    { key: "inclusions", label: "Inclusions" },
+    { key: "howToUse", label: "How to use / ticket info" },
+  ];
+
+  const handleImportContent = async (productId) => {
+    if (!importFields.length) { showToastError("Pick at least one field to replace"); return; }
+    if (!window.confirm(`Replace ${importFields.join(", ")} of "${tourGroup?.name}" with Globaltix data? This overwrites the current values.`)) return;
+    setImporting(true);
+    try {
+      const res = await globaltixImportContent({
+        globaltixProductId: productId,
+        tourGroupId: tourGroup._id,
+        environment,
+        fields: importFields,
+      });
+      showToastSuccess(`Replaced: ${(res?.data?.applied || []).join(", ")}`, "Content imported");
+    } catch (err) {
+      showToastError(err?.response?.data?.message || "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productDetail, setProductDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -385,6 +416,39 @@ const ConnectGlobtixModal = ({ isOpen, toggle, tourGroup, onSuccess, initialProd
             <i className="bx bx-search-alt" style={{ fontSize: 40 }}></i>
             <p className="mt-2">Search for a Globaltix product to link to this tour group.</p>
           </div>
+        )}
+        {/* Replace TYL content with provider data — field-by-field opt-in */}
+        {tourGroup && (selectedProduct || tourGroup?.globaltixProductId) && (
+          <Card className="mt-2">
+            <CardBody className="py-2">
+              <div className="d-flex flex-wrap align-items-center gap-3">
+                <strong className="small">Replace product data from Globaltix:</strong>
+                {IMPORT_FIELD_OPTIONS.map((f) => (
+                  <label key={f.key} className="small d-flex align-items-center gap-1 mb-0" style={{ cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={importFields.includes(f.key)}
+                      onChange={(e) =>
+                        setImportFields((prev) => (e.target.checked ? [...prev, f.key] : prev.filter((k) => k !== f.key)))
+                      }
+                    />
+                    {f.label}
+                  </label>
+                ))}
+                <Button
+                  size="sm"
+                  color="warning"
+                  disabled={importing}
+                  onClick={() => handleImportContent(selectedProduct?.globaltixProductId || tourGroup?.globaltixProductId)}
+                >
+                  {importing ? <Spinner size="sm" /> : "Replace selected"}
+                </Button>
+              </div>
+              <div className="text-muted mt-1" style={{ fontSize: 11 }}>
+                Syncs fresh data from Globaltix first, then overwrites only the ticked fields. Unticked content is untouched.
+              </div>
+            </CardBody>
+          </Card>
         )}
       </ModalBody>
 
