@@ -61,7 +61,11 @@ const SupportTickets = () => {
         setReplying(true);
         try {
             const res = await replySupportTicket(selected._id, reply.trim());
-            showToastSuccess("Reply sent — the customer has been emailed");
+            if (res?.data?.emailSent === false) {
+                showToastError("Reply saved, but the email to the customer failed — retry or contact them directly");
+            } else {
+                showToastSuccess("Reply sent — the customer has been emailed");
+            }
             setSelected(res?.data?.ticket || null);
             setReply("");
             load(page);
@@ -140,7 +144,10 @@ const SupportTickets = () => {
                                         const last = t.messages?.[t.messages.length - 1];
                                         return (
                                             <tr key={t._id} style={{ cursor: "pointer" }} onClick={() => setSelected(t)}>
-                                                <td><code>{t.ticketNumber}</code></td>
+                                                <td>
+                                                    <code>{t.ticketNumber}</code>
+                                                    {t.subject && <div><small className="text-muted">{t.subject}</small></div>}
+                                                </td>
                                                 <td>
                                                     <div className="fw-semibold">{t.name}</div>
                                                     <small className="text-muted">{t.email}</small>
@@ -183,7 +190,10 @@ const SupportTickets = () => {
                                     <strong>{selected.name}</strong> · <a href={`mailto:${selected.email}`}>{selected.email}</a>
                                     {selected.phone ? <> · {selected.phone}</> : null}
                                     <br />
-                                    <small className="text-muted">Opened {new Date(selected.createdAt).toLocaleString()}</small>
+                                    <small className="text-muted">
+                                        {selected.subject ? <>Topic: {selected.subject} · </> : null}
+                                        Opened {new Date(selected.createdAt).toLocaleString()}
+                                    </small>
                                 </p>
 
                                 <div style={{ maxHeight: 360, overflowY: "auto" }} className="mb-3">
