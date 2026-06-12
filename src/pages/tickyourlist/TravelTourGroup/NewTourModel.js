@@ -32,6 +32,11 @@ import {
 import { getCities } from "../../../store/travelCity/action"
 import EditorReact from "./Editor"
 import CreatableSelect from "react-select/creatable"
+import ItineraryBuilder, {
+  itineraryToFormValue,
+  itineraryToPayload,
+  appendItineraryFiles,
+} from "./ItineraryBuilder"
 
 export default function NewTourModel({ setModal, isEdit, editId }) {
   const [activeTab, setactiveTab] = useState(1)
@@ -91,7 +96,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
     shortSummary: tourGroupById?.shortSummary || "",
     inclusions: tourGroupById?.inclusions || "",
     exclusions: tourGroupById?.exclusions || "",
-    itinerary: tourGroupById?.itinerary || "",
+    itinerary: itineraryToFormValue(tourGroupById?.itinerary),
     additionalInfo: tourGroupById?.additionalInfo || "",
     ticketDeliveryInfo: tourGroupById?.ticketDeliveryInfo || "",
     confirmedTicketInfo: tourGroupById?.confirmedTicketInfo || "",
@@ -214,6 +219,17 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
 
   const validationSchema = Yup.object({
     name: Yup.string().required("Tour Group name is required"),
+    itinerary: Yup.mixed()
+      .nullable()
+      .test(
+        "itinerary-step-titles",
+        "Every itinerary step needs a title",
+        value => {
+          if (!value || !Array.isArray(value.steps) || !value.steps.length)
+            return true
+          return value.steps.every(s => s.title && s.title.trim())
+        }
+      ),
     // flowType: Yup.string(),
     // neighbourhood: Yup.string(),
     // url: Yup.string(),
@@ -432,6 +448,12 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
       ...Object.fromEntries(keyFields.map(key => [key, values?.[key]])),
       allTags: values.allTags.map(tag => tag.value),
     }
+    // Itinerary: send the structured payload; on edit, deleting all steps of
+    // a previously saved itinerary must clear it server-side too.
+    data.itinerary = itineraryToPayload(values.itinerary)
+    if (isEdit && !data.itinerary && tourGroupById?.itinerary) {
+      data.clearItinerary = true
+    }
     const nullValidatedData = emptyStringToNull(data)
     const formData = new FormData()
 
@@ -459,6 +481,9 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
         formData.append(`safetyVideos`, img.image)
       }
     })
+
+    // New itinerary step media (named step_{order}_image_{i} for matching)
+    appendItineraryFiles(formData, values.itinerary)
 
     /*  console.log(JSON.stringify(values.imageUploads)) */
     if (isEdit) {
@@ -1673,9 +1698,9 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                       className="form-label"
                                       htmlFor="itinerary"
                                     >
-                                      Itinerary
+                                      Itinerary (optional)
                                     </Label>
-                                    <EditorReact
+                                    <ItineraryBuilder
                                       value={values.itinerary}
                                       onChange={val =>
                                         setFieldValue("itinerary", val)
