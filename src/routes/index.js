@@ -204,6 +204,7 @@ import Agents from "../pages/tickyourlist/AdminOps/Agents";
 import GiftCardsAdmin from "../pages/tickyourlist/AdminOps/GiftCards";
 import WaitlistAdmin from "../pages/tickyourlist/AdminOps/Waitlist";
 import CustomerConsole from "../pages/tickyourlist/AdminOps/CustomerConsole";
+import RegisteredCustomers from "../pages/tickyourlist/AdminOps/RegisteredCustomers";
 import TylCashManagement from "../pages/tickyourlist/AdminOps/TylCashManagement";
 import SupportTickets from "../pages/tickyourlist/AdminOps/SupportTickets";
 import AutomationsHealth from "../pages/tickyourlist/AdminOps/AutomationsHealth";
@@ -455,6 +456,7 @@ const authProtectedRoutes = [
   { path: "/admin-ops/gift-cards", component: <GlobaltixAuthGuard><GiftCardsAdmin /></GlobaltixAuthGuard> },
   { path: "/admin-ops/waitlist", component: <GlobaltixAuthGuard><WaitlistAdmin /></GlobaltixAuthGuard> },
   { path: "/admin-ops/customer-console", component: <GlobaltixAuthGuard><CustomerConsole /></GlobaltixAuthGuard> },
+  { path: "/admin-ops/registered-customers", component: <GlobaltixAuthGuard><RegisteredCustomers /></GlobaltixAuthGuard> },
   { path: "/admin-ops/tylcash", component: <GlobaltixAuthGuard><TylCashManagement /></GlobaltixAuthGuard> },
   { path: "/admin-ops/support-tickets", component: <GlobaltixAuthGuard><SupportTickets /></GlobaltixAuthGuard> },
   { path: "/admin-ops/automations", component: <GlobaltixAuthGuard><AutomationsHealth /></GlobaltixAuthGuard> },

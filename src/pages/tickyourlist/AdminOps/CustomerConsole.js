@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card, CardBody, Col, Container, Row, Table, Spinner, Button, Input, Badge,
 } from "reactstrap";
@@ -26,12 +26,11 @@ const CustomerConsole = () => {
   const [amendDate, setAmendDate] = useState("");
   const [amending, setAmending] = useState(false);
 
-  const load = async (e) => {
-    e?.preventDefault();
-    if (!email.includes("@")) return;
+  const doLoad = async (lookupEmail) => {
+    if (!lookupEmail.includes("@")) return;
     setLoading(true);
     try {
-      const res = await getCustomer360(email.trim());
+      const res = await getCustomer360(lookupEmail.trim());
       setData(res?.data || null);
     } catch (err) {
       showToastError(err?.response?.data?.message || "Lookup failed");
@@ -40,6 +39,20 @@ const CustomerConsole = () => {
       setLoading(false);
     }
   };
+
+  const load = async (e) => {
+    e?.preventDefault();
+    await doLoad(email);
+  };
+
+  // Deep link from the Registered Customers list: /admin-ops/customer-console?email=…
+  useEffect(() => {
+    const qpEmail = new URLSearchParams(window.location.search).get("email");
+    if (qpEmail) {
+      setEmail(qpEmail);
+      doLoad(qpEmail);
+    }
+  }, []);
 
   const resend = async (bookingId) => {
     setResendingId(bookingId);
@@ -105,6 +118,10 @@ const CustomerConsole = () => {
                         <div className="fs-5 fw-semibold">{[acct.firstName, acct.lastName].filter(Boolean).join(" ") || "—"}</div>
                         <div className="text-muted">{acct.email}</div>
                         <div className="mt-2 d-flex gap-2 flex-wrap">
+                          {acct.verified ? <Badge color="success">Verified</Badge> : <Badge color="warning">Unverified</Badge>}
+                          <Badge color={acct.status ? "success" : "secondary"}>{acct.status ? "Active" : "Inactive"}</Badge>
+                          <Badge color="light" className="text-muted">{acct.googleId ? "Google sign-in" : "Email signup"}</Badge>
+                          {acct.welcomeEmailSentAt && <Badge color="info">Welcomed</Badge>}
                           {acct.isAgent && <Badge color="danger">Agent · {acct.agentCommissionPct}%</Badge>}
                           {acct.referralCode && <Badge color="light" className="text-muted">Ref code: {acct.referralCode}</Badge>}
                           {acct.referredBy && <Badge color="info">Referred user</Badge>}

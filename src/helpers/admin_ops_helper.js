@@ -19,6 +19,7 @@ export const amendBooking = (bookingId, { newDate, newStartTime }) =>
 
 // ─── Customer 360 / automations health ──────────────────────────────────────
 export const getCustomer360 = (email) => get(`/v1/admin/ops/customer`, { params: { email } });
+export const getRegisteredCustomers = (params = {}) => get(`/v1/admin/ops/registered-customers`, { params });
 export const getAutomationsHealth = () => get(`/v1/admin/ops/automations`);
 export const resendConfirmationEmail = (bookingId) =>
   post(`/v1/tyltourcustomerbooking/booking/${bookingId}/resend-confirmation-email`, {});
