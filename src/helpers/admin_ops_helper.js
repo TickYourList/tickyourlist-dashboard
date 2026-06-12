@@ -59,3 +59,10 @@ export const adjustCustomerTylCash = (customerId, amount, reason) =>
   post(`/v1/admin/tylcash/customer/${customerId}/adjust`, { amount, reason });
 export const recalculateCustomerTylCash = (customerId) =>
   post(`/v1/admin/tylcash/customer/${customerId}/recalculate`, {});
+
+// ─── Support tickets ─────────────────────────────────────────────────────────
+export const getSupportTickets = (params = {}) => get(`/v1/support/tickets`, { params });
+export const replySupportTicket = (ticketId, message) =>
+  post(`/v1/support/tickets/${ticketId}/reply`, { message });
+export const setSupportTicketStatus = (ticketId, status) =>
+  put(`/v1/support/tickets/${ticketId}/status`, { status });
