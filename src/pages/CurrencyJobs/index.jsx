@@ -135,6 +135,7 @@ const CurrencyJobs = () => {
   const [settings, setSettings] = useState(null);
   const [bounds, setBounds] = useState({});
   const [savingSettings, setSavingSettings] = useState(false);
+  const [rateHistory, setRateHistory] = useState([]);
   const timerRef = useRef(null);
 
   const loadSummary = useCallback(async () => {
@@ -170,11 +171,20 @@ const CurrencyJobs = () => {
     }
   }, []);
 
+  const loadRateHistory = useCallback(async () => {
+    try {
+      const res = await get(`${BASE}/rate-history?currency=INR&limit=20`);
+      setRateHistory((res?.data || res)?.history || []);
+    } catch (e) {
+      console.warn("rate history load failed", e?.message);
+    }
+  }, []);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([loadSummary(), loadRuns(), loadSettings()]);
+    await Promise.all([loadSummary(), loadRuns(), loadSettings(), loadRateHistory()]);
     setLoading(false);
-  }, [loadSummary, loadRuns, loadSettings]);
+  }, [loadSummary, loadRuns, loadSettings, loadRateHistory]);
 
   const saveSettings = async () => {
     setSavingSettings(true);
@@ -574,6 +584,27 @@ const CurrencyJobs = () => {
             </span>
           </>
         )}
+      </Card>
+
+      {/* ── Rate history (audit) ─────────────────────────────────────────── */}
+      <Card size="small" title="Exchange-rate history (USD→INR, recent fetches)" style={{ marginTop: 16 }}>
+        <Table
+          rowKey={(r, i) => `${r.fetchedAt}-${i}`}
+          size="small"
+          pagination={{ pageSize: 8 }}
+          dataSource={rateHistory}
+          locale={{ emptyText: "No rate snapshots yet" }}
+          columns={[
+            { title: "Fetched at", dataIndex: "fetchedAt", render: fmtTime },
+            { title: "Provider", dataIndex: "provider", render: (p) => <Tag>{p}</Tag> },
+            { title: "USD→INR", dataIndex: "rate", render: (r) => (r != null ? r : "—") },
+            { title: "Currencies", dataIndex: "ratesCount" },
+            { title: "Status", dataIndex: "isGood", render: (g, r) => g ? <Tag color="green">good</Tag> : <Tooltip title={r.rejectionReason}><Tag color="red">rejected</Tag></Tooltip> },
+          ]}
+        />
+        <div style={{ fontSize: 12, color: "#888", marginTop: 8 }}>
+          Every fetched rate set is recorded (1-year retention) — answers “what was the rate when this booking was made?”. Showing USD→INR; the API supports any currency.
+        </div>
       </Card>
 
       {/* ── Glossary: what each term means ───────────────────────────────── */}
