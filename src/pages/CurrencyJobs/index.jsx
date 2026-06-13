@@ -236,6 +236,69 @@ const CurrencyJobs = () => {
         </div>
       </div>
 
+      {summary?.fxHealth && (
+        <Card size="small" style={{ marginBottom: 12 }}>
+          <Row gutter={16}>
+            <Col xs={12} md={6}>
+              <Statistic
+                title="Rates age"
+                value={
+                  summary.fxHealth.ratesAgeMs == null
+                    ? "—"
+                    : ago(Date.now() - summary.fxHealth.ratesAgeMs)
+                }
+                valueStyle={{ fontSize: 16 }}
+              />
+            </Col>
+            <Col xs={12} md={6}>
+              <Statistic
+                title="Last good source"
+                value={summary.fxHealth.lastGoodProvider || "—"}
+                valueStyle={{ fontSize: 16 }}
+              />
+              <div style={{ fontSize: 11, color: "#888" }}>
+                {fmtTime(summary.fxHealth.lastGoodAt)}
+              </div>
+            </Col>
+            <Col xs={12} md={6}>
+              <Statistic
+                title="Primary quota (month)"
+                value={
+                  summary.fxHealth.quotaUsed == null
+                    ? "—"
+                    : `${summary.fxHealth.quotaUsed} / ${summary.fxHealth.quotaLimit}`
+                }
+                valueStyle={{
+                  fontSize: 16,
+                  color:
+                    (summary.fxHealth.quotaPercent || 0) >= 80 ? "#c0392b" : undefined,
+                }}
+                suffix={
+                  summary.fxHealth.quotaPercent != null
+                    ? `(${summary.fxHealth.quotaPercent}%)`
+                    : ""
+                }
+              />
+            </Col>
+            <Col xs={12} md={6}>
+              <Statistic
+                title="Providers"
+                valueRender={() => (
+                  <span style={{ fontSize: 14 }}>
+                    <Tag color={summary.fxHealth.primaryProviderConfigured ? "green" : "default"}>
+                      primary {summary.fxHealth.primaryProviderConfigured ? "✓" : "off"}
+                    </Tag>
+                    <Tag color={summary.fxHealth.fallbackProviderConfigured ? "green" : "default"}>
+                      fallback {summary.fxHealth.fallbackProviderConfigured ? "✓" : "off"}
+                    </Tag>
+                  </span>
+                )}
+              />
+            </Col>
+          </Row>
+        </Card>
+      )}
+
       <Spin spinning={loading && !summary}>
         <Row gutter={[16, 16]} style={{ marginBottom: 8 }}>
           {(summary?.jobs || []).map((job) => {
