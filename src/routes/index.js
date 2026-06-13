@@ -166,6 +166,8 @@ import CurrencyTable from "../pages/TravelCurrency/CurrencyTable";
 import AddCurrency from "../pages/TravelCurrency/AddCurrencyForm";
 // Currency cron monitoring dashboard
 import CurrencyJobs from "../pages/CurrencyJobs/index";
+// Meilisearch index management
+import SearchIndex from "../pages/SearchIndex/index";
 import TourGroupTable from "../pages/tickyourlist/TravelTourGroup/index"
 import TravelPartners from "../pages/Travel-Partners/TravelPartners";
 import Coupons from "pages/Operations/Coupons";
@@ -396,6 +398,11 @@ const authProtectedRoutes = [
   {
     path: "/currency-jobs",
     component: <CurrencyJobs />,
+    exact: true,
+  },
+  {
+    path: "/search-index",
+    component: <SearchIndex />,
     exact: true,
   },
   {

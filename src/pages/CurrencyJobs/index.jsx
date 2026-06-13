@@ -12,14 +12,77 @@ import {
   Tooltip,
   message,
   Spin,
+  InputNumber,
+  Input,
+  Collapse,
+  Divider,
 } from "antd";
 import {
   ReloadOutlined,
   DollarOutlined,
   AppstoreOutlined,
   ThunderboltOutlined,
+  SettingOutlined,
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
-import { get, post } from "../../helpers/api_helper";
+import { get, post, put } from "../../helpers/api_helper";
+
+// Plain-language meaning for each tunable setting + glossary term.
+const SETTING_FIELDS = [
+  {
+    key: "rateRefreshIntervalMinutes",
+    label: "Auto-refresh interval (minutes)",
+    type: "number",
+    help: "How often we automatically fetch fresh exchange rates from the provider. FX rates change roughly once a day, so 720 (12 hours) is plenty. Lower = fresher rates but uses more of your monthly API quota.",
+  },
+  {
+    key: "rateCacheTtlSeconds",
+    label: "Rate cache duration (seconds)",
+    type: "number",
+    help: "How long a fetched rate is reused before we fetch a new one. Keep this at or above the refresh interval, otherwise normal customer traffic triggers extra API calls. 43200 = 12 hours.",
+  },
+  {
+    key: "rateRefreshEnabled",
+    label: "Auto-refresh enabled",
+    type: "switch",
+    help: "Master switch for the scheduled refresh. If off, rates only update when a customer request finds the cache expired (lazy). Leave on.",
+  },
+  {
+    key: "alertEmails",
+    label: "Alert email recipients",
+    type: "text",
+    help: "Who gets emailed if currency conversion stops working (provider down, or monthly quota used up). Comma-separated list of emails.",
+  },
+  {
+    key: "alertCooldownSeconds",
+    label: "Alert cooldown (seconds)",
+    type: "number",
+    help: "Minimum gap between repeat alert emails, so a single outage doesn't flood your inbox. 3600 = at most one alert per hour.",
+  },
+  {
+    key: "maxDeviationPercent",
+    label: "Max rate deviation (%)",
+    type: "number",
+    help: "Safety check: reject a freshly fetched rate if it jumped more than this % versus the last known-good value. Protects against corrupted provider data breaking every price. 10 = 10%.",
+  },
+  {
+    key: "monthlyQuota",
+    label: "Monthly API quota",
+    type: "number",
+    help: "Your FX provider's monthly request budget. We email a warning when usage crosses 80% of this, so you can act before it runs out (the free plan is ~1500/month).",
+  },
+];
+
+const GLOSSARY = [
+  ["Refresh FX rates now", "Manually fetch the latest exchange rates from the provider immediately, instead of waiting for the schedule."],
+  ["Run alignment now", "Recalculate every own-product's price in all currencies from its USD base price, using the latest rates. This normally runs automatically every night."],
+  ["Exchange Rate Refresh", "The background job that pulls fresh exchange rates from the provider and caches them."],
+  ["Currency Alignment", "The background job that rewrites each product's stored per-currency prices so they match the latest rates."],
+  ["Healthy / Overdue / Stuck", "Healthy = the job ran successfully recently. Overdue = it hasn't succeeded within its expected window. Stuck = a run started but never finished (usually a crash)."],
+  ["FX cache fresh / stale", "Whether the cached exchange rates are still within their cache duration. Stale means a refresh is due."],
+  ["Last known-good", "The most recent set of valid rates we saved. If the provider goes down, we serve these instead of wrong (USD-only) prices."],
+  ["Quota", "How many requests you've made to the FX provider this month, against your monthly budget."],
+];
 
 const BASE = "/v1/admin/currency-jobs";
 
@@ -69,6 +132,9 @@ const CurrencyJobs = () => {
   const [busy, setBusy] = useState("");
   const [filters, setFilters] = useState({ jobType: "", status: "" });
   const [auto, setAuto] = useState(false);
+  const [settings, setSettings] = useState(null);
+  const [bounds, setBounds] = useState({});
+  const [savingSettings, setSavingSettings] = useState(false);
   const timerRef = useRef(null);
 
   const loadSummary = useCallback(async () => {
@@ -92,11 +158,38 @@ const CurrencyJobs = () => {
     }
   }, [filters]);
 
+  const loadSettings = useCallback(async () => {
+    try {
+      const res = await get(`${BASE}/settings`);
+      const d = res?.data || res;
+      setSettings(d.settings);
+      setBounds(d.bounds || {});
+    } catch (e) {
+      // settings are non-critical for the monitor view; don't spam
+      console.warn("settings load failed", e?.message);
+    }
+  }, []);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([loadSummary(), loadRuns()]);
+    await Promise.all([loadSummary(), loadRuns(), loadSettings()]);
     setLoading(false);
-  }, [loadSummary, loadRuns]);
+  }, [loadSummary, loadRuns, loadSettings]);
+
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      await put(`${BASE}/settings`, settings);
+      message.success("Settings saved — effective within ~1 minute");
+      loadSettings();
+    } catch (e) {
+      message.error(`Save failed: ${e?.response?.data?.message || e.message}`);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const setField = (key, val) => setSettings((s) => ({ ...s, [key]: val }));
 
   useEffect(() => {
     loadAll();
@@ -410,6 +503,93 @@ const CurrencyJobs = () => {
           scroll={{ x: true }}
         />
       </Card>
+
+      {/* ── Tunable settings ─────────────────────────────────────────────── */}
+      <Card
+        size="small"
+        title={
+          <span>
+            <SettingOutlined /> Settings (change cadence & thresholds — no redeploy)
+          </span>
+        }
+        style={{ marginTop: 16 }}
+        extra={
+          settings?.updatedByEmail ? (
+            <span style={{ fontSize: 12, color: "#888" }}>
+              last changed by {settings.updatedByEmail}
+            </span>
+          ) : null
+        }
+      >
+        {!settings ? (
+          <Spin />
+        ) : (
+          <>
+            <Row gutter={[16, 16]}>
+              {SETTING_FIELDS.map((f) => {
+                const b = bounds[f.key === "maxDeviationPercent" ? "maxDeviationPercent" : f.key];
+                return (
+                  <Col xs={24} md={12} key={f.key}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontWeight: 600, fontSize: 13 }}>{f.label}</span>
+                      <Tooltip title={f.help}>
+                        <QuestionCircleOutlined style={{ color: "#aaa" }} />
+                      </Tooltip>
+                    </div>
+                    <div style={{ margin: "4px 0" }}>
+                      {f.type === "number" && (
+                        <InputNumber
+                          style={{ width: 200 }}
+                          min={b?.min}
+                          max={b?.max}
+                          value={settings[f.key]}
+                          onChange={(v) => setField(f.key, v)}
+                        />
+                      )}
+                      {f.type === "switch" && (
+                        <Switch
+                          checked={!!settings[f.key]}
+                          onChange={(v) => setField(f.key, v)}
+                        />
+                      )}
+                      {f.type === "text" && (
+                        <Input
+                          style={{ maxWidth: 360 }}
+                          value={settings[f.key]}
+                          onChange={(e) => setField(f.key, e.target.value)}
+                        />
+                      )}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#888", lineHeight: 1.4 }}>{f.help}</div>
+                  </Col>
+                );
+              })}
+            </Row>
+            <Divider style={{ margin: "16px 0" }} />
+            <Button type="primary" loading={savingSettings} onClick={saveSettings}>
+              Save settings
+            </Button>
+            <span style={{ marginLeft: 12, fontSize: 12, color: "#888" }}>
+              Takes effect within ~1 minute across all servers.
+            </span>
+          </>
+        )}
+      </Card>
+
+      {/* ── Glossary: what each term means ───────────────────────────────── */}
+      <Collapse style={{ marginTop: 16 }} items={[{
+        key: "glossary",
+        label: <span><QuestionCircleOutlined /> What do these terms mean?</span>,
+        children: (
+          <div>
+            {GLOSSARY.map(([term, meaning]) => (
+              <p key={term} style={{ marginBottom: 8 }}>
+                <b>{term}</b> — <span style={{ color: "#555" }}>{meaning}</span>
+              </p>
+            ))}
+          </div>
+        ),
+      }]} />
     </div>
   );
 };
