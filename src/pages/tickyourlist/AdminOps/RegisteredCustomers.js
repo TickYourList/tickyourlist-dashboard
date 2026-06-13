@@ -3,8 +3,8 @@ import {
   Badge, Button, Card, CardBody, Col, Container, Input, Row, Spinner, Table,
 } from "reactstrap";
 import { useNavigate } from "react-router-dom";
-import { getRegisteredCustomers } from "helpers/admin_ops_helper";
-import { showToastError } from "helpers/toastBuilder";
+import { getRegisteredCustomers, resendVerification, resendVerificationBulk } from "helpers/admin_ops_helper";
+import { showToastError, showToastSuccess } from "helpers/toastBuilder";
 
 /**
  * Directory of every registered account (verified or not): who they are, how
@@ -24,6 +24,34 @@ const RegisteredCustomers = () => {
   const [verified, setVerified] = useState("");
   const [method, setMethod] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendingId, setResendingId] = useState(null);
+  const [bulkSending, setBulkSending] = useState(false);
+
+  const handleResend = async (c) => {
+    setResendingId(c._id);
+    try {
+      await resendVerification(c._id);
+      showToastSuccess(`Verification email sent to ${c.email}`);
+    } catch (err) {
+      showToastError(err?.response?.data?.message || "Failed to send verification email");
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  const handleBulkResend = async () => {
+    if (!window.confirm("Send a verification reminder to all genuine unverified customers (bots/already-verified are skipped)?")) return;
+    setBulkSending(true);
+    try {
+      const res = await resendVerificationBulk({ cooldownDays: 3, max: 200 });
+      const d = res?.data || {};
+      showToastSuccess(`Sent ${d.sent || 0} reminders (skipped ${d.skippedInvalidEmail || 0} invalid emails, ${d.failed || 0} failed)`);
+    } catch (err) {
+      showToastError(err?.response?.data?.message || "Bulk reminder failed");
+    } finally {
+      setBulkSending(false);
+    }
+  };
 
   const load = async (p = page) => {
     setLoading(true);
@@ -80,12 +108,17 @@ const RegisteredCustomers = () => {
       <Container fluid>
         <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <h4 className="mb-0">Registered Customers</h4>
-          {counts && (
-            <div className="d-flex gap-2">
-              <Badge color="success" pill>{counts.verified} verified</Badge>
-              <Badge color="warning" pill>{counts.unverified} unverified</Badge>
-            </div>
-          )}
+          <div className="d-flex gap-2 align-items-center">
+            {counts && (
+              <>
+                <Badge color="success" pill>{counts.verified} verified</Badge>
+                <Badge color="warning" pill>{counts.unverified} unverified</Badge>
+              </>
+            )}
+            <Button color="warning" size="sm" outline onClick={handleBulkResend} disabled={bulkSending}>
+              {bulkSending ? <Spinner size="sm" /> : "✉ Remind all unverified"}
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -168,16 +201,30 @@ const RegisteredCustomers = () => {
                       <td className="small">{spendSummary(c.bookingStats)}</td>
                       <td className="small">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "—"}</td>
                       <td>
-                        <Button
-                          color="primary"
-                          size="sm"
-                          outline
-                          onClick={() =>
-                            navigate(`/admin-ops/customer-console?email=${encodeURIComponent(c.email)}`)
-                          }
-                        >
-                          360° view
-                        </Button>
+                        <div className="d-flex gap-2">
+                          {!c.verified && (
+                            <Button
+                              color="warning"
+                              size="sm"
+                              outline
+                              title="Re-send verification email"
+                              disabled={resendingId === c._id}
+                              onClick={() => handleResend(c)}
+                            >
+                              {resendingId === c._id ? <Spinner size="sm" /> : "✉ Verify"}
+                            </Button>
+                          )}
+                          <Button
+                            color="primary"
+                            size="sm"
+                            outline
+                            onClick={() =>
+                              navigate(`/admin-ops/customer-console?email=${encodeURIComponent(c.email)}`)
+                            }
+                          >
+                            360° view
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

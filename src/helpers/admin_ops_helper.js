@@ -21,6 +21,8 @@ export const amendBooking = (bookingId, { newDate, newStartTime }) =>
 export const getCustomer360 = (email) => get(`/v1/admin/ops/customer`, { params: { email } });
 export const getRegisteredCustomers = (params = {}) => get(`/v1/admin/ops/registered-customers`, { params });
 export const getCustomerActivity = (params = {}) => get(`/v1/admin/ops/customer-activity`, { params });
+export const resendVerification = (customerId) => post(`/v1/admin/ops/customer/${customerId}/resend-verification`, {});
+export const resendVerificationBulk = (body = {}) => post(`/v1/admin/ops/resend-verification-bulk`, body);
 export const getAutomationsHealth = () => get(`/v1/admin/ops/automations`);
 export const resendConfirmationEmail = (bookingId) =>
   post(`/v1/tyltourcustomerbooking/booking/${bookingId}/resend-confirmation-email`, {});
