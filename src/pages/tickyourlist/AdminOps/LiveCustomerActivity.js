@@ -95,12 +95,20 @@ const LiveCustomerActivity = () => {
     const onStats = (payload) => {
       if (payload?.stats) setStats(payload.stats);
     };
+    // Geo resolves in the background; merge it into the matching row when it lands.
+    const onGeoPatch = (payload) => {
+      if (!payload?._id || !payload.location) return;
+      setItems((prev) =>
+        prev.map((e) => (e._id === payload._id ? { ...e, location: payload.location } : e))
+      );
+    };
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("customer_activity", onActivity);
     socket.on("customer_activity_recent", onRecent);
     socket.on("customer_activity_stats", onStats);
+    socket.on("customer_activity_geo", onGeoPatch);
 
     if (socket.connected) onConnect();
 
@@ -111,6 +119,7 @@ const LiveCustomerActivity = () => {
       socket.off("customer_activity", onActivity);
       socket.off("customer_activity_recent", onRecent);
       socket.off("customer_activity_stats", onStats);
+      socket.off("customer_activity_geo", onGeoPatch);
     };
   }, []);
 
