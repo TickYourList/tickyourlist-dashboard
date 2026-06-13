@@ -103,6 +103,7 @@
     "redux-saga": "^1.2.2",
     "sass": "^1.89.2",
     "simplebar-react": "^2.4.1",
+    "socket.io-client": "^4.8.3",
     "swiper": "^12.1.2",
     "toastr": "^2.1.4",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
