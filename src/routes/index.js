@@ -164,6 +164,8 @@ import CurrencyTable from "../pages/TravelCurrency/CurrencyTable";
 // import EmailVerification from "pages/AuthenticationInner/auth-email-verification";
 // Add Currency
 import AddCurrency from "../pages/TravelCurrency/AddCurrencyForm";
+// Currency cron monitoring dashboard
+import CurrencyJobs from "../pages/CurrencyJobs/index";
 import TourGroupTable from "../pages/tickyourlist/TravelTourGroup/index"
 import TravelPartners from "../pages/Travel-Partners/TravelPartners";
 import Coupons from "pages/Operations/Coupons";
@@ -389,6 +391,11 @@ const authProtectedRoutes = [
   {
     path: "/travel-currency",
     component: <CurrencyTable />,
+    exact: true,
+  },
+  {
+    path: "/currency-jobs",
+    component: <CurrencyJobs />,
     exact: true,
   },
   {

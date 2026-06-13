@@ -336,6 +336,11 @@ const SidebarContent = props => {
                    <span>{props.t("Currency")}</span>
                   </Link>
               </li>
+                  <li>
+                  <Link to="/currency-jobs">
+                   <span>{props.t("Currency Jobs Monitor")}</span>
+                  </Link>
+              </li>
                 {canViewCountry && (
                 <li>
                   <Link to="/country">{props.t('Country')}</Link>
