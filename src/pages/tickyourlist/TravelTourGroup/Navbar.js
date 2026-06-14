@@ -12,6 +12,7 @@ export default function Navbar({ activeTab, setactiveTab, passedSteps = [] }) {
     "Ticket Info",
     "Additional Info",
     "Summary",
+    "Itinerary",
     "Image Uploads",
     "Product Images",
     "Safety Images",

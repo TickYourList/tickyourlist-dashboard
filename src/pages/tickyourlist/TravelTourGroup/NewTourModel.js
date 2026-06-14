@@ -512,7 +512,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
   function toggleTab(tab) {
     if (activeTab !== tab) {
       const modifiedSteps = [...passedSteps, tab]
-      if (tab >= 1 && tab <= 10) {
+      if (tab >= 1 && tab <= 11) {
         setactiveTab(tab)
         setPassedSteps(modifiedSteps)
       }
@@ -1692,51 +1692,54 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                     />
                                   </Col>
                                 </Row>
-                                <Row>
-                                  <Col className="mb-3">
-                                    <Label
-                                      className="form-label"
-                                      htmlFor="itinerary"
-                                    >
-                                      Itinerary (optional)
-                                    </Label>
-                                    <ItineraryBuilder
-                                      value={values.itinerary}
-                                      onChange={val =>
-                                        setFieldValue("itinerary", val)
-                                      }
-                                    />
-                                    <ErrorMessage
-                                      component={"span"}
-                                      className="text-danger"
-                                      name="itinerary"
-                                    />
-                                  </Col>
-                                </Row>
                               </Col>
                             </Row>
                           </TabPane>
+
+                          {/* Itinerary (dedicated step) */}
                           <TabPane tabId={7}>
+                            <Row>
+                              <Col className="mb-3">
+                                <Label className="form-label" htmlFor="itinerary">
+                                  Itinerary (optional)
+                                </Label>
+                                <ItineraryBuilder
+                                  value={values.itinerary}
+                                  onChange={val =>
+                                    setFieldValue("itinerary", val)
+                                  }
+                                />
+                                <ErrorMessage
+                                  component={"span"}
+                                  className="text-danger"
+                                  name="itinerary"
+                                />
+                              </Col>
+                            </Row>
+                          </TabPane>
+
+                          {/* Image Uploads */}
+                          <TabPane tabId={8}>
                             {/* Media -productImages, safetyImages and safetyVideos */}
                             <h5>Tour Images</h5>
                             <TourImages />
                           </TabPane>
 
                           {/* Product Images */}
-                          <TabPane tabId={8}>
+                          <TabPane tabId={9}>
                             <h5>Product Images</h5>
                             <ProductImage />{" "}
                           </TabPane>
 
                           {/* Safety Images */}
-                          <TabPane tabId={9}>
+                          <TabPane tabId={10}>
                             {" "}
                             <h5>Safety Images</h5>
                             <SafetyImage />
                           </TabPane>
 
                           {/* Safety Videos */}
-                          <TabPane tabId={10}>
+                          <TabPane tabId={11}>
                             {" "}
                             <h5>Safety Videos</h5>
                             <SafetyVideo />
@@ -1771,7 +1774,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                           </li>
                           <li
                             className={
-                              activeTab === 10 ? "next d-none" : "next"
+                              activeTab === 11 ? "next d-none" : "next"
                             }
                           >
                             <Link
@@ -1783,7 +1786,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                               Next
                             </Link>
                           </li>
-                          {activeTab === 10 && (
+                          {activeTab === 11 && (
                             <li className="next">
                               <FormikSubmitButton
                                 isEdit={isEdit}
