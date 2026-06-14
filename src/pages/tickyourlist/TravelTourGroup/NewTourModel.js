@@ -37,6 +37,10 @@ import ItineraryBuilder, {
   itineraryToPayload,
   appendItineraryFiles,
 } from "./ItineraryBuilder"
+import ComboBuilder, {
+  comboConfigToFormValue,
+  comboConfigToPayload,
+} from "./ComboBuilder"
 
 export default function NewTourModel({ setModal, isEdit, editId }) {
   const [activeTab, setactiveTab] = useState(1)
@@ -79,6 +83,7 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
   const initialValues = {
     name: tourGroupById?.name || "",
     flowType: tourGroupById?.flowType || "",
+    comboConfig: comboConfigToFormValue(tourGroupById?.comboConfig),
     neighbourhood: tourGroupById?.neighbourhood || "",
     url: tourGroupById?.url || "",
     cityCode: tourGroupById?.cityCode || "",
@@ -228,6 +233,19 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
           if (!value || !Array.isArray(value.steps) || !value.steps.length)
             return true
           return value.steps.every(s => s.title && s.title.trim())
+        }
+      ),
+    comboConfig: Yup.mixed()
+      .nullable()
+      .test(
+        "combo-valid",
+        "A combo needs at least 2 experiences, each with an experience and a ticket variant selected",
+        function (value) {
+          // Only enforced for COMBO products.
+          if (this.parent?.flowType !== "COMBO") return true
+          const items = (value && Array.isArray(value.items) ? value.items : [])
+            .filter(it => it && it.tourGroupId && it.variantId)
+          return items.length >= 2
         }
       ),
     // flowType: Yup.string(),
@@ -453,6 +471,16 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
     data.itinerary = itineraryToPayload(values.itinerary)
     if (isEdit && !data.itinerary && tourGroupById?.itinerary) {
       data.clearItinerary = true
+    }
+    // Combo bundle: only persist a comboConfig for COMBO products; clear it
+    // server-side if a previously-combo product no longer has valid items.
+    if (values.flowType === "COMBO") {
+      data.comboConfig = comboConfigToPayload(values.comboConfig)
+    } else {
+      data.comboConfig = null
+    }
+    if (isEdit && !data.comboConfig && tourGroupById?.comboConfig) {
+      data.clearComboConfig = true
     }
     const nullValidatedData = emptyStringToNull(data)
     const formData = new FormData()
@@ -1012,6 +1040,23 @@ export default function NewTourModel({ setModal, isEdit, editId }) {
                                 </Row>
                               </Col>
                             </Row>
+                            {values.flowType === "COMBO" && (
+                              <Row className="mt-3">
+                                <Col xs={12}>
+                                  <ComboBuilder
+                                    value={values.comboConfig}
+                                    onChange={val =>
+                                      setFieldValue("comboConfig", val)
+                                    }
+                                  />
+                                  <ErrorMessage
+                                    component={"span"}
+                                    className="text-danger"
+                                    name="comboConfig"
+                                  />
+                                </Col>
+                              </Row>
+                            )}
                           </TabPane>
                           <TabPane tabId={2}>
                             {" "}
