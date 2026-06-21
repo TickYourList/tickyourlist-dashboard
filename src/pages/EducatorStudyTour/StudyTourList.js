@@ -6,7 +6,7 @@ import {
 } from "reactstrap";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 import { showToastSuccess, showToastError } from "../../helpers/toastBuilder";
-import { getStudyTours, createStudyTour, deleteStudyTour } from "../../helpers/educator_study_tour_helper";
+import { getStudyTours, createStudyTour, deleteStudyTour } from "../../apis/educatorStudyTour";
 
 const STATUS_COLORS = { draft: "secondary", open: "success", closed: "warning", completed: "info", archived: "dark" };
 

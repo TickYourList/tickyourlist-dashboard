@@ -16,7 +16,7 @@ import {
   getDefaultDocChecklist,
   getExpenses, getExpenseSummary, addExpense, deleteExpense, EXPENSE_CATEGORIES,
   PARTICIPANT_STAGES, STAGE_LABELS, STAGE_COLORS, MESSAGE_TEMPLATES,
-} from "../../helpers/educator_study_tour_helper";
+} from "../../apis/educatorStudyTour";
 
 /** Toggle switch helper (reactstrap + bootstrap form-switch). */
 const Toggle = ({ id, checked, onChange, label }) => (
@@ -50,6 +50,85 @@ const TAB_STAGE = {
   flight: "flight_booked",
 };
 
+const TOUR_STATUS_COLORS = { draft: "secondary", open: "success", closed: "warning", completed: "info", archived: "dark" };
+
+const publicBaseUrl = () =>
+  (process.env.REACT_APP_TYL_PUBLIC_BASE_URL || "https://www.tickyourlist.com").replace(/\/$/, "");
+
+const publicRegistrationUrl = (tour) =>
+  tour?.slug ? `${publicBaseUrl()}/educator-study-tours/${tour.slug}` : "";
+
+const inputDate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+
+const multilineToList = (text) =>
+  (text || "").split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+
+const listToMultiline = (list) => (Array.isArray(list) ? list.join("\n") : "");
+
+const numberOrUndefined = (value) => {
+  if (value === "" || value == null) return undefined;
+  const n = Number(value);
+  return Number.isNaN(n) ? undefined : n;
+};
+
+const EMPTY_ADVANCED_FILTERS = {
+  city: "",
+  state: "",
+  institution: "",
+  cluster: "",
+  source: "",
+  coordinator: "",
+  documentStatus: "",
+  paymentStatus: "",
+  visaStatus: "",
+  passportRisk: false,
+  flightStatus: "",
+  extensionDemand: "",
+};
+
+const containsText = (value, query) =>
+  !query || String(value || "").toLowerCase().includes(String(query).toLowerCase().trim());
+
+const daysUntilDate = (d) => {
+  if (!d) return null;
+  return Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000);
+};
+
+const matchesAdvancedFilters = (p, f) => {
+  if (!containsText(p.city, f.city)) return false;
+  if (!containsText(p.state, f.state)) return false;
+  if (!containsText(p.institutionName, f.institution)) return false;
+  if (!containsText(p.travelCluster, f.cluster)) return false;
+  if (f.source && p.source !== f.source) return false;
+  if (!containsText(p.assignedCoordinator?.name, f.coordinator)) return false;
+
+  const docs = p.documents || [];
+  const requiredDocs = docs.filter((d) => d.required);
+  const missingRequired = requiredDocs.some((d) => d.status !== "uploaded" && d.status !== "verified");
+  if (f.documentStatus === "missing_required" && !missingRequired) return false;
+  if (["pending", "uploaded", "verified", "rejected"].includes(f.documentStatus) && !docs.some((d) => d.status === f.documentStatus)) return false;
+
+  const quoted = Number(p.quotedAmount || 0);
+  const paid = Number(p.paidAmount || 0);
+  const overdueMilestone = (p.paymentMilestones || []).some((m) => !m.paid && daysUntilDate(m.dueDate) != null && daysUntilDate(m.dueDate) < 0);
+  if (f.paymentStatus === "outstanding" && !(quoted > paid && p.stage !== "cancelled")) return false;
+  if (f.paymentStatus === "fully_paid" && !(quoted > 0 && paid >= quoted)) return false;
+  if (f.paymentStatus === "overdue" && !overdueMilestone) return false;
+
+  const visaDeadlineDays = daysUntilDate(p.visaAppointment?.documentDeadline);
+  if (f.visaStatus === "deadline_7d" && !(visaDeadlineDays != null && visaDeadlineDays >= 0 && visaDeadlineDays <= 7)) return false;
+  if (f.visaStatus === "appointment_missing" && p.visaAppointment?.scheduled) return false;
+  if (f.visaStatus === "appointment_scheduled" && !p.visaAppointment?.scheduled) return false;
+
+  const passportDays = daysUntilDate(p.passportExpiry);
+  if (f.passportRisk && !(passportDays == null || passportDays < 180)) return false;
+  if (f.flightStatus === "missing" && p.flight?.booked) return false;
+  if (f.flightStatus === "booked" && !p.flight?.booked) return false;
+  if (f.extensionDemand && (p.wantsExtension || "no") !== f.extensionDemand) return false;
+
+  return true;
+};
+
 const Participants = () => {
   const { tourId } = useParams();
   document.title = "Study Tour Participants | TickYourList";
@@ -63,6 +142,8 @@ const Participants = () => {
   const [search, setSearch] = useState("");
   const [soloOnly, setSoloOnly] = useState(false);
   const [attnOnly, setAttnOnly] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState(EMPTY_ADVANCED_FILTERS);
   const [expensesOpen, setExpensesOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -122,8 +203,14 @@ const Participants = () => {
   };
 
   const filtered = useMemo(
-    () => (attnOnly ? participants.filter((p) => attentionReasons(p).length) : participants),
-    [participants, attnOnly]
+    () => participants
+      .filter((p) => (attnOnly ? attentionReasons(p).length : true))
+      .filter((p) => matchesAdvancedFilters(p, advancedFilters)),
+    [participants, attnOnly, advancedFilters]
+  );
+  const activeAdvancedFilterCount = useMemo(
+    () => Object.values(advancedFilters).filter((v) => v === true || (typeof v === "string" && v.trim())).length,
+    [advancedFilters]
   );
 
   return (
@@ -137,6 +224,8 @@ const Participants = () => {
             <Button color="soft-primary" size="sm" onClick={() => setSettingsOpen(true)}><i className="bx bx-cog me-1" />Tour Settings</Button>
           </div>
         </div>
+
+        <RegistrationLinkPanel tour={tour} onEdit={() => setSettingsOpen(true)} />
 
         {/* Advanced cohort tools */}
         <CohortTools tourId={tourId} onChanged={() => { loadParticipants(); loadTour(); }} />
@@ -182,11 +271,22 @@ const Participants = () => {
               </div>
             </Col>
             <Col md={3} className="text-end">
+              <Button color="soft-secondary" className="me-2" onClick={() => setAdvancedOpen((v) => !v)}>
+                <i className="bx bx-filter-alt me-1" />Advanced{activeAdvancedFilterCount ? ` (${activeAdvancedFilterCount})` : ""}
+              </Button>
               <Button color="success" onClick={() => setAddModal(true)}>
                 <i className="bx bx-user-plus me-1" /> Add (Concierge)
               </Button>
             </Col>
           </Row>
+          {advancedOpen ? (
+            <AdvancedFiltersPanel
+              filters={advancedFilters}
+              onChange={setAdvancedFilters}
+              onReset={() => setAdvancedFilters(EMPTY_ADVANCED_FILTERS)}
+              resultCount={filtered.length}
+            />
+          ) : null}
         </CardBody></Card>
 
         {/* Table */}
@@ -276,6 +376,7 @@ const Participants = () => {
 const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, onClose, onPatch, onMessage }) => {
   const [ops, setOps] = useState({});
   const [reg, setReg] = useState({});
+  const [companions, setCompanions] = useState([]);
   const [visa, setVisa] = useState({});
   const [flight, setFlight] = useState({});
   useEffect(() => {
@@ -296,15 +397,53 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
         })),
       });
       setReg({
-        salutation: x.salutation || "", fullName: x.fullName || "", designation: x.designation || "",
-        institutionName: x.institutionName || "", email: x.email || "", mobile: x.mobile || "",
+        salutation: x.salutation || "", fullName: x.fullName || "", dob: inputDate(x.dob), gender: x.gender || "",
+        communicationMethod: x.communicationMethod || "whatsapp", designation: x.designation || "",
+        institutionName: x.institutionName || "", institutionType: x.institutionType || "", email: x.email || "", mobile: x.mobile || "",
+        officialEmail: x.officialEmail || "", website: x.website || "",
+        yearsExperience: x.yearsExperience || "", studentsCount: x.studentsCount || "", educatorsCount: x.educatorsCount || "",
+        responsibilities: (x.responsibilities || []).join(", "),
         city: x.city || "", state: x.state || "", nationality: x.nationality || "",
+        interests: (x.interests || []).join(", "), expectedOutcome: x.expectedOutcome || "",
+        institutionVisitPreferences: (x.institutionVisitPreferences || []).join(", "),
+        presentationInterest: x.presentationInterest || "", visitedNordic: !!x.visitedNordic,
         occupancy: x.occupancy || "", mealPreference: x.mealPreference || "",
-        allergies: (x.allergies || []).join(", "), travelAssistance: (x.travelAssistance || []).join(", "),
+        dietaryDetails: x.dietaryDetails || "", allergies: (x.allergies || []).join(", "), allergyDetails: x.allergyDetails || "",
+        smoking: !!x.smoking, alcoholPreference: x.alcoholPreference || "", roommatePreference: x.roommatePreference || "",
+        preferredRoommateName: x.preferredRoommateName || "", preferredRoommateInstitution: x.preferredRoommateInstitution || "",
+        passportCountry: x.passportCountry || "India", passportIssueDate: inputDate(x.passportIssueDate),
+        travelAssistance: (x.travelAssistance || []).join(", "), invitationLetter: !!x.invitationLetter,
+        travelCommitments: x.travelCommitments || "",
+        visaRefusalHas: !!x.visaRefusal?.has, visaRefusalCountry: x.visaRefusal?.country || "",
+        visaRefusalYear: x.visaRefusal?.year || "", visaRefusalReason: x.visaRefusal?.reason || "",
         wantsExtension: x.wantsExtension || "", idaMember: !!x.idaMember, idaMembershipNumber: x.idaMembershipNumber || "",
+        extensionDays: x.extensionDays || "", extensionTravelType: x.extensionTravelType || "",
+        preferredDestinations: (x.preferredDestinations || []).join(", "), extensionCompanion: x.extensionCompanion || "",
+        extensionSupport: !!x.extensionSupport, extensionNotes: x.extensionNotes || "",
         emergencyName: x.emergencyName || "", emergencyRelationship: x.emergencyRelationship || "", emergencyPhone: x.emergencyPhone || "",
+        emergencyEmail: x.emergencyEmail || "",
         medicalCondition: x.medicalCondition || "", mainReason: x.mainReason || "", registeredAddress: x.registeredAddress || "",
+        invoiceNameType: x.invoiceNameType || "", billingName: x.billingName || "", gstin: x.gstin || "",
+        accountsContact: x.accountsContact || "", accountsEmail: x.accountsEmail || "", billingAddress: x.billingAddress || "",
+        privacyConsent: !!x.declarations?.privacyConsent,
+        visaDisclaimer: !!x.declarations?.visaDisclaimer,
+        cancellationPolicy: !!x.declarations?.cancellationPolicy,
+        medicalDeclaration: !!x.declarations?.medicalDeclaration,
       });
+      setCompanions((x.accompanyingPersons || []).map((a) => ({
+        fullName: a.fullName || "",
+        relationship: a.relationship || "",
+        dob: inputDate(a.dob),
+        nationality: a.nationality || "",
+        passportNumber: a.passportNumber || "",
+        passportExpiry: inputDate(a.passportExpiry),
+        mobile: a.mobile || "",
+        email: a.email || "",
+        mealPreference: a.mealPreference || "",
+        visaSupport: !!a.visaSupport,
+        medicalDetails: a.medicalDetails || "",
+        participationType: a.participationType || "full_programme",
+      })));
       const v = x.visaAppointment || {};
       setVisa({
         scheduled: !!v.scheduled,
@@ -378,15 +517,75 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
   const splitList = (s) => (s || "").split(",").map((x) => x.trim()).filter(Boolean);
 
   const saveReg = () => onPatch(p._id, {
-    salutation: reg.salutation, fullName: reg.fullName, designation: reg.designation,
-    institutionName: reg.institutionName, email: reg.email, mobile: reg.mobile,
+    salutation: reg.salutation, fullName: reg.fullName, dob: reg.dob || undefined, gender: reg.gender,
+    communicationMethod: reg.communicationMethod || undefined, designation: reg.designation,
+    institutionName: reg.institutionName, institutionType: reg.institutionType, email: reg.email, mobile: reg.mobile,
+    officialEmail: reg.officialEmail, website: reg.website,
+    yearsExperience: numberOrUndefined(reg.yearsExperience), studentsCount: numberOrUndefined(reg.studentsCount), educatorsCount: numberOrUndefined(reg.educatorsCount),
+    responsibilities: splitList(reg.responsibilities),
     city: reg.city, state: reg.state, nationality: reg.nationality, registeredAddress: reg.registeredAddress,
+    interests: splitList(reg.interests), expectedOutcome: reg.expectedOutcome,
+    institutionVisitPreferences: splitList(reg.institutionVisitPreferences),
+    presentationInterest: reg.presentationInterest || undefined, visitedNordic: reg.visitedNordic,
     occupancy: reg.occupancy || undefined, mealPreference: reg.mealPreference,
-    allergies: splitList(reg.allergies), travelAssistance: splitList(reg.travelAssistance),
+    dietaryDetails: reg.dietaryDetails, allergies: splitList(reg.allergies), allergyDetails: reg.allergyDetails,
+    smoking: reg.smoking, alcoholPreference: reg.alcoholPreference, roommatePreference: reg.roommatePreference,
+    preferredRoommateName: reg.preferredRoommateName, preferredRoommateInstitution: reg.preferredRoommateInstitution,
+    passportCountry: reg.passportCountry, passportIssueDate: reg.passportIssueDate || undefined,
+    travelAssistance: splitList(reg.travelAssistance), invitationLetter: reg.invitationLetter, travelCommitments: reg.travelCommitments,
+    visaRefusal: {
+      has: !!reg.visaRefusalHas,
+      country: reg.visaRefusalCountry,
+      year: numberOrUndefined(reg.visaRefusalYear),
+      reason: reg.visaRefusalReason,
+    },
     wantsExtension: reg.wantsExtension || undefined, idaMember: reg.idaMember, idaMembershipNumber: reg.idaMembershipNumber,
+    extensionDays: reg.extensionDays, extensionTravelType: reg.extensionTravelType,
+    preferredDestinations: splitList(reg.preferredDestinations), extensionCompanion: reg.extensionCompanion,
+    extensionSupport: reg.extensionSupport, extensionNotes: reg.extensionNotes,
     emergencyName: reg.emergencyName, emergencyRelationship: reg.emergencyRelationship, emergencyPhone: reg.emergencyPhone,
+    emergencyEmail: reg.emergencyEmail,
     medicalCondition: reg.medicalCondition, mainReason: reg.mainReason,
+    invoiceNameType: reg.invoiceNameType || undefined, billingName: reg.billingName, gstin: reg.gstin,
+    accountsContact: reg.accountsContact, accountsEmail: reg.accountsEmail, billingAddress: reg.billingAddress,
+    declarations: {
+      ...(p.declarations || {}),
+      privacyConsent: !!reg.privacyConsent,
+      visaDisclaimer: !!reg.visaDisclaimer,
+      cancellationPolicy: !!reg.cancellationPolicy,
+      medicalDeclaration: !!reg.medicalDeclaration,
+    },
   }, "Registration updated");
+
+  const setCompanionField = (idx, field, value) => {
+    setCompanions((items) => items.map((item, i) => i === idx ? { ...item, [field]: value } : item));
+  };
+  const addCompanion = () => {
+    setCompanions((items) => [...items, {
+      fullName: "", relationship: "", dob: "", nationality: "Indian", passportNumber: "", passportExpiry: "",
+      mobile: "", email: "", mealPreference: "", visaSupport: true, medicalDetails: "", participationType: "full_programme",
+    }]);
+  };
+  const removeCompanion = (idx) => setCompanions((items) => items.filter((_, i) => i !== idx));
+  const saveCompanions = () => {
+    const cleaned = companions
+      .filter((a) => a.fullName || a.relationship || a.mobile || a.email || a.passportNumber)
+      .map((a) => ({
+        fullName: a.fullName,
+        relationship: a.relationship,
+        dob: a.dob || undefined,
+        nationality: a.nationality,
+        passportNumber: a.passportNumber,
+        passportExpiry: a.passportExpiry || undefined,
+        mobile: a.mobile,
+        email: a.email,
+        mealPreference: a.mealPreference,
+        visaSupport: !!a.visaSupport,
+        medicalDetails: a.medicalDetails,
+        participationType: a.participationType || "full_programme",
+      }));
+    onPatch(p._id, { hasAccompanying: cleaned.length > 0, accompanyingPersons: cleaned }, "Accompanying persons updated");
+  };
 
   const saveVisa = () => onPatch(p._id, {
     visaAppointment: {
@@ -461,10 +660,10 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
       </ModalHeader>
       <ModalBody>
         <Nav tabs className="mb-3">
-          {["profile", "ops", "documents", "visa", "flight", "comms"].map((t) => (
+          {["profile", "companions", "ops", "documents", "visa", "flight", "comms"].map((t) => (
             <NavItem key={t}>
               <NavLink className={classnames({ active: activeTab === t })} onClick={() => setActiveTab(t)} role="button">
-                <span className="text-capitalize">{t === "comms" ? "Communications" : t}</span>
+                <span className="text-capitalize">{t === "comms" ? "Communications" : t === "companions" ? "Accompanying" : t}</span>
               </NavLink>
             </NavItem>
           ))}
@@ -481,10 +680,37 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
               <Col md={6}><Label>Institution</Label><Input value={reg.institutionName} onChange={(e) => setReg({ ...reg, institutionName: e.target.value })} /></Col>
               <Col md={3}><Label>Email</Label><Input type="email" value={reg.email} onChange={(e) => setReg({ ...reg, email: e.target.value })} /></Col>
               <Col md={3}><Label>Mobile</Label><Input value={reg.mobile} onChange={(e) => setReg({ ...reg, mobile: e.target.value })} /></Col>
+              <Col md={3}><Label>Date of birth</Label><Input type="date" value={reg.dob || ""} onChange={(e) => setReg({ ...reg, dob: e.target.value })} /></Col>
+              <Col md={3}><Label>Gender</Label><Input value={reg.gender || ""} onChange={(e) => setReg({ ...reg, gender: e.target.value })} /></Col>
+              <Col md={3}><Label>Preferred communication</Label>
+                <Input type="select" value={reg.communicationMethod || ""} onChange={(e) => setReg({ ...reg, communicationMethod: e.target.value })}>
+                  <option value="">—</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="phone">Phone</option>
+                </Input>
+              </Col>
+              <Col md={3}><Label>Official email</Label><Input type="email" value={reg.officialEmail || ""} onChange={(e) => setReg({ ...reg, officialEmail: e.target.value })} /></Col>
               <Col md={4}><Label>City</Label><Input value={reg.city} onChange={(e) => setReg({ ...reg, city: e.target.value })} /></Col>
               <Col md={4}><Label>State</Label><Input value={reg.state} onChange={(e) => setReg({ ...reg, state: e.target.value })} /></Col>
               <Col md={4}><Label>Nationality</Label><Input value={reg.nationality} onChange={(e) => setReg({ ...reg, nationality: e.target.value })} /></Col>
+              <Col md={4}><Label>Institution type</Label><Input value={reg.institutionType || ""} onChange={(e) => setReg({ ...reg, institutionType: e.target.value })} /></Col>
+              <Col md={4}><Label>Website</Label><Input value={reg.website || ""} onChange={(e) => setReg({ ...reg, website: e.target.value })} /></Col>
+              <Col md={4}><Label>Years experience</Label><Input type="number" value={reg.yearsExperience || ""} onChange={(e) => setReg({ ...reg, yearsExperience: e.target.value })} /></Col>
+              <Col md={4}><Label>Students count</Label><Input type="number" value={reg.studentsCount || ""} onChange={(e) => setReg({ ...reg, studentsCount: e.target.value })} /></Col>
+              <Col md={4}><Label>Educators count</Label><Input type="number" value={reg.educatorsCount || ""} onChange={(e) => setReg({ ...reg, educatorsCount: e.target.value })} /></Col>
+              <Col md={4}><Label>Responsibilities</Label><Input value={reg.responsibilities || ""} onChange={(e) => setReg({ ...reg, responsibilities: e.target.value })} placeholder="Leadership, curriculum, admissions" /></Col>
               <Col md={12}><Label>Registered address</Label><Input type="textarea" rows={2} value={reg.registeredAddress} onChange={(e) => setReg({ ...reg, registeredAddress: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Programme interest</h6></Col>
+              <Col md={6}><Label>Interests (comma-separated)</Label><Input value={reg.interests || ""} onChange={(e) => setReg({ ...reg, interests: e.target.value })} /></Col>
+              <Col md={6}><Label>Institution visit preferences</Label><Input value={reg.institutionVisitPreferences || ""} onChange={(e) => setReg({ ...reg, institutionVisitPreferences: e.target.value })} /></Col>
+              <Col md={4}><Label>Presentation interest</Label>
+                <Input type="select" value={reg.presentationInterest || ""} onChange={(e) => setReg({ ...reg, presentationInterest: e.target.value })}>
+                  <option value="">—</option><option value="yes">Yes</option><option value="no">No</option><option value="maybe">Maybe</option>
+                </Input>
+              </Col>
+              <Col md={4} className="d-flex align-items-end">
+                <Toggle id="visitedNordic" checked={reg.visitedNordic} onChange={(e) => setReg({ ...reg, visitedNordic: e.target.checked })} label="Visited Nordic before" />
+              </Col>
+              <Col md={12}><Label>Expected outcome</Label><Input type="textarea" rows={2} value={reg.expectedOutcome || ""} onChange={(e) => setReg({ ...reg, expectedOutcome: e.target.value })} /></Col>
 
               <Col md={12}><h6 className="text-muted mb-0 mt-2">Trip preferences</h6></Col>
               <Col md={3}><Label>Occupancy</Label>
@@ -501,22 +727,110 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
               <Col md={3} className="d-flex align-items-end">
                 <Toggle id="idaFlag" checked={reg.idaMember} onChange={(e) => setReg({ ...reg, idaMember: e.target.checked })} label="IDA member" />
               </Col>
+              <Col md={3}><Label>IDA membership no.</Label><Input value={reg.idaMembershipNumber || ""} onChange={(e) => setReg({ ...reg, idaMembershipNumber: e.target.value })} /></Col>
+              <Col md={3} className="d-flex align-items-end">
+                <Toggle id="invitationLetter" checked={reg.invitationLetter} onChange={(e) => setReg({ ...reg, invitationLetter: e.target.checked })} label="Needs invitation letter" />
+              </Col>
+              <Col md={3}><Label>Passport country</Label><Input value={reg.passportCountry || ""} onChange={(e) => setReg({ ...reg, passportCountry: e.target.value })} /></Col>
+              <Col md={3}><Label>Passport issue date</Label><Input type="date" value={reg.passportIssueDate || ""} onChange={(e) => setReg({ ...reg, passportIssueDate: e.target.value })} /></Col>
               <Col md={6}><Label>Allergies (comma-separated)</Label><Input value={reg.allergies} onChange={(e) => setReg({ ...reg, allergies: e.target.value })} /></Col>
               <Col md={6}><Label>Travel assistance (comma-separated)</Label><Input value={reg.travelAssistance} onChange={(e) => setReg({ ...reg, travelAssistance: e.target.value })} /></Col>
+              <Col md={6}><Label>Dietary details</Label><Input value={reg.dietaryDetails || ""} onChange={(e) => setReg({ ...reg, dietaryDetails: e.target.value })} /></Col>
+              <Col md={6}><Label>Allergy details</Label><Input value={reg.allergyDetails || ""} onChange={(e) => setReg({ ...reg, allergyDetails: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Accommodation</h6></Col>
+              <Col md={3} className="d-flex align-items-end">
+                <Toggle id="smokingPref" checked={reg.smoking} onChange={(e) => setReg({ ...reg, smoking: e.target.checked })} label="Smoking preference" />
+              </Col>
+              <Col md={3}><Label>Alcohol preference</Label><Input value={reg.alcoholPreference || ""} onChange={(e) => setReg({ ...reg, alcoholPreference: e.target.value })} /></Col>
+              <Col md={3}><Label>Roommate preference</Label><Input value={reg.roommatePreference || ""} onChange={(e) => setReg({ ...reg, roommatePreference: e.target.value })} /></Col>
+              <Col md={3}><Label>Preferred roommate</Label><Input value={reg.preferredRoommateName || ""} onChange={(e) => setReg({ ...reg, preferredRoommateName: e.target.value })} /></Col>
+              <Col md={4}><Label>Preferred roommate institution</Label><Input value={reg.preferredRoommateInstitution || ""} onChange={(e) => setReg({ ...reg, preferredRoommateInstitution: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Visa history and extension</h6></Col>
+              <Col md={3} className="d-flex align-items-end">
+                <Toggle id="visaRefusalHas" checked={reg.visaRefusalHas} onChange={(e) => setReg({ ...reg, visaRefusalHas: e.target.checked })} label="Visa refusal history" />
+              </Col>
+              <Col md={3}><Label>Refusal country</Label><Input value={reg.visaRefusalCountry || ""} onChange={(e) => setReg({ ...reg, visaRefusalCountry: e.target.value })} /></Col>
+              <Col md={2}><Label>Refusal year</Label><Input type="number" value={reg.visaRefusalYear || ""} onChange={(e) => setReg({ ...reg, visaRefusalYear: e.target.value })} /></Col>
+              <Col md={4}><Label>Refusal reason</Label><Input value={reg.visaRefusalReason || ""} onChange={(e) => setReg({ ...reg, visaRefusalReason: e.target.value })} /></Col>
+              <Col md={3}><Label>Extension days</Label><Input value={reg.extensionDays || ""} onChange={(e) => setReg({ ...reg, extensionDays: e.target.value })} /></Col>
+              <Col md={3}><Label>Extension travel type</Label><Input value={reg.extensionTravelType || ""} onChange={(e) => setReg({ ...reg, extensionTravelType: e.target.value })} /></Col>
+              <Col md={6}><Label>Preferred destinations</Label><Input value={reg.preferredDestinations || ""} onChange={(e) => setReg({ ...reg, preferredDestinations: e.target.value })} /></Col>
+              <Col md={4}><Label>Extension companion</Label><Input value={reg.extensionCompanion || ""} onChange={(e) => setReg({ ...reg, extensionCompanion: e.target.value })} /></Col>
+              <Col md={3} className="d-flex align-items-end">
+                <Toggle id="extensionSupport" checked={reg.extensionSupport} onChange={(e) => setReg({ ...reg, extensionSupport: e.target.checked })} label="Needs extension support" />
+              </Col>
+              <Col md={12}><Label>Extension notes</Label><Input type="textarea" rows={2} value={reg.extensionNotes || ""} onChange={(e) => setReg({ ...reg, extensionNotes: e.target.value })} /></Col>
+              <Col md={12}><Label>Travel commitments</Label><Input type="textarea" rows={2} value={reg.travelCommitments || ""} onChange={(e) => setReg({ ...reg, travelCommitments: e.target.value })} /></Col>
 
               <Col md={12}><h6 className="text-muted mb-0 mt-2">Emergency &amp; medical</h6></Col>
               <Col md={4}><Label>Emergency name</Label><Input value={reg.emergencyName} onChange={(e) => setReg({ ...reg, emergencyName: e.target.value })} /></Col>
               <Col md={4}><Label>Relationship</Label><Input value={reg.emergencyRelationship} onChange={(e) => setReg({ ...reg, emergencyRelationship: e.target.value })} /></Col>
               <Col md={4}><Label>Emergency phone</Label><Input value={reg.emergencyPhone} onChange={(e) => setReg({ ...reg, emergencyPhone: e.target.value })} /></Col>
+              <Col md={4}><Label>Emergency email</Label><Input type="email" value={reg.emergencyEmail || ""} onChange={(e) => setReg({ ...reg, emergencyEmail: e.target.value })} /></Col>
               <Col md={12}><Label>Medical condition</Label><Input value={reg.medicalCondition} onChange={(e) => setReg({ ...reg, medicalCondition: e.target.value })} /></Col>
               <Col md={12}><Label>Main reason for joining</Label><Input type="textarea" rows={2} value={reg.mainReason} onChange={(e) => setReg({ ...reg, mainReason: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Billing</h6></Col>
+              <Col md={3}><Label>Invoice name type</Label>
+                <Input type="select" value={reg.invoiceNameType || ""} onChange={(e) => setReg({ ...reg, invoiceNameType: e.target.value })}>
+                  <option value="">—</option><option value="individual">Individual</option><option value="institution">Institution</option>
+                </Input>
+              </Col>
+              <Col md={3}><Label>Billing name</Label><Input value={reg.billingName || ""} onChange={(e) => setReg({ ...reg, billingName: e.target.value })} /></Col>
+              <Col md={3}><Label>GSTIN</Label><Input value={reg.gstin || ""} onChange={(e) => setReg({ ...reg, gstin: e.target.value })} /></Col>
+              <Col md={3}><Label>Accounts contact</Label><Input value={reg.accountsContact || ""} onChange={(e) => setReg({ ...reg, accountsContact: e.target.value })} /></Col>
+              <Col md={4}><Label>Accounts email</Label><Input type="email" value={reg.accountsEmail || ""} onChange={(e) => setReg({ ...reg, accountsEmail: e.target.value })} /></Col>
+              <Col md={8}><Label>Billing address</Label><Input value={reg.billingAddress || ""} onChange={(e) => setReg({ ...reg, billingAddress: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Declarations</h6></Col>
+              <Col md={3}><Toggle id="privacyConsent" checked={reg.privacyConsent} onChange={(e) => setReg({ ...reg, privacyConsent: e.target.checked })} label="Privacy consent" /></Col>
+              <Col md={3}><Toggle id="visaDisclaimer" checked={reg.visaDisclaimer} onChange={(e) => setReg({ ...reg, visaDisclaimer: e.target.checked })} label="Visa disclaimer" /></Col>
+              <Col md={3}><Toggle id="cancellationPolicy" checked={reg.cancellationPolicy} onChange={(e) => setReg({ ...reg, cancellationPolicy: e.target.checked })} label="Cancellation policy" /></Col>
+              <Col md={3}><Toggle id="medicalDeclaration" checked={reg.medicalDeclaration} onChange={(e) => setReg({ ...reg, medicalDeclaration: e.target.checked })} label="Medical declaration" /></Col>
             </Row>
-            {p.hasAccompanying ? (
-              <div className="alert alert-light border mt-3 mb-0">
-                <strong>Accompanying:</strong> {(p.accompanyingPersons || []).map((a) => `${a.fullName || "—"}${a.relationship ? ` (${a.relationship})` : ""}`).join(", ") || `${(p.accompanyingPersons || []).length} person(s)`}
-              </div>
-            ) : null}
             <Button color="primary" className="mt-3" onClick={saveReg}>Save registration</Button>
+          </TabPane>
+
+          {/* ACCOMPANYING PERSONS */}
+          <TabPane tabId="companions">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h6 className="mb-0">Accompanying persons</h6>
+                <small className="text-muted">Manage family members, colleagues, or travel-stay-only guests attached to this participant.</small>
+              </div>
+              <Button size="sm" color="soft-primary" onClick={addCompanion}><i className="bx bx-plus me-1" />Add person</Button>
+            </div>
+            {companions.length === 0 ? <p className="text-muted">No accompanying persons added.</p> : companions.map((a, idx) => (
+              <Card key={idx} className="border mb-2">
+                <CardBody>
+                  <Row className="g-2">
+                    <Col md={4}><Label>Full name</Label><Input value={a.fullName || ""} onChange={(e) => setCompanionField(idx, "fullName", e.target.value)} /></Col>
+                    <Col md={2}><Label>Relationship</Label><Input value={a.relationship || ""} onChange={(e) => setCompanionField(idx, "relationship", e.target.value)} /></Col>
+                    <Col md={2}><Label>DOB</Label><Input type="date" value={a.dob || ""} onChange={(e) => setCompanionField(idx, "dob", e.target.value)} /></Col>
+                    <Col md={2}><Label>Nationality</Label><Input value={a.nationality || ""} onChange={(e) => setCompanionField(idx, "nationality", e.target.value)} /></Col>
+                    <Col md={2}><Label>Participation</Label>
+                      <Input type="select" value={a.participationType || "full_programme"} onChange={(e) => setCompanionField(idx, "participationType", e.target.value)}>
+                        <option value="full_programme">Full programme</option>
+                        <option value="travel_stay_only">Travel/stay only</option>
+                      </Input>
+                    </Col>
+                    <Col md={3}><Label>Passport number</Label><Input value={a.passportNumber || ""} onChange={(e) => setCompanionField(idx, "passportNumber", e.target.value)} /></Col>
+                    <Col md={3}><Label>Passport expiry</Label><Input type="date" value={a.passportExpiry || ""} onChange={(e) => setCompanionField(idx, "passportExpiry", e.target.value)} /></Col>
+                    <Col md={3}><Label>Mobile</Label><Input value={a.mobile || ""} onChange={(e) => setCompanionField(idx, "mobile", e.target.value)} /></Col>
+                    <Col md={3}><Label>Email</Label><Input type="email" value={a.email || ""} onChange={(e) => setCompanionField(idx, "email", e.target.value)} /></Col>
+                    <Col md={3}><Label>Meal preference</Label><Input value={a.mealPreference || ""} onChange={(e) => setCompanionField(idx, "mealPreference", e.target.value)} /></Col>
+                    <Col md={3} className="d-flex align-items-end">
+                      <Toggle id={`comp-visa-${idx}`} checked={a.visaSupport} onChange={(e) => setCompanionField(idx, "visaSupport", e.target.checked)} label="Visa support" />
+                    </Col>
+                    <Col md={5}><Label>Medical details</Label><Input value={a.medicalDetails || ""} onChange={(e) => setCompanionField(idx, "medicalDetails", e.target.value)} /></Col>
+                    <Col md={1} className="d-flex align-items-end"><i className="bx bx-trash text-danger fs-4" role="button" onClick={() => removeCompanion(idx)} /></Col>
+                  </Row>
+                </CardBody>
+              </Card>
+            ))}
+            <Button color="primary" onClick={saveCompanions}>Save accompanying persons</Button>
           </TabPane>
 
           {/* OPS */}
@@ -888,6 +1202,124 @@ const AddParticipantModal = ({ isOpen, tourId, onClose, onAdded }) => {
   );
 };
 
+/* ----------------------- Registration link panel ------------------------ */
+const RegistrationLinkPanel = ({ tour, onEdit }) => {
+  const [copied, setCopied] = useState(false);
+  const url = publicRegistrationUrl(tour);
+  const status = tour?.status || "draft";
+  const isOpen = status === "open";
+
+  const copy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+      showToastSuccess("Registration link copied", "Copied");
+    } catch (e) {
+      showToastError("Could not copy link", "Clipboard");
+    }
+  };
+
+  return (
+    <Card>
+      <CardBody>
+        <Row className="g-3 align-items-end">
+          <Col md={7}>
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <h6 className="mb-0">Public registration</h6>
+              <Badge color={TOUR_STATUS_COLORS[status] || "secondary"}>{status}</Badge>
+            </div>
+            <Input value={url || "Add a tour slug to generate the public registration URL"} readOnly />
+            {!isOpen ? (
+              <small className="text-warning d-block mt-1">This tour is not open yet. Change status to open before sharing the link.</small>
+            ) : null}
+          </Col>
+          <Col md={5} className="text-md-end">
+            <Button color="soft-secondary" className="me-2" onClick={copy} disabled={!url}>
+              <i className={`bx ${copied ? "bx-check" : "bx-copy"} me-1`} />{copied ? "Copied" : "Copy"}
+            </Button>
+            <Button color="soft-primary" className="me-2" onClick={() => window.open(url, "_blank", "noopener,noreferrer")} disabled={!url}>
+              <i className="bx bx-link-external me-1" />Open
+            </Button>
+            <Button color="primary" onClick={onEdit}>
+              <i className="bx bx-edit me-1" />Edit Tour
+            </Button>
+          </Col>
+        </Row>
+      </CardBody>
+    </Card>
+  );
+};
+
+/* ----------------------- Advanced participant filters ------------------- */
+const AdvancedFiltersPanel = ({ filters, onChange, onReset, resultCount }) => {
+  const set = (key, value) => onChange({ ...filters, [key]: value });
+
+  return (
+    <div className="border-top mt-3 pt-3">
+      <div className="d-flex justify-content-between align-items-center mb-2">
+        <h6 className="mb-0">Advanced filters</h6>
+        <div>
+          <small className="text-muted me-3">{resultCount} matching participant(s)</small>
+          <Button size="sm" color="light" onClick={onReset}>Reset</Button>
+        </div>
+      </div>
+      <Row className="g-2">
+        <Col md={3}><Label className="mb-1 small">City</Label><Input bsSize="sm" value={filters.city} onChange={(e) => set("city", e.target.value)} /></Col>
+        <Col md={3}><Label className="mb-1 small">State</Label><Input bsSize="sm" value={filters.state} onChange={(e) => set("state", e.target.value)} /></Col>
+        <Col md={3}><Label className="mb-1 small">Institution</Label><Input bsSize="sm" value={filters.institution} onChange={(e) => set("institution", e.target.value)} /></Col>
+        <Col md={3}><Label className="mb-1 small">Cluster</Label><Input bsSize="sm" value={filters.cluster} onChange={(e) => set("cluster", e.target.value)} /></Col>
+        <Col md={3}><Label className="mb-1 small">Source</Label>
+          <Input bsSize="sm" type="select" value={filters.source} onChange={(e) => set("source", e.target.value)}>
+            <option value="">Any</option><option value="self">Self</option><option value="concierge">Concierge</option>
+          </Input>
+        </Col>
+        <Col md={3}><Label className="mb-1 small">Coordinator</Label><Input bsSize="sm" value={filters.coordinator} onChange={(e) => set("coordinator", e.target.value)} /></Col>
+        <Col md={3}><Label className="mb-1 small">Documents</Label>
+          <Input bsSize="sm" type="select" value={filters.documentStatus} onChange={(e) => set("documentStatus", e.target.value)}>
+            <option value="">Any</option>
+            <option value="missing_required">Missing required</option>
+            <option value="pending">Has pending</option>
+            <option value="uploaded">Has uploaded</option>
+            <option value="verified">Has verified</option>
+            <option value="rejected">Has rejected</option>
+          </Input>
+        </Col>
+        <Col md={3}><Label className="mb-1 small">Payment</Label>
+          <Input bsSize="sm" type="select" value={filters.paymentStatus} onChange={(e) => set("paymentStatus", e.target.value)}>
+            <option value="">Any</option>
+            <option value="outstanding">Outstanding</option>
+            <option value="fully_paid">Fully paid</option>
+            <option value="overdue">Overdue milestone</option>
+          </Input>
+        </Col>
+        <Col md={3}><Label className="mb-1 small">Visa</Label>
+          <Input bsSize="sm" type="select" value={filters.visaStatus} onChange={(e) => set("visaStatus", e.target.value)}>
+            <option value="">Any</option>
+            <option value="deadline_7d">Docs due in 7 days</option>
+            <option value="appointment_missing">Appointment missing</option>
+            <option value="appointment_scheduled">Appointment scheduled</option>
+          </Input>
+        </Col>
+        <Col md={3}><Label className="mb-1 small">Flights</Label>
+          <Input bsSize="sm" type="select" value={filters.flightStatus} onChange={(e) => set("flightStatus", e.target.value)}>
+            <option value="">Any</option><option value="missing">Missing</option><option value="booked">Booked</option>
+          </Input>
+        </Col>
+        <Col md={3}><Label className="mb-1 small">Extension demand</Label>
+          <Input bsSize="sm" type="select" value={filters.extensionDemand} onChange={(e) => set("extensionDemand", e.target.value)}>
+            <option value="">Any</option><option value="yes">Yes</option><option value="maybe">Maybe</option><option value="no">No</option>
+          </Input>
+        </Col>
+        <Col md={3} className="d-flex align-items-end">
+          <Toggle id="passportRiskFilter" checked={filters.passportRisk} onChange={(e) => set("passportRisk", e.target.checked)} label="Passport risk" />
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
 /* ----------------------- Cohort tools panel ---------------------------- */
 const rowsToCsv = (rows) => {
   if (!rows || !rows.length) return "";
@@ -1224,18 +1656,43 @@ const BulkImportModal = ({ isOpen, tourId, onClose, onDone }) => {
   );
 };
 
-/* ===================== Tour settings (bank + docs) ===================== */
+/* ===================== Tour settings / full setup ======================= */
 const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
-  const [tab, setTab] = useState("bank");
+  const [tab, setTab] = useState("details");
+  const [form, setForm] = useState({});
   const [bank, setBank] = useState({});
   const [coordinators, setCoordinators] = useState([]);
+  const [itinerary, setItinerary] = useState([]);
   const [docs, setDocs] = useState({ individual: [], schoolSponsored: [] });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (isOpen && tour) {
+      setTab("details");
+      setForm({
+        name: tour.name || "",
+        slug: tour.slug || "",
+        year: tour.year || "",
+        destinationCountry: tour.destinationCountry || "",
+        status: tour.status || "draft",
+        startDate: inputDate(tour.startDate),
+        endDate: inputDate(tour.endDate),
+        summary: tour.summary || "",
+        hostName: tour.hostPartner?.name || "",
+        hostContactPerson: tour.hostPartner?.contactPerson || "",
+        hostEmail: tour.hostPartner?.email || "",
+        hostPhone: tour.hostPartner?.phone || "",
+        hostWebsite: tour.hostPartner?.website || "",
+        currency: tour.pricing?.currency || "INR",
+        doubleOccupancyPerPerson: tour.pricing?.doubleOccupancyPerPerson || "",
+        singleSupplementMin: tour.pricing?.singleSupplementMin || "",
+        singleSupplementMax: tour.pricing?.singleSupplementMax || "",
+        inclusions: listToMultiline(tour.pricing?.inclusions),
+        exclusions: listToMultiline(tour.pricing?.exclusions),
+      });
       setBank(tour.bankDetails || {});
       setCoordinators(tour.coordinators || []);
+      setItinerary(tour.itinerary?.length ? tour.itinerary : []);
       setDocs({
         individual: tour.documentChecklist?.individual || [],
         schoolSponsored: tour.documentChecklist?.schoolSponsored || [],
@@ -1244,9 +1701,46 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
   }, [isOpen, tour]);
 
   const save = async () => {
+    if (!form.name || !form.slug) { showToastError("Tour name and slug are required", "Validation"); return; }
     setBusy(true);
     try {
-      await updateStudyTour(tour._id, { bankDetails: bank, coordinators, documentChecklist: docs });
+      const slug = form.slug.trim().toLowerCase().replace(/\s+/g, "-");
+      await updateStudyTour(tour._id, {
+        name: form.name,
+        slug,
+        year: numberOrUndefined(form.year),
+        destinationCountry: form.destinationCountry,
+        status: form.status,
+        startDate: form.startDate || undefined,
+        endDate: form.endDate || undefined,
+        summary: form.summary,
+        hostPartner: {
+          name: form.hostName,
+          contactPerson: form.hostContactPerson,
+          email: form.hostEmail,
+          phone: form.hostPhone,
+          website: form.hostWebsite,
+        },
+        pricing: {
+          currency: form.currency || "INR",
+          doubleOccupancyPerPerson: numberOrUndefined(form.doubleOccupancyPerPerson),
+          singleSupplementMin: numberOrUndefined(form.singleSupplementMin),
+          singleSupplementMax: numberOrUndefined(form.singleSupplementMax),
+          inclusions: multilineToList(form.inclusions),
+          exclusions: multilineToList(form.exclusions),
+        },
+        itinerary: itinerary
+          .filter((day) => day.title || day.city || day.details)
+          .map((day, idx) => ({
+            day: Number(day.day) || idx + 1,
+            title: day.title || `Day ${idx + 1}`,
+            city: day.city,
+            details: day.details,
+          })),
+        bankDetails: bank,
+        coordinators: coordinators.filter((c) => c.name || c.role || c.phone || c.email),
+        documentChecklist: docs,
+      });
       showToastSuccess("Tour settings saved", "Success");
       onSaved();
     } catch (e) { showToastError("Save failed", "Error"); }
@@ -1258,6 +1752,11 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
   };
   const addDoc = (list) => setDocs((d) => ({ ...d, [list]: [...d[list], { key: `doc_${Date.now()}`, label: "", required: true, multiple: false, acceptTypes: [] }] }));
   const removeDoc = (list, idx) => setDocs((d) => ({ ...d, [list]: d[list].filter((_, i) => i !== idx) }));
+  const setItineraryField = (idx, field, value) => {
+    setItinerary((days) => days.map((day, i) => i === idx ? { ...day, [field]: value } : day));
+  };
+  const addItineraryDay = () => setItinerary((days) => ([...days, { day: days.length + 1, title: "", city: "", details: "" }]));
+  const removeItineraryDay = (idx) => setItinerary((days) => days.filter((_, i) => i !== idx));
 
   const DocBuilder = ({ list, title }) => (
     <div className="mb-3">
@@ -1265,10 +1764,11 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
         <h6 className="mb-0">{title}</h6>
         <Button size="sm" color="soft-primary" onClick={() => addDoc(list)}><i className="bx bx-plus" /> Add field</Button>
       </div>
-      {docs[list].map((it, idx) => (
+      {(docs[list] || []).map((it, idx) => (
         <Row key={idx} className="g-2 mt-1 align-items-center">
-          <Col md={4}><Input bsSize="sm" placeholder="Document label" value={it.label} onChange={(e) => setDocField(list, idx, "label", e.target.value)} /></Col>
-          <Col md={3}><Input bsSize="sm" placeholder="types e.g. pdf,jpg" value={(it.acceptTypes || []).join(",")} onChange={(e) => setDocField(list, idx, "acceptTypes", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} /></Col>
+          <Col md={3}><Input bsSize="sm" placeholder="Document label" value={it.label} onChange={(e) => setDocField(list, idx, "label", e.target.value)} /></Col>
+          <Col md={3}><Input bsSize="sm" placeholder="Description / helper text" value={it.description || ""} onChange={(e) => setDocField(list, idx, "description", e.target.value)} /></Col>
+          <Col md={2}><Input bsSize="sm" placeholder="types e.g. pdf,jpg" value={(it.acceptTypes || []).join(",")} onChange={(e) => setDocField(list, idx, "acceptTypes", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} /></Col>
           <Col md={2}><Input bsSize="sm" type="number" placeholder="max MB" value={it.maxSizeMB || ""} onChange={(e) => setDocField(list, idx, "maxSizeMB", e.target.value ? Number(e.target.value) : undefined)} /></Col>
           <Col md={1}><Toggle id={`req-${list}-${idx}`} checked={it.required} onChange={(e) => setDocField(list, idx, "required", e.target.checked)} label="Req" /></Col>
           <Col md={1}><Toggle id={`mul-${list}-${idx}`} checked={it.multiple} onChange={(e) => setDocField(list, idx, "multiple", e.target.checked)} label="Multi" /></Col>
@@ -1285,11 +1785,74 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
       <ModalHeader toggle={onClose}>Tour settings — {tour.name}</ModalHeader>
       <ModalBody>
         <Nav tabs className="mb-3">
-          {["bank", "coordinators", "documents"].map((t) => (
+          {["details", "pricing", "itinerary", "bank", "coordinators", "documents"].map((t) => (
             <NavItem key={t}><NavLink className={classnames({ active: tab === t })} role="button" onClick={() => setTab(t)}><span className="text-capitalize">{t === "bank" ? "Bank details" : t}</span></NavLink></NavItem>
           ))}
         </Nav>
         <TabContent activeTab={tab}>
+          <TabPane tabId="details">
+            <Row className="g-3">
+              <Col md={6}><Label>Tour name *</Label><Input value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Col>
+              <Col md={3}><Label>Slug *</Label><Input value={form.slug || ""} onChange={(e) => setForm({ ...form, slug: e.target.value })} /></Col>
+              <Col md={3}><Label>Status</Label>
+                <Input type="select" value={form.status || "draft"} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                  <option value="draft">Draft</option>
+                  <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                  <option value="completed">Completed</option>
+                  <option value="archived">Archived</option>
+                </Input>
+              </Col>
+              <Col md={3}><Label>Year</Label><Input type="number" value={form.year || ""} onChange={(e) => setForm({ ...form, year: e.target.value })} /></Col>
+              <Col md={3}><Label>Destination country</Label><Input value={form.destinationCountry || ""} onChange={(e) => setForm({ ...form, destinationCountry: e.target.value })} /></Col>
+              <Col md={3}><Label>Start date</Label><Input type="date" value={form.startDate || ""} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></Col>
+              <Col md={3}><Label>End date</Label><Input type="date" value={form.endDate || ""} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></Col>
+              <Col md={12}><Label>Summary</Label><Input type="textarea" rows={3} value={form.summary || ""} onChange={(e) => setForm({ ...form, summary: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Host partner</h6></Col>
+              <Col md={4}><Label>Partner name</Label><Input value={form.hostName || ""} onChange={(e) => setForm({ ...form, hostName: e.target.value })} /></Col>
+              <Col md={4}><Label>Contact person</Label><Input value={form.hostContactPerson || ""} onChange={(e) => setForm({ ...form, hostContactPerson: e.target.value })} /></Col>
+              <Col md={4}><Label>Website</Label><Input value={form.hostWebsite || ""} onChange={(e) => setForm({ ...form, hostWebsite: e.target.value })} /></Col>
+              <Col md={6}><Label>Email</Label><Input type="email" value={form.hostEmail || ""} onChange={(e) => setForm({ ...form, hostEmail: e.target.value })} /></Col>
+              <Col md={6}><Label>Phone</Label><Input value={form.hostPhone || ""} onChange={(e) => setForm({ ...form, hostPhone: e.target.value })} /></Col>
+              <Col md={12}>
+                <Label>Public registration URL</Label>
+                <Input value={form.slug ? `${publicBaseUrl()}/educator-study-tours/${form.slug.trim().toLowerCase().replace(/\s+/g, "-")}` : ""} readOnly />
+              </Col>
+            </Row>
+          </TabPane>
+
+          <TabPane tabId="pricing">
+            <Row className="g-3">
+              <Col md={3}><Label>Currency</Label><Input value={form.currency || "INR"} onChange={(e) => setForm({ ...form, currency: e.target.value })} /></Col>
+              <Col md={3}><Label>Double / person</Label><Input type="number" value={form.doubleOccupancyPerPerson || ""} onChange={(e) => setForm({ ...form, doubleOccupancyPerPerson: e.target.value })} /></Col>
+              <Col md={3}><Label>Single supplement min</Label><Input type="number" value={form.singleSupplementMin || ""} onChange={(e) => setForm({ ...form, singleSupplementMin: e.target.value })} /></Col>
+              <Col md={3}><Label>Single supplement max</Label><Input type="number" value={form.singleSupplementMax || ""} onChange={(e) => setForm({ ...form, singleSupplementMax: e.target.value })} /></Col>
+              <Col md={6}><Label>Inclusions (one per line)</Label><Input type="textarea" rows={8} value={form.inclusions || ""} onChange={(e) => setForm({ ...form, inclusions: e.target.value })} /></Col>
+              <Col md={6}><Label>Exclusions (one per line)</Label><Input type="textarea" rows={8} value={form.exclusions || ""} onChange={(e) => setForm({ ...form, exclusions: e.target.value })} /></Col>
+            </Row>
+          </TabPane>
+
+          <TabPane tabId="itinerary">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <p className="text-muted small mb-0">Build the shared day-wise programme shown to ops and later the public/customer portal.</p>
+              <Button size="sm" color="soft-primary" onClick={addItineraryDay}><i className="bx bx-plus me-1" />Add day</Button>
+            </div>
+            {itinerary.length === 0 ? <p className="text-muted">No itinerary days yet.</p> : itinerary.map((day, idx) => (
+              <Card key={idx} className="border mb-2">
+                <CardBody className="py-2">
+                  <Row className="g-2 align-items-start">
+                    <Col md={1}><Label className="small mb-1">Day</Label><Input bsSize="sm" type="number" value={day.day || idx + 1} onChange={(e) => setItineraryField(idx, "day", e.target.value)} /></Col>
+                    <Col md={4}><Label className="small mb-1">Title</Label><Input bsSize="sm" value={day.title || ""} onChange={(e) => setItineraryField(idx, "title", e.target.value)} /></Col>
+                    <Col md={3}><Label className="small mb-1">City</Label><Input bsSize="sm" value={day.city || ""} onChange={(e) => setItineraryField(idx, "city", e.target.value)} /></Col>
+                    <Col md={3}><Label className="small mb-1">Details</Label><Input bsSize="sm" value={day.details || ""} onChange={(e) => setItineraryField(idx, "details", e.target.value)} /></Col>
+                    <Col md={1} className="pt-4"><i className="bx bx-trash text-danger" role="button" onClick={() => removeItineraryDay(idx)} /></Col>
+                  </Row>
+                </CardBody>
+              </Card>
+            ))}
+          </TabPane>
+
           <TabPane tabId="bank">
             <p className="text-muted small">Global bank details for this tour — shared with participants in the payment email.</p>
             <Row className="g-3">
@@ -1332,7 +1895,7 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
       </ModalBody>
       <ModalFooter>
         <Button color="light" onClick={onClose}>Cancel</Button>
-        <Button color="primary" onClick={save} disabled={busy}>{busy ? <Spinner size="sm" /> : "Save settings"}</Button>
+        <Button color="primary" onClick={save} disabled={busy}>{busy ? <Spinner size="sm" /> : "Save tour settings"}</Button>
       </ModalFooter>
     </Modal>
   );
