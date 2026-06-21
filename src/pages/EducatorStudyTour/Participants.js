@@ -341,7 +341,7 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
       const newIdx = PARTICIPANT_STAGES.indexOf(mapped);
       return newIdx > curIdx ? { ...o, stage: mapped } : o;
     });
-  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab]); // eslint-disable-line
 
   if (!participant) return null;
   const p = participant;
