@@ -14,7 +14,7 @@ import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
 import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
   updateParticipant, deleteParticipant, previewMessage, sendMessage,
-  getTourAnalytics, getTourWeather, getManifest, runAutomations, bulkMessage,
+  getTourAnalytics, getPaymentsReport, getTourWeather, getManifest, runAutomations, bulkMessage,
   updateStudyTour, bulkImportParticipants, uploadDocument, getChannelAvailability,
   getDefaultDocChecklist,
   getExpenses, getExpenseSummary, addExpense, updateExpense, deleteExpense, EXPENSE_CATEGORIES,
@@ -350,6 +350,7 @@ const Participants = () => {
   const [sortOrder, setSortOrder] = useState("desc");
   const [totalParticipants, setTotalParticipants] = useState(0);
   const [expensesOpen, setExpensesOpen] = useState(false);
+  const [paymentsOpen, setPaymentsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -526,6 +527,7 @@ const Participants = () => {
         <div className="d-flex justify-content-between align-items-center flex-wrap">
           <Breadcrumbs title={<Link to="/educator-study-tours">Study Tours</Link>} breadcrumbItem={tour?.name || "Participants"} />
           <div className="mb-3">
+            <Button color="soft-success" size="sm" className="me-2" onClick={() => setPaymentsOpen(true)}><i className="bx bx-rupee me-1" />Payments</Button>
             <Button color="soft-dark" size="sm" className="me-2" onClick={() => setExpensesOpen(true)}><i className="bx bx-wallet me-1" />Expenses</Button>
             <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setImportOpen(true)}><i className="bx bx-import me-1" />Import CSV</Button>
             <Button color="soft-primary" size="sm" onClick={() => setSettingsOpen(true)}><i className="bx bx-cog me-1" />Tour Settings</Button>
@@ -757,6 +759,7 @@ const Participants = () => {
         onAdded={() => { setAddModal(false); loadParticipants(); loadTour(); }}
       />
 
+      <PaymentsModal isOpen={paymentsOpen} tourId={tourId} onClose={() => setPaymentsOpen(false)} onOpenParticipant={(id) => { setPaymentsOpen(false); openDetail(id); }} />
       <ExpensesModal isOpen={expensesOpen} tourId={tourId} onClose={() => setExpensesOpen(false)} />
       <BulkImportModal isOpen={importOpen} tourId={tourId} existingParticipants={participants} onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); loadParticipants(); loadTour(); }} />
       <TourSettingsModal isOpen={settingsOpen} tour={tour} onClose={() => setSettingsOpen(false)} onSaved={() => { setSettingsOpen(false); loadTour(); }} />
@@ -2144,6 +2147,102 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
         <Button color="success" onClick={send} disabled={busy}>{busy ? <Spinner size="sm" /> : "Send to cohort"}</Button>
       </ModalFooter>
       <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
+    </Modal>
+  );
+};
+
+/* ===================== Outstanding payments modal ===================== */
+const BUCKET_META = {
+  current: { label: "Current / not overdue", color: "soft-secondary" },
+  d1_7: { label: "Overdue 1–7 days", color: "soft-warning" },
+  d8_30: { label: "Overdue 8–30 days", color: "soft-danger" },
+  d30_plus: { label: "Overdue 30+ days", color: "danger" },
+};
+const PaymentsModal = ({ isOpen, tourId, onClose, onOpenParticipant }) => {
+  const { can } = usePermissions();
+  const canEdit = can(ACTIONS.CAN_EDIT, MODULES.STUDY_TOUR_PERMS);
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [remindingId, setRemindingId] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    try { const r = await getPaymentsReport(tourId); setReport(r?.data?.report || null); }
+    catch (e) { showToastError(e?.response?.data?.message || "Failed to load payments", "Error"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (isOpen) load(); /* eslint-disable-next-line */ }, [isOpen, tourId]);
+
+  const money = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+
+  const remind = async (row) => {
+    setRemindingId(row.id);
+    try {
+      await sendMessage(row.id, "payment_instructions", ["email"]);
+      showToastSuccess(`Reminder sent to ${row.fullName}`, "Payment reminder");
+    } catch (e) { showToastError(e?.response?.data?.message || "Could not send reminder", "Error"); }
+    finally { setRemindingId(""); }
+  };
+
+  const r = report;
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="xl" centered>
+      <ModalHeader toggle={onClose}>Outstanding payments</ModalHeader>
+      <ModalBody>
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : !r ? (
+          <p className="text-muted">No data.</p>
+        ) : (
+          <>
+            <Row className="g-2 mb-3">
+              <Col md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{money(r.totalOutstanding)}</h5><small className="text-muted">Total outstanding</small></div></Col>
+              <Col md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{r.participantsOwing}</h5><small className="text-muted">Participants owing</small></div></Col>
+              <Col md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0 text-danger">{r.overdueCount}</h5><small className="text-muted">With overdue dues</small></div></Col>
+              <Col md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{money(r.buckets?.d30_plus)}</h5><small className="text-muted">30+ days overdue</small></div></Col>
+            </Row>
+
+            <div className="d-flex flex-wrap gap-2 mb-3">
+              {Object.entries(BUCKET_META).map(([k, meta]) => (
+                <Badge key={k} color={meta.color} className="p-2">
+                  {meta.label}: <strong>{money(r.buckets?.[k])}</strong>
+                </Badge>
+              ))}
+            </div>
+
+            {r.rows.length === 0 ? <p className="text-muted">🎉 Everyone is fully paid — nothing outstanding.</p> : (
+              <Table className="align-middle" responsive>
+                <thead><tr><th>Participant</th><th>Stage</th><th className="text-end">Quoted</th><th className="text-end">Paid</th><th className="text-end">Outstanding</th><th>Next due</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                  {r.rows.map((row) => (
+                    <tr key={row.id}>
+                      <td>
+                        <a href="#!" onClick={(e) => { e.preventDefault(); onOpenParticipant(row.id); }}>{row.fullName}</a>
+                        <div className="small text-muted">{row.email}</div>
+                      </td>
+                      <td><Badge color="soft-secondary">{STAGE_LABELS[row.stage] || row.stage}</Badge></td>
+                      <td className="text-end">{money(row.quoted)}</td>
+                      <td className="text-end">{money(row.paid)}</td>
+                      <td className="text-end fw-semibold">{money(row.outstanding)}</td>
+                      <td>{row.nextDue ? <span className="small">{row.nextDue.label} · {money(row.nextDue.amount)}<br />{row.nextDue.dueDate ? fmt(row.nextDue.dueDate) : ""}</span> : <span className="text-muted small">{row.hasSchedule ? "—" : "no schedule"}</span>}</td>
+                      <td>{row.overdueDays > 0 ? <Badge color={row.overdueDays > 30 ? "danger" : "soft-danger"}>{row.overdueDays}d overdue</Badge> : <Badge color="soft-success">on track</Badge>}</td>
+                      <td className="text-end">
+                        {canEdit && (
+                          <Button size="sm" color="soft-primary" disabled={remindingId === row.id} onClick={() => remind(row)}>
+                            {remindingId === row.id ? <Spinner size="sm" /> : <><i className="bx bx-envelope me-1" />Remind</>}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+          </>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button color="light" onClick={onClose}>Close</Button>
+        <Button color="soft-primary" onClick={load}><i className="bx bx-refresh me-1" />Refresh</Button>
+      </ModalFooter>
     </Modal>
   );
 };

@@ -12,6 +12,7 @@ export const getTourWeather = (id, place, date) =>
   get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/weather${buildQuery({ place, date })}`);
 
 export const getTourAnalytics = (id) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/analytics`);
+export const getPaymentsReport = (id) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/payments`);
 export const getManifest = (id, type) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/manifest?type=${type}`);
 export const manifestCsvUrl = (id, type) => `${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/manifest?type=${type}&format=csv`;
 export const runAutomations = (studyTour) => post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/automations/run`, { studyTour });
