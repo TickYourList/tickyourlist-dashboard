@@ -568,8 +568,8 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
         coordPhone: x.assignedCoordinator?.phone || "",
         internalNotes: x.internalNotes || "",
         milestones: (x.paymentMilestones || []).map((m) => ({
-          label: m.label || "", amount: m.amount || "", paid: !!m.paid,
-          dueDate: m.dueDate ? new Date(m.dueDate).toISOString().slice(0, 10) : "",
+          label: m.label || "", amount: m.amount || "", paid: !!m.paid, reference: m.reference || "",
+          dueDate: inputDate(m.dueDate), paidAt: inputDate(m.paidAt),
         })),
       });
       setReg({
@@ -636,10 +636,11 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
       setFlight({
         booked: !!f.booked, pnr: f.pnr || "",
         oAirline: f.outbound?.airline || "", oFlight: f.outbound?.flightNumber || "",
-        oDate: f.outbound?.date ? new Date(f.outbound.date).toISOString().slice(0, 10) : "",
-        oFrom: f.outbound?.from || "", oTo: f.outbound?.to || "",
+        oDate: inputDate(f.outbound?.date), oDepartTime: f.outbound?.departTime || "", oArriveTime: f.outbound?.arriveTime || "",
+        oFrom: f.outbound?.from || "", oTo: f.outbound?.to || "", oBaggage: f.outbound?.baggage || "",
         rAirline: f.return?.airline || "", rFlight: f.return?.flightNumber || "",
-        rDate: f.return?.date ? new Date(f.return.date).toISOString().slice(0, 10) : "",
+        rDate: inputDate(f.return?.date), rDepartTime: f.return?.departTime || "", rArriveTime: f.return?.arriveTime || "",
+        rFrom: f.return?.from || "", rTo: f.return?.to || "", rBaggage: f.return?.baggage || "",
         departureCity: x.departureCity || "", departureAirport: x.departureAirport || "",
       });
     }
@@ -671,7 +672,14 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
   const saveOps = () => {
     const milestones = (ops.milestones || [])
       .filter((m) => m.label && m.amount !== "")
-      .map((m) => ({ label: m.label, amount: Number(m.amount), paid: !!m.paid, dueDate: m.dueDate || undefined }));
+      .map((m) => ({
+        label: m.label,
+        amount: Number(m.amount),
+        paid: !!m.paid,
+        dueDate: m.dueDate || undefined,
+        paidAt: m.paidAt || undefined,
+        reference: m.reference,
+      }));
     const paidFromMilestones = milestones.filter((m) => m.paid).reduce((s, m) => s + m.amount, 0);
     const paidAmount = paidFromMilestones || (ops.paidAmount === "" ? undefined : Number(ops.paidAmount));
     const quoted = ops.quotedAmount === "" ? undefined : Number(ops.quotedAmount);
@@ -776,15 +784,26 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
   const saveFlight = () => onPatch(p._id, {
     flight: {
       booked: flight.booked, pnr: flight.pnr,
-      outbound: { airline: flight.oAirline, flightNumber: flight.oFlight, date: flight.oDate || undefined, from: flight.oFrom, to: flight.oTo },
-      return: { airline: flight.rAirline, flightNumber: flight.rFlight, date: flight.rDate || undefined },
+      outbound: {
+        airline: flight.oAirline, flightNumber: flight.oFlight, date: flight.oDate || undefined,
+        from: flight.oFrom, to: flight.oTo, departTime: flight.oDepartTime, arriveTime: flight.oArriveTime, baggage: flight.oBaggage,
+      },
+      return: {
+        airline: flight.rAirline, flightNumber: flight.rFlight, date: flight.rDate || undefined,
+        from: flight.rFrom, to: flight.rTo, departTime: flight.rDepartTime, arriveTime: flight.rArriveTime, baggage: flight.rBaggage,
+      },
     },
     departureCity: flight.departureCity, departureAirport: flight.departureAirport,
     ...(flight.booked ? { stage: advance("flight_booked") } : {}),
   }, "Flight details updated");
 
   const verifyDoc = (idx, status) => {
-    const documents = (p.documents || []).map((d, i) => i === idx ? { ...d, status } : d);
+    let note;
+    if (status === "rejected") {
+      note = window.prompt("Reason for rejecting this document");
+      if (note == null) return;
+    }
+    const documents = (p.documents || []).map((d, i) => i === idx ? { ...d, status, ...(note !== undefined ? { note } : {}) } : d);
     onPatch(p._id, { documents }, "Document updated");
   };
 
@@ -1051,16 +1070,18 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
               <Col md={12}>
                 <div className="d-flex justify-content-between align-items-center">
                   <Label className="mb-0">Payment schedule</Label>
-                  <Button size="sm" color="soft-primary" onClick={() => setOps({ ...ops, milestones: [...(ops.milestones || []), { label: "", amount: "", dueDate: "", paid: false }] })}>
+                  <Button size="sm" color="soft-primary" onClick={() => setOps({ ...ops, milestones: [...(ops.milestones || []), { label: "", amount: "", dueDate: "", paidAt: "", reference: "", paid: false }] })}>
                     <i className="bx bx-plus me-1" />Add milestone
                   </Button>
                 </div>
                 {(ops.milestones || []).length === 0 ? <small className="text-muted">No milestones — add a token/advance/balance schedule.</small> : (
                   (ops.milestones || []).map((m, mi) => (
                     <Row key={mi} className="g-2 mt-1 align-items-center">
-                      <Col md={4}><Input placeholder="Label (Token / Balance)" value={m.label} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, label: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
-                      <Col md={3}><Input type="number" placeholder="Amount" value={m.amount} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, amount: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
-                      <Col md={3}><Input type="date" value={m.dueDate} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, dueDate: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
+                      <Col md={3}><Input placeholder="Label (Token / Balance)" value={m.label} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, label: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
+                      <Col md={2}><Input type="number" placeholder="Amount" value={m.amount} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, amount: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
+                      <Col md={2}><Input type="date" title="Due date" value={m.dueDate} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, dueDate: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
+                      <Col md={2}><Input type="date" title="Paid date" value={m.paidAt || ""} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, paidAt: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
+                      <Col md={2}><Input placeholder="Reference" value={m.reference || ""} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, reference: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
                       <Col md={1}><Toggle id={`paid-${mi}`} checked={m.paid} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, paid: e.target.checked }; setOps({ ...ops, milestones: x }); }} label="Paid" /></Col>
                       <Col md={1}><i className="bx bx-trash text-danger" role="button" onClick={() => setOps({ ...ops, milestones: ops.milestones.filter((_, j) => j !== mi) })} /></Col>
                     </Row>
@@ -1091,6 +1112,7 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
                           {d.multiple ? <Badge color="soft-secondary" className="ms-1">multi</Badge> : null}
                           {d.maxSizeMB ? <small className="text-muted d-block">max {d.maxSizeMB}MB {d.acceptTypes?.length ? `· ${d.acceptTypes.join("/")}` : ""}</small> : (d.acceptTypes?.length ? <small className="text-muted d-block">{d.acceptTypes.join("/")}</small> : null)}
                           {d.description ? <small className="text-muted d-block">{d.description}</small> : null}
+                          {d.note ? <small className="text-danger d-block">Note: {d.note}</small> : null}
                         </td>
                         <td>{d.required ? "Yes" : "—"}</td>
                         <td><Badge color={d.status === "verified" ? "success" : d.status === "uploaded" ? "info" : d.status === "rejected" ? "danger" : "secondary"}>{d.status}</Badge></td>
@@ -1158,11 +1180,19 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
               <Col md={2}><Label>Date</Label><Input type="date" value={flight.oDate} onChange={(e) => setFlight({ ...flight, oDate: e.target.value })} /></Col>
               <Col md={2}><Label>From</Label><Input value={flight.oFrom} onChange={(e) => setFlight({ ...flight, oFrom: e.target.value })} /></Col>
               <Col md={2}><Label>To</Label><Input value={flight.oTo} onChange={(e) => setFlight({ ...flight, oTo: e.target.value })} /></Col>
+              <Col md={2}><Label>Depart time</Label><Input value={flight.oDepartTime || ""} onChange={(e) => setFlight({ ...flight, oDepartTime: e.target.value })} placeholder="22:45" /></Col>
+              <Col md={2}><Label>Arrive time</Label><Input value={flight.oArriveTime || ""} onChange={(e) => setFlight({ ...flight, oArriveTime: e.target.value })} placeholder="07:10" /></Col>
+              <Col md={4}><Label>Baggage</Label><Input value={flight.oBaggage || ""} onChange={(e) => setFlight({ ...flight, oBaggage: e.target.value })} placeholder="23kg check-in + 7kg cabin" /></Col>
 
               <Col md={12}><h6 className="text-muted mb-0 mt-2">Return</h6></Col>
               <Col md={3}><Label>Airline</Label><Input value={flight.rAirline} onChange={(e) => setFlight({ ...flight, rAirline: e.target.value })} /></Col>
               <Col md={3}><Label>Flight no.</Label><Input value={flight.rFlight} onChange={(e) => setFlight({ ...flight, rFlight: e.target.value })} /></Col>
               <Col md={2}><Label>Date</Label><Input type="date" value={flight.rDate} onChange={(e) => setFlight({ ...flight, rDate: e.target.value })} /></Col>
+              <Col md={2}><Label>From</Label><Input value={flight.rFrom || ""} onChange={(e) => setFlight({ ...flight, rFrom: e.target.value })} /></Col>
+              <Col md={2}><Label>To</Label><Input value={flight.rTo || ""} onChange={(e) => setFlight({ ...flight, rTo: e.target.value })} /></Col>
+              <Col md={2}><Label>Depart time</Label><Input value={flight.rDepartTime || ""} onChange={(e) => setFlight({ ...flight, rDepartTime: e.target.value })} /></Col>
+              <Col md={2}><Label>Arrive time</Label><Input value={flight.rArriveTime || ""} onChange={(e) => setFlight({ ...flight, rArriveTime: e.target.value })} /></Col>
+              <Col md={4}><Label>Baggage</Label><Input value={flight.rBaggage || ""} onChange={(e) => setFlight({ ...flight, rBaggage: e.target.value })} /></Col>
             </Row>
             <Button color="primary" className="mt-3" onClick={saveFlight}>Save flight details</Button>
             <span className="text-muted ms-2 small">Then use "Send Message → Flight Confirmation".</span>
