@@ -1,4 +1,4 @@
-import { get, post, put, del } from "./api_helper";
+import { get, post, put, del, postFormData } from "./api_helper";
 
 const BASE = "/v1/educator-study-tours";
 
@@ -37,6 +37,29 @@ export const getTourAnalytics = (id) => get(`${BASE}/admin/tours/${id}/analytics
 export const getManifest = (id, type) => get(`${BASE}/admin/tours/${id}/manifest?type=${type}`);
 export const manifestCsvUrl = (id, type) => `${BASE}/admin/tours/${id}/manifest?type=${type}&format=csv`;
 export const runAutomations = (studyTour) => post(`${BASE}/admin/automations/run`, { studyTour });
+export const bulkImportParticipants = (studyTour, participants) =>
+  post(`${BASE}/admin/participants/bulk-import`, { studyTour, participants });
+export const uploadDocument = (file) => {
+  const fd = new FormData();
+  fd.append("document", file);
+  return postFormData(`${BASE}/admin/upload`, fd);
+};
+export const getDefaultDocChecklist = () => get(`${BASE}/admin/default-doc-checklist`);
+
+/* --------------------------- Expenses ----------------------------------- */
+export const getExpenses = (tourId, params = {}) => {
+  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString();
+  return get(`${BASE}/admin/tours/${tourId}/expenses${qs ? `?${qs}` : ""}`);
+};
+export const getExpenseSummary = (tourId) => get(`${BASE}/admin/tours/${tourId}/expenses/summary`);
+export const addExpense = (tourId, data) => post(`${BASE}/admin/tours/${tourId}/expenses`, data);
+export const updateExpense = (id, data) => put(`${BASE}/admin/expenses/${id}`, data);
+export const deleteExpense = (id) => del(`${BASE}/admin/expenses/${id}`);
+
+export const EXPENSE_CATEGORIES = [
+  "flights", "hotel", "visa", "transport", "meals", "sightseeing",
+  "insurance", "guide", "gifts", "misc", "refund",
+];
 
 /* --------------------------- Constants ---------------------------------- */
 export const PARTICIPANT_STAGES = [

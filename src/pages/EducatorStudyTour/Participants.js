@@ -12,11 +12,43 @@ import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
   updateParticipant, deleteParticipant, previewMessage, sendMessage,
   getTourAnalytics, getTourWeather, getManifest, runAutomations, bulkMessage,
+  updateStudyTour, bulkImportParticipants, uploadDocument, getChannelAvailability,
+  getDefaultDocChecklist,
+  getExpenses, getExpenseSummary, addExpense, deleteExpense, EXPENSE_CATEGORIES,
   PARTICIPANT_STAGES, STAGE_LABELS, STAGE_COLORS, MESSAGE_TEMPLATES,
 } from "../../helpers/educator_study_tour_helper";
 
-const inr = (n) => (typeof n === "number" ? `₹${n.toLocaleString("en-IN")}` : "—");
+/** Toggle switch helper (reactstrap + bootstrap form-switch). */
+const Toggle = ({ id, checked, onChange, label }) => (
+  <div className="form-check form-switch">
+    <input className="form-check-input" type="checkbox" role="switch" id={id} checked={!!checked} onChange={onChange} />
+    <Label className="form-check-label" for={id}>{label}</Label>
+  </div>
+);
+
+/** Date helper used across read-only displays. */
 const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—");
+
+/** Compute "needs attention" reasons for a participant (client-side). */
+const attentionReasons = (p) => {
+  const out = [];
+  const daysTo = (d) => (d ? Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000) : null);
+  const missingDocs = (p.documents || []).filter((d) => d.required && d.status !== "uploaded" && d.status !== "verified").length;
+  if (missingDocs && ["documents_pending", "visa_scheduled", "quoted", "paid"].includes(p.stage)) out.push(`${missingDocs} docs pending`);
+  if (p.quotedAmount && (p.paidAmount || 0) < p.quotedAmount && p.stage !== "cancelled") out.push("payment due");
+  const pe = daysTo(p.passportExpiry);
+  if (pe != null && pe < 180) out.push("passport <6mo");
+  const vd = daysTo(p.visaAppointment?.documentDeadline);
+  if (vd != null && vd >= 0 && vd <= 7 && p.stage !== "visa_approved") out.push(`visa docs in ${vd}d`);
+  return out;
+};
+
+// Selecting one of these tabs auto-fills the Stage dropdown to the matching stage.
+const TAB_STAGE = {
+  documents: "documents_pending",
+  visa: "visa_scheduled",
+  flight: "flight_booked",
+};
 
 const Participants = () => {
   const { tourId } = useParams();
@@ -30,6 +62,10 @@ const Participants = () => {
   const [filterStage, setFilterStage] = useState("");
   const [search, setSearch] = useState("");
   const [soloOnly, setSoloOnly] = useState(false);
+  const [attnOnly, setAttnOnly] = useState(false);
+  const [expensesOpen, setExpensesOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const [detail, setDetail] = useState(null); // participant being viewed
   const [activeTab, setActiveTab] = useState("profile");
@@ -85,12 +121,22 @@ const Participants = () => {
     catch (e) { showToastError("Delete failed", "Error"); }
   };
 
-  const filtered = useMemo(() => participants, [participants]);
+  const filtered = useMemo(
+    () => (attnOnly ? participants.filter((p) => attentionReasons(p).length) : participants),
+    [participants, attnOnly]
+  );
 
   return (
     <div className="page-content">
       <Container fluid>
-        <Breadcrumbs title={<Link to="/educator-study-tours">Study Tours</Link>} breadcrumbItem={tour?.name || "Participants"} />
+        <div className="d-flex justify-content-between align-items-center flex-wrap">
+          <Breadcrumbs title={<Link to="/educator-study-tours">Study Tours</Link>} breadcrumbItem={tour?.name || "Participants"} />
+          <div className="mb-3">
+            <Button color="soft-dark" size="sm" className="me-2" onClick={() => setExpensesOpen(true)}><i className="bx bx-wallet me-1" />Expenses</Button>
+            <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setImportOpen(true)}><i className="bx bx-import me-1" />Import CSV</Button>
+            <Button color="soft-primary" size="sm" onClick={() => setSettingsOpen(true)}><i className="bx bx-cog me-1" />Tour Settings</Button>
+          </div>
+        </div>
 
         {/* Advanced cohort tools */}
         <CohortTools tourId={tourId} onChanged={() => { loadParticipants(); loadTour(); }} />
@@ -129,11 +175,10 @@ const Participants = () => {
                 {PARTICIPANT_STAGES.map((s) => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
               </Input>
             </Col>
-            <Col md={2}>
-              <div className="form-check mt-4">
-                <input className="form-check-input" type="checkbox" id="soloOnly" checked={soloOnly}
-                       onChange={(e) => setSoloOnly(e.target.checked)} />
-                <Label className="form-check-label" for="soloOnly">Solo travellers</Label>
+            <Col md={3}>
+              <div className="mt-4 d-flex gap-3">
+                <Toggle id="soloOnly" checked={soloOnly} onChange={(e) => setSoloOnly(e.target.checked)} label="Solo only" />
+                <Toggle id="attnOnly" checked={attnOnly} onChange={(e) => setAttnOnly(e.target.checked)} label="Needs attention" />
               </div>
             </Col>
             <Col md={3} className="text-end">
@@ -166,6 +211,7 @@ const Participants = () => {
                         </Link>
                         {p.isSolo ? <Badge color="soft-info" className="ms-2">Solo</Badge> : null}
                         {p.source === "concierge" ? <Badge color="soft-secondary" className="ms-1">Concierge</Badge> : null}
+                        <div>{attentionReasons(p).map((r, ri) => <Badge key={ri} color="soft-danger" className="me-1 mt-1">{r}</Badge>)}</div>
                       </td>
                       <td>{p.institutionName || "—"}</td>
                       <td><Badge color={STAGE_COLORS[p.stage] || "secondary"}>{STAGE_LABELS[p.stage] || p.stage}</Badge></td>
@@ -218,6 +264,10 @@ const Participants = () => {
         onClose={() => setAddModal(false)}
         onAdded={() => { setAddModal(false); loadParticipants(); loadTour(); }}
       />
+
+      <ExpensesModal isOpen={expensesOpen} tourId={tourId} onClose={() => setExpensesOpen(false)} />
+      <BulkImportModal isOpen={importOpen} tourId={tourId} onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); loadParticipants(); loadTour(); }} />
+      <TourSettingsModal isOpen={settingsOpen} tour={tour} onClose={() => setSettingsOpen(false)} onSaved={() => { setSettingsOpen(false); loadTour(); }} />
     </div>
   );
 };
@@ -225,37 +275,183 @@ const Participants = () => {
 /* ----------------------- Detail modal (tabs) --------------------------- */
 const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, onClose, onPatch, onMessage }) => {
   const [ops, setOps] = useState({});
+  const [reg, setReg] = useState({});
+  const [visa, setVisa] = useState({});
+  const [flight, setFlight] = useState({});
   useEffect(() => {
     if (participant) {
+      const x = participant;
       setOps({
-        stage: participant.stage || "registered",
-        travelCluster: participant.travelCluster || "",
-        isSolo: !!participant.isSolo,
-        quotedAmount: participant.quotedAmount || "",
-        paidAmount: participant.paidAmount || "",
-        coordName: participant.assignedCoordinator?.name || "",
-        coordPhone: participant.assignedCoordinator?.phone || "",
-        internalNotes: participant.internalNotes || "",
+        stage: x.stage || "registered",
+        travelCluster: x.travelCluster || "",
+        isSolo: !!x.isSolo,
+        quotedAmount: x.quotedAmount || "",
+        paidAmount: x.paidAmount || "",
+        coordName: x.assignedCoordinator?.name || "",
+        coordPhone: x.assignedCoordinator?.phone || "",
+        internalNotes: x.internalNotes || "",
+        milestones: (x.paymentMilestones || []).map((m) => ({
+          label: m.label || "", amount: m.amount || "", paid: !!m.paid,
+          dueDate: m.dueDate ? new Date(m.dueDate).toISOString().slice(0, 10) : "",
+        })),
+      });
+      setReg({
+        salutation: x.salutation || "", fullName: x.fullName || "", designation: x.designation || "",
+        institutionName: x.institutionName || "", email: x.email || "", mobile: x.mobile || "",
+        city: x.city || "", state: x.state || "", nationality: x.nationality || "",
+        occupancy: x.occupancy || "", mealPreference: x.mealPreference || "",
+        allergies: (x.allergies || []).join(", "), travelAssistance: (x.travelAssistance || []).join(", "),
+        wantsExtension: x.wantsExtension || "", idaMember: !!x.idaMember, idaMembershipNumber: x.idaMembershipNumber || "",
+        emergencyName: x.emergencyName || "", emergencyRelationship: x.emergencyRelationship || "", emergencyPhone: x.emergencyPhone || "",
+        medicalCondition: x.medicalCondition || "", mainReason: x.mainReason || "", registeredAddress: x.registeredAddress || "",
+      });
+      const v = x.visaAppointment || {};
+      setVisa({
+        scheduled: !!v.scheduled,
+        date: v.date ? new Date(v.date).toISOString().slice(0, 10) : "",
+        time: v.time || "", centreName: v.centreName || "", centreAddress: v.centreAddress || "",
+        referenceNumber: v.referenceNumber || "",
+        documentDeadline: v.documentDeadline ? new Date(v.documentDeadline).toISOString().slice(0, 10) : "",
+        formLink: v.formLink || "",
+        passportNumber: x.passportNumber || "",
+        passportExpiry: x.passportExpiry ? new Date(x.passportExpiry).toISOString().slice(0, 10) : "",
+        hasSchengenVisa: !!x.hasSchengenVisa,
+      });
+      const f = x.flight || {};
+      setFlight({
+        booked: !!f.booked, pnr: f.pnr || "",
+        oAirline: f.outbound?.airline || "", oFlight: f.outbound?.flightNumber || "",
+        oDate: f.outbound?.date ? new Date(f.outbound.date).toISOString().slice(0, 10) : "",
+        oFrom: f.outbound?.from || "", oTo: f.outbound?.to || "",
+        rAirline: f.return?.airline || "", rFlight: f.return?.flightNumber || "",
+        rDate: f.return?.date ? new Date(f.return.date).toISOString().slice(0, 10) : "",
+        departureCity: x.departureCity || "", departureAirport: x.departureAirport || "",
       });
     }
   }, [participant]);
 
+  // Selecting a journey tab auto-fills the Stage dropdown to that tab's stage.
+  // Advance-only: never rolls a more-advanced participant backwards.
+  useEffect(() => {
+    const mapped = TAB_STAGE[activeTab];
+    if (!mapped) return;
+    setOps((o) => {
+      if (!o.stage) return { ...o, stage: mapped };
+      const curIdx = PARTICIPANT_STAGES.indexOf(o.stage);
+      const newIdx = PARTICIPANT_STAGES.indexOf(mapped);
+      return newIdx > curIdx ? { ...o, stage: mapped } : o;
+    });
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!participant) return null;
   const p = participant;
 
-  const saveOps = () => onPatch(p._id, {
-    stage: ops.stage,
-    travelCluster: ops.travelCluster,
-    isSolo: ops.isSolo,
-    quotedAmount: ops.quotedAmount === "" ? undefined : Number(ops.quotedAmount),
-    paidAmount: ops.paidAmount === "" ? undefined : Number(ops.paidAmount),
-    assignedCoordinator: { name: ops.coordName, phone: ops.coordPhone },
-    internalNotes: ops.internalNotes,
-  }, "Participant updated");
+  // Advance-only stage helper: never rolls a more-advanced participant back.
+  const advance = (target) => {
+    const cur = PARTICIPANT_STAGES.indexOf(p.stage);
+    const next = PARTICIPANT_STAGES.indexOf(target);
+    return next > cur ? target : p.stage;
+  };
+
+  const saveOps = () => {
+    const milestones = (ops.milestones || [])
+      .filter((m) => m.label && m.amount !== "")
+      .map((m) => ({ label: m.label, amount: Number(m.amount), paid: !!m.paid, dueDate: m.dueDate || undefined }));
+    const paidFromMilestones = milestones.filter((m) => m.paid).reduce((s, m) => s + m.amount, 0);
+    const paidAmount = paidFromMilestones || (ops.paidAmount === "" ? undefined : Number(ops.paidAmount));
+    const quoted = ops.quotedAmount === "" ? undefined : Number(ops.quotedAmount);
+    // Auto-advance to "paid" when the full quote is collected.
+    let stage = ops.stage;
+    if (quoted && paidAmount && paidAmount >= quoted) stage = advance("paid") === "paid" ? "paid" : stage;
+    onPatch(p._id, {
+      stage,
+      travelCluster: ops.travelCluster,
+      isSolo: ops.isSolo,
+      quotedAmount: quoted,
+      paidAmount,
+      paymentMilestones: milestones,
+      assignedCoordinator: { name: ops.coordName, phone: ops.coordPhone },
+      internalNotes: ops.internalNotes,
+    }, "Participant updated");
+  };
+
+  const splitList = (s) => (s || "").split(",").map((x) => x.trim()).filter(Boolean);
+
+  const saveReg = () => onPatch(p._id, {
+    salutation: reg.salutation, fullName: reg.fullName, designation: reg.designation,
+    institutionName: reg.institutionName, email: reg.email, mobile: reg.mobile,
+    city: reg.city, state: reg.state, nationality: reg.nationality, registeredAddress: reg.registeredAddress,
+    occupancy: reg.occupancy || undefined, mealPreference: reg.mealPreference,
+    allergies: splitList(reg.allergies), travelAssistance: splitList(reg.travelAssistance),
+    wantsExtension: reg.wantsExtension || undefined, idaMember: reg.idaMember, idaMembershipNumber: reg.idaMembershipNumber,
+    emergencyName: reg.emergencyName, emergencyRelationship: reg.emergencyRelationship, emergencyPhone: reg.emergencyPhone,
+    medicalCondition: reg.medicalCondition, mainReason: reg.mainReason,
+  }, "Registration updated");
+
+  const saveVisa = () => onPatch(p._id, {
+    visaAppointment: {
+      scheduled: visa.scheduled,
+      date: visa.date || undefined, time: visa.time, centreName: visa.centreName, centreAddress: visa.centreAddress,
+      referenceNumber: visa.referenceNumber, documentDeadline: visa.documentDeadline || undefined, formLink: visa.formLink,
+    },
+    passportNumber: visa.passportNumber, passportExpiry: visa.passportExpiry || undefined, hasSchengenVisa: visa.hasSchengenVisa,
+    ...(visa.scheduled ? { stage: advance("visa_scheduled") } : {}),
+  }, "Visa details updated");
+
+  const saveFlight = () => onPatch(p._id, {
+    flight: {
+      booked: flight.booked, pnr: flight.pnr,
+      outbound: { airline: flight.oAirline, flightNumber: flight.oFlight, date: flight.oDate || undefined, from: flight.oFrom, to: flight.oTo },
+      return: { airline: flight.rAirline, flightNumber: flight.rFlight, date: flight.rDate || undefined },
+    },
+    departureCity: flight.departureCity, departureAirport: flight.departureAirport,
+    ...(flight.booked ? { stage: advance("flight_booked") } : {}),
+  }, "Flight details updated");
 
   const verifyDoc = (idx, status) => {
     const documents = (p.documents || []).map((d, i) => i === idx ? { ...d, status } : d);
     onPatch(p._id, { documents }, "Document updated");
+  };
+
+  const uploadToDoc = async (idx, fileList) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    const doc = (p.documents || [])[idx];
+    if (doc?.maxSizeMB) {
+      const tooBig = files.find((f) => f.size > doc.maxSizeMB * 1024 * 1024);
+      if (tooBig) { showToastError(`"${tooBig.name}" exceeds ${doc.maxSizeMB}MB`, "Too large"); return; }
+    }
+    try {
+      const uploaded = [];
+      for (const f of files) {
+        const r = await uploadDocument(f);
+        if (r?.data?.url) uploaded.push({ url: r.data.url, key: r.data.key, name: f.name, size: f.size, uploadedAt: new Date() });
+      }
+      const documents = (p.documents || []).map((d, i) => {
+        if (i !== idx) return d;
+        const existing = d.multiple ? (d.files || []) : [];
+        return { ...d, files: [...existing, ...uploaded], status: "uploaded" };
+      });
+      onPatch(p._id, { documents }, `${uploaded.length} file(s) uploaded`);
+    } catch (e) { showToastError("Upload failed", "Error"); }
+  };
+
+  const removeFile = (idx, fileIdx) => {
+    const documents = (p.documents || []).map((d, i) => {
+      if (i !== idx) return d;
+      const files = (d.files || []).filter((_, fi) => fi !== fileIdx);
+      return { ...d, files, status: files.length ? d.status : "pending" };
+    });
+    onPatch(p._id, { documents }, "File removed");
+  };
+
+  const addCustomDoc = () => {
+    const label = window.prompt("Document name (e.g. 'Marriage certificate')");
+    if (!label) return;
+    const documents = [...(p.documents || []), {
+      key: `custom_${Date.now()}`, label, required: false, multiple: true, acceptTypes: [], files: [], status: "pending",
+    }];
+    onPatch(p._id, { documents }, "Document added");
   };
 
   return (
@@ -275,32 +471,52 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
         </Nav>
 
         <TabContent activeTab={activeTab}>
-          {/* PROFILE */}
+          {/* PROFILE — editable registration */}
           <TabPane tabId="profile">
-            <Row>
-              <Col md={6}>
-                <h6 className="text-muted">Personal</h6>
-                <Info label="Full name" value={p.fullName} />
-                <Info label="Designation" value={p.designation} />
-                <Info label="Institution" value={p.institutionName} />
-                <Info label="Email" value={p.email} />
-                <Info label="Mobile" value={p.mobile} />
-                <Info label="City / State" value={[p.city, p.state].filter(Boolean).join(", ")} />
-                <Info label="IDA Member" value={p.idaMember ? `Yes${p.idaMembershipNumber ? ` (${p.idaMembershipNumber})` : ""}` : "No"} />
+            <Row className="g-3">
+              <Col md={12}><h6 className="text-muted mb-0">Personal &amp; institution</h6></Col>
+              <Col md={2}><Label>Salutation</Label><Input value={reg.salutation} onChange={(e) => setReg({ ...reg, salutation: e.target.value })} /></Col>
+              <Col md={5}><Label>Full name</Label><Input value={reg.fullName} onChange={(e) => setReg({ ...reg, fullName: e.target.value })} /></Col>
+              <Col md={5}><Label>Designation</Label><Input value={reg.designation} onChange={(e) => setReg({ ...reg, designation: e.target.value })} /></Col>
+              <Col md={6}><Label>Institution</Label><Input value={reg.institutionName} onChange={(e) => setReg({ ...reg, institutionName: e.target.value })} /></Col>
+              <Col md={3}><Label>Email</Label><Input type="email" value={reg.email} onChange={(e) => setReg({ ...reg, email: e.target.value })} /></Col>
+              <Col md={3}><Label>Mobile</Label><Input value={reg.mobile} onChange={(e) => setReg({ ...reg, mobile: e.target.value })} /></Col>
+              <Col md={4}><Label>City</Label><Input value={reg.city} onChange={(e) => setReg({ ...reg, city: e.target.value })} /></Col>
+              <Col md={4}><Label>State</Label><Input value={reg.state} onChange={(e) => setReg({ ...reg, state: e.target.value })} /></Col>
+              <Col md={4}><Label>Nationality</Label><Input value={reg.nationality} onChange={(e) => setReg({ ...reg, nationality: e.target.value })} /></Col>
+              <Col md={12}><Label>Registered address</Label><Input type="textarea" rows={2} value={reg.registeredAddress} onChange={(e) => setReg({ ...reg, registeredAddress: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Trip preferences</h6></Col>
+              <Col md={3}><Label>Occupancy</Label>
+                <Input type="select" value={reg.occupancy} onChange={(e) => setReg({ ...reg, occupancy: e.target.value })}>
+                  <option value="">—</option><option value="double">Double</option><option value="single">Single</option>
+                </Input>
               </Col>
-              <Col md={6}>
-                <h6 className="text-muted">Trip preferences</h6>
-                <Info label="Occupancy" value={p.occupancy} />
-                <Info label="Meal" value={p.mealPreference} />
-                <Info label="Allergies" value={(p.allergies || []).join(", ")} />
-                <Info label="Travel assistance" value={(p.travelAssistance || []).join(", ")} />
-                <Info label="Wants extension" value={p.wantsExtension} />
-                <Info label="Accompanying" value={p.hasAccompanying ? `${(p.accompanyingPersons || []).length} person(s)` : "No"} />
-                <Info label="Emergency" value={p.emergencyName ? `${p.emergencyName} (${p.emergencyRelationship || ""}) ${p.emergencyPhone || ""}` : "—"} />
+              <Col md={3}><Label>Meal</Label><Input value={reg.mealPreference} onChange={(e) => setReg({ ...reg, mealPreference: e.target.value })} /></Col>
+              <Col md={3}><Label>Wants extension</Label>
+                <Input type="select" value={reg.wantsExtension} onChange={(e) => setReg({ ...reg, wantsExtension: e.target.value })}>
+                  <option value="">—</option><option value="yes">Yes</option><option value="no">No</option><option value="maybe">Maybe</option>
+                </Input>
               </Col>
+              <Col md={3} className="d-flex align-items-end">
+                <Toggle id="idaFlag" checked={reg.idaMember} onChange={(e) => setReg({ ...reg, idaMember: e.target.checked })} label="IDA member" />
+              </Col>
+              <Col md={6}><Label>Allergies (comma-separated)</Label><Input value={reg.allergies} onChange={(e) => setReg({ ...reg, allergies: e.target.value })} /></Col>
+              <Col md={6}><Label>Travel assistance (comma-separated)</Label><Input value={reg.travelAssistance} onChange={(e) => setReg({ ...reg, travelAssistance: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Emergency &amp; medical</h6></Col>
+              <Col md={4}><Label>Emergency name</Label><Input value={reg.emergencyName} onChange={(e) => setReg({ ...reg, emergencyName: e.target.value })} /></Col>
+              <Col md={4}><Label>Relationship</Label><Input value={reg.emergencyRelationship} onChange={(e) => setReg({ ...reg, emergencyRelationship: e.target.value })} /></Col>
+              <Col md={4}><Label>Emergency phone</Label><Input value={reg.emergencyPhone} onChange={(e) => setReg({ ...reg, emergencyPhone: e.target.value })} /></Col>
+              <Col md={12}><Label>Medical condition</Label><Input value={reg.medicalCondition} onChange={(e) => setReg({ ...reg, medicalCondition: e.target.value })} /></Col>
+              <Col md={12}><Label>Main reason for joining</Label><Input type="textarea" rows={2} value={reg.mainReason} onChange={(e) => setReg({ ...reg, mainReason: e.target.value })} /></Col>
             </Row>
-            {p.medicalCondition ? <div className="alert alert-warning mt-2 mb-0"><strong>Medical:</strong> {p.medicalCondition}</div> : null}
-            {p.mainReason ? <div className="mt-3"><h6 className="text-muted">Main reason</h6><p className="mb-0">{p.mainReason}</p></div> : null}
+            {p.hasAccompanying ? (
+              <div className="alert alert-light border mt-3 mb-0">
+                <strong>Accompanying:</strong> {(p.accompanyingPersons || []).map((a) => `${a.fullName || "—"}${a.relationship ? ` (${a.relationship})` : ""}`).join(", ") || `${(p.accompanyingPersons || []).length} person(s)`}
+              </div>
+            ) : null}
+            <Button color="primary" className="mt-3" onClick={saveReg}>Save registration</Button>
           </TabPane>
 
           {/* OPS */}
@@ -318,18 +534,14 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
                        placeholder="e.g. Mumbai group" />
               </Col>
               <Col md={4} className="d-flex align-items-end">
-                <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id="soloFlag" checked={ops.isSolo}
-                         onChange={(e) => setOps({ ...ops, isSolo: e.target.checked })} />
-                  <Label className="form-check-label" for="soloFlag">Solo traveller</Label>
-                </div>
+                <Toggle id="soloFlag" checked={ops.isSolo} onChange={(e) => setOps({ ...ops, isSolo: e.target.checked })} label="Solo traveller" />
               </Col>
               <Col md={4}>
                 <Label>Quoted amount (₹)</Label>
                 <Input type="number" value={ops.quotedAmount} onChange={(e) => setOps({ ...ops, quotedAmount: e.target.value })} />
               </Col>
               <Col md={4}>
-                <Label>Paid amount (₹)</Label>
+                <Label>Paid amount (₹) <small className="text-muted">(auto from milestones)</small></Label>
                 <Input type="number" value={ops.paidAmount} onChange={(e) => setOps({ ...ops, paidAmount: e.target.value })} />
               </Col>
               <Col md={4}>
@@ -342,58 +554,128 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
               </Col>
               <Col md={12}>
                 <Label>Internal notes</Label>
-                <Input type="textarea" rows={3} value={ops.internalNotes} onChange={(e) => setOps({ ...ops, internalNotes: e.target.value })} />
+                <Input type="textarea" rows={2} value={ops.internalNotes} onChange={(e) => setOps({ ...ops, internalNotes: e.target.value })} />
+              </Col>
+
+              {/* Payment milestones editor */}
+              <Col md={12}>
+                <div className="d-flex justify-content-between align-items-center">
+                  <Label className="mb-0">Payment schedule</Label>
+                  <Button size="sm" color="soft-primary" onClick={() => setOps({ ...ops, milestones: [...(ops.milestones || []), { label: "", amount: "", dueDate: "", paid: false }] })}>
+                    <i className="bx bx-plus me-1" />Add milestone
+                  </Button>
+                </div>
+                {(ops.milestones || []).length === 0 ? <small className="text-muted">No milestones — add a token/advance/balance schedule.</small> : (
+                  (ops.milestones || []).map((m, mi) => (
+                    <Row key={mi} className="g-2 mt-1 align-items-center">
+                      <Col md={4}><Input placeholder="Label (Token / Balance)" value={m.label} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, label: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
+                      <Col md={3}><Input type="number" placeholder="Amount" value={m.amount} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, amount: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
+                      <Col md={3}><Input type="date" value={m.dueDate} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, dueDate: e.target.value }; setOps({ ...ops, milestones: x }); }} /></Col>
+                      <Col md={1}><Toggle id={`paid-${mi}`} checked={m.paid} onChange={(e) => { const x = [...ops.milestones]; x[mi] = { ...m, paid: e.target.checked }; setOps({ ...ops, milestones: x }); }} label="Paid" /></Col>
+                      <Col md={1}><i className="bx bx-trash text-danger" role="button" onClick={() => setOps({ ...ops, milestones: ops.milestones.filter((_, j) => j !== mi) })} /></Col>
+                    </Row>
+                  ))
+                )}
               </Col>
             </Row>
             <Button color="primary" className="mt-3" onClick={saveOps}>Save ops details</Button>
           </TabPane>
 
-          {/* DOCUMENTS */}
+          {/* DOCUMENTS — upload (single/multiple), verify, add custom */}
           <TabPane tabId="documents">
-            {(p.documents || []).length === 0 ? <p className="text-muted">No document checklist.</p> : (
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <small className="text-muted">Upload on the participant's behalf, verify, or add a custom document.</small>
+              <Button size="sm" color="soft-primary" onClick={addCustomDoc}><i className="bx bx-plus me-1" />Add document</Button>
+            </div>
+            {(p.documents || []).length === 0 ? <p className="text-muted">No documents configured for this tour.</p> : (
               <Table className="align-middle">
-                <thead><tr><th>Document</th><th>Required</th><th>Status</th><th>File</th><th>Action</th></tr></thead>
+                <thead><tr><th>Document</th><th>Req.</th><th>Status</th><th>Files</th><th style={{ minWidth: 220 }}>Action</th></tr></thead>
                 <tbody>
-                  {p.documents.map((d, i) => (
-                    <tr key={d.key}>
-                      <td>{d.label}</td>
-                      <td>{d.required ? "Yes" : "Optional"}</td>
-                      <td><Badge color={d.status === "verified" ? "success" : d.status === "uploaded" ? "info" : d.status === "rejected" ? "danger" : "secondary"}>{d.status}</Badge></td>
-                      <td>{d.fileUrl ? <a href={d.fileUrl} target="_blank" rel="noreferrer">View</a> : "—"}</td>
-                      <td>
-                        <Button size="sm" color="soft-success" className="me-1" onClick={() => verifyDoc(i, "verified")}>Verify</Button>
-                        <Button size="sm" color="soft-danger" onClick={() => verifyDoc(i, "rejected")}>Reject</Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {p.documents.map((d, i) => {
+                    const accept = (d.acceptTypes && d.acceptTypes.length) ? d.acceptTypes.map((t) => `.${t}`).join(",") : "image/*,application/pdf,.doc,.docx";
+                    const files = d.files && d.files.length ? d.files : (d.fileUrl ? [{ url: d.fileUrl, name: "file" }] : []);
+                    return (
+                      <tr key={d.key}>
+                        <td>
+                          {d.label}{d.required ? <span className="text-danger"> *</span> : null}
+                          {d.multiple ? <Badge color="soft-secondary" className="ms-1">multi</Badge> : null}
+                          {d.maxSizeMB ? <small className="text-muted d-block">max {d.maxSizeMB}MB {d.acceptTypes?.length ? `· ${d.acceptTypes.join("/")}` : ""}</small> : (d.acceptTypes?.length ? <small className="text-muted d-block">{d.acceptTypes.join("/")}</small> : null)}
+                          {d.description ? <small className="text-muted d-block">{d.description}</small> : null}
+                        </td>
+                        <td>{d.required ? "Yes" : "—"}</td>
+                        <td><Badge color={d.status === "verified" ? "success" : d.status === "uploaded" ? "info" : d.status === "rejected" ? "danger" : "secondary"}>{d.status}</Badge></td>
+                        <td>
+                          {files.length === 0 ? <span className="text-muted">—</span> : files.map((f, fi) => (
+                            <div key={fi} className="small d-flex align-items-center gap-1">
+                              <a href={f.url} target="_blank" rel="noreferrer">{f.name || `file ${fi + 1}`}</a>
+                              <i className="bx bx-x text-danger" role="button" title="remove" onClick={() => removeFile(i, fi)} />
+                            </div>
+                          ))}
+                        </td>
+                        <td>
+                          <Label className="btn btn-soft-primary btn-sm mb-0 me-1">
+                            <i className="bx bx-upload me-1" />Upload
+                            <input type="file" hidden multiple={!!d.multiple} accept={accept}
+                                   onChange={(e) => { uploadToDoc(i, e.target.files); e.target.value = ""; }} />
+                          </Label>
+                          <Button size="sm" color="soft-success" className="me-1" onClick={() => verifyDoc(i, "verified")}>Verify</Button>
+                          <Button size="sm" color="soft-danger" onClick={() => verifyDoc(i, "rejected")}>Reject</Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </Table>
             )}
           </TabPane>
 
-          {/* VISA */}
+          {/* VISA — editable */}
           <TabPane tabId="visa">
-            <Info label="Scheduled" value={p.visaAppointment?.scheduled ? "Yes" : "No"} />
-            <Info label="Date / time" value={`${fmt(p.visaAppointment?.date)} ${p.visaAppointment?.time || ""}`} />
-            <Info label="Centre" value={p.visaAppointment?.centreName} />
-            <Info label="Address" value={p.visaAppointment?.centreAddress} />
-            <Info label="Reference" value={p.visaAppointment?.referenceNumber} />
-            <Info label="Document deadline" value={fmt(p.visaAppointment?.documentDeadline)} />
-            <Info label="Passport" value={p.passportNumber} />
-            <Info label="Passport expiry" value={fmt(p.passportExpiry)} />
-            <Info label="Schengen visa" value={p.hasSchengenVisa ? "Yes" : "No"} />
-            <Info label="Past refusal" value={p.visaRefusal?.has ? `Yes — ${p.visaRefusal.country || ""} ${p.visaRefusal.year || ""}` : "No"} />
-            <p className="text-muted mt-2 small">Edit visa appointment details via Ops &gt; the API, or use "Send Visa Appointment" message after setting these.</p>
+            <Row className="g-3">
+              <Col md={3} className="d-flex align-items-end">
+                <Toggle id="visaSched" checked={visa.scheduled} onChange={(e) => setVisa({ ...visa, scheduled: e.target.checked })} label="Appointment scheduled" />
+              </Col>
+              <Col md={3}><Label>Date</Label><Input type="date" value={visa.date} onChange={(e) => setVisa({ ...visa, date: e.target.value })} /></Col>
+              <Col md={3}><Label>Time</Label><Input value={visa.time} onChange={(e) => setVisa({ ...visa, time: e.target.value })} placeholder="10:30 AM" /></Col>
+              <Col md={3}><Label>Reference no.</Label><Input value={visa.referenceNumber} onChange={(e) => setVisa({ ...visa, referenceNumber: e.target.value })} /></Col>
+              <Col md={6}><Label>Centre name</Label><Input value={visa.centreName} onChange={(e) => setVisa({ ...visa, centreName: e.target.value })} /></Col>
+              <Col md={6}><Label>Centre address</Label><Input value={visa.centreAddress} onChange={(e) => setVisa({ ...visa, centreAddress: e.target.value })} /></Col>
+              <Col md={4}><Label>Document deadline</Label><Input type="date" value={visa.documentDeadline} onChange={(e) => setVisa({ ...visa, documentDeadline: e.target.value })} /></Col>
+              <Col md={8}><Label>Visa form link</Label><Input value={visa.formLink} onChange={(e) => setVisa({ ...visa, formLink: e.target.value })} /></Col>
+              <Col md={4}><Label>Passport number</Label><Input value={visa.passportNumber} onChange={(e) => setVisa({ ...visa, passportNumber: e.target.value })} /></Col>
+              <Col md={4}><Label>Passport expiry</Label><Input type="date" value={visa.passportExpiry} onChange={(e) => setVisa({ ...visa, passportExpiry: e.target.value })} /></Col>
+              <Col md={4} className="d-flex align-items-end">
+                <Toggle id="schengen" checked={visa.hasSchengenVisa} onChange={(e) => setVisa({ ...visa, hasSchengenVisa: e.target.checked })} label="Holds Schengen visa" />
+              </Col>
+            </Row>
+            <Button color="primary" className="mt-3" onClick={saveVisa}>Save visa details</Button>
+            <span className="text-muted ms-2 small">Then use "Send Message → Visa Appointment" to notify the participant.</span>
           </TabPane>
 
-          {/* FLIGHT */}
+          {/* FLIGHT — editable */}
           <TabPane tabId="flight">
-            <Info label="Booked" value={p.flight?.booked ? "Yes" : "No"} />
-            <Info label="PNR" value={p.flight?.pnr} />
-            <Info label="Outbound" value={p.flight?.outbound ? `${p.flight.outbound.airline || ""} ${p.flight.outbound.flightNumber || ""} · ${fmt(p.flight.outbound.date)}` : "—"} />
-            <Info label="Return" value={p.flight?.return ? `${p.flight.return.airline || ""} ${p.flight.return.flightNumber || ""} · ${fmt(p.flight.return.date)}` : "—"} />
-            <Info label="Departure city" value={p.departureCity} />
-            <Info label="Departure airport" value={p.departureAirport} />
+            <Row className="g-3">
+              <Col md={3} className="d-flex align-items-end">
+                <Toggle id="flightBooked" checked={flight.booked} onChange={(e) => setFlight({ ...flight, booked: e.target.checked })} label="Flights booked" />
+              </Col>
+              <Col md={3}><Label>PNR</Label><Input value={flight.pnr} onChange={(e) => setFlight({ ...flight, pnr: e.target.value })} /></Col>
+              <Col md={3}><Label>Departure city</Label><Input value={flight.departureCity} onChange={(e) => setFlight({ ...flight, departureCity: e.target.value })} /></Col>
+              <Col md={3}><Label>Departure airport</Label><Input value={flight.departureAirport} onChange={(e) => setFlight({ ...flight, departureAirport: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Outbound</h6></Col>
+              <Col md={3}><Label>Airline</Label><Input value={flight.oAirline} onChange={(e) => setFlight({ ...flight, oAirline: e.target.value })} /></Col>
+              <Col md={3}><Label>Flight no.</Label><Input value={flight.oFlight} onChange={(e) => setFlight({ ...flight, oFlight: e.target.value })} /></Col>
+              <Col md={2}><Label>Date</Label><Input type="date" value={flight.oDate} onChange={(e) => setFlight({ ...flight, oDate: e.target.value })} /></Col>
+              <Col md={2}><Label>From</Label><Input value={flight.oFrom} onChange={(e) => setFlight({ ...flight, oFrom: e.target.value })} /></Col>
+              <Col md={2}><Label>To</Label><Input value={flight.oTo} onChange={(e) => setFlight({ ...flight, oTo: e.target.value })} /></Col>
+
+              <Col md={12}><h6 className="text-muted mb-0 mt-2">Return</h6></Col>
+              <Col md={3}><Label>Airline</Label><Input value={flight.rAirline} onChange={(e) => setFlight({ ...flight, rAirline: e.target.value })} /></Col>
+              <Col md={3}><Label>Flight no.</Label><Input value={flight.rFlight} onChange={(e) => setFlight({ ...flight, rFlight: e.target.value })} /></Col>
+              <Col md={2}><Label>Date</Label><Input type="date" value={flight.rDate} onChange={(e) => setFlight({ ...flight, rDate: e.target.value })} /></Col>
+            </Row>
+            <Button color="primary" className="mt-3" onClick={saveFlight}>Save flight details</Button>
+            <span className="text-muted ms-2 small">Then use "Send Message → Flight Confirmation".</span>
           </TabPane>
 
           {/* COMMS */}
@@ -425,13 +707,6 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
   );
 };
 
-const Info = ({ label, value }) => (
-  <div className="d-flex mb-1">
-    <div className="text-muted" style={{ width: 150, flexShrink: 0 }}>{label}</div>
-    <div className="fw-semibold">{value || "—"}</div>
-  </div>
-);
-
 /* ----------------------- Send message modal ---------------------------- */
 const SendMessageModal = ({ isOpen, participant, onClose, onSent }) => {
   const [templateKey, setTemplateKey] = useState("registration_received");
@@ -439,8 +714,9 @@ const SendMessageModal = ({ isOpen, participant, onClose, onSent }) => {
   const [vars, setVars] = useState({});
   const [preview, setPreview] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [avail, setAvail] = useState(null);
 
-  useEffect(() => { if (isOpen) { setPreview(null); setVars({}); } }, [isOpen, participant]);
+  useEffect(() => { if (isOpen) { setPreview(null); setVars({}); getChannelAvailability().then((r) => setAvail(r?.data?.channels || null)).catch(() => {}); } }, [isOpen, participant]);
 
   const doPreview = async () => {
     if (!participant) return;
@@ -481,10 +757,11 @@ const SendMessageModal = ({ isOpen, participant, onClose, onSent }) => {
             <Label className="mt-3">Channels</Label>
             <div className="d-flex gap-3">
               {["email", "whatsapp", "sms"].map((c) => (
-                <div className="form-check" key={c}>
-                  <input className="form-check-input" type="checkbox" id={`ch-${c}`} checked={channels[c]}
-                         onChange={(e) => setChannels({ ...channels, [c]: e.target.checked })} />
-                  <Label className="form-check-label text-capitalize" for={`ch-${c}`}>{c}</Label>
+                <div key={c}>
+                  <Toggle id={`ch-${c}`} checked={channels[c]}
+                          onChange={(e) => setChannels({ ...channels, [c]: e.target.checked })}
+                          label={c[0].toUpperCase() + c.slice(1)} />
+                  {avail && avail[c] === false ? <small className="text-danger d-block" style={{ fontSize: 10 }}>not configured</small> : null}
                 </div>
               ))}
             </div>
@@ -769,11 +1046,9 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
         <Label className="mt-2">Channels</Label>
         <div className="d-flex gap-3">
           {["email", "whatsapp", "sms"].map((c) => (
-            <div className="form-check" key={c}>
-              <input className="form-check-input" type="checkbox" id={`bch-${c}`} checked={channels[c]}
-                     onChange={(e) => setChannels({ ...channels, [c]: e.target.checked })} />
-              <Label className="form-check-label text-capitalize" for={`bch-${c}`}>{c}</Label>
-            </div>
+            <Toggle key={c} id={`bch-${c}`} checked={channels[c]}
+                    onChange={(e) => setChannels({ ...channels, [c]: e.target.checked })}
+                    label={c[0].toUpperCase() + c.slice(1)} />
           ))}
         </div>
         {templateKey === "custom" && (
@@ -793,6 +1068,271 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
       <ModalFooter>
         <Button color="light" onClick={onClose}>Cancel</Button>
         <Button color="success" onClick={send} disabled={busy}>{busy ? <Spinner size="sm" /> : "Send to cohort"}</Button>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
+/* ========================= Expenses modal ============================== */
+const ExpensesModal = ({ isOpen, tourId, onClose }) => {
+  const [expenses, setExpenses] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [f, setF] = useState({ category: "hotel", status: "incurred" });
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    try {
+      const [e, s] = await Promise.all([getExpenses(tourId), getExpenseSummary(tourId)]);
+      setExpenses(e?.data?.expenses || []);
+      setSummary(s?.data?.summary || null);
+    } catch (err) { showToastError("Failed to load expenses", "Error"); }
+  };
+  useEffect(() => { if (isOpen) { load(); setF({ category: "hotel", status: "incurred" }); } /* eslint-disable-next-line */ }, [isOpen]);
+
+  const add = async () => {
+    if (!f.title || f.amount == null || f.amount === "") { showToastError("Title and amount required", "Validation"); return; }
+    setBusy(true);
+    try {
+      await addExpense(tourId, { ...f, amount: Number(f.amount) });
+      showToastSuccess("Expense added", "Success");
+      setF({ category: "hotel", status: "incurred" }); load();
+    } catch (e) { showToastError("Add failed", "Error"); }
+    finally { setBusy(false); }
+  };
+  const remove = async (id) => {
+    if (!window.confirm("Delete this expense?")) return;
+    try { await deleteExpense(id); load(); } catch (e) { showToastError("Delete failed", "Error"); }
+  };
+
+  const money = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+  const s = summary;
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="xl" scrollable>
+      <ModalHeader toggle={onClose}>Trip Expense Management</ModalHeader>
+      <ModalBody>
+        {s && (
+          <Row className="g-2 mb-3">
+            <Stat label="Total spent" value={money(s.totalSpent)} />
+            <Stat label="Extras" value={money(s.extrasSpent)} />
+            <Stat label="Revenue collected" value={money(s.revenueCollected)} />
+            <Stat label="Margin (vs collected)" value={money(s.marginVsCollected)} sub={s.marginVsCollected >= 0 ? "profit" : "loss"} />
+            <Stat label="Cost / head" value={money(s.costPerHead)} />
+            <Stat label="Reimbursable" value={money(s.reimbursable)} />
+          </Row>
+        )}
+
+        <Card className="bg-light border-0"><CardBody className="py-2">
+          <Row className="g-2 align-items-end">
+            <Col md={2}><Label className="mb-0 small">Category</Label>
+              <Input type="select" bsSize="sm" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })}>
+                {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </Input>
+            </Col>
+            <Col md={3}><Label className="mb-0 small">Title</Label><Input bsSize="sm" value={f.title || ""} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="Hotel — 3 nights Helsinki" /></Col>
+            <Col md={2}><Label className="mb-0 small">Amount (₹)</Label><Input bsSize="sm" type="number" value={f.amount || ""} onChange={(e) => setF({ ...f, amount: e.target.value })} /></Col>
+            <Col md={2}><Label className="mb-0 small">Date</Label><Input bsSize="sm" type="date" value={f.date || ""} onChange={(e) => setF({ ...f, date: e.target.value })} /></Col>
+            <Col md={2}><Label className="mb-0 small">Vendor</Label><Input bsSize="sm" value={f.vendor || ""} onChange={(e) => setF({ ...f, vendor: e.target.value })} /></Col>
+            <Col md={1}><Button color="primary" size="sm" onClick={add} disabled={busy}>{busy ? <Spinner size="sm" /> : "Add"}</Button></Col>
+            <Col md={2}><Toggle id="exExtra" checked={!!f.isExtra} onChange={(e) => setF({ ...f, isExtra: e.target.checked })} label="Extra / utilised" /></Col>
+            <Col md={2}><Toggle id="exReimb" checked={!!f.reimbursable} onChange={(e) => setF({ ...f, reimbursable: e.target.checked })} label="Reimbursable" /></Col>
+          </Row>
+        </CardBody></Card>
+
+        <Table className="align-middle mt-3">
+          <thead><tr><th>Date</th><th>Category</th><th>Title</th><th>Vendor</th><th className="text-end">Amount</th><th>Flags</th><th></th></tr></thead>
+          <tbody>
+            {expenses.length === 0 ? <tr><td colSpan={7} className="text-center text-muted">No expenses yet.</td></tr> :
+              expenses.map((x) => (
+                <tr key={x._id}>
+                  <td className="small">{fmt(x.date)}</td>
+                  <td className="text-capitalize">{x.category}</td>
+                  <td>{x.title}{x.participant?.fullName ? <small className="text-muted d-block">for {x.participant.fullName}</small> : null}</td>
+                  <td>{x.vendor || "—"}</td>
+                  <td className="text-end fw-semibold">{money(x.amount)}</td>
+                  <td>{x.isExtra ? <Badge color="soft-warning" className="me-1">extra</Badge> : null}{x.reimbursable ? <Badge color="soft-info">reimb.</Badge> : null}</td>
+                  <td><i className="bx bx-trash text-danger" role="button" onClick={() => remove(x._id)} /></td>
+                </tr>
+              ))}
+          </tbody>
+        </Table>
+      </ModalBody>
+      <ModalFooter><Button color="light" onClick={onClose}>Close</Button></ModalFooter>
+    </Modal>
+  );
+};
+
+/* ========================= Bulk import modal =========================== */
+const BulkImportModal = ({ isOpen, tourId, onClose, onDone }) => {
+  const [rows, setRows] = useState([]);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (isOpen) setRows([]); }, [isOpen]);
+
+  const parseCsv = (text) => {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (!lines.length) return [];
+    const headers = lines[0].split(",").map((h) => h.trim());
+    return lines.slice(1).map((line) => {
+      const cols = line.split(",");
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = (cols[i] || "").trim(); });
+      return obj;
+    });
+  };
+
+  const onFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setRows(parseCsv(String(reader.result)));
+    reader.readAsText(file);
+  };
+
+  const doImport = async () => {
+    if (!rows.length) { showToastError("Nothing to import", "Validation"); return; }
+    setBusy(true);
+    try {
+      const r = await bulkImportParticipants(tourId, rows);
+      const d = r?.data || {};
+      showToastSuccess(`Created ${d.created || 0}, skipped ${d.skipped || 0}`, "Import complete");
+      onDone();
+    } catch (e) { showToastError("Import failed", "Error"); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="lg" scrollable>
+      <ModalHeader toggle={onClose}>Bulk import participants (CSV)</ModalHeader>
+      <ModalBody>
+        <p className="text-muted small">CSV header row must include at least <code>fullName,email,mobile</code>. Optional: <code>institutionName,designation,occupancy,travelCluster,city,state,mealPreference</code>.</p>
+        <Input type="file" accept=".csv,text/csv" onChange={onFile} />
+        {rows.length > 0 && (
+          <>
+            <p className="mt-3 mb-1"><strong>{rows.length}</strong> rows parsed (preview first 5):</p>
+            <Table size="sm" className="align-middle">
+              <thead><tr>{Object.keys(rows[0]).slice(0, 6).map((h) => <th key={h}>{h}</th>)}</tr></thead>
+              <tbody>{rows.slice(0, 5).map((r, i) => <tr key={i}>{Object.keys(rows[0]).slice(0, 6).map((h) => <td key={h} className="small">{r[h]}</td>)}</tr>)}</tbody>
+            </Table>
+          </>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button color="light" onClick={onClose}>Cancel</Button>
+        <Button color="primary" onClick={doImport} disabled={busy || !rows.length}>{busy ? <Spinner size="sm" /> : `Import ${rows.length || ""}`}</Button>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
+/* ===================== Tour settings (bank + docs) ===================== */
+const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
+  const [tab, setTab] = useState("bank");
+  const [bank, setBank] = useState({});
+  const [coordinators, setCoordinators] = useState([]);
+  const [docs, setDocs] = useState({ individual: [], schoolSponsored: [] });
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && tour) {
+      setBank(tour.bankDetails || {});
+      setCoordinators(tour.coordinators || []);
+      setDocs({
+        individual: tour.documentChecklist?.individual || [],
+        schoolSponsored: tour.documentChecklist?.schoolSponsored || [],
+      });
+    }
+  }, [isOpen, tour]);
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      await updateStudyTour(tour._id, { bankDetails: bank, coordinators, documentChecklist: docs });
+      showToastSuccess("Tour settings saved", "Success");
+      onSaved();
+    } catch (e) { showToastError("Save failed", "Error"); }
+    finally { setBusy(false); }
+  };
+
+  const setDocField = (list, idx, field, value) => {
+    setDocs((d) => ({ ...d, [list]: d[list].map((it, i) => i === idx ? { ...it, [field]: value } : it) }));
+  };
+  const addDoc = (list) => setDocs((d) => ({ ...d, [list]: [...d[list], { key: `doc_${Date.now()}`, label: "", required: true, multiple: false, acceptTypes: [] }] }));
+  const removeDoc = (list, idx) => setDocs((d) => ({ ...d, [list]: d[list].filter((_, i) => i !== idx) }));
+
+  const DocBuilder = ({ list, title }) => (
+    <div className="mb-3">
+      <div className="d-flex justify-content-between align-items-center">
+        <h6 className="mb-0">{title}</h6>
+        <Button size="sm" color="soft-primary" onClick={() => addDoc(list)}><i className="bx bx-plus" /> Add field</Button>
+      </div>
+      {docs[list].map((it, idx) => (
+        <Row key={idx} className="g-2 mt-1 align-items-center">
+          <Col md={4}><Input bsSize="sm" placeholder="Document label" value={it.label} onChange={(e) => setDocField(list, idx, "label", e.target.value)} /></Col>
+          <Col md={3}><Input bsSize="sm" placeholder="types e.g. pdf,jpg" value={(it.acceptTypes || []).join(",")} onChange={(e) => setDocField(list, idx, "acceptTypes", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} /></Col>
+          <Col md={2}><Input bsSize="sm" type="number" placeholder="max MB" value={it.maxSizeMB || ""} onChange={(e) => setDocField(list, idx, "maxSizeMB", e.target.value ? Number(e.target.value) : undefined)} /></Col>
+          <Col md={1}><Toggle id={`req-${list}-${idx}`} checked={it.required} onChange={(e) => setDocField(list, idx, "required", e.target.checked)} label="Req" /></Col>
+          <Col md={1}><Toggle id={`mul-${list}-${idx}`} checked={it.multiple} onChange={(e) => setDocField(list, idx, "multiple", e.target.checked)} label="Multi" /></Col>
+          <Col md={1}><i className="bx bx-trash text-danger" role="button" onClick={() => removeDoc(list, idx)} /></Col>
+        </Row>
+      ))}
+    </div>
+  );
+
+  if (!tour) return null;
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="xl" scrollable>
+      <ModalHeader toggle={onClose}>Tour settings — {tour.name}</ModalHeader>
+      <ModalBody>
+        <Nav tabs className="mb-3">
+          {["bank", "coordinators", "documents"].map((t) => (
+            <NavItem key={t}><NavLink className={classnames({ active: tab === t })} role="button" onClick={() => setTab(t)}><span className="text-capitalize">{t === "bank" ? "Bank details" : t}</span></NavLink></NavItem>
+          ))}
+        </Nav>
+        <TabContent activeTab={tab}>
+          <TabPane tabId="bank">
+            <p className="text-muted small">Global bank details for this tour — shared with participants in the payment email.</p>
+            <Row className="g-3">
+              <Col md={6}><Label>Account name</Label><Input value={bank.accountName || ""} onChange={(e) => setBank({ ...bank, accountName: e.target.value })} /></Col>
+              <Col md={6}><Label>Account number</Label><Input value={bank.accountNumber || ""} onChange={(e) => setBank({ ...bank, accountNumber: e.target.value })} /></Col>
+              <Col md={4}><Label>IFSC</Label><Input value={bank.ifsc || ""} onChange={(e) => setBank({ ...bank, ifsc: e.target.value })} /></Col>
+              <Col md={4}><Label>Bank name</Label><Input value={bank.bankName || ""} onChange={(e) => setBank({ ...bank, bankName: e.target.value })} /></Col>
+              <Col md={4}><Label>Branch</Label><Input value={bank.branch || ""} onChange={(e) => setBank({ ...bank, branch: e.target.value })} /></Col>
+              <Col md={6}><Label>UPI</Label><Input value={bank.upi || ""} onChange={(e) => setBank({ ...bank, upi: e.target.value })} /></Col>
+              <Col md={6}><Label>Note (e.g. payment reference)</Label><Input value={bank.notes || ""} onChange={(e) => setBank({ ...bank, notes: e.target.value })} /></Col>
+            </Row>
+          </TabPane>
+          <TabPane tabId="coordinators">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <p className="text-muted small mb-0">Named coordinators shown in participant emails.</p>
+              <Button size="sm" color="soft-primary" onClick={() => setCoordinators([...coordinators, { name: "", role: "", phone: "", email: "" }])}><i className="bx bx-plus" /> Add</Button>
+            </div>
+            {coordinators.map((c, i) => (
+              <Row key={i} className="g-2 mt-1">
+                <Col md={3}><Input bsSize="sm" placeholder="Name" value={c.name || ""} onChange={(e) => setCoordinators(coordinators.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} /></Col>
+                <Col md={3}><Input bsSize="sm" placeholder="Role (Visa Coordinator)" value={c.role || ""} onChange={(e) => setCoordinators(coordinators.map((x, j) => j === i ? { ...x, role: e.target.value } : x))} /></Col>
+                <Col md={2}><Input bsSize="sm" placeholder="Phone" value={c.phone || ""} onChange={(e) => setCoordinators(coordinators.map((x, j) => j === i ? { ...x, phone: e.target.value } : x))} /></Col>
+                <Col md={3}><Input bsSize="sm" placeholder="Email" value={c.email || ""} onChange={(e) => setCoordinators(coordinators.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} /></Col>
+                <Col md={1}><i className="bx bx-trash text-danger" role="button" onClick={() => setCoordinators(coordinators.filter((_, j) => j !== i))} /></Col>
+              </Row>
+            ))}
+          </TabPane>
+          <TabPane tabId="documents">
+            <div className="d-flex justify-content-between align-items-center">
+              <p className="text-muted small mb-2">Customise the document requirements participants must upload (label, file types, max size, required, multiple).</p>
+              <Button size="sm" color="soft-secondary" onClick={async () => {
+                try { const r = await getDefaultDocChecklist(); if (r?.data?.checklist) { setDocs(r.data.checklist); showToastSuccess("Loaded standard Schengen list", "Defaults"); } }
+                catch (e) { showToastError("Could not load defaults", "Error"); }
+              }}><i className="bx bx-list-ul me-1" />Load Schengen defaults</Button>
+            </div>
+            <DocBuilder list="individual" title="Individual applicant" />
+            <DocBuilder list="schoolSponsored" title="School-sponsored" />
+          </TabPane>
+        </TabContent>
+      </ModalBody>
+      <ModalFooter>
+        <Button color="light" onClick={onClose}>Cancel</Button>
+        <Button color="primary" onClick={save} disabled={busy}>{busy ? <Spinner size="sm" /> : "Save settings"}</Button>
       </ModalFooter>
     </Modal>
   );
