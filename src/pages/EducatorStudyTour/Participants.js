@@ -36,8 +36,8 @@ const attentionReasons = (p) => {
   const missingDocs = (p.documents || []).filter((d) => d.required && d.status !== "uploaded" && d.status !== "verified").length;
   if (missingDocs && ["documents_pending", "visa_scheduled", "quoted", "paid"].includes(p.stage)) out.push(`${missingDocs} docs pending`);
   if (p.quotedAmount && (p.paidAmount || 0) < p.quotedAmount && p.stage !== "cancelled") out.push("payment due");
-  const pe = daysTo(p.passportExpiry);
-  if (pe != null && pe < 180) out.push("passport <6mo");
+  const passportRisks = passportRiskReasons(p);
+  if (passportRisks.length) out.push(passportRisks[0]);
   const vd = daysTo(p.visaAppointment?.documentDeadline);
   if (vd != null && vd >= 0 && vd <= 7 && p.stage !== "visa_approved") out.push(`visa docs in ${vd}d`);
   return out;
@@ -207,12 +207,60 @@ const EMPTY_ADVANCED_FILTERS = {
   extensionDemand: "",
 };
 
+const PARTICIPANT_SORT_OPTIONS = [
+  { value: "createdAt", label: "Newest first", defaultOrder: "desc" },
+  { value: "fullName", label: "Name", defaultOrder: "asc" },
+  { value: "institutionName", label: "Institution", defaultOrder: "asc" },
+  { value: "stage", label: "Stage", defaultOrder: "asc" },
+  { value: "city", label: "City", defaultOrder: "asc" },
+  { value: "travelCluster", label: "Cluster", defaultOrder: "asc" },
+  { value: "quotedAmount", label: "Quote amount", defaultOrder: "desc" },
+  { value: "paidAmount", label: "Paid amount", defaultOrder: "desc" },
+];
+
 const containsText = (value, query) =>
   !query || String(value || "").toLowerCase().includes(String(query).toLowerCase().trim());
 
 const daysUntilDate = (d) => {
   if (!d) return null;
   return Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000);
+};
+
+const documentReadiness = (p) => {
+  const required = (p.documents || []).filter((d) => d.required);
+  const completed = required.filter((d) => d.status === "uploaded" || d.status === "verified").length;
+  const verified = required.filter((d) => d.status === "verified").length;
+  const rejected = required.filter((d) => d.status === "rejected").length;
+  const missing = Math.max(required.length - completed, 0);
+  return {
+    required: required.length,
+    completed,
+    verified,
+    rejected,
+    missing,
+    pct: required.length ? Math.round((completed / required.length) * 100) : 100,
+  };
+};
+
+const passportRiskReasons = (p) => {
+  const reasons = [];
+  const expiryDays = daysUntilDate(p.passportExpiry);
+  if (!p.passportNumber) reasons.push("passport number missing");
+  if (!p.passportIssueDate) reasons.push("issue date missing");
+  if (!p.passportExpiry) reasons.push("expiry missing");
+  else if (expiryDays < 0) reasons.push("passport expired");
+  else if (expiryDays < 180) reasons.push("expiry under 6 months");
+  if (p.visaRefusal?.has) reasons.push("visa refusal history");
+  return reasons;
+};
+
+const paymentInsights = (p) => {
+  const quoted = Number(p.quotedAmount || 0);
+  const paid = Number(p.paidAmount || 0);
+  const outstanding = Math.max(quoted - paid, 0);
+  const overdueMilestones = (p.paymentMilestones || []).filter((m) => !m.paid && daysUntilDate(m.dueDate) != null && daysUntilDate(m.dueDate) < 0);
+  const upcomingMilestones = (p.paymentMilestones || []).filter((m) => !m.paid && daysUntilDate(m.dueDate) != null && daysUntilDate(m.dueDate) >= 0 && daysUntilDate(m.dueDate) <= 7);
+  return { quoted, paid, outstanding, overdue: overdueMilestones.length, upcoming: upcomingMilestones.length };
 };
 
 const matchesAdvancedFilters = (p, f) => {
@@ -241,8 +289,7 @@ const matchesAdvancedFilters = (p, f) => {
   if (f.visaStatus === "appointment_missing" && p.visaAppointment?.scheduled) return false;
   if (f.visaStatus === "appointment_scheduled" && !p.visaAppointment?.scheduled) return false;
 
-  const passportDays = daysUntilDate(p.passportExpiry);
-  if (f.passportRisk && !(passportDays == null || passportDays < 180)) return false;
+  if (f.passportRisk && !passportRiskReasons(p).length) return false;
   if (f.flightStatus === "missing" && p.flight?.booked) return false;
   if (f.flightStatus === "booked" && !p.flight?.booked) return false;
   if (f.extensionDemand && (p.wantsExtension || "no") !== f.extensionDemand) return false;
@@ -261,10 +308,16 @@ const Participants = () => {
 
   const [filterStage, setFilterStage] = useState("");
   const [search, setSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [soloOnly, setSoloOnly] = useState(false);
   const [attnOnly, setAttnOnly] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState(EMPTY_ADVANCED_FILTERS);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [totalParticipants, setTotalParticipants] = useState(0);
   const [expensesOpen, setExpensesOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -289,16 +342,32 @@ const Participants = () => {
       const res = await getParticipants({
         studyTour: tourId,
         stage: filterStage || undefined,
-        search: search || undefined,
+        search: appliedSearch || undefined,
         solo: soloOnly ? "true" : undefined,
+        city: advancedFilters.city || undefined,
+        state: advancedFilters.state || undefined,
+        institution: advancedFilters.institution || undefined,
+        cluster: advancedFilters.cluster || undefined,
+        source: advancedFilters.source || undefined,
+        coordinator: advancedFilters.coordinator || undefined,
+        page,
+        limit: pageSize,
+        sortBy,
+        sortOrder,
       });
       setParticipants(res?.data?.participants || []);
+      setTotalParticipants(Number(res?.data?.total ?? res?.data?.participants?.length ?? 0));
+      setSelectedIds([]);
     } catch (e) { showToastError("Failed to load participants", "Error"); }
     finally { setLoading(false); }
   };
 
   useEffect(() => { loadTour(); }, [tourId]);
-  useEffect(() => { loadParticipants(); /* eslint-disable-next-line */ }, [tourId, filterStage, soloOnly]);
+  useEffect(() => { loadParticipants(); /* eslint-disable-next-line */ }, [
+    tourId, filterStage, appliedSearch, soloOnly, page, pageSize, sortBy, sortOrder,
+    advancedFilters.city, advancedFilters.state, advancedFilters.institution,
+    advancedFilters.cluster, advancedFilters.source, advancedFilters.coordinator,
+  ]);
 
   const openDetail = async (id) => {
     try {
@@ -330,6 +399,31 @@ const Participants = () => {
       .filter((p) => matchesAdvancedFilters(p, advancedFilters)),
     [participants, attnOnly, advancedFilters]
   );
+  const pageOpsSummary = useMemo(() => {
+    const summary = {
+      count: filtered.length,
+      outstanding: 0,
+      paymentDue: 0,
+      overduePayments: 0,
+      docRequired: 0,
+      docCompleted: 0,
+      passportRisks: 0,
+      missingFlights: 0,
+    };
+    filtered.forEach((p) => {
+      const docs = documentReadiness(p);
+      const pay = paymentInsights(p);
+      summary.outstanding += pay.outstanding;
+      if (pay.outstanding > 0) summary.paymentDue += 1;
+      if (pay.overdue > 0) summary.overduePayments += 1;
+      summary.docRequired += docs.required;
+      summary.docCompleted += docs.completed;
+      if (passportRiskReasons(p).length) summary.passportRisks += 1;
+      if (!p.flight?.booked) summary.missingFlights += 1;
+    });
+    summary.docRate = summary.docRequired ? Math.round((summary.docCompleted / summary.docRequired) * 100) : 100;
+    return summary;
+  }, [filtered]);
   const activeAdvancedFilterCount = useMemo(
     () => Object.values(advancedFilters).filter((v) => v === true || (typeof v === "string" && v.trim())).length,
     [advancedFilters]
@@ -338,12 +432,25 @@ const Participants = () => {
     () => participants.filter((p) => selectedIds.includes(p._id)),
     [participants, selectedIds]
   );
+  const totalPages = Math.max(1, Math.ceil((totalParticipants || 0) / pageSize));
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
   const allFilteredSelected = filtered.length > 0 && filtered.every((p) => selectedIds.includes(p._id));
   const toggleSelected = (id) => setSelectedIds((ids) => ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
   const toggleAllFiltered = () => setSelectedIds((ids) => {
     if (allFilteredSelected) return ids.filter((id) => !filtered.some((p) => p._id === id));
     return [...new Set([...ids, ...filtered.map((p) => p._id)])];
   });
+  const setStageFilter = (stage) => { setFilterStage(stage); setPage(1); };
+  const applySearch = () => { setAppliedSearch(search.trim()); setPage(1); };
+  const updateAdvancedFilters = (next) => { setAdvancedFilters(next); setPage(1); };
+  const resetAdvancedFilters = () => { setAdvancedFilters(EMPTY_ADVANCED_FILTERS); setPage(1); };
+  const changeSort = (field) => {
+    const option = PARTICIPANT_SORT_OPTIONS.find((x) => x.value === field);
+    setSortBy(field);
+    setSortOrder(sortBy === field ? (sortOrder === "asc" ? "desc" : "asc") : (option?.defaultOrder || "asc"));
+    setPage(1);
+  };
+  const changePageSize = (size) => { setPageSize(Number(size)); setPage(1); };
   const bulkUpdate = async (data, message = "Participants updated") => {
     if (!selectedParticipants.length) return;
     setLoading(true);
@@ -396,7 +503,7 @@ const Participants = () => {
         <Row className="mb-3">
           {PARTICIPANT_STAGES.filter((s) => s !== "cancelled").map((s) => (
             <Col key={s} xs={6} md={3} xl={true} className="mb-2">
-              <Card className="mb-0" role="button" onClick={() => setFilterStage(filterStage === s ? "" : s)}
+              <Card className="mb-0" role="button" onClick={() => setStageFilter(filterStage === s ? "" : s)}
                     style={{ border: filterStage === s ? "2px solid #556ee6" : undefined }}>
                 <CardBody className="p-2 text-center">
                   <h4 className="mb-0">{stageCounts[s] || 0}</h4>
@@ -415,20 +522,32 @@ const Participants = () => {
               <div className="d-flex gap-2">
                 <Input value={search} onChange={(e) => setSearch(e.target.value)}
                        placeholder="Name, email, institution, phone"
-                       onKeyDown={(e) => e.key === "Enter" && loadParticipants()} />
-                <Button color="primary" onClick={loadParticipants}><i className="bx bx-search" /></Button>
+                       onKeyDown={(e) => e.key === "Enter" && applySearch()} />
+                <Button color="primary" onClick={applySearch}><i className="bx bx-search" /></Button>
               </div>
             </Col>
             <Col md={3}>
               <Label className="mb-1">Stage</Label>
-              <Input type="select" value={filterStage} onChange={(e) => setFilterStage(e.target.value)}>
+              <Input type="select" value={filterStage} onChange={(e) => setStageFilter(e.target.value)}>
                 <option value="">All stages</option>
                 {PARTICIPANT_STAGES.map((s) => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
               </Input>
             </Col>
+            <Col md={2}>
+              <Label className="mb-1">Sort</Label>
+              <Input type="select" value={sortBy} onChange={(e) => changeSort(e.target.value)}>
+                {PARTICIPANT_SORT_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </Input>
+            </Col>
+            <Col md={1}>
+              <Label className="mb-1">Order</Label>
+              <Button color="light" className="w-100" onClick={() => { setSortOrder(sortOrder === "asc" ? "desc" : "asc"); setPage(1); }}>
+                <i className={`bx bx-sort-${sortOrder === "asc" ? "up" : "down"}`} />
+              </Button>
+            </Col>
             <Col md={3}>
               <div className="mt-4 d-flex gap-3">
-                <Toggle id="soloOnly" checked={soloOnly} onChange={(e) => setSoloOnly(e.target.checked)} label="Solo only" />
+                <Toggle id="soloOnly" checked={soloOnly} onChange={(e) => { setSoloOnly(e.target.checked); setPage(1); }} label="Solo only" />
                 <Toggle id="attnOnly" checked={attnOnly} onChange={(e) => setAttnOnly(e.target.checked)} label="Needs attention" />
               </div>
             </Col>
@@ -444,12 +563,14 @@ const Participants = () => {
           {advancedOpen ? (
             <AdvancedFiltersPanel
               filters={advancedFilters}
-              onChange={setAdvancedFilters}
-              onReset={() => setAdvancedFilters(EMPTY_ADVANCED_FILTERS)}
+              onChange={updateAdvancedFilters}
+              onReset={resetAdvancedFilters}
               resultCount={filtered.length}
             />
           ) : null}
         </CardBody></Card>
+
+        <CurrentViewSummary summary={pageOpsSummary} total={totalParticipants} />
 
         {/* Table */}
         <Card><CardBody>
@@ -465,6 +586,15 @@ const Participants = () => {
             }}
             onExport={exportSelected}
           />
+          <ParticipantPagination
+            page={page}
+            pageSize={pageSize}
+            total={totalParticipants}
+            totalPages={totalPages}
+            currentCount={filtered.length}
+            onPage={setPage}
+            onPageSize={changePageSize}
+          />
           {loading ? (
             <div className="text-center py-4"><Spinner color="primary" /></div>
           ) : filtered.length === 0 ? (
@@ -474,44 +604,83 @@ const Participants = () => {
               <Table className="table align-middle mb-0">
                 <thead><tr>
                   <th style={{ width: 36 }}><Input type="checkbox" checked={allFilteredSelected} onChange={toggleAllFiltered} /></th>
-                  <th>Name</th><th>Institution</th><th>Stage</th><th>Occupancy</th>
-                  <th>Cluster</th><th>Contact</th><th className="text-end">Actions</th>
+                  <SortableTh field="fullName" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Name</SortableTh>
+                  <SortableTh field="institutionName" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Institution</SortableTh>
+                  <SortableTh field="stage" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Stage</SortableTh>
+                  <th>Readiness</th>
+                  <th>Occupancy</th>
+                  <SortableTh field="travelCluster" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Cluster</SortableTh>
+                  <th>Contact</th><th className="text-end">Actions</th>
                 </tr></thead>
                 <tbody>
-                  {filtered.map((p) => (
-                    <tr key={p._id}>
-                      <td><Input type="checkbox" checked={selectedIds.includes(p._id)} onChange={() => toggleSelected(p._id)} /></td>
-                      <td>
-                        <Link to="#" onClick={(e) => { e.preventDefault(); openDetail(p._id); }} className="fw-semibold">
-                          {p.fullName}
-                        </Link>
-                        {p.isSolo ? <Badge color="soft-info" className="ms-2">Solo</Badge> : null}
-                        {p.source === "concierge" ? <Badge color="soft-secondary" className="ms-1">Concierge</Badge> : null}
-                        <div>{attentionReasons(p).map((r, ri) => <Badge key={ri} color="soft-danger" className="me-1 mt-1">{r}</Badge>)}</div>
-                      </td>
-                      <td>{p.institutionName || "—"}</td>
-                      <td><Badge color={STAGE_COLORS[p.stage] || "secondary"}>{STAGE_LABELS[p.stage] || p.stage}</Badge></td>
-                      <td className="text-capitalize">{p.occupancy || "—"}</td>
-                      <td>{p.travelCluster || "—"}</td>
-                      <td><div className="small">{p.email}<br />{p.mobile}</div></td>
-                      <td className="text-end">
-                        <Button color="soft-primary" size="sm" className="me-1" onClick={() => openDetail(p._id)}>
-                          <i className="bx bx-show" />
-                        </Button>
-                        <Button color="soft-success" size="sm" className="me-1"
-                                onClick={() => { setDetail(p); setMsgModal(true); }}>
-                          <i className="bx bx-envelope" />
-                        </Button>
-                        <Button color="soft-danger" size="sm" onClick={() => remove(p._id)}>
-                          <i className="bx bx-trash" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {filtered.map((p) => {
+                    const docs = documentReadiness(p);
+                    const passportRisks = passportRiskReasons(p);
+                    const payment = paymentInsights(p);
+                    return (
+                      <tr key={p._id}>
+                        <td><Input type="checkbox" checked={selectedIds.includes(p._id)} onChange={() => toggleSelected(p._id)} /></td>
+                        <td>
+                          <Link to="#" onClick={(e) => { e.preventDefault(); openDetail(p._id); }} className="fw-semibold">
+                            {p.fullName}
+                          </Link>
+                          {p.isSolo ? <Badge color="soft-info" className="ms-2">Solo</Badge> : null}
+                          {p.source === "concierge" ? <Badge color="soft-secondary" className="ms-1">Concierge</Badge> : null}
+                          <div>{attentionReasons(p).map((r, ri) => <Badge key={ri} color="soft-danger" className="me-1 mt-1">{r}</Badge>)}</div>
+                        </td>
+                        <td>{p.institutionName || "—"}</td>
+                        <td><Badge color={STAGE_COLORS[p.stage] || "secondary"}>{STAGE_LABELS[p.stage] || p.stage}</Badge></td>
+                        <td>
+                          <Badge color={docs.missing || docs.rejected ? "soft-warning" : "soft-success"} className="me-1">
+                            Docs {docs.pct}%
+                          </Badge>
+                          {passportRisks.length ? (
+                            <Badge color="soft-danger" title={passportRisks.join(", ")} className="me-1">Passport review</Badge>
+                          ) : (
+                            <Badge color="soft-success" className="me-1">Passport OK</Badge>
+                          )}
+                          {payment.quoted ? (
+                            <Badge color={payment.outstanding ? (payment.overdue ? "soft-danger" : "soft-warning") : "soft-success"} className="mt-1">
+                              {payment.outstanding ? `₹${payment.outstanding.toLocaleString("en-IN")} due` : "Paid"}
+                            </Badge>
+                          ) : (
+                            <Badge color="soft-secondary" className="mt-1">No quote</Badge>
+                          )}
+                        </td>
+                        <td className="text-capitalize">{p.occupancy || "—"}</td>
+                        <td>{p.travelCluster || "—"}</td>
+                        <td><div className="small">{p.email}<br />{p.mobile}</div></td>
+                        <td className="text-end">
+                          <Button color="soft-primary" size="sm" className="me-1" onClick={() => openDetail(p._id)}>
+                            <i className="bx bx-show" />
+                          </Button>
+                          <Button color="soft-success" size="sm" className="me-1"
+                                  onClick={() => { setDetail(p); setMsgModal(true); }}>
+                            <i className="bx bx-envelope" />
+                          </Button>
+                          <Button color="soft-danger" size="sm" onClick={() => remove(p._id)}>
+                            <i className="bx bx-trash" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </Table>
             </div>
           )}
+          {!loading ? (
+            <ParticipantPagination
+              page={page}
+              pageSize={pageSize}
+              total={totalParticipants}
+              totalPages={totalPages}
+              currentCount={filtered.length}
+              onPage={setPage}
+              onPageSize={changePageSize}
+              compact
+            />
+          ) : null}
         </CardBody></Card>
       </Container>
 
@@ -1405,6 +1574,92 @@ const AddParticipantModal = ({ isOpen, tourId, onClose, onAdded }) => {
         </ModalFooter>
       </Form>
     </Modal>
+  );
+};
+
+const CurrentViewSummary = ({ summary, total }) => (
+  <Card>
+    <CardBody className="py-3">
+      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <h6 className="mb-0"><i className="bx bx-pulse me-1" />Current view readiness</h6>
+        <small className="text-muted">{summary.count} visible from {total || 0} matching server result(s)</small>
+      </div>
+      <Row className="g-2">
+        <Col xs={6} md={2}>
+          <div className="border rounded p-2 h-100">
+            <small className="text-muted d-block">Outstanding</small>
+            <strong>₹{(summary.outstanding || 0).toLocaleString("en-IN")}</strong>
+            <small className="d-block text-muted">{summary.paymentDue} participant(s)</small>
+          </div>
+        </Col>
+        <Col xs={6} md={2}>
+          <div className="border rounded p-2 h-100">
+            <small className="text-muted d-block">Overdue payments</small>
+            <strong className={summary.overduePayments ? "text-danger" : ""}>{summary.overduePayments}</strong>
+            <small className="d-block text-muted">milestone owner(s)</small>
+          </div>
+        </Col>
+        <Col xs={6} md={2}>
+          <div className="border rounded p-2 h-100">
+            <small className="text-muted d-block">Docs ready</small>
+            <strong>{summary.docRate}%</strong>
+            <small className="d-block text-muted">{summary.docCompleted}/{summary.docRequired}</small>
+          </div>
+        </Col>
+        <Col xs={6} md={2}>
+          <div className="border rounded p-2 h-100">
+            <small className="text-muted d-block">Passport risks</small>
+            <strong className={summary.passportRisks ? "text-danger" : ""}>{summary.passportRisks}</strong>
+            <small className="d-block text-muted">need review</small>
+          </div>
+        </Col>
+        <Col xs={6} md={2}>
+          <div className="border rounded p-2 h-100">
+            <small className="text-muted d-block">Flights missing</small>
+            <strong className={summary.missingFlights ? "text-warning" : ""}>{summary.missingFlights}</strong>
+            <small className="d-block text-muted">not booked</small>
+          </div>
+        </Col>
+      </Row>
+    </CardBody>
+  </Card>
+);
+
+const SortableTh = ({ field, sortBy, sortOrder, onSort, children }) => (
+  <th role="button" onClick={() => onSort(field)} className="text-nowrap">
+    {children}
+    {sortBy === field ? <i className={`bx bx-chevron-${sortOrder === "asc" ? "up" : "down"} ms-1`} /> : null}
+  </th>
+);
+
+const ParticipantPagination = ({ page, pageSize, total, totalPages, currentCount, onPage, onPageSize, compact }) => {
+  const start = total ? ((page - 1) * pageSize) + 1 : 0;
+  const end = Math.min(page * pageSize, total || 0);
+  const expectedPageCount = total ? Math.max(0, end - start + 1) : 0;
+  return (
+    <div className={`d-flex justify-content-between align-items-center flex-wrap gap-2 ${compact ? "mt-3" : "mb-3"}`}>
+      <div className="small text-muted">
+        Showing {start}-{end} of {total || 0}
+        {currentCount !== expectedPageCount && total ? ` (${currentCount} visible after page filters)` : ""}
+      </div>
+      <div className="d-flex align-items-center gap-2">
+        {!compact ? (
+          <>
+            <span className="small text-muted">Rows</span>
+            <Input bsSize="sm" type="select" value={pageSize} onChange={(e) => onPageSize(e.target.value)} style={{ width: 82 }}>
+              {[10, 25, 50, 100, 200].map((n) => <option key={n} value={n}>{n}</option>)}
+            </Input>
+          </>
+        ) : null}
+        <Button color="light" size="sm" disabled={page <= 1} onClick={() => onPage(Math.max(1, page - 1))}>
+          Previous
+        </Button>
+        <span className="small text-muted">Page {page} of {totalPages}</span>
+        <Button color="light" size="sm" disabled={page >= totalPages} onClick={() => onPage(Math.min(totalPages, page + 1))}>
+          Next
+        </Button>
+      </div>
+    </div>
   );
 };
 

@@ -24,7 +24,7 @@ Build the educator study tour module into a complete ops cockpit for high-touch 
 | Area | Existing functionality | Notes |
 | --- | --- | --- |
 | Tour list | List tours, create basic tour, delete tour | Creation captures name, slug, year, destination, status, summary, basic pricing. |
-| Tour detail | Stage board, participant table, search, stage filter, solo filter, needs-attention filter | Route is `/educator-study-tours/:tourId`. |
+| Tour detail | Stage board, paginated participant table, search, sorting, stage filter, solo filter, needs-attention filter | Route is `/educator-study-tours/:tourId`. |
 | Participants | Add concierge participant, view participant, edit profile, delete participant | Profile editor covers core personal, institution, trip preference, emergency, medical fields. |
 | Ops | Edit stage, travel cluster, solo flag, quote amount, paid amount, coordinator, internal notes | Payment milestones can be added and marked paid. |
 | Documents | Per-participant checklist, upload files, remove files, verify, reject, add custom document | Missing reject reason and participant self-service link in UI. |
@@ -35,7 +35,7 @@ Build the educator study tour module into a complete ops cockpit for high-touch 
 | Cohort tools | Analytics summary, live weather, run reminders, export rooming/dietary/flight CSV | Good base for ops dashboard. |
 | Expenses | Add expenses, delete expenses, see expense summary | Missing edit, filters in UI, budget planning, attachments. |
 | Tour settings | Bank details, coordinators, document checklist builder, load default Schengen checklist | Missing itinerary, host partner, dates, public page content. |
-| Import | Bulk CSV import with preview | CSV parser is basic and does not handle quoted commas robustly. |
+| Import | Bulk CSV import with preview | Handles quoted fields, header aliases, dry-run validation, duplicate warnings, and error CSV download. |
 | Backend | Public registration endpoints, public upload, admin CRUD, messaging, automation, weather, analytics, expenses | Public frontend page/portal does not appear implemented in dashboard/frontend search. |
 
 ## Priority Legend
@@ -54,11 +54,11 @@ Build the educator study tour module into a complete ops cockpit for high-touch 
 | P0 | Done | Participant full-field editor | Add UI for schema fields not currently editable: DOB, gender, passport country, passport issue date, visa refusal, communication method, website, official email, students count, educators count, responsibilities, expected outcome, presentation interest, institution visit preferences, visited Nordic, dietary details, allergy details, emergency email, billing/GST fields, declarations. |
 | P0 | Done | Accompanying-person editor | Add, edit, and remove accompanying persons with passport, visa support, meal, medical, contact, and participation type. |
 | P0 | Done | Advanced participant filters | Filter by city, state, institution, cluster, document status, payment status, overdue milestone, visa deadline, passport expiry risk, flight missing, extension demand, source, coordinator. |
-| P0 | Todo | Server pagination and sorting | Participant list should support large cohorts with page, limit, sort, and total count from backend. |
+| P0 | Done | Server pagination and sorting | Participant list supports page, limit, sort, total count, and server-side filters for search, stage, solo, city, state, institution, cluster, source, and coordinator. |
 | P0 | Done | Bulk selection actions | Select participants and update stage, coordinator, cluster, export, mark solo, or cancel in bulk. Bulk targeted message still belongs in the communication dry-run/recipient-preview work. |
 | P0 | Done | Robust CSV import | Added quoted-field CSV parsing, header mapping, downloadable sample, dry-run validation, duplicate detection, and downloadable error report. |
 | P0 | Partial | Expense edit UI | Backend update is now wired with edit mode, category filter, participant-name filter, and notes. Attachments/receipt upload remain for a later file-upload slice. |
-| P0 | Todo | Build verification | Keep `yarn build` and `CI=true yarn build` passing after every module change. |
+| P0 | Done | Build verification | `npm run build` passes in backend, and `yarn build` plus `CI=true yarn build` pass in dashboard after the latest module change. |
 
 ## Phase 2: Registration And Customer Portal
 
@@ -95,7 +95,7 @@ Build the educator study tour module into a complete ops cockpit for high-touch 
 | --- | --- | --- | --- |
 | P0 | Todo | Quote builder | Calculate final quote from base price, single supplement, accompanying persons, extension, discounts, taxes, add-ons, and currency. |
 | P0 | Partial | Payment milestone workflow | Due dates, paid dates, transaction references, paid flags, and automatic stage movement are wired. Payment method and receipt attachment remain. |
-| P0 | Todo | Outstanding payment dashboard | Aging buckets, overdue list, upcoming due milestones, paid vs quoted, reminders due. |
+| P0 | Partial | Outstanding payment dashboard | Current-view outstanding total, payment-due participant count, overdue milestone owner count, and row-level due badges are visible. Full aging buckets, reminder queue, and payment follow-up board remain. |
 | P1 | Todo | Payment gateway links | Generate and track secure payment links rather than manual links only. |
 | P1 | Todo | Invoice/proforma generation | Generate proforma invoice, GST invoice, receipt, credit note, cancellation/refund note. |
 | P1 | Todo | Payment reconciliation | Reconcile gateway/webhook payments against milestones and participant records. |
@@ -108,8 +108,8 @@ Build the educator study tour module into a complete ops cockpit for high-touch 
 | Priority | Status | Feature | What to build |
 | --- | --- | --- | --- |
 | P0 | Done | Reject reason and doc notes | When rejecting a document, capture reason/note and show it to ops in participant detail. Participant-facing display belongs to the self-service portal. |
-| P0 | Todo | Document readiness score | Show required docs uploaded/verified per participant and cohort-level completion. |
-| P0 | Todo | Passport validity rules | Flag passport expiry under 6 months, missing passport number, missing issue date, name mismatch, old visa risk. |
+| P0 | Done | Document readiness score | Shows required-document completion percentage per participant, current-view document completion, and cohort-level completion from analytics. |
+| P0 | Done | Passport validity rules | Flags missing passport number, missing issue date, missing/expired/under-6-month expiry, and visa refusal history in needs-attention/readiness views. Name mismatch and OCR-backed checks remain future advanced work. |
 | P1 | Todo | Visa task board | Board/calendar for document deadline, appointment date, centre, status, coordinator, and risk. |
 | P1 | Todo | Bulk visa scheduling | Apply appointment details to multiple participants, then send a visa appointment message. |
 | P1 | Todo | Visa document generation | Generate cover letter, NOC request, invitation letter, sponsorship letter, document index, and checklist PDF. |
@@ -152,7 +152,7 @@ Build the educator study tour module into a complete ops cockpit for high-touch 
 
 | Priority | Status | Feature | What to build |
 | --- | --- | --- | --- |
-| P0 | Todo | Better cohort dashboard | Funnel by stage, docs completion, payment collection, visa readiness, flight readiness, extension demand, solo risk. |
+| P0 | Partial | Better cohort dashboard | Stage board, analytics cards, current-view readiness strip, payment/doc/passport/flight indicators, extension demand, and solo counts are visible. Dedicated visa readiness board and richer risk ranking remain. |
 | P1 | Todo | Conversion analytics | Registration to quoted, quoted to paid, paid to docs, docs to visa, visa to ready, with time-in-stage. |
 | P1 | Todo | Financial reporting | Revenue, outstanding, expenses, cost per head, gross margin, category breakdown, reimbursables. |
 | P1 | Todo | Risk dashboard | Participants needing attention ranked by payment, passport, docs, visa deadline, flights, emergency data. |
@@ -202,7 +202,7 @@ Build the educator study tour module into a complete ops cockpit for high-touch 
 - [x] Create `StudyTourEditModal` or `/educator-study-tours/:tourId/settings` page for all tour fields.
 - [x] Add public registration link/copy/open panel to the tour detail header.
 - [x] Add participant detail tabs for full professional, billing, extension, accommodation, and accompanying-person fields.
-- [x] Add advanced filter drawer and wire backend query support for missing filters. Dashboard filtering is done; backend query support remains part of server pagination/sorting.
+- [x] Add advanced filter drawer and wire backend query support for missing filters.
 - [x] Replace basic CSV parser with robust import mapping and dry-run validation.
 - [x] Add document rejection reason and show it in participant detail.
 - [x] Add expense edit modal and expense filters.
