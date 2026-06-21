@@ -235,10 +235,18 @@ import WorkflowEditor from "../pages/EmailTemplates/WorkflowEditor";
 // Customer Segments
 import Segments from "../pages/EmailTemplates/Segments";
 
+// Educator Study Tours (isolated module)
+import StudyTourList from "../pages/EducatorStudyTour/StudyTourList";
+import StudyTourParticipants from "../pages/EducatorStudyTour/Participants";
+
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <AutomobileDashboard /> },
   { path: "/automobile-dashboard", component: <AutomobileDashboard /> },
+
+  // Educator Study Tours
+  { path: "/educator-study-tours", component: <StudyTourList /> },
+  { path: "/educator-study-tours/:tourId", component: <StudyTourParticipants /> },
 
   // domain
   { path: "/ecommerce-get-domain", component: <EcommerceGetDomain /> },

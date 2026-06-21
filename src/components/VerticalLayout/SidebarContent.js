@@ -175,6 +175,13 @@ const SidebarContent = props => {
             {/* <li className="menu-title">{props.t("Travel")}</li> */}
 
             <li>
+              <Link to="/educator-study-tours">
+                <i className="bx bx-graduation"></i>
+                <span>{props.t("Educator Study Tours")}</span>
+              </Link>
+            </li>
+
+            <li>
               <Link to="/#" className="has-arrow">
                 <i className="bx bx-store"></i>
                 <span>{props.t("Product Management")}</span>
