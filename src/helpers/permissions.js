@@ -14,6 +14,7 @@ export const MODULES = {
   BOOKING_PERMS: 'tylTravelBooking',                  // This module controls the Travel Booking permissions
   FAQS_PERMS: 'tylTravelFaqs',                        // This module controls the Travel FAQs permissions
   COUNTRY_PERMS: 'tylTravelCountry',                  // This module controls the Travel Country permissions
+  STUDY_TOUR_PERMS: 'studyTours',                     // Educator Study Tour module (matches backend methodPermission key)
 };
 
 // Action keys

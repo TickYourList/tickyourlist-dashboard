@@ -5,7 +5,9 @@ import {
   Modal, ModalHeader, ModalBody, ModalFooter, Form, Label, Input,
 } from "reactstrap";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
+import ConfirmModal from "../../components/Common/ConfirmModal";
 import { showToastSuccess, showToastError } from "../../helpers/toastBuilder";
+import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
 import { getStudyTours, createStudyTour, deleteStudyTour } from "../../apis/educatorStudyTour";
 
 const STATUS_COLORS = { draft: "secondary", open: "success", closed: "warning", completed: "info", archived: "dark" };
@@ -19,11 +21,16 @@ const EMPTY = {
 const StudyTourList = () => {
   document.title = "Educator Study Tours | TickYourList";
 
+  const { can } = usePermissions();
+  const canAdd = can(ACTIONS.CAN_ADD, MODULES.STUDY_TOUR_PERMS);
+  const canDelete = can(ACTIONS.CAN_DELETE, MODULES.STUDY_TOUR_PERMS);
+
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [confirm, setConfirm] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -70,10 +77,17 @@ const StudyTourList = () => {
     }
   };
 
-  const remove = async (id) => {
-    if (!window.confirm("Delete this study tour? Participants will remain in the database.")) return;
-    try { await deleteStudyTour(id); showToastSuccess("Deleted", "Success"); load(); }
-    catch (e) { showToastError(e?.response?.data?.message || "Delete failed", "Error"); }
+  const remove = (tour) => {
+    setConfirm({
+      title: "Delete study tour",
+      message: `Delete “${tour.name}”? Participants will remain in the database. This cannot be undone.`,
+      confirmLabel: "Delete tour",
+      confirmWord: "DELETE",
+      onConfirm: async () => {
+        try { await deleteStudyTour(tour._id); showToastSuccess("Deleted", "Success"); load(); }
+        catch (e) { showToastError(e?.response?.data?.message || "Delete failed", "Error"); throw e; }
+      },
+    });
   };
 
   return (
@@ -84,9 +98,11 @@ const StudyTourList = () => {
         <Row className="mb-3">
           <Col><h5 className="mb-0">Programmes</h5></Col>
           <Col className="text-end">
-            <Button color="primary" onClick={() => setModal(true)}>
-              <i className="bx bx-plus me-1" /> New Study Tour
-            </Button>
+            {canAdd && (
+              <Button color="primary" onClick={() => setModal(true)}>
+                <i className="bx bx-plus me-1" /> New Study Tour
+              </Button>
+            )}
           </Col>
         </Row>
 
@@ -118,9 +134,11 @@ const StudyTourList = () => {
                       <Link to={`/educator-study-tours/${t._id}`} className="btn btn-soft-primary btn-sm">
                         <i className="bx bx-group me-1" /> Manage Participants
                       </Link>
-                      <Button color="soft-danger" size="sm" onClick={() => remove(t._id)}>
-                        <i className="bx bx-trash" />
-                      </Button>
+                      {canDelete && (
+                        <Button color="soft-danger" size="sm" onClick={() => remove(t)}>
+                          <i className="bx bx-trash" />
+                        </Button>
+                      )}
                     </div>
                   </CardBody>
                 </Card>
@@ -190,6 +208,8 @@ const StudyTourList = () => {
           </ModalFooter>
         </Form>
       </Modal>
+
+      <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
     </div>
   );
 };

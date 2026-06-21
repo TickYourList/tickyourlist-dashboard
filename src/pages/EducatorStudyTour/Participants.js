@@ -6,8 +6,11 @@ import {
   TabContent, TabPane, Table,
 } from "reactstrap";
 import classnames from "classnames";
+import Switch from "react-switch";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
+import ConfirmModal from "../../components/Common/ConfirmModal";
 import { showToastSuccess, showToastError } from "../../helpers/toastBuilder";
+import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
 import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
   updateParticipant, deleteParticipant, previewMessage, sendMessage,
@@ -18,11 +21,35 @@ import {
   PARTICIPANT_STAGES, STAGE_LABELS, STAGE_COLORS, MESSAGE_TEMPLATES,
 } from "../../apis/educatorStudyTour";
 
-/** Toggle switch helper (reactstrap + bootstrap form-switch). */
+/**
+ * Toggle switch helper — uses react-switch (the same component used across the
+ * dashboard, e.g. Calendar pricing) so it's reliably clickable and clearly sized.
+ * Keeps the original API: onChange receives a synthetic `{ target: { checked } }`
+ * so every existing call site (e.target.checked) keeps working unchanged.
+ */
 const Toggle = ({ id, checked, onChange, label }) => (
-  <div className="form-check form-switch">
-    <input className="form-check-input" type="checkbox" role="switch" id={id} checked={!!checked} onChange={onChange} />
-    <Label className="form-check-label" for={id}>{label}</Label>
+  <div className="d-flex align-items-center gap-2">
+    <Switch
+      id={id}
+      checked={!!checked}
+      onChange={(val) => onChange({ target: { checked: val } })}
+      onColor="#556ee6"
+      offColor="#ced4da"
+      onHandleColor="#ffffff"
+      offHandleColor="#ffffff"
+      handleDiameter={22}
+      uncheckedIcon={false}
+      checkedIcon={false}
+      boxShadow="0px 1px 4px rgba(0,0,0,0.3)"
+      activeBoxShadow="0px 0px 1px 6px rgba(0,0,0,0.15)"
+      height={26}
+      width={50}
+    />
+    {label ? (
+      <span role="button" className="user-select-none mb-0" onClick={() => onChange({ target: { checked: !checked } })}>
+        {label}
+      </span>
+    ) : null}
   </div>
 );
 
@@ -299,6 +326,10 @@ const matchesAdvancedFilters = (p, f) => {
 
 const Participants = () => {
   const { tourId } = useParams();
+  const { can } = usePermissions();
+  const canEdit = can(ACTIONS.CAN_EDIT, MODULES.STUDY_TOUR_PERMS);
+  const canDelete = can(ACTIONS.CAN_DELETE, MODULES.STUDY_TOUR_PERMS);
+  const [confirm, setConfirm] = useState(null);
   document.title = "Study Tour Participants | TickYourList";
 
   const [tour, setTour] = useState(null);
@@ -387,10 +418,17 @@ const Participants = () => {
     } catch (e) { showToastError(e?.response?.data?.message || "Update failed", "Error"); }
   };
 
-  const remove = async (id) => {
-    if (!window.confirm("Delete this participant permanently?")) return;
-    try { await deleteParticipant(id); showToastSuccess("Deleted", "Success"); setDetail(null); loadParticipants(); loadTour(); }
-    catch (e) { showToastError("Delete failed", "Error"); }
+  const remove = (p) => {
+    setConfirm({
+      title: "Delete participant",
+      message: `Permanently delete ${p.fullName || "this participant"}? This removes their registration, documents and history. This cannot be undone.`,
+      confirmLabel: "Delete participant",
+      confirmWord: "DELETE",
+      onConfirm: async () => {
+        try { await deleteParticipant(p._id); showToastSuccess("Deleted", "Success"); setDetail(null); loadParticipants(); loadTour(); }
+        catch (e) { showToastError("Delete failed", "Error"); throw e; }
+      },
+    });
   };
 
   const filtered = useMemo(
@@ -517,7 +555,7 @@ const Participants = () => {
         {/* Filters */}
         <Card><CardBody>
           <Row className="g-2 align-items-end">
-            <Col md={4}>
+            <Col md={3}>
               <Label className="mb-1">Search</Label>
               <div className="d-flex gap-2">
                 <Input value={search} onChange={(e) => setSearch(e.target.value)}
@@ -545,21 +583,23 @@ const Participants = () => {
                 <i className={`bx bx-sort-${sortOrder === "asc" ? "up" : "down"}`} />
               </Button>
             </Col>
-            <Col md={3}>
-              <div className="mt-4 d-flex gap-3">
-                <Toggle id="soloOnly" checked={soloOnly} onChange={(e) => { setSoloOnly(e.target.checked); setPage(1); }} label="Solo only" />
-                <Toggle id="attnOnly" checked={attnOnly} onChange={(e) => setAttnOnly(e.target.checked)} label="Needs attention" />
+            <Col md={3} className="text-end">
+              <div className="d-flex gap-2 justify-content-end flex-wrap">
+                <Button color="soft-secondary" onClick={() => setAdvancedOpen((v) => !v)}>
+                  <i className="bx bx-filter-alt me-1" />Advanced{activeAdvancedFilterCount ? ` (${activeAdvancedFilterCount})` : ""}
+                </Button>
+                <Button color="success" onClick={() => setAddModal(true)}>
+                  <i className="bx bx-user-plus me-1" /> Add (Concierge)
+                </Button>
               </div>
             </Col>
-            <Col md={3} className="text-end">
-              <Button color="soft-secondary" className="me-2" onClick={() => setAdvancedOpen((v) => !v)}>
-                <i className="bx bx-filter-alt me-1" />Advanced{activeAdvancedFilterCount ? ` (${activeAdvancedFilterCount})` : ""}
-              </Button>
-              <Button color="success" onClick={() => setAddModal(true)}>
-                <i className="bx bx-user-plus me-1" /> Add (Concierge)
-              </Button>
-            </Col>
           </Row>
+
+          {/* Quick toggles on their own row so they stay aligned and clearly tappable */}
+          <div className="d-flex flex-wrap gap-4 mt-3">
+            <Toggle id="soloOnly" checked={soloOnly} onChange={(e) => { setSoloOnly(e.target.checked); setPage(1); }} label="Solo only" />
+            <Toggle id="attnOnly" checked={attnOnly} onChange={(e) => setAttnOnly(e.target.checked)} label="Needs attention" />
+          </div>
           {advancedOpen ? (
             <AdvancedFiltersPanel
               filters={advancedFilters}
@@ -581,9 +621,14 @@ const Participants = () => {
             onCluster={setBulkCluster}
             onCoordinator={setBulkCoordinator}
             onSolo={(isSolo) => bulkUpdate({ isSolo }, "Solo flag updated")}
-            onCancel={() => {
-              if (window.confirm(`Cancel ${selectedParticipants.length} selected participant(s)?`)) bulkUpdate({ stage: "cancelled" }, "Participants cancelled");
-            }}
+            onCancel={() => setConfirm({
+              title: "Cancel participants",
+              message: `Mark ${selectedParticipants.length} selected participant(s) as cancelled? You can move them back to another stage later.`,
+              confirmLabel: "Cancel participants",
+              confirmColor: "warning",
+              confirmWord: "CANCEL",
+              onConfirm: () => bulkUpdate({ stage: "cancelled" }, "Participants cancelled"),
+            })}
             onExport={exportSelected}
           />
           <ParticipantPagination
@@ -658,9 +703,11 @@ const Participants = () => {
                                   onClick={() => { setDetail(p); setMsgModal(true); }}>
                             <i className="bx bx-envelope" />
                           </Button>
-                          <Button color="soft-danger" size="sm" onClick={() => remove(p._id)}>
-                            <i className="bx bx-trash" />
-                          </Button>
+                          {canDelete && (
+                            <Button color="soft-danger" size="sm" onClick={() => remove(p)}>
+                              <i className="bx bx-trash" />
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -713,7 +760,79 @@ const Participants = () => {
       <ExpensesModal isOpen={expensesOpen} tourId={tourId} onClose={() => setExpensesOpen(false)} />
       <BulkImportModal isOpen={importOpen} tourId={tourId} existingParticipants={participants} onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); loadParticipants(); loadTour(); }} />
       <TourSettingsModal isOpen={settingsOpen} tour={tour} onClose={() => setSettingsOpen(false)} onSaved={() => { setSettingsOpen(false); loadTour(); }} />
+
+      <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
     </div>
+  );
+};
+
+/* ----------------------- Quote builder (Ops tab) ----------------------- */
+/**
+ * Computes a suggested quote from the tour's pricing anchors + this participant's
+ * occupancy / companions / extension, with discount & tax. Applies the total to
+ * the Quoted amount field and can generate a 25/50/25 token-advance-balance
+ * payment schedule. Pure UI helper — saving still goes through Save ops details.
+ */
+const QuoteBuilder = ({ tour, participant, onApplyQuote, onApplySchedule }) => {
+  const pr = (tour && tour.pricing) || {};
+  const [open, setOpen] = useState(false);
+  const [base, setBase] = useState(pr.doubleOccupancyPerPerson || 0);
+  const [single, setSingle] = useState(participant?.occupancy === "single" ? (pr.singleSupplementMax || pr.singleSupplementMin || 0) : 0);
+  const [compCount, setCompCount] = useState((participant?.accompanyingPersons || []).length || 0);
+  const [compRate, setCompRate] = useState(pr.doubleOccupancyPerPerson || 0);
+  const [extension, setExtension] = useState(0);
+  const [addons, setAddons] = useState(0);
+  const [discount, setDiscount] = useState(0);
+  const [taxPct, setTaxPct] = useState(0);
+
+  const n = (v) => Number(v) || 0;
+  const subtotal = n(base) + n(single) + n(compCount) * n(compRate) + n(extension) + n(addons) - n(discount);
+  const tax = Math.round((subtotal * n(taxPct)) / 100);
+  const total = Math.max(0, subtotal + tax);
+  const fmtMoney = (v) => `₹${n(v).toLocaleString("en-IN")}`;
+
+  const isoInDays = (days) => { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); };
+  const makeSchedule = () => {
+    const token = Math.round(total * 0.25);
+    const advance = Math.round(total * 0.5);
+    const balance = total - token - advance; // exact remainder — no rounding drift
+    onApplySchedule([
+      { label: "Token", amount: token, dueDate: isoInDays(7), paidAt: "", reference: "", paid: false },
+      { label: "Advance", amount: advance, dueDate: isoInDays(30), paidAt: "", reference: "", paid: false },
+      { label: "Balance", amount: balance, dueDate: isoInDays(60), paidAt: "", reference: "", paid: false },
+    ]);
+  };
+
+  return (
+    <Col md={12}>
+      <Button size="sm" color="soft-info" onClick={() => setOpen((o) => !o)}>
+        <i className="bx bx-calculator me-1" />{open ? "Hide quote builder" : "Build a quote"}
+      </Button>
+      {open && (
+        <div className="border rounded p-3 mt-2 bg-light">
+          <Row className="g-2">
+            <Col md={4}><Label className="small mb-0">Base (double / person)</Label><Input type="number" value={base} onChange={(e) => setBase(e.target.value)} /></Col>
+            <Col md={4}><Label className="small mb-0">Single supplement</Label><Input type="number" value={single} onChange={(e) => setSingle(e.target.value)} /></Col>
+            <Col md={2}><Label className="small mb-0">Companions</Label><Input type="number" value={compCount} onChange={(e) => setCompCount(e.target.value)} /></Col>
+            <Col md={2}><Label className="small mb-0">Rate each</Label><Input type="number" value={compRate} onChange={(e) => setCompRate(e.target.value)} /></Col>
+            <Col md={3}><Label className="small mb-0">Extension</Label><Input type="number" value={extension} onChange={(e) => setExtension(e.target.value)} /></Col>
+            <Col md={3}><Label className="small mb-0">Add-ons</Label><Input type="number" value={addons} onChange={(e) => setAddons(e.target.value)} /></Col>
+            <Col md={3}><Label className="small mb-0">Discount</Label><Input type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} /></Col>
+            <Col md={3}><Label className="small mb-0">Tax %</Label><Input type="number" value={taxPct} onChange={(e) => setTaxPct(e.target.value)} /></Col>
+          </Row>
+          <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mt-3">
+            <div className="small text-muted">
+              Subtotal {fmtMoney(subtotal)}{n(taxPct) ? ` · tax ${fmtMoney(tax)}` : ""}
+              <span className="ms-2 fs-6 fw-semibold text-dark">Total {fmtMoney(total)}</span>
+            </div>
+            <div>
+              <Button size="sm" color="soft-primary" className="me-2" onClick={() => onApplyQuote(total)}>Use as quoted amount</Button>
+              <Button size="sm" color="soft-success" onClick={makeSchedule}>Generate 25/50/25 schedule</Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Col>
   );
 };
 
@@ -1234,6 +1353,14 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
                 <Label>Internal notes</Label>
                 <Input type="textarea" rows={2} value={ops.internalNotes} onChange={(e) => setOps({ ...ops, internalNotes: e.target.value })} />
               </Col>
+
+              {/* Quote builder — computes a suggested quote + payment schedule */}
+              <QuoteBuilder
+                tour={tour}
+                participant={p}
+                onApplyQuote={(amt) => setOps((o) => ({ ...o, quotedAmount: amt }))}
+                onApplySchedule={(ms) => setOps((o) => ({ ...o, milestones: ms }))}
+              />
 
               {/* Payment milestones editor */}
               <Col md={12}>
@@ -1830,10 +1957,13 @@ const downloadCsv = (filename, csv) => {
 };
 
 const CohortTools = ({ tourId, onChanged }) => {
+  const { can } = usePermissions();
+  const canEdit = can(ACTIONS.CAN_EDIT, MODULES.STUDY_TOUR_PERMS);
   const [analytics, setAnalytics] = useState(null);
   const [weather, setWeather] = useState(null);
   const [busy, setBusy] = useState("");
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [confirm, setConfirm] = useState(null);
 
   const loadAnalytics = async () => {
     try { const r = await getTourAnalytics(tourId); setAnalytics(r?.data?.analytics || null); }
@@ -1859,17 +1989,22 @@ const CohortTools = ({ tourId, onChanged }) => {
     finally { setBusy(""); }
   };
 
-  const runReminders = async () => {
-    if (!window.confirm("Run due reminders now? This sends any deadline-driven messages that are due today.")) return;
-    setBusy("automations");
-    try {
-      const r = await runAutomations(tourId);
-      const res = r?.data?.result || {};
-      showToastSuccess(`Sent ${res.sent || 0}, skipped ${res.skipped || 0}, failed ${res.failed || 0}`, "Reminders");
-      onChanged && onChanged();
-    } catch (e) { showToastError("Automation run failed", "Error"); }
-    finally { setBusy(""); }
-  };
+  const runReminders = () => setConfirm({
+    title: "Run due reminders",
+    message: "Send any deadline-driven messages (visa, payment, weather, etc.) that are due today? Recipients will receive emails/SMS immediately.",
+    confirmLabel: "Run reminders now",
+    confirmColor: "warning",
+    onConfirm: async () => {
+      setBusy("automations");
+      try {
+        const r = await runAutomations(tourId);
+        const res = r?.data?.result || {};
+        showToastSuccess(`Sent ${res.sent || 0}, skipped ${res.skipped || 0}, failed ${res.failed || 0}`, "Reminders");
+        onChanged && onChanged();
+      } catch (e) { showToastError("Automation run failed", "Error"); }
+      finally { setBusy(""); }
+    },
+  });
 
   const a = analytics;
   return (
@@ -1882,12 +2017,16 @@ const CohortTools = ({ tourId, onChanged }) => {
           <Button size="sm" color="soft-info" className="me-2" onClick={fetchWeather} disabled={busy === "weather"}>
             {busy === "weather" ? <Spinner size="sm" /> : <><i className="bx bx-cloud me-1" />Live weather</>}
           </Button>
-          <Button size="sm" color="soft-success" className="me-2" onClick={() => setBulkOpen(true)}>
-            <i className="bx bx-broadcast me-1" />Bulk message
-          </Button>
-          <Button size="sm" color="soft-warning" onClick={runReminders} disabled={busy === "automations"}>
-            {busy === "automations" ? <Spinner size="sm" /> : <><i className="bx bx-bell me-1" />Run reminders</>}
-          </Button>
+          {canEdit && (
+            <Button size="sm" color="soft-success" className="me-2" onClick={() => setBulkOpen(true)}>
+              <i className="bx bx-broadcast me-1" />Bulk message
+            </Button>
+          )}
+          {canEdit && (
+            <Button size="sm" color="soft-warning" onClick={runReminders} disabled={busy === "automations"}>
+              {busy === "automations" ? <Spinner size="sm" /> : <><i className="bx bx-bell me-1" />Run reminders</>}
+            </Button>
+          )}
         </Col>
       </Row>
 
@@ -1919,6 +2058,7 @@ const CohortTools = ({ tourId, onChanged }) => {
       </div>
 
       <BulkMessageModal isOpen={bulkOpen} tourId={tourId} onClose={() => setBulkOpen(false)} onSent={() => { setBulkOpen(false); onChanged && onChanged(); }} />
+      <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
     </CardBody></Card>
   );
 };
@@ -1939,21 +2079,29 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
   const [channels, setChannels] = useState({ email: true, whatsapp: false, sms: false });
   const [vars, setVars] = useState({});
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(null);
 
   useEffect(() => { if (isOpen) { setVars({}); setStage(""); } }, [isOpen]);
 
-  const send = async () => {
+  const send = () => {
     const chans = Object.entries(channels).filter(([, v]) => v).map(([k]) => k);
     if (!chans.length) { showToastError("Select a channel", "Validation"); return; }
-    if (!window.confirm("Send this message to the whole (filtered) cohort?")) return;
-    setBusy(true);
-    try {
-      const r = await bulkMessage(tourId, templateKey, chans, vars, stage || undefined);
-      const d = r?.data || {};
-      showToastSuccess(`${d.sent || 0}/${d.recipients || 0} sent`, "Bulk message");
-      onSent();
-    } catch (e) { showToastError("Bulk send failed", "Error"); }
-    finally { setBusy(false); }
+    setConfirm({
+      title: "Send to cohort",
+      message: `Send this message via ${chans.join(", ")} to ${stage ? `everyone at stage “${STAGE_LABELS[stage] || stage}”` : "the whole cohort"}? This dispatches immediately.`,
+      confirmLabel: "Send now",
+      confirmColor: "success",
+      onConfirm: async () => {
+        setBusy(true);
+        try {
+          const r = await bulkMessage(tourId, templateKey, chans, vars, stage || undefined);
+          const d = r?.data || {};
+          showToastSuccess(`${d.sent || 0}/${d.recipients || 0} sent`, "Bulk message");
+          onSent();
+        } catch (e) { showToastError("Bulk send failed", "Error"); }
+        finally { setBusy(false); }
+      },
+    });
   };
 
   return (
@@ -1995,12 +2143,16 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
         <Button color="light" onClick={onClose}>Cancel</Button>
         <Button color="success" onClick={send} disabled={busy}>{busy ? <Spinner size="sm" /> : "Send to cohort"}</Button>
       </ModalFooter>
+      <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
     </Modal>
   );
 };
 
 /* ========================= Expenses modal ============================== */
 const ExpensesModal = ({ isOpen, tourId, onClose }) => {
+  const { can } = usePermissions();
+  const canDelete = can(ACTIONS.CAN_DELETE, MODULES.STUDY_TOUR_PERMS);
+  const [confirm, setConfirm] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState(null);
   const [f, setF] = useState({ category: "hotel", status: "incurred" });
@@ -2045,14 +2197,18 @@ const ExpensesModal = ({ isOpen, tourId, onClose }) => {
       notes: x.notes || "",
     });
   };
-  const remove = async (id) => {
-    if (!window.confirm("Delete this expense?")) return;
-    try {
-      await deleteExpense(id);
-      if (editingId === id) { setEditingId(""); setF({ category: "hotel", status: "incurred" }); }
-      load();
-    } catch (e) { showToastError("Delete failed", "Error"); }
-  };
+  const remove = (x) => setConfirm({
+    title: "Delete expense",
+    message: `Delete “${x.title || "this expense"}” (${`₹${Number(x.amount || 0).toLocaleString("en-IN")}`})? This cannot be undone.`,
+    confirmLabel: "Delete expense",
+    onConfirm: async () => {
+      try {
+        await deleteExpense(x._id);
+        if (editingId === x._id) { setEditingId(""); setF({ category: "hotel", status: "incurred" }); }
+        load();
+      } catch (e) { showToastError("Delete failed", "Error"); throw e; }
+    },
+  });
 
   const money = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
   const s = summary;
@@ -2122,7 +2278,9 @@ const ExpensesModal = ({ isOpen, tourId, onClose }) => {
                   <td>{x.isExtra ? <Badge color="soft-warning" className="me-1">extra</Badge> : null}{x.reimbursable ? <Badge color="soft-info">reimb.</Badge> : null}</td>
                   <td className="text-end">
                     <Button size="sm" color="soft-primary" className="me-1" onClick={() => startEdit(x)}><i className="bx bx-edit" /></Button>
-                    <Button size="sm" color="soft-danger" onClick={() => remove(x._id)}><i className="bx bx-trash" /></Button>
+                    {canDelete && (
+                      <Button size="sm" color="soft-danger" onClick={() => remove(x)}><i className="bx bx-trash" /></Button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -2130,6 +2288,7 @@ const ExpensesModal = ({ isOpen, tourId, onClose }) => {
         </Table>
       </ModalBody>
       <ModalFooter><Button color="light" onClick={onClose}>Close</Button></ModalFooter>
+      <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
     </Modal>
   );
 };
