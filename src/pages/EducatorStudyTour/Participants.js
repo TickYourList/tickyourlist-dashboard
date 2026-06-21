@@ -14,7 +14,7 @@ import {
   getTourAnalytics, getTourWeather, getManifest, runAutomations, bulkMessage,
   updateStudyTour, bulkImportParticipants, uploadDocument, getChannelAvailability,
   getDefaultDocChecklist,
-  getExpenses, getExpenseSummary, addExpense, deleteExpense, EXPENSE_CATEGORIES,
+  getExpenses, getExpenseSummary, addExpense, updateExpense, deleteExpense, EXPENSE_CATEGORIES,
   PARTICIPANT_STAGES, STAGE_LABELS, STAGE_COLORS, MESSAGE_TEMPLATES,
 } from "../../apis/educatorStudyTour";
 
@@ -69,6 +69,127 @@ const numberOrUndefined = (value) => {
   if (value === "" || value == null) return undefined;
   const n = Number(value);
   return Number.isNaN(n) ? undefined : n;
+};
+
+const csvEscape = (v) => {
+  const s = v == null ? "" : String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+const participantExportRows = (list) => list.map((p) => ({
+  fullName: p.fullName || "",
+  email: p.email || "",
+  mobile: p.mobile || "",
+  institutionName: p.institutionName || "",
+  designation: p.designation || "",
+  city: p.city || "",
+  state: p.state || "",
+  stage: p.stage || "",
+  occupancy: p.occupancy || "",
+  travelCluster: p.travelCluster || "",
+  source: p.source || "",
+  quotedAmount: p.quotedAmount || "",
+  paidAmount: p.paidAmount || "",
+  wantsExtension: p.wantsExtension || "",
+}));
+
+const IMPORT_HEADER_ALIASES = {
+  fullName: ["fullname", "full name", "name", "participant name"],
+  email: ["email", "email address", "mail"],
+  mobile: ["mobile", "phone", "phone number", "contact", "contact number"],
+  institutionName: ["institution", "institutionname", "institution name", "school", "school name"],
+  designation: ["designation", "role", "title"],
+  occupancy: ["occupancy", "room type"],
+  travelCluster: ["travelcluster", "travel cluster", "cluster", "group"],
+  city: ["city"],
+  state: ["state"],
+  mealPreference: ["meal", "meal preference", "food preference"],
+  wantsExtension: ["extension", "wants extension", "wantsextension"],
+};
+
+const IMPORT_SAMPLE_ROWS = [
+  {
+    fullName: "Anita Sharma",
+    email: "anita@example.com",
+    mobile: "+919999999999",
+    institutionName: "Green Valley School",
+    designation: "Principal",
+    occupancy: "double",
+    travelCluster: "Mumbai group",
+    city: "Mumbai",
+    state: "Maharashtra",
+    mealPreference: "Vegetarian",
+    wantsExtension: "maybe",
+  },
+];
+
+const parseCsvText = (text) => {
+  const rows = [];
+  let row = [];
+  let value = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    const next = text[i + 1];
+    if (ch === '"' && inQuotes && next === '"') { value += '"'; i += 1; continue; }
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (ch === "," && !inQuotes) { row.push(value); value = ""; continue; }
+    if ((ch === "\n" || ch === "\r") && !inQuotes) {
+      if (ch === "\r" && next === "\n") i += 1;
+      row.push(value);
+      if (row.some((cell) => String(cell).trim())) rows.push(row);
+      row = [];
+      value = "";
+      continue;
+    }
+    value += ch;
+  }
+  row.push(value);
+  if (row.some((cell) => String(cell).trim())) rows.push(row);
+  return rows;
+};
+
+const normalizeHeader = (header) => String(header || "").trim().toLowerCase().replace(/[_-]+/g, " ");
+
+const mapImportHeader = (header) => {
+  const normalized = normalizeHeader(header);
+  return Object.keys(IMPORT_HEADER_ALIASES).find((field) =>
+    IMPORT_HEADER_ALIASES[field].some((alias) => normalizeHeader(alias) === normalized)
+  ) || header.trim();
+};
+
+const parseParticipantImport = (text, existingParticipants = []) => {
+  const csvRows = parseCsvText(text);
+  if (!csvRows.length) return { rows: [], errors: [{ row: 0, email: "", reason: "empty file" }] };
+  const headers = csvRows[0].map(mapImportHeader);
+  const existingEmails = new Set(existingParticipants.map((p) => String(p.email || "").toLowerCase()));
+  const seenEmails = new Set();
+  const rows = [];
+  const errors = [];
+
+  csvRows.slice(1).forEach((cols, idx) => {
+    const rowNumber = idx + 2;
+    const item = {};
+    headers.forEach((h, i) => { item[h] = String(cols[i] || "").trim(); });
+    const email = String(item.email || "").toLowerCase();
+    if (!item.fullName || !item.email || !item.mobile) {
+      errors.push({ row: rowNumber, email: item.email || "", reason: "missing fullName, email or mobile" });
+      return;
+    }
+    if (seenEmails.has(email)) {
+      errors.push({ row: rowNumber, email, reason: "duplicate email in file" });
+      return;
+    }
+    if (existingEmails.has(email)) {
+      errors.push({ row: rowNumber, email, reason: "participant already exists in this tour" });
+      return;
+    }
+    seenEmails.add(email);
+    rows.push({ ...item, email });
+  });
+
+  return { rows, errors };
 };
 
 const EMPTY_ADVANCED_FILTERS = {
@@ -152,6 +273,7 @@ const Participants = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [addModal, setAddModal] = useState(false);
   const [msgModal, setMsgModal] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const loadTour = async () => {
     try {
@@ -212,6 +334,46 @@ const Participants = () => {
     () => Object.values(advancedFilters).filter((v) => v === true || (typeof v === "string" && v.trim())).length,
     [advancedFilters]
   );
+  const selectedParticipants = useMemo(
+    () => participants.filter((p) => selectedIds.includes(p._id)),
+    [participants, selectedIds]
+  );
+  const allFilteredSelected = filtered.length > 0 && filtered.every((p) => selectedIds.includes(p._id));
+  const toggleSelected = (id) => setSelectedIds((ids) => ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
+  const toggleAllFiltered = () => setSelectedIds((ids) => {
+    if (allFilteredSelected) return ids.filter((id) => !filtered.some((p) => p._id === id));
+    return [...new Set([...ids, ...filtered.map((p) => p._id)])];
+  });
+  const bulkUpdate = async (data, message = "Participants updated") => {
+    if (!selectedParticipants.length) return;
+    setLoading(true);
+    try {
+      await Promise.all(selectedParticipants.map((p) => updateParticipant(p._id, data)));
+      showToastSuccess(`${selectedParticipants.length} participant(s) updated`, message);
+      setSelectedIds([]);
+      await Promise.all([loadParticipants(), loadTour()]);
+    } catch (e) {
+      showToastError(e?.response?.data?.message || "Bulk update failed", "Error");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const exportSelected = () => {
+    const list = selectedParticipants.length ? selectedParticipants : filtered;
+    if (!list.length) { showToastError("No participants to export", "Export"); return; }
+    downloadCsv("participants-export.csv", rowsToCsv(participantExportRows(list)));
+  };
+  const setBulkCluster = () => {
+    const travelCluster = window.prompt("Travel cluster for selected participants");
+    if (travelCluster == null) return;
+    bulkUpdate({ travelCluster }, "Cluster updated");
+  };
+  const setBulkCoordinator = () => {
+    const name = window.prompt("Coordinator name for selected participants");
+    if (name == null) return;
+    const phone = window.prompt("Coordinator phone (optional)") || "";
+    bulkUpdate({ assignedCoordinator: { name, phone } }, "Coordinator assigned");
+  };
 
   return (
     <div className="page-content">
@@ -291,6 +453,18 @@ const Participants = () => {
 
         {/* Table */}
         <Card><CardBody>
+          <BulkActionBar
+            selectedCount={selectedParticipants.length}
+            onClear={() => setSelectedIds([])}
+            onStage={(stage) => bulkUpdate({ stage }, "Stage updated")}
+            onCluster={setBulkCluster}
+            onCoordinator={setBulkCoordinator}
+            onSolo={(isSolo) => bulkUpdate({ isSolo }, "Solo flag updated")}
+            onCancel={() => {
+              if (window.confirm(`Cancel ${selectedParticipants.length} selected participant(s)?`)) bulkUpdate({ stage: "cancelled" }, "Participants cancelled");
+            }}
+            onExport={exportSelected}
+          />
           {loading ? (
             <div className="text-center py-4"><Spinner color="primary" /></div>
           ) : filtered.length === 0 ? (
@@ -299,12 +473,14 @@ const Participants = () => {
             <div className="table-responsive">
               <Table className="table align-middle mb-0">
                 <thead><tr>
+                  <th style={{ width: 36 }}><Input type="checkbox" checked={allFilteredSelected} onChange={toggleAllFiltered} /></th>
                   <th>Name</th><th>Institution</th><th>Stage</th><th>Occupancy</th>
                   <th>Cluster</th><th>Contact</th><th className="text-end">Actions</th>
                 </tr></thead>
                 <tbody>
                   {filtered.map((p) => (
                     <tr key={p._id}>
+                      <td><Input type="checkbox" checked={selectedIds.includes(p._id)} onChange={() => toggleSelected(p._id)} /></td>
                       <td>
                         <Link to="#" onClick={(e) => { e.preventDefault(); openDetail(p._id); }} className="fw-semibold">
                           {p.fullName}
@@ -366,7 +542,7 @@ const Participants = () => {
       />
 
       <ExpensesModal isOpen={expensesOpen} tourId={tourId} onClose={() => setExpensesOpen(false)} />
-      <BulkImportModal isOpen={importOpen} tourId={tourId} onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); loadParticipants(); loadTour(); }} />
+      <BulkImportModal isOpen={importOpen} tourId={tourId} existingParticipants={participants} onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); loadParticipants(); loadTour(); }} />
       <TourSettingsModal isOpen={settingsOpen} tour={tour} onClose={() => setSettingsOpen(false)} onSaved={() => { setSettingsOpen(false); loadTour(); }} />
     </div>
   );
@@ -1202,6 +1378,39 @@ const AddParticipantModal = ({ isOpen, tourId, onClose, onAdded }) => {
   );
 };
 
+/* ----------------------- Bulk participant actions ----------------------- */
+const BulkActionBar = ({ selectedCount, onClear, onStage, onCluster, onCoordinator, onSolo, onCancel, onExport }) => {
+  const [stage, setStage] = useState("");
+
+  if (!selectedCount) return null;
+
+  return (
+    <div className="border rounded p-2 mb-3 bg-light">
+      <Row className="g-2 align-items-center">
+        <Col md={2}><strong>{selectedCount}</strong> selected</Col>
+        <Col md={3}>
+          <div className="d-flex gap-2">
+            <Input bsSize="sm" type="select" value={stage} onChange={(e) => setStage(e.target.value)}>
+              <option value="">Set stage...</option>
+              {PARTICIPANT_STAGES.map((s) => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
+            </Input>
+            <Button size="sm" color="primary" disabled={!stage} onClick={() => { onStage(stage); setStage(""); }}>Apply</Button>
+          </div>
+        </Col>
+        <Col md={7} className="text-md-end">
+          <Button size="sm" color="soft-secondary" className="me-1" onClick={onCluster}>Cluster</Button>
+          <Button size="sm" color="soft-secondary" className="me-1" onClick={onCoordinator}>Coordinator</Button>
+          <Button size="sm" color="soft-info" className="me-1" onClick={() => onSolo(true)}>Mark solo</Button>
+          <Button size="sm" color="soft-light" className="me-1" onClick={() => onSolo(false)}>Clear solo</Button>
+          <Button size="sm" color="soft-warning" className="me-1" onClick={onCancel}>Cancel</Button>
+          <Button size="sm" color="soft-success" className="me-1" onClick={onExport}>Export</Button>
+          <Button size="sm" color="light" onClick={onClear}>Clear</Button>
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
 /* ----------------------- Registration link panel ------------------------ */
 const RegistrationLinkPanel = ({ tour, onEdit }) => {
   const [copied, setCopied] = useState(false);
@@ -1510,34 +1719,59 @@ const ExpensesModal = ({ isOpen, tourId, onClose }) => {
   const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState(null);
   const [f, setF] = useState({ category: "hotel", status: "incurred" });
+  const [editingId, setEditingId] = useState("");
+  const [filters, setFilters] = useState({ category: "", participant: "" });
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
     try {
-      const [e, s] = await Promise.all([getExpenses(tourId), getExpenseSummary(tourId)]);
+      const [e, s] = await Promise.all([getExpenses(tourId, { category: filters.category || undefined }), getExpenseSummary(tourId)]);
       setExpenses(e?.data?.expenses || []);
       setSummary(s?.data?.summary || null);
     } catch (err) { showToastError("Failed to load expenses", "Error"); }
   };
-  useEffect(() => { if (isOpen) { load(); setF({ category: "hotel", status: "incurred" }); } /* eslint-disable-next-line */ }, [isOpen]);
+  useEffect(() => { if (isOpen) { load(); setF({ category: "hotel", status: "incurred" }); setEditingId(""); } /* eslint-disable-next-line */ }, [isOpen, filters.category]);
 
-  const add = async () => {
+  const saveExpense = async () => {
     if (!f.title || f.amount == null || f.amount === "") { showToastError("Title and amount required", "Validation"); return; }
     setBusy(true);
     try {
-      await addExpense(tourId, { ...f, amount: Number(f.amount) });
-      showToastSuccess("Expense added", "Success");
-      setF({ category: "hotel", status: "incurred" }); load();
-    } catch (e) { showToastError("Add failed", "Error"); }
+      const payload = { ...f, amount: Number(f.amount) };
+      if (editingId) await updateExpense(editingId, payload);
+      else await addExpense(tourId, payload);
+      showToastSuccess(editingId ? "Expense updated" : "Expense added", "Success");
+      setEditingId("");
+      setF({ category: "hotel", status: "incurred" });
+      load();
+    } catch (e) { showToastError(editingId ? "Update failed" : "Add failed", "Error"); }
     finally { setBusy(false); }
+  };
+  const startEdit = (x) => {
+    setEditingId(x._id);
+    setF({
+      category: x.category || "hotel",
+      status: x.status || "incurred",
+      title: x.title || "",
+      amount: x.amount || "",
+      date: x.date ? new Date(x.date).toISOString().slice(0, 10) : "",
+      vendor: x.vendor || "",
+      isExtra: !!x.isExtra,
+      reimbursable: !!x.reimbursable,
+      notes: x.notes || "",
+    });
   };
   const remove = async (id) => {
     if (!window.confirm("Delete this expense?")) return;
-    try { await deleteExpense(id); load(); } catch (e) { showToastError("Delete failed", "Error"); }
+    try {
+      await deleteExpense(id);
+      if (editingId === id) { setEditingId(""); setF({ category: "hotel", status: "incurred" }); }
+      load();
+    } catch (e) { showToastError("Delete failed", "Error"); }
   };
 
   const money = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
   const s = summary;
+  const filteredExpenses = expenses.filter((x) => containsText(x.participant?.fullName, filters.participant));
 
   return (
     <Modal isOpen={isOpen} toggle={onClose} size="xl" scrollable>
@@ -1556,6 +1790,12 @@ const ExpensesModal = ({ isOpen, tourId, onClose }) => {
 
         <Card className="bg-light border-0"><CardBody className="py-2">
           <Row className="g-2 align-items-end">
+            <Col md={12}>
+              <div className="d-flex justify-content-between align-items-center">
+                <h6 className="mb-0">{editingId ? "Edit expense" : "Add expense"}</h6>
+                {editingId ? <Button size="sm" color="light" onClick={() => { setEditingId(""); setF({ category: "hotel", status: "incurred" }); }}>Cancel edit</Button> : null}
+              </div>
+            </Col>
             <Col md={2}><Label className="mb-0 small">Category</Label>
               <Input type="select" bsSize="sm" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })}>
                 {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -1565,17 +1805,29 @@ const ExpensesModal = ({ isOpen, tourId, onClose }) => {
             <Col md={2}><Label className="mb-0 small">Amount (₹)</Label><Input bsSize="sm" type="number" value={f.amount || ""} onChange={(e) => setF({ ...f, amount: e.target.value })} /></Col>
             <Col md={2}><Label className="mb-0 small">Date</Label><Input bsSize="sm" type="date" value={f.date || ""} onChange={(e) => setF({ ...f, date: e.target.value })} /></Col>
             <Col md={2}><Label className="mb-0 small">Vendor</Label><Input bsSize="sm" value={f.vendor || ""} onChange={(e) => setF({ ...f, vendor: e.target.value })} /></Col>
-            <Col md={1}><Button color="primary" size="sm" onClick={add} disabled={busy}>{busy ? <Spinner size="sm" /> : "Add"}</Button></Col>
+            <Col md={1}><Button color="primary" size="sm" onClick={saveExpense} disabled={busy}>{busy ? <Spinner size="sm" /> : editingId ? "Save" : "Add"}</Button></Col>
             <Col md={2}><Toggle id="exExtra" checked={!!f.isExtra} onChange={(e) => setF({ ...f, isExtra: e.target.checked })} label="Extra / utilised" /></Col>
             <Col md={2}><Toggle id="exReimb" checked={!!f.reimbursable} onChange={(e) => setF({ ...f, reimbursable: e.target.checked })} label="Reimbursable" /></Col>
+            <Col md={6}><Label className="mb-0 small">Notes</Label><Input bsSize="sm" value={f.notes || ""} onChange={(e) => setF({ ...f, notes: e.target.value })} /></Col>
           </Row>
         </CardBody></Card>
 
+        <Row className="g-2 align-items-end mt-2">
+          <Col md={3}><Label className="mb-0 small">Filter category</Label>
+            <Input type="select" bsSize="sm" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
+              <option value="">All categories</option>
+              {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </Input>
+          </Col>
+          <Col md={3}><Label className="mb-0 small">Participant name</Label><Input bsSize="sm" value={filters.participant} onChange={(e) => setFilters({ ...filters, participant: e.target.value })} /></Col>
+          <Col md={2}><Button size="sm" color="light" onClick={() => setFilters({ category: "", participant: "" })}>Reset filters</Button></Col>
+        </Row>
+
         <Table className="align-middle mt-3">
-          <thead><tr><th>Date</th><th>Category</th><th>Title</th><th>Vendor</th><th className="text-end">Amount</th><th>Flags</th><th></th></tr></thead>
+          <thead><tr><th>Date</th><th>Category</th><th>Title</th><th>Vendor</th><th className="text-end">Amount</th><th>Flags</th><th className="text-end">Actions</th></tr></thead>
           <tbody>
-            {expenses.length === 0 ? <tr><td colSpan={7} className="text-center text-muted">No expenses yet.</td></tr> :
-              expenses.map((x) => (
+            {filteredExpenses.length === 0 ? <tr><td colSpan={7} className="text-center text-muted">No expenses found.</td></tr> :
+              filteredExpenses.map((x) => (
                 <tr key={x._id}>
                   <td className="small">{fmt(x.date)}</td>
                   <td className="text-capitalize">{x.category}</td>
@@ -1583,7 +1835,10 @@ const ExpensesModal = ({ isOpen, tourId, onClose }) => {
                   <td>{x.vendor || "—"}</td>
                   <td className="text-end fw-semibold">{money(x.amount)}</td>
                   <td>{x.isExtra ? <Badge color="soft-warning" className="me-1">extra</Badge> : null}{x.reimbursable ? <Badge color="soft-info">reimb.</Badge> : null}</td>
-                  <td><i className="bx bx-trash text-danger" role="button" onClick={() => remove(x._id)} /></td>
+                  <td className="text-end">
+                    <Button size="sm" color="soft-primary" className="me-1" onClick={() => startEdit(x)}><i className="bx bx-edit" /></Button>
+                    <Button size="sm" color="soft-danger" onClick={() => remove(x._id)}><i className="bx bx-trash" /></Button>
+                  </td>
                 </tr>
               ))}
           </tbody>
@@ -1595,29 +1850,31 @@ const ExpensesModal = ({ isOpen, tourId, onClose }) => {
 };
 
 /* ========================= Bulk import modal =========================== */
-const BulkImportModal = ({ isOpen, tourId, onClose, onDone }) => {
+const BulkImportModal = ({ isOpen, tourId, existingParticipants = [], onClose, onDone }) => {
   const [rows, setRows] = useState([]);
+  const [errors, setErrors] = useState([]);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { if (isOpen) setRows([]); }, [isOpen]);
-
-  const parseCsv = (text) => {
-    const lines = text.split(/\r?\n/).filter((l) => l.trim());
-    if (!lines.length) return [];
-    const headers = lines[0].split(",").map((h) => h.trim());
-    return lines.slice(1).map((line) => {
-      const cols = line.split(",");
-      const obj = {};
-      headers.forEach((h, i) => { obj[h] = (cols[i] || "").trim(); });
-      return obj;
-    });
-  };
+  useEffect(() => { if (isOpen) { setRows([]); setErrors([]); } }, [isOpen]);
 
   const onFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setRows(parseCsv(String(reader.result)));
+    reader.onload = () => {
+      const parsed = parseParticipantImport(String(reader.result), existingParticipants);
+      setRows(parsed.rows);
+      setErrors(parsed.errors);
+    };
     reader.readAsText(file);
+  };
+
+  const downloadSample = () => {
+    downloadCsv("study-tour-participants-sample.csv", rowsToCsv(IMPORT_SAMPLE_ROWS));
+  };
+
+  const downloadErrors = () => {
+    if (!errors.length) return;
+    downloadCsv("study-tour-import-errors.csv", rowsToCsv(errors));
   };
 
   const doImport = async () => {
@@ -1636,8 +1893,18 @@ const BulkImportModal = ({ isOpen, tourId, onClose, onDone }) => {
     <Modal isOpen={isOpen} toggle={onClose} size="lg" scrollable>
       <ModalHeader toggle={onClose}>Bulk import participants (CSV)</ModalHeader>
       <ModalBody>
-        <p className="text-muted small">CSV header row must include at least <code>fullName,email,mobile</code>. Optional: <code>institutionName,designation,occupancy,travelCluster,city,state,mealPreference</code>.</p>
+        <div className="d-flex justify-content-between align-items-start gap-3">
+          <p className="text-muted small mb-2">CSV header row must include at least <code>fullName,email,mobile</code>. Optional aliases such as <code>Name</code>, <code>Phone</code>, <code>Institution</code>, and <code>Cluster</code> are mapped automatically.</p>
+          <Button color="soft-secondary" size="sm" onClick={downloadSample}><i className="bx bx-download me-1" />Sample</Button>
+        </div>
         <Input type="file" accept=".csv,text/csv" onChange={onFile} />
+        {(rows.length || errors.length) ? (
+          <div className="mt-3">
+            <Badge color="success" className="me-2">{rows.length} valid</Badge>
+            <Badge color={errors.length ? "danger" : "secondary"}>{errors.length} issue(s)</Badge>
+            {errors.length ? <Button color="link" size="sm" className="p-0 ms-2" onClick={downloadErrors}>Download error report</Button> : null}
+          </div>
+        ) : null}
         {rows.length > 0 && (
           <>
             <p className="mt-3 mb-1"><strong>{rows.length}</strong> rows parsed (preview first 5):</p>
@@ -1647,6 +1914,12 @@ const BulkImportModal = ({ isOpen, tourId, onClose, onDone }) => {
             </Table>
           </>
         )}
+        {errors.length > 0 ? (
+          <Table size="sm" className="align-middle mt-3">
+            <thead><tr><th>Row</th><th>Email</th><th>Issue</th></tr></thead>
+            <tbody>{errors.slice(0, 6).map((err, i) => <tr key={i}><td>{err.row}</td><td>{err.email || "—"}</td><td>{err.reason}</td></tr>)}</tbody>
+          </Table>
+        ) : null}
       </ModalBody>
       <ModalFooter>
         <Button color="light" onClick={onClose}>Cancel</Button>
