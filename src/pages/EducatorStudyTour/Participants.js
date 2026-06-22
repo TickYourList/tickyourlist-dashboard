@@ -13,9 +13,9 @@ import { showToastSuccess, showToastError } from "../../helpers/toastBuilder";
 import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
 import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
-  updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
-  getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getStudyTourActivity,
-  getTourWeather, getManifest, runAutomations, bulkMessage,
+  updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, getParticipantInvoice, getVisaDoc, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
+  getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getStudyTourActivity, getCommunicationsTimeline,
+  getTourWeather, getManifest, getManifestPrint, runAutomations, bulkMessage,
   updateStudyTour, bulkImportParticipants, uploadDocument, getChannelAvailability,
   getDefaultDocChecklist,
   getExpenses, getExpenseSummary, addExpense, updateExpense, deleteExpense, EXPENSE_CATEGORIES,
@@ -357,6 +357,8 @@ const Participants = () => {
   const [roomingOpen, setRoomingOpen] = useState(false);
   const [readinessOpen, setReadinessOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [financeOpen, setFinanceOpen] = useState(false);
+  const [commsLogOpen, setCommsLogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -564,6 +566,8 @@ const Participants = () => {
             <Button color="soft-primary" size="sm" className="me-2" onClick={() => setReadinessOpen(true)}><i className="bx bx-check-shield me-1" />Readiness</Button>
             <Button color="soft-success" size="sm" className="me-2" onClick={() => setPaymentsOpen(true)}><i className="bx bx-rupee me-1" />Payments</Button>
             <Button color="soft-dark" size="sm" className="me-2" onClick={() => setExpensesOpen(true)}><i className="bx bx-wallet me-1" />Expenses</Button>
+            <Button color="soft-success" size="sm" className="me-2" onClick={() => setFinanceOpen(true)}><i className="bx bx-line-chart me-1" />Finance</Button>
+            <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setCommsLogOpen(true)}><i className="bx bx-message-rounded-dots me-1" />Comms Log</Button>
             <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setActivityOpen(true)}><i className="bx bx-history me-1" />Activity</Button>
             <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setImportOpen(true)}><i className="bx bx-import me-1" />Import CSV</Button>
             <Button color="soft-primary" size="sm" onClick={() => setSettingsOpen(true)}><i className="bx bx-cog me-1" />Tour Settings</Button>
@@ -816,7 +820,9 @@ const Participants = () => {
       <RoomingModal isOpen={roomingOpen} tourId={tourId} onClose={() => setRoomingOpen(false)} onOpenParticipant={(id) => { setRoomingOpen(false); openDetail(id); }} onChanged={() => { loadParticipants(); loadTour(); }} />
       <ReadinessModal isOpen={readinessOpen} tourId={tourId} onClose={() => setReadinessOpen(false)} onOpenParticipant={(id) => { setReadinessOpen(false); openDetail(id); }} />
       <ActivityModal isOpen={activityOpen} onClose={() => setActivityOpen(false)} />
+      <CommsLogModal isOpen={commsLogOpen} tourId={tourId} onClose={() => setCommsLogOpen(false)} onOpenParticipant={(id) => { setCommsLogOpen(false); openDetail(id); }} />
       <PaymentsModal isOpen={paymentsOpen} tourId={tourId} onClose={() => setPaymentsOpen(false)} onOpenParticipant={(id) => { setPaymentsOpen(false); openDetail(id); }} />
+      <FinanceModal isOpen={financeOpen} tourId={tourId} onClose={() => setFinanceOpen(false)} />
       <ExpensesModal isOpen={expensesOpen} tourId={tourId} onClose={() => setExpensesOpen(false)} />
       <BulkImportModal isOpen={importOpen} tourId={tourId} existingParticipants={participants} onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); loadParticipants(); loadTour(); }} />
       <TourSettingsModal isOpen={settingsOpen} tour={tour} onClose={() => setSettingsOpen(false)} onSaved={() => { setSettingsOpen(false); loadTour(); }} />
@@ -1175,6 +1181,30 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
     },
   }, "Insurance & transfer saved");
 
+  // Open a printable doc in a new tab — opened synchronously (popup-safe), filled after fetch.
+  const openPrintable = async (fetcher, type, label) => {
+    const w = window.open("", "_blank");
+    if (w) w.document.write("<p style='font-family:sans-serif;padding:24px'>Generating…</p>");
+    try {
+      const r = await fetcher(p._id, type);
+      const html = r?.data?.html;
+      if (!html) throw new Error("No document returned");
+      if (w) { w.document.open(); w.document.write(html); w.document.close(); }
+    } catch (e) {
+      if (w) w.close();
+      showToastError(e?.response?.data?.message || `Could not generate ${label}`, "Error");
+    }
+  };
+  const openInvoice = (type) => openPrintable(getParticipantInvoice, type, "invoice");
+  const openVisaDoc = (type) => openPrintable(getVisaDoc, type, "document");
+
+  const resendComm = async (c) => {
+    try {
+      await sendMessage(p._id, c.templateKey, [c.channel], {});
+      onPatch(p._id, {}, "Message re-sent"); // re-dispatches + reloads the participant
+    } catch (e) { showToastError(e?.response?.data?.message || "Resend failed", "Error"); }
+  };
+
   const submitCancel = async () => {
     if (!cancelForm.reason.trim()) { showToastError("A cancellation reason is required", "Validation"); return; }
     setCancelBusy(true);
@@ -1482,6 +1512,14 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
                 onApplySchedule={(ms) => setOps((o) => ({ ...o, milestones: ms }))}
               />
 
+              <Col md={12}>
+                <span className="text-muted me-2 small">Documents:</span>
+                <Button size="sm" color="soft-secondary" className="me-2" onClick={() => openInvoice("proforma")}><i className="bx bx-receipt me-1" />Proforma</Button>
+                <Button size="sm" color="soft-secondary" className="me-2" onClick={() => openInvoice("gst")}><i className="bx bx-receipt me-1" />Tax invoice</Button>
+                <Button size="sm" color="soft-secondary" onClick={() => openInvoice("receipt")}><i className="bx bx-receipt me-1" />Receipt</Button>
+                <small className="text-muted d-block mt-1">Opens a printable document (save as PDF). Uses the saved quote &amp; payments — save ops first.</small>
+              </Col>
+
               {/* Payment milestones editor */}
               <Col md={12}>
                 <div className="d-flex justify-content-between align-items-center">
@@ -1616,6 +1654,16 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
             </Row>
             <Button color="primary" className="mt-3" onClick={saveVisa}>Save visa details</Button>
             <span className="text-muted ms-2 small">Then use "Send Message → Visa Appointment" to notify the participant.</span>
+
+            <hr />
+            <div>
+              <span className="text-muted me-2 small">Generate visa-pack documents:</span>
+              <Button size="sm" color="soft-secondary" className="me-2 mb-1" onClick={() => openVisaDoc("cover_letter")}><i className="bx bx-file me-1" />Cover letter</Button>
+              <Button size="sm" color="soft-secondary" className="me-2 mb-1" onClick={() => openVisaDoc("invitation")}><i className="bx bx-file me-1" />Invitation</Button>
+              <Button size="sm" color="soft-secondary" className="me-2 mb-1" onClick={() => openVisaDoc("noc")}><i className="bx bx-file me-1" />NOC</Button>
+              <Button size="sm" color="soft-secondary" className="mb-1" onClick={() => openVisaDoc("checklist")}><i className="bx bx-list-check me-1" />Checklist</Button>
+              <small className="text-muted d-block mt-1">Pre-filled drafts — open, review, print on letterhead and sign.</small>
+            </div>
           </TabPane>
 
           {/* FLIGHT — editable */}
@@ -1698,7 +1746,7 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
           <TabPane tabId="comms">
             {(p.communications || []).length === 0 ? <p className="text-muted">No messages sent yet.</p> : (
               <Table className="align-middle">
-                <thead><tr><th>When</th><th>Channel</th><th>Template</th><th>To</th><th>Status</th></tr></thead>
+                <thead><tr><th>When</th><th>Channel</th><th>Template</th><th>To</th><th>Status</th><th></th></tr></thead>
                 <tbody>
                   {[...p.communications].reverse().map((c, i) => (
                     <tr key={i}>
@@ -1706,7 +1754,12 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
                       <td className="text-capitalize">{c.channel}</td>
                       <td>{c.templateKey}</td>
                       <td className="small">{c.to || "—"}</td>
-                      <td><Badge color={c.status === "sent" ? "success" : c.status === "failed" ? "danger" : "warning"}>{c.status}</Badge></td>
+                      <td><Badge color={c.status === "sent" ? "success" : c.status === "failed" ? "danger" : "warning"}>{c.status}</Badge>{c.error ? <i className="bx bx-info-circle text-danger ms-1" title={c.error} /> : null}</td>
+                      <td>
+                        {c.status === "failed" && (
+                          <Button size="sm" color="soft-primary" title="Resend" onClick={() => resendComm(c)}><i className="bx bx-refresh" /></Button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -2196,6 +2249,19 @@ const CohortTools = ({ tourId, onChanged }) => {
     finally { setBusy(""); }
   };
 
+  const printManifest = async (type) => {
+    const w = window.open("", "_blank");
+    if (w) w.document.write("<p style='font-family:sans-serif;padding:24px'>Generating…</p>");
+    setBusy(`print-${type}`);
+    try {
+      const r = await getManifestPrint(tourId, type);
+      const html = r?.data?.html;
+      if (!html) throw new Error("No document");
+      if (w) { w.document.open(); w.document.write(html); w.document.close(); }
+    } catch (e) { if (w) w.close(); showToastError("Could not generate document", "Error"); }
+    finally { setBusy(""); }
+  };
+
   const runReminders = () => setConfirm({
     title: "Run due reminders",
     message: "Send any deadline-driven messages (visa, payment, weather, etc.) that are due today? Recipients will receive emails/SMS immediately.",
@@ -2260,6 +2326,14 @@ const CohortTools = ({ tourId, onChanged }) => {
         {["rooming", "dietary", "flight", "transfer", "insurance"].map((t) => (
           <Button key={t} size="sm" color="light" className="me-2 text-capitalize" onClick={() => exportManifest(t)} disabled={busy === t}>
             <i className="bx bx-download me-1" />{t} CSV
+          </Button>
+        ))}
+      </div>
+      <div className="mt-2">
+        <span className="text-muted me-2 small">Partner documents (print/PDF):</span>
+        {["rooming", "dietary", "flight", "transfer", "insurance"].map((t) => (
+          <Button key={t} size="sm" color="soft-light" className="me-2 text-capitalize" onClick={() => printManifest(t)} disabled={busy === `print-${t}`}>
+            <i className="bx bx-printer me-1" />{t}
           </Button>
         ))}
       </div>
@@ -2410,6 +2484,106 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
         <Button color="success" onClick={send} disabled={busy}>{busy ? <Spinner size="sm" /> : "Send to cohort"}</Button>
       </ModalFooter>
       <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
+    </Modal>
+  );
+};
+
+/* =================== Cohort communication timeline ==================== */
+const CommsLogModal = ({ isOpen, tourId, onClose, onOpenParticipant }) => {
+  const { can } = usePermissions();
+  const canEdit = can(ACTIONS.CAN_EDIT, MODULES.STUDY_TOUR_PERMS);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [channel, setChannel] = useState("");
+  const [status, setStatus] = useState("");
+  const [template, setTemplate] = useState("");
+  const [page, setPage] = useState(1);
+  const [resending, setResending] = useState("");
+  const limit = 50;
+
+  const load = async (pg = 1) => {
+    setLoading(true);
+    try {
+      const r = await getCommunicationsTimeline(tourId, { page: pg, limit, channel: channel || undefined, status: status || undefined, template: template || undefined });
+      setData(r?.data || null);
+      setPage(pg);
+    } catch (e) { showToastError(e?.response?.data?.message || "Failed to load comms log", "Error"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (isOpen) { setChannel(""); setStatus(""); setTemplate(""); load(1); } /* eslint-disable-next-line */ }, [isOpen, tourId]);
+  useEffect(() => { if (isOpen) load(1); /* eslint-disable-next-line */ }, [channel, status, template]);
+
+  const resend = async (it, i) => {
+    setResending(`${i}`);
+    try {
+      await sendMessage(it.participantId, it.templateKey, [it.channel], {});
+      showToastSuccess(`Re-sent ${it.channel} to ${it.fullName}`, "Resent");
+      await load(page);
+    } catch (e) { showToastError(e?.response?.data?.message || "Resend failed", "Error"); }
+    finally { setResending(""); }
+  };
+
+  const d = data;
+  const totalPages = d ? Math.max(1, Math.ceil(d.total / limit)) : 1;
+  const tmplLabel = (k) => (MESSAGE_TEMPLATES.find((t) => t.key === k)?.label) || k;
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="xl" centered scrollable>
+      <ModalHeader toggle={onClose}>Communication log — whole cohort</ModalHeader>
+      <ModalBody>
+        {d && (
+          <div className="d-flex flex-wrap gap-2 mb-3 align-items-center">
+            {Object.entries(d.channelCounts || {}).map(([c, n]) => <Badge key={c} color="soft-info" className="p-2 text-capitalize">{c}: {n}</Badge>)}
+            {Object.entries(d.statusCounts || {}).map(([s, n]) => <Badge key={s} color={s === "sent" ? "soft-success" : s === "failed" ? "soft-danger" : "soft-warning"} className="p-2 text-capitalize">{s}: {n}</Badge>)}
+          </div>
+        )}
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          <Input type="select" bsSize="sm" style={{ maxWidth: 150 }} value={channel} onChange={(e) => setChannel(e.target.value)}>
+            <option value="">All channels</option><option value="email">Email</option><option value="whatsapp">WhatsApp</option><option value="sms">SMS</option>
+          </Input>
+          <Input type="select" bsSize="sm" style={{ maxWidth: 150 }} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">All statuses</option><option value="sent">Sent</option><option value="failed">Failed</option><option value="queued">Queued</option>
+          </Input>
+          <Input type="select" bsSize="sm" style={{ maxWidth: 200 }} value={template} onChange={(e) => setTemplate(e.target.value)}>
+            <option value="">All templates</option>
+            {MESSAGE_TEMPLATES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+          </Input>
+        </div>
+
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : !d || d.items.length === 0 ? (
+          <p className="text-muted">No messages match.</p>
+        ) : (
+          <Table className="align-middle" responsive>
+            <thead><tr><th>When</th><th>Participant</th><th>Channel</th><th>Template</th><th>To</th><th>Status</th><th>Trigger</th><th></th></tr></thead>
+            <tbody>
+              {d.items.map((it, i) => (
+                <tr key={i}>
+                  <td className="small">{new Date(it.sentAt).toLocaleString("en-IN")}</td>
+                  <td className="small"><a href="#!" onClick={(e) => { e.preventDefault(); onOpenParticipant(it.participantId); }}>{it.fullName}</a></td>
+                  <td className="text-capitalize small">{it.channel}</td>
+                  <td className="small">{tmplLabel(it.templateKey)}</td>
+                  <td className="small">{it.to || "—"}</td>
+                  <td><Badge color={it.status === "sent" ? "soft-success" : it.status === "failed" ? "soft-danger" : "soft-warning"}>{it.status}</Badge>{it.error ? <i className="bx bx-info-circle text-danger ms-1" title={it.error} /> : null}</td>
+                  <td className="small text-capitalize">{it.trigger || "manual"}</td>
+                  <td>
+                    {it.status === "failed" && canEdit && (
+                      <Button size="sm" color="soft-primary" disabled={resending === `${i}`} onClick={() => resend(it, i)} title="Resend this message">
+                        {resending === `${i}` ? <Spinner size="sm" /> : <i className="bx bx-refresh" />}
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <span className="text-muted small me-auto">{d?.total || 0} message(s) · page {page}/{totalPages}</span>
+        <Button color="light" disabled={page <= 1 || loading} onClick={() => load(page - 1)}>Prev</Button>
+        <Button color="light" disabled={page >= totalPages || loading} onClick={() => load(page + 1)}>Next</Button>
+        <Button color="soft-primary" onClick={() => load(1)}><i className="bx bx-refresh me-1" />Refresh</Button>
+      </ModalFooter>
     </Modal>
   );
 };
@@ -2961,6 +3135,95 @@ const VisaBoardModal = ({ isOpen, tourId, onClose, onOpenParticipant, onChanged 
       </ModalBody>
       <ModalFooter>
         <Button color="light" onClick={onClose}>Close</Button>
+        <Button color="soft-primary" onClick={load}><i className="bx bx-refresh me-1" />Refresh</Button>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
+/* ========================= Finance report ============================= */
+const FinanceModal = ({ isOpen, tourId, onClose }) => {
+  const [s, setS] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try { const r = await getExpenseSummary(tourId); setS(r?.data?.summary || null); }
+    catch (e) { showToastError(e?.response?.data?.message || "Failed to load finance report", "Error"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (isOpen) load(); /* eslint-disable-next-line */ }, [isOpen, tourId]);
+
+  const money = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+  const catLabel = (key) => key || "uncategorised";
+
+  const exportCsv = () => {
+    if (!s) return;
+    const rows = [
+      ["Metric", "Value"],
+      ["Revenue quoted", s.revenueQuoted], ["Revenue collected", s.revenueCollected],
+      ["Outstanding", s.outstanding], ["Collection rate %", s.collectionRate],
+      ["Total spent", s.totalSpent], ["Extras spent", s.extrasSpent], ["Reimbursable", s.reimbursable],
+      ["Margin vs collected", s.marginVsCollected], ["Margin % vs collected", s.marginPctVsCollected],
+      ["Margin vs quoted", s.marginVsQuoted], ["Cost per head", s.costPerHead], ["Revenue per head", s.revenuePerHead],
+      ["Participants", s.participants],
+      [], ["Expense category", "Amount"],
+      ...(s.byCategoryDetailed || []).map((c) => [catLabel(c._id), c.total]),
+    ];
+    const csv = rows.map((r) => r.map((v) => (v == null ? "" : `"${String(v).replace(/"/g, '""')}"`)).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "study-tour-finance.csv"; a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const maxCat = s ? Math.max(1, ...(s.byCategoryDetailed || []).map((c) => c.total)) : 1;
+  const marginPos = s ? s.marginVsCollected >= 0 : true;
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="lg" centered scrollable>
+      <ModalHeader toggle={onClose}>Financial report</ModalHeader>
+      <ModalBody>
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : !s ? <p className="text-muted">No data.</p> : (
+          <>
+            <h6 className="text-muted">Revenue</h6>
+            <Row className="g-2 mb-3">
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{money(s.revenueQuoted)}</h5><small className="text-muted">Quoted</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0 text-success">{money(s.revenueCollected)}</h5><small className="text-muted">Collected</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0 text-warning">{money(s.outstanding)}</h5><small className="text-muted">Outstanding</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{s.collectionRate}%</h5><small className="text-muted">Collection rate</small></div></Col>
+            </Row>
+
+            <h6 className="text-muted">Costs &amp; margin</h6>
+            <Row className="g-2 mb-3">
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{money(s.totalSpent)}</h5><small className="text-muted">Total spent</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className={`mb-0 ${marginPos ? "text-success" : "text-danger"}`}>{money(s.marginVsCollected)}</h5><small className="text-muted">Margin (vs collected)</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className={`mb-0 ${marginPos ? "text-success" : "text-danger"}`}>{s.marginPctVsCollected}%</h5><small className="text-muted">Margin %</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{money(s.costPerHead)}</h5><small className="text-muted">Cost / head</small></div></Col>
+            </Row>
+            <p className="small text-muted">
+              {s.participants} participant(s) · revenue/head {money(s.revenuePerHead)} · extras {money(s.extrasSpent)} · reimbursable {money(s.reimbursable)} · margin vs quoted {money(s.marginVsQuoted)}
+            </p>
+
+            <h6 className="text-muted mt-3">Expenses by category</h6>
+            {(s.byCategoryDetailed || []).length === 0 ? <p className="text-muted small">No expenses recorded.</p> : (
+              <div>
+                {s.byCategoryDetailed.map((c) => (
+                  <div key={c._id} className="mb-2">
+                    <div className="d-flex justify-content-between small"><span className="text-capitalize">{catLabel(c._id)} <span className="text-muted">({c.count})</span></span><span className="fw-semibold">{money(c.total)}</span></div>
+                    <div className="progress" style={{ height: 6 }}>
+                      <div className="progress-bar bg-primary" style={{ width: `${Math.round((c.total / maxCat) * 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button color="light" onClick={onClose}>Close</Button>
+        <Button color="soft-secondary" onClick={exportCsv} disabled={!s}><i className="bx bx-download me-1" />Export CSV</Button>
         <Button color="soft-primary" onClick={load}><i className="bx bx-refresh me-1" />Refresh</Button>
       </ModalFooter>
     </Modal>
