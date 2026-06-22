@@ -73,3 +73,12 @@
 .badge.bg-dark{
   color: var(--#{$prefix}light);
 }
+
+// Soft badges via reactstrap's `color="soft-*"` prop (renders `.badge.bg-soft-*`).
+// The theme only styled `.badge-soft-*`, so `bg-soft-*` fell back to white text
+// on no background (invisible). Map them to the same soft variant.
+@each $color, $value in $theme-colors {
+  .badge.bg-soft-#{$color} {
+    @include badge-variant-soft($value);
+  }
+}

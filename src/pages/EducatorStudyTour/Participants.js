@@ -13,8 +13,9 @@ import { showToastSuccess, showToastError } from "../../helpers/toastBuilder";
 import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
 import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
-  updateParticipant, deleteParticipant, previewMessage, sendMessage,
-  getTourAnalytics, getPaymentsReport, getTourWeather, getManifest, runAutomations, bulkMessage,
+  updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
+  getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getStudyTourActivity,
+  getTourWeather, getManifest, runAutomations, bulkMessage,
   updateStudyTour, bulkImportParticipants, uploadDocument, getChannelAvailability,
   getDefaultDocChecklist,
   getExpenses, getExpenseSummary, addExpense, updateExpense, deleteExpense, EXPENSE_CATEGORIES,
@@ -342,6 +343,7 @@ const Participants = () => {
   const [appliedSearch, setAppliedSearch] = useState("");
   const [soloOnly, setSoloOnly] = useState(false);
   const [attnOnly, setAttnOnly] = useState(false);
+  const [archivedView, setArchivedView] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState(EMPTY_ADVANCED_FILTERS);
   const [page, setPage] = useState(1);
@@ -351,6 +353,10 @@ const Participants = () => {
   const [totalParticipants, setTotalParticipants] = useState(0);
   const [expensesOpen, setExpensesOpen] = useState(false);
   const [paymentsOpen, setPaymentsOpen] = useState(false);
+  const [visaOpen, setVisaOpen] = useState(false);
+  const [roomingOpen, setRoomingOpen] = useState(false);
+  const [readinessOpen, setReadinessOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -382,6 +388,7 @@ const Participants = () => {
         cluster: advancedFilters.cluster || undefined,
         source: advancedFilters.source || undefined,
         coordinator: advancedFilters.coordinator || undefined,
+        archived: archivedView ? "true" : undefined,
         page,
         limit: pageSize,
         sortBy,
@@ -396,7 +403,7 @@ const Participants = () => {
 
   useEffect(() => { loadTour(); }, [tourId]);
   useEffect(() => { loadParticipants(); /* eslint-disable-next-line */ }, [
-    tourId, filterStage, appliedSearch, soloOnly, page, pageSize, sortBy, sortOrder,
+    tourId, filterStage, appliedSearch, soloOnly, archivedView, page, pageSize, sortBy, sortOrder,
     advancedFilters.city, advancedFilters.state, advancedFilters.institution,
     advancedFilters.cluster, advancedFilters.source, advancedFilters.coordinator,
   ]);
@@ -422,14 +429,39 @@ const Participants = () => {
   const remove = (p) => {
     setConfirm({
       title: "Delete participant",
-      message: `Permanently delete ${p.fullName || "this participant"}? This removes their registration, documents and history. This cannot be undone.`,
-      confirmLabel: "Delete participant",
+      message: `Permanently delete ${p.fullName || "this participant"}? This removes their registration, documents and history. This cannot be undone — consider Archiving instead.`,
+      confirmLabel: "Delete permanently",
       confirmWord: "DELETE",
       onConfirm: async () => {
         try { await deleteParticipant(p._id); showToastSuccess("Deleted", "Success"); setDetail(null); loadParticipants(); loadTour(); }
         catch (e) { showToastError("Delete failed", "Error"); throw e; }
       },
     });
+  };
+
+  const archive = (p) => {
+    setConfirm({
+      title: "Archive participant",
+      message: `Archive ${p.fullName || "this participant"}? They'll be hidden from lists, boards and analytics but can be restored anytime.`,
+      confirmLabel: "Archive",
+      confirmColor: "warning",
+      onConfirm: async () => {
+        try { await archiveParticipant(p._id); showToastSuccess("Archived", "Success"); setDetail(null); loadParticipants(); loadTour(); }
+        catch (e) { showToastError("Archive failed", "Error"); throw e; }
+      },
+    });
+  };
+
+  const restore = async (p) => {
+    try { await restoreParticipant(p._id); showToastSuccess(`${p.fullName} restored`, "Restored"); loadParticipants(); loadTour(); }
+    catch (e) { showToastError("Restore failed", "Error"); }
+  };
+
+  const cancel = async (id, payload) => {
+    await cancelParticipant(id, payload); // throws on failure → handled by caller
+    showToastSuccess("Participant cancelled", "Cancelled");
+    if (detail?._id === id) openDetail(id);
+    loadParticipants(); loadTour();
   };
 
   const filtered = useMemo(
@@ -527,14 +559,18 @@ const Participants = () => {
         <div className="d-flex justify-content-between align-items-center flex-wrap">
           <Breadcrumbs title={<Link to="/educator-study-tours">Study Tours</Link>} breadcrumbItem={tour?.name || "Participants"} />
           <div className="mb-3">
+            <Button color="soft-info" size="sm" className="me-2" onClick={() => setVisaOpen(true)}><i className="bx bx-id-card me-1" />Visa Board</Button>
+            <Button color="soft-warning" size="sm" className="me-2" onClick={() => setRoomingOpen(true)}><i className="bx bx-bed me-1" />Rooming</Button>
+            <Button color="soft-primary" size="sm" className="me-2" onClick={() => setReadinessOpen(true)}><i className="bx bx-check-shield me-1" />Readiness</Button>
             <Button color="soft-success" size="sm" className="me-2" onClick={() => setPaymentsOpen(true)}><i className="bx bx-rupee me-1" />Payments</Button>
             <Button color="soft-dark" size="sm" className="me-2" onClick={() => setExpensesOpen(true)}><i className="bx bx-wallet me-1" />Expenses</Button>
+            <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setActivityOpen(true)}><i className="bx bx-history me-1" />Activity</Button>
             <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setImportOpen(true)}><i className="bx bx-import me-1" />Import CSV</Button>
             <Button color="soft-primary" size="sm" onClick={() => setSettingsOpen(true)}><i className="bx bx-cog me-1" />Tour Settings</Button>
           </div>
         </div>
 
-        <RegistrationLinkPanel tour={tour} onEdit={() => setSettingsOpen(true)} />
+        <RegistrationLinkPanel tour={tour} onEdit={() => setSettingsOpen(true)} filled={Object.entries(stageCounts).reduce((s, [k, v]) => (k === "cancelled" ? s : s + (Number(v) || 0)), 0)} />
 
         {/* Advanced cohort tools */}
         <CohortTools tourId={tourId} onChanged={() => { loadParticipants(); loadTour(); }} />
@@ -601,6 +637,7 @@ const Participants = () => {
           <div className="d-flex flex-wrap gap-4 mt-3">
             <Toggle id="soloOnly" checked={soloOnly} onChange={(e) => { setSoloOnly(e.target.checked); setPage(1); }} label="Solo only" />
             <Toggle id="attnOnly" checked={attnOnly} onChange={(e) => setAttnOnly(e.target.checked)} label="Needs attention" />
+            <Toggle id="archivedView" checked={archivedView} onChange={(e) => { setArchivedView(e.target.checked); setPage(1); }} label="Show archived" />
           </div>
           {advancedOpen ? (
             <AdvancedFiltersPanel
@@ -705,10 +742,25 @@ const Participants = () => {
                                   onClick={() => { setDetail(p); setMsgModal(true); }}>
                             <i className="bx bx-envelope" />
                           </Button>
-                          {canDelete && (
-                            <Button color="soft-danger" size="sm" onClick={() => remove(p)}>
-                              <i className="bx bx-trash" />
-                            </Button>
+                          {archivedView ? (
+                            <>
+                              {canEdit && (
+                                <Button color="soft-success" size="sm" className="me-1" title="Restore" onClick={() => restore(p)}>
+                                  <i className="bx bx-undo" />
+                                </Button>
+                              )}
+                              {canDelete && (
+                                <Button color="soft-danger" size="sm" title="Delete permanently" onClick={() => remove(p)}>
+                                  <i className="bx bx-trash" />
+                                </Button>
+                              )}
+                            </>
+                          ) : (
+                            canEdit && (
+                              <Button color="soft-warning" size="sm" title="Archive" onClick={() => archive(p)}>
+                                <i className="bx bx-archive-in" />
+                              </Button>
+                            )
                           )}
                         </td>
                       </tr>
@@ -740,6 +792,7 @@ const Participants = () => {
         activeTab={activeTab} setActiveTab={setActiveTab}
         onClose={() => setDetail(null)}
         onPatch={patch}
+        onCancel={cancel}
         onMessage={() => setMsgModal(true)}
       />
 
@@ -759,6 +812,10 @@ const Participants = () => {
         onAdded={() => { setAddModal(false); loadParticipants(); loadTour(); }}
       />
 
+      <VisaBoardModal isOpen={visaOpen} tourId={tourId} onClose={() => setVisaOpen(false)} onOpenParticipant={(id) => { setVisaOpen(false); openDetail(id); }} onChanged={() => { loadParticipants(); loadTour(); }} />
+      <RoomingModal isOpen={roomingOpen} tourId={tourId} onClose={() => setRoomingOpen(false)} onOpenParticipant={(id) => { setRoomingOpen(false); openDetail(id); }} onChanged={() => { loadParticipants(); loadTour(); }} />
+      <ReadinessModal isOpen={readinessOpen} tourId={tourId} onClose={() => setReadinessOpen(false)} onOpenParticipant={(id) => { setReadinessOpen(false); openDetail(id); }} />
+      <ActivityModal isOpen={activityOpen} onClose={() => setActivityOpen(false)} />
       <PaymentsModal isOpen={paymentsOpen} tourId={tourId} onClose={() => setPaymentsOpen(false)} onOpenParticipant={(id) => { setPaymentsOpen(false); openDetail(id); }} />
       <ExpensesModal isOpen={expensesOpen} tourId={tourId} onClose={() => setExpensesOpen(false)} />
       <BulkImportModal isOpen={importOpen} tourId={tourId} existingParticipants={participants} onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); loadParticipants(); loadTour(); }} />
@@ -840,12 +897,17 @@ const QuoteBuilder = ({ tour, participant, onApplyQuote, onApplySchedule }) => {
 };
 
 /* ----------------------- Detail modal (tabs) --------------------------- */
-const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, onClose, onPatch, onMessage }) => {
+const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, onClose, onPatch, onCancel, onMessage }) => {
   const [ops, setOps] = useState({});
   const [reg, setReg] = useState({});
   const [companions, setCompanions] = useState([]);
   const [visa, setVisa] = useState({});
   const [flight, setFlight] = useState({});
+  const [logistics, setLogistics] = useState({});
+  const [logUploading, setLogUploading] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelForm, setCancelForm] = useState({ reason: "", refundAmount: "", refundStatus: "none", refundReference: "", creditNoteRef: "", notes: "" });
+  const [cancelBusy, setCancelBusy] = useState(false);
   useEffect(() => {
     if (participant) {
       const x = participant;
@@ -933,6 +995,16 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
         rDate: inputDate(f.return?.date), rDepartTime: f.return?.departTime || "", rArriveTime: f.return?.arriveTime || "",
         rFrom: f.return?.from || "", rTo: f.return?.to || "", rBaggage: f.return?.baggage || "",
         departureCity: x.departureCity || "", departureAirport: x.departureAirport || "",
+      });
+      const ins = x.insurance || {}; const tr = x.transfer || {};
+      setLogistics({
+        provider: ins.provider || "", policyNumber: ins.policyNumber || "", insuredAmount: ins.insuredAmount || "",
+        currency: ins.currency || "INR", validFrom: inputDate(ins.validFrom), validTo: inputDate(ins.validTo),
+        emergencyHotline: ins.emergencyHotline || "", documentUrl: ins.documentUrl || "", documentName: ins.documentName || "",
+        arrivalGroup: tr.arrivalGroup || "", arrivalPoint: tr.arrivalPoint || "", arrivalPickupTime: tr.arrivalPickupTime || "",
+        departureGroup: tr.departureGroup || "", departurePoint: tr.departurePoint || "", departurePickupTime: tr.departurePickupTime || "",
+        vehicle: tr.vehicle || "", guideName: tr.guideName || "", guidePhone: tr.guidePhone || "",
+        emergencyPhone: tr.emergencyPhone || "", notes: tr.notes || "",
       });
     }
   }, [participant]);
@@ -1088,6 +1160,51 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
     ...(flight.booked ? { stage: advance("flight_booked") } : {}),
   }, "Flight details updated");
 
+  const saveLogistics = () => onPatch(p._id, {
+    insurance: {
+      provider: logistics.provider, policyNumber: logistics.policyNumber,
+      insuredAmount: logistics.insuredAmount === "" ? undefined : Number(logistics.insuredAmount),
+      currency: logistics.currency, validFrom: logistics.validFrom || undefined, validTo: logistics.validTo || undefined,
+      emergencyHotline: logistics.emergencyHotline, documentUrl: logistics.documentUrl, documentName: logistics.documentName,
+    },
+    transfer: {
+      arrivalGroup: logistics.arrivalGroup, arrivalPoint: logistics.arrivalPoint, arrivalPickupTime: logistics.arrivalPickupTime,
+      departureGroup: logistics.departureGroup, departurePoint: logistics.departurePoint, departurePickupTime: logistics.departurePickupTime,
+      vehicle: logistics.vehicle, guideName: logistics.guideName, guidePhone: logistics.guidePhone,
+      emergencyPhone: logistics.emergencyPhone, notes: logistics.notes,
+    },
+  }, "Insurance & transfer saved");
+
+  const submitCancel = async () => {
+    if (!cancelForm.reason.trim()) { showToastError("A cancellation reason is required", "Validation"); return; }
+    setCancelBusy(true);
+    try {
+      await onCancel(p._id, {
+        reason: cancelForm.reason.trim(),
+        refundAmount: cancelForm.refundAmount === "" ? undefined : Number(cancelForm.refundAmount),
+        refundStatus: cancelForm.refundStatus,
+        refundReference: cancelForm.refundReference || undefined,
+        creditNoteRef: cancelForm.creditNoteRef || undefined,
+        notes: cancelForm.notes || undefined,
+      });
+      setCancelOpen(false);
+    } catch (e) { showToastError(e?.response?.data?.message || "Cancellation failed", "Error"); }
+    finally { setCancelBusy(false); }
+  };
+
+  const uploadInsuranceDoc = async (fileList) => {
+    const f = Array.from(fileList || [])[0];
+    if (!f) return;
+    if (f.size > 15 * 1024 * 1024) { showToastError("File exceeds 15MB", "Too large"); return; }
+    setLogUploading(true);
+    try {
+      const r = await uploadDocument(f);
+      if (r?.data?.url) setLogistics((l) => ({ ...l, documentUrl: r.data.url, documentName: f.name }));
+      showToastSuccess("Policy document uploaded — remember to Save", "Uploaded");
+    } catch (e) { showToastError("Upload failed", "Error"); }
+    finally { setLogUploading(false); }
+  };
+
   const verifyDoc = (idx, status) => {
     let note;
     if (status === "rejected") {
@@ -1146,10 +1263,10 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
       </ModalHeader>
       <ModalBody>
         <Nav tabs className="mb-3">
-          {["profile", "companions", "ops", "documents", "visa", "flight", "comms"].map((t) => (
+          {["profile", "companions", "ops", "documents", "visa", "flight", "logistics", "comms"].map((t) => (
             <NavItem key={t}>
               <NavLink className={classnames({ active: activeTab === t })} onClick={() => setActiveTab(t)} role="button">
-                <span className="text-capitalize">{t === "comms" ? "Communications" : t === "companions" ? "Accompanying" : t}</span>
+                <span className="text-capitalize">{t === "comms" ? "Communications" : t === "companions" ? "Accompanying" : t === "logistics" ? "Insurance & Transfer" : t}</span>
               </NavLink>
             </NavItem>
           ))}
@@ -1389,6 +1506,44 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
               </Col>
             </Row>
             <Button color="primary" className="mt-3" onClick={saveOps}>Save ops details</Button>
+
+            {/* Cancellation & refund */}
+            <hr />
+            {p.stage === "cancelled" && p.cancellation ? (
+              <div className="alert alert-danger">
+                <strong><i className="bx bx-x-circle me-1" />Cancelled</strong>
+                {p.cancellation.cancelledAt ? <span className="text-muted ms-2 small">{fmt(p.cancellation.cancelledAt)}</span> : null}
+                <div className="small mt-1">
+                  {p.cancellation.reason ? <div><strong>Reason:</strong> {p.cancellation.reason}</div> : null}
+                  {p.cancellation.refundAmount != null ? <div><strong>Refund:</strong> ₹{Number(p.cancellation.refundAmount).toLocaleString("en-IN")} · <Badge color={p.cancellation.refundStatus === "processed" ? "soft-success" : p.cancellation.refundStatus === "pending" ? "soft-warning" : "soft-secondary"}>{p.cancellation.refundStatus || "none"}</Badge></div> : null}
+                  {p.cancellation.refundReference ? <div><strong>Refund ref:</strong> {p.cancellation.refundReference}</div> : null}
+                  {p.cancellation.creditNoteRef ? <div><strong>Credit note:</strong> {p.cancellation.creditNoteRef}</div> : null}
+                  {p.cancellation.notes ? <div><strong>Notes:</strong> {p.cancellation.notes}</div> : null}
+                </div>
+              </div>
+            ) : !cancelOpen ? (
+              <Button color="soft-danger" size="sm" onClick={() => setCancelOpen(true)}><i className="bx bx-x-circle me-1" />Cancel participant…</Button>
+            ) : (
+              <div className="border border-danger rounded p-3">
+                <h6 className="text-danger mb-2">Cancel participant</h6>
+                <Row className="g-2">
+                  <Col md={12}><Label className="mb-0">Reason *</Label><Input value={cancelForm.reason} onChange={(e) => setCancelForm({ ...cancelForm, reason: e.target.value })} placeholder="e.g. Visa refused, personal reasons" /></Col>
+                  <Col md={3}><Label className="mb-0">Refund amount</Label><Input type="number" value={cancelForm.refundAmount} onChange={(e) => setCancelForm({ ...cancelForm, refundAmount: e.target.value })} /></Col>
+                  <Col md={3}><Label className="mb-0">Refund status</Label>
+                    <Input type="select" value={cancelForm.refundStatus} onChange={(e) => setCancelForm({ ...cancelForm, refundStatus: e.target.value })}>
+                      <option value="none">None</option><option value="pending">Pending</option><option value="processed">Processed</option>
+                    </Input>
+                  </Col>
+                  <Col md={3}><Label className="mb-0">Refund ref</Label><Input value={cancelForm.refundReference} onChange={(e) => setCancelForm({ ...cancelForm, refundReference: e.target.value })} /></Col>
+                  <Col md={3}><Label className="mb-0">Credit note ref</Label><Input value={cancelForm.creditNoteRef} onChange={(e) => setCancelForm({ ...cancelForm, creditNoteRef: e.target.value })} /></Col>
+                  <Col md={12}><Label className="mb-0">Notes</Label><Input value={cancelForm.notes} onChange={(e) => setCancelForm({ ...cancelForm, notes: e.target.value })} /></Col>
+                </Row>
+                <div className="mt-2">
+                  <Button color="danger" size="sm" className="me-2" disabled={cancelBusy} onClick={submitCancel}>{cancelBusy ? <Spinner size="sm" /> : "Confirm cancellation"}</Button>
+                  <Button color="light" size="sm" onClick={() => setCancelOpen(false)}>Keep active</Button>
+                </div>
+              </div>
+            )}
           </TabPane>
 
           {/* DOCUMENTS — upload (single/multiple), verify, add custom */}
@@ -1495,6 +1650,48 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
             </Row>
             <Button color="primary" className="mt-3" onClick={saveFlight}>Save flight details</Button>
             <span className="text-muted ms-2 small">Then use "Send Message → Flight Confirmation".</span>
+          </TabPane>
+
+          {/* INSURANCE & TRANSFER */}
+          <TabPane tabId="logistics">
+            <h6 className="text-muted mb-2"><i className="bx bx-shield-quarter me-1" />Travel insurance</h6>
+            <Row className="g-3">
+              <Col md={4}><Label>Provider</Label><Input value={logistics.provider || ""} onChange={(e) => setLogistics({ ...logistics, provider: e.target.value })} /></Col>
+              <Col md={4}><Label>Policy number</Label><Input value={logistics.policyNumber || ""} onChange={(e) => setLogistics({ ...logistics, policyNumber: e.target.value })} /></Col>
+              <Col md={2}><Label>Insured amount</Label><Input type="number" value={logistics.insuredAmount || ""} onChange={(e) => setLogistics({ ...logistics, insuredAmount: e.target.value })} /></Col>
+              <Col md={2}><Label>Currency</Label><Input value={logistics.currency || ""} onChange={(e) => setLogistics({ ...logistics, currency: e.target.value })} /></Col>
+              <Col md={3}><Label>Valid from</Label><Input type="date" value={logistics.validFrom || ""} onChange={(e) => setLogistics({ ...logistics, validFrom: e.target.value })} /></Col>
+              <Col md={3}><Label>Valid to</Label><Input type="date" value={logistics.validTo || ""} onChange={(e) => setLogistics({ ...logistics, validTo: e.target.value })} /></Col>
+              <Col md={3}><Label>Emergency hotline</Label><Input value={logistics.emergencyHotline || ""} onChange={(e) => setLogistics({ ...logistics, emergencyHotline: e.target.value })} /></Col>
+              <Col md={3}>
+                <Label>Policy document</Label>
+                <div className="d-flex align-items-center gap-2">
+                  <Label className="btn btn-soft-primary btn-sm mb-0">
+                    {logUploading ? <Spinner size="sm" /> : <><i className="bx bx-upload me-1" />Upload</>}
+                    <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => { uploadInsuranceDoc(e.target.files); e.target.value = ""; }} />
+                  </Label>
+                  {logistics.documentUrl ? <a href={logistics.documentUrl} target="_blank" rel="noreferrer" className="small">{logistics.documentName || "view"}</a> : <span className="text-muted small">none</span>}
+                </div>
+              </Col>
+            </Row>
+
+            <h6 className="text-muted mb-2 mt-4"><i className="bx bx-bus me-1" />Ground transfers</h6>
+            <Row className="g-3">
+              <Col md={12}><small className="text-muted">Arrival</small></Col>
+              <Col md={3}><Label>Group</Label><Input value={logistics.arrivalGroup || ""} onChange={(e) => setLogistics({ ...logistics, arrivalGroup: e.target.value })} placeholder="Bus A" /></Col>
+              <Col md={5}><Label>Pickup point</Label><Input value={logistics.arrivalPoint || ""} onChange={(e) => setLogistics({ ...logistics, arrivalPoint: e.target.value })} placeholder="Helsinki Airport T2 arrivals" /></Col>
+              <Col md={4}><Label>Pickup time</Label><Input value={logistics.arrivalPickupTime || ""} onChange={(e) => setLogistics({ ...logistics, arrivalPickupTime: e.target.value })} placeholder="14 May · 08:30" /></Col>
+              <Col md={12}><small className="text-muted">Departure</small></Col>
+              <Col md={3}><Label>Group</Label><Input value={logistics.departureGroup || ""} onChange={(e) => setLogistics({ ...logistics, departureGroup: e.target.value })} /></Col>
+              <Col md={5}><Label>Drop point</Label><Input value={logistics.departurePoint || ""} onChange={(e) => setLogistics({ ...logistics, departurePoint: e.target.value })} /></Col>
+              <Col md={4}><Label>Pickup time</Label><Input value={logistics.departurePickupTime || ""} onChange={(e) => setLogistics({ ...logistics, departurePickupTime: e.target.value })} /></Col>
+              <Col md={4}><Label>Vehicle</Label><Input value={logistics.vehicle || ""} onChange={(e) => setLogistics({ ...logistics, vehicle: e.target.value })} placeholder="49-seater coach" /></Col>
+              <Col md={4}><Label>Guide name</Label><Input value={logistics.guideName || ""} onChange={(e) => setLogistics({ ...logistics, guideName: e.target.value })} /></Col>
+              <Col md={4}><Label>Guide phone</Label><Input value={logistics.guidePhone || ""} onChange={(e) => setLogistics({ ...logistics, guidePhone: e.target.value })} /></Col>
+              <Col md={4}><Label>Emergency phone</Label><Input value={logistics.emergencyPhone || ""} onChange={(e) => setLogistics({ ...logistics, emergencyPhone: e.target.value })} /></Col>
+              <Col md={8}><Label>Notes</Label><Input value={logistics.notes || ""} onChange={(e) => setLogistics({ ...logistics, notes: e.target.value })} /></Col>
+            </Row>
+            <Button color="primary" className="mt-3" onClick={saveLogistics}>Save insurance & transfer</Button>
           </TabPane>
 
           {/* COMMS */}
@@ -1827,11 +2024,13 @@ const BulkActionBar = ({ selectedCount, onClear, onStage, onCluster, onCoordinat
 };
 
 /* ----------------------- Registration link panel ------------------------ */
-const RegistrationLinkPanel = ({ tour, onEdit }) => {
+const RegistrationLinkPanel = ({ tour, onEdit, filled = 0 }) => {
   const [copied, setCopied] = useState(false);
   const url = publicRegistrationUrl(tour);
   const status = tour?.status || "draft";
   const isOpen = status === "open";
+  const cap = Number(tour?.capacity) || 0;
+  const full = cap > 0 && filled >= cap;
 
   const copy = async () => {
     if (!url) return;
@@ -1853,6 +2052,11 @@ const RegistrationLinkPanel = ({ tour, onEdit }) => {
             <div className="d-flex align-items-center gap-2 mb-1">
               <h6 className="mb-0">Public registration</h6>
               <Badge color={TOUR_STATUS_COLORS[status] || "secondary"}>{status}</Badge>
+              {cap > 0 && (
+                <Badge color={full ? (tour.waitlistEnabled ? "soft-warning" : "soft-danger") : "soft-info"}>
+                  {filled}/{cap} filled{full ? (tour.waitlistEnabled ? " · waitlist on" : " · FULL") : ""}
+                </Badge>
+              )}
             </div>
             <Input value={url || "Add a tour slug to generate the public registration URL"} readOnly />
             {!isOpen ? (
@@ -2053,7 +2257,7 @@ const CohortTools = ({ tourId, onChanged }) => {
 
       <div className="mt-3">
         <span className="text-muted me-2 small">Export manifests:</span>
-        {["rooming", "dietary", "flight"].map((t) => (
+        {["rooming", "dietary", "flight", "transfer", "insurance"].map((t) => (
           <Button key={t} size="sm" color="light" className="me-2 text-capitalize" onClick={() => exportManifest(t)} disabled={busy === t}>
             <i className="bx bx-download me-1" />{t} CSV
           </Button>
@@ -2083,15 +2287,35 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
   const [vars, setVars] = useState({});
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [previewing, setPreviewing] = useState(false);
 
-  useEffect(() => { if (isOpen) { setVars({}); setStage(""); } }, [isOpen]);
+  useEffect(() => { if (isOpen) { setVars({}); setStage(""); setPreview(null); } }, [isOpen]);
+  // The preview goes stale if the message definition changes — clear it.
+  useEffect(() => { setPreview(null); }, [templateKey, stage, channels, vars]);
+
+  const selectedChans = () => Object.entries(channels).filter(([, v]) => v).map(([k]) => k);
+
+  const runPreview = async () => {
+    const chans = selectedChans();
+    if (!chans.length) { showToastError("Select a channel", "Validation"); return; }
+    setPreviewing(true);
+    try {
+      const r = await bulkMessagePreview(tourId, templateKey, chans, vars, stage || undefined);
+      setPreview(r?.data || null);
+    } catch (e) { showToastError(e?.response?.data?.message || "Preview failed", "Error"); }
+    finally { setPreviewing(false); }
+  };
 
   const send = () => {
-    const chans = Object.entries(channels).filter(([, v]) => v).map(([k]) => k);
+    const chans = selectedChans();
     if (!chans.length) { showToastError("Select a channel", "Validation"); return; }
+    const deliverableNote = preview
+      ? ` ${chans.map((c) => `${c}: ${preview.projected?.[c]?.deliverable ?? "?"} deliverable`).join(", ")}.`
+      : " Tip: run a preview first to see exact recipients.";
     setConfirm({
       title: "Send to cohort",
-      message: `Send this message via ${chans.join(", ")} to ${stage ? `everyone at stage “${STAGE_LABELS[stage] || stage}”` : "the whole cohort"}? This dispatches immediately.`,
+      message: `Send this message via ${chans.join(", ")} to ${stage ? `everyone at stage “${STAGE_LABELS[stage] || stage}”` : "the whole cohort"}${preview ? ` (${preview.total} recipients)` : ""}? This dispatches immediately.${deliverableNote}`,
       confirmLabel: "Send now",
       confirmColor: "success",
       onConfirm: async () => {
@@ -2108,7 +2332,7 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} toggle={onClose} centered>
+    <Modal isOpen={isOpen} toggle={onClose} centered size="lg" scrollable>
       <ModalHeader toggle={onClose}>Bulk message to cohort</ModalHeader>
       <ModalBody>
         <Label>Template</Label>
@@ -2141,12 +2365,604 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
         {templateKey === "weather_packing" && (
           <p className="text-muted small mt-2">Leave temperature blank — a live forecast is fetched automatically.</p>
         )}
+
+        {/* Dry-run preview */}
+        {preview && (
+          <div className="border rounded p-3 mt-3 bg-light">
+            <div className="d-flex justify-content-between align-items-center">
+              <strong className="small"><i className="bx bx-show me-1" />Dry run — {preview.total} recipient(s){stage ? ` at “${STAGE_LABELS[stage] || stage}”` : " (whole cohort)"}</strong>
+              <span className="text-muted small">nothing sent yet</span>
+            </div>
+            <div className="d-flex flex-wrap gap-2 mt-2">
+              {Object.entries(preview.projected || {}).map(([c, p]) => (
+                <Badge key={c} color={!p.configured ? "soft-secondary" : p.undeliverable ? "soft-warning" : "soft-success"} className="p-2 text-capitalize">
+                  {c}: {p.configured ? <>{p.deliverable} deliverable{p.undeliverable ? `, ${p.undeliverable} missing contact` : ""}</> : "channel not configured"}
+                </Badge>
+              ))}
+            </div>
+            {preview.rendered?.subject && (
+              <div className="small text-muted mt-2">Sample subject (as {preview.sampleOf}): <span className="text-dark">{preview.rendered.subject}</span></div>
+            )}
+            <div className="mt-2" style={{ maxHeight: 180, overflowY: "auto" }}>
+              <Table size="sm" className="mb-0">
+                <thead><tr><th>Name</th><th>Stage</th>{(preview.channels || []).map((c) => <th key={c} className="text-capitalize">{c}</th>)}</tr></thead>
+                <tbody>
+                  {(preview.recipients || []).map((r) => (
+                    <tr key={r.id}>
+                      <td className="small">{r.fullName}<div className="text-muted" style={{ fontSize: 11 }}>{r.email || r.mobile || ""}</div></td>
+                      <td className="small">{STAGE_LABELS[r.stage] || r.stage}</td>
+                      {(preview.channels || []).map((c) => (
+                        <td key={c}>{r.deliverable?.[c] ? <i className="bx bx-check text-success" /> : <i className="bx bx-x text-danger" title="undeliverable — missing contact or channel off" />}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          </div>
+        )}
       </ModalBody>
       <ModalFooter>
         <Button color="light" onClick={onClose}>Cancel</Button>
+        <Button color="soft-info" onClick={runPreview} disabled={previewing}>
+          {previewing ? <Spinner size="sm" /> : <><i className="bx bx-show me-1" />Preview recipients</>}
+        </Button>
         <Button color="success" onClick={send} disabled={busy}>{busy ? <Spinner size="sm" /> : "Send to cohort"}</Button>
       </ModalFooter>
       <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
+    </Modal>
+  );
+};
+
+/* ========================= Activity timeline ========================== */
+/** Turn an audited method+path into a human-readable action. */
+const describeActivity = (it) => {
+  const p = it.path || "";
+  const m = it.method || "";
+  if (p.includes("/participants/bulk-import")) return "Bulk-imported participants";
+  if (p.includes("/participants/bulk-message")) return "Sent a bulk message";
+  if (p.includes("/participants/bulk-visa")) return "Bulk visa scheduling";
+  if (/\/participants\/[a-f0-9]{24}\/archive/.test(p)) return "Archived a participant";
+  if (/\/participants\/[a-f0-9]{24}\/restore/.test(p)) return "Restored a participant";
+  if (/\/participants\/[a-f0-9]{24}\/message/.test(p)) return "Sent a participant message";
+  if (/\/participants\/[a-f0-9]{24}$/.test(p) && m === "PUT") return "Updated a participant";
+  if (/\/participants\/[a-f0-9]{24}$/.test(p) && m === "DELETE") return "Deleted a participant";
+  if (p.endsWith("/participants") && m === "POST") return "Added a participant (concierge)";
+  if (p.includes("/rooming/assign")) return "Assigned rooming";
+  if (p.includes("/rooming/clear")) return "Cleared rooming";
+  if (p.includes("/duplicate")) return "Duplicated a tour";
+  if (p.includes("/automations/run")) return "Ran due reminders";
+  if (/\/expenses/.test(p)) return m === "DELETE" ? "Deleted an expense" : m === "PUT" ? "Updated an expense" : "Added an expense";
+  if (p.endsWith("/tours") && m === "POST") return "Created a study tour";
+  if (/\/tours\/[a-f0-9]{24}$/.test(p) && m === "PUT") return "Updated tour settings";
+  if (/\/tours\/[a-f0-9]{24}$/.test(p) && m === "DELETE") return "Deleted a study tour";
+  if (p.includes("/upload")) return "Uploaded a document";
+  return `${m} ${p.split("?")[0].replace("/v1/educator-study-tours/admin", "")}`;
+};
+const ACTION_COLORS = { create: "soft-success", update: "soft-info", delete: "soft-danger", other: "soft-secondary" };
+
+const ActivityModal = ({ isOpen, onClose }) => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 50;
+
+  const load = async (pg = page) => {
+    setLoading(true);
+    try {
+      const r = await getStudyTourActivity({ page: pg, limit });
+      setItems(r?.data?.items || []);
+      setTotal(Number(r?.data?.total || 0));
+      setPage(pg);
+    } catch (e) { showToastError(e?.response?.data?.message || "Failed to load activity", "Error"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (isOpen) load(1); /* eslint-disable-next-line */ }, [isOpen]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="lg" centered scrollable>
+      <ModalHeader toggle={onClose}>Activity log — who changed what</ModalHeader>
+      <ModalBody>
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : items.length === 0 ? (
+          <p className="text-muted">No activity recorded yet. Admin actions (create/update/delete/messages) appear here.</p>
+        ) : (
+          <Table className="align-middle" responsive>
+            <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Status</th></tr></thead>
+            <tbody>
+              {items.map((it, i) => (
+                <tr key={it._id || i}>
+                  <td className="small">{new Date(it.createdAt).toLocaleString("en-IN")}</td>
+                  <td className="small">{it.actorName || it.actorEmail || "—"}{it.actorName && it.actorEmail ? <div className="text-muted" style={{ fontSize: 11 }}>{it.actorEmail}</div> : null}</td>
+                  <td><Badge color={ACTION_COLORS[it.action] || "soft-secondary"} className="me-1 text-capitalize">{it.action}</Badge>{describeActivity(it)}</td>
+                  <td>{it.statusCode ? <Badge color={it.statusCode < 300 ? "soft-success" : "soft-danger"}>{it.statusCode}</Badge> : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <span className="text-muted small me-auto">{total} event(s) · page {page}/{totalPages}</span>
+        <Button color="light" disabled={page <= 1 || loading} onClick={() => load(page - 1)}>Prev</Button>
+        <Button color="light" disabled={page >= totalPages || loading} onClick={() => load(page + 1)}>Next</Button>
+        <Button color="soft-primary" onClick={() => load(1)}><i className="bx bx-refresh me-1" />Refresh</Button>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
+/* ===================== On-trip readiness board ======================== */
+const READINESS_ITEMS = [
+  { key: "passport", label: "Passport", abbr: "Passport" },
+  { key: "visa", label: "Visa approved", abbr: "Visa" },
+  { key: "insurance", label: "Insurance", abbr: "Insur." },
+  { key: "flight", label: "Flight booked", abbr: "Flight" },
+  { key: "hotel", label: "Hotel/room", abbr: "Hotel" },
+  { key: "emergency", label: "Emergency contact", abbr: "Emerg." },
+  { key: "payment", label: "Fully paid", abbr: "Paid" },
+  { key: "documents", label: "Docs verified", abbr: "Docs" },
+];
+const ReadinessModal = ({ isOpen, tourId, onClose, onOpenParticipant }) => {
+  const [board, setBoard] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState(""); // "", "ready", "not_ready"
+  const [search, setSearch] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    try { const r = await getReadinessBoard(tourId); setBoard(r?.data?.board || null); }
+    catch (e) { showToastError(e?.response?.data?.message || "Failed to load readiness", "Error"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (isOpen) { load(); setFilter(""); setSearch(""); } /* eslint-disable-next-line */ }, [isOpen, tourId]);
+
+  const rows = useMemo(() => {
+    const all = board?.rows || [];
+    return all.filter((r) =>
+      (!filter || (filter === "ready" ? r.ready : !r.ready)) &&
+      (!search || `${r.fullName} ${r.email} ${r.travelCluster}`.toLowerCase().includes(search.toLowerCase().trim())),
+    );
+  }, [board, filter, search]);
+
+  const b = board;
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="xl" centered scrollable>
+      <ModalHeader toggle={onClose}>On-trip readiness — ready to fly?</ModalHeader>
+      <ModalBody>
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : !b ? <p className="text-muted">No data.</p> : (
+          <>
+            <Row className="g-2 mb-3">
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0 text-success">{b.readyCount}/{b.total}</h5><small className="text-muted">Ready to fly</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0 text-danger">{b.notReady}</h5><small className="text-muted">Not ready</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{b.travelDays != null ? `${b.travelDays}d` : "—"}</h5><small className="text-muted">To departure</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{b.total ? Math.round((b.readyCount / b.total) * 100) : 0}%</h5><small className="text-muted">Cohort ready</small></div></Col>
+            </Row>
+
+            <div className="d-flex flex-wrap gap-2 mb-3 align-items-center">
+              {READINESS_ITEMS.map((it) => (b.itemFailCounts?.[it.key] ? (
+                <Badge key={it.key} color="soft-danger" className="p-2">{it.label}: {b.itemFailCounts[it.key]} pending</Badge>
+              ) : null))}
+              {!READINESS_ITEMS.some((it) => b.itemFailCounts?.[it.key]) && <Badge color="soft-success" className="p-2">Everyone is fully ready 🎉</Badge>}
+            </div>
+
+            <div className="d-flex flex-wrap gap-2 mb-3 align-items-center">
+              <Input type="select" bsSize="sm" style={{ maxWidth: 160 }} value={filter} onChange={(e) => setFilter(e.target.value)}>
+                <option value="">All ({b.total})</option>
+                <option value="not_ready">Not ready ({b.notReady})</option>
+                <option value="ready">Ready ({b.readyCount})</option>
+              </Input>
+              <Input style={{ maxWidth: 220 }} bsSize="sm" placeholder="Search name / cluster" value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
+
+            {rows.length === 0 ? <p className="text-muted">No participants match.</p> : (
+              <Table className="align-middle text-center" responsive>
+                <thead>
+                  <tr>
+                    <th className="text-start">Participant</th>
+                    {READINESS_ITEMS.map((it) => <th key={it.key} title={it.label}><small>{it.abbr}</small></th>)}
+                    <th>Ready</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id} className={r.ready ? "table-success" : ""}>
+                      <td className="text-start">
+                        <a href="#!" onClick={(e) => { e.preventDefault(); onOpenParticipant(r.id); }} className="fw-semibold">{r.fullName}</a>
+                        {r.travelCluster ? <span className="text-muted small"> · {r.travelCluster}</span> : null}
+                      </td>
+                      {READINESS_ITEMS.map((it) => (
+                        <td key={it.key}>
+                          {r.checks[it.key]
+                            ? <i className="bx bx-check-circle text-success" title={`${it.label}: ok`} />
+                            : <i className="bx bx-x-circle text-danger" title={`${it.label}: pending`} />}
+                        </td>
+                      ))}
+                      <td>
+                        {r.ready
+                          ? <Badge color="soft-success">Ready</Badge>
+                          : <Badge color="soft-danger" title={`Missing: ${r.missing.join(", ")}`}>{r.doneCount}/{r.total}</Badge>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+          </>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button color="light" onClick={onClose}>Close</Button>
+        <Button color="soft-primary" onClick={load}><i className="bx bx-refresh me-1" />Refresh</Button>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
+/* ========================= Rooming builder ============================= */
+const EMPTY_ROOM_FORM = { hotel: "", roomNumber: "", roomType: "", checkIn: "", checkOut: "", notes: "" };
+
+const RoomingModal = ({ isOpen, tourId, onClose, onOpenParticipant, onChanged }) => {
+  const { can } = usePermissions();
+  const canEdit = can(ACTIONS.CAN_EDIT, MODULES.STUDY_TOUR_PERMS);
+  const [board, setBoard] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [form, setForm] = useState(EMPTY_ROOM_FORM);
+  const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try { const r = await getRoomingBoard(tourId); setBoard(r?.data?.board || null); }
+    catch (e) { showToastError(e?.response?.data?.message || "Failed to load rooming", "Error"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => {
+    if (isOpen) { load(); setSelected([]); setForm(EMPTY_ROOM_FORM); setSearch(""); }
+    /* eslint-disable-next-line */
+  }, [isOpen, tourId]);
+
+  const unassigned = useMemo(() => {
+    const u = board?.unassigned || [];
+    return u.filter((r) => !search || `${r.fullName} ${r.institutionName} ${r.preferredRoommateName}`.toLowerCase().includes(search.toLowerCase().trim()));
+  }, [board, search]);
+
+  const toggle = (id) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const suggestType = (n) => (n <= 1 ? "single" : n === 2 ? "twin" : "triple");
+
+  const assign = async () => {
+    if (!selected.length) { showToastError("Select participants from the unassigned list", "Validation"); return; }
+    if (!form.roomNumber.trim()) { showToastError("Enter a room number", "Validation"); return; }
+    setBusy(true);
+    try {
+      await assignRoom(tourId, {
+        participantIds: selected,
+        hotel: form.hotel || undefined,
+        roomNumber: form.roomNumber.trim(),
+        roomType: form.roomType || suggestType(selected.length),
+        checkIn: form.checkIn || undefined,
+        checkOut: form.checkOut || undefined,
+        notes: form.notes || undefined,
+      });
+      showToastSuccess(`Room ${form.roomNumber} assigned to ${selected.length}`, "Rooming");
+      setSelected([]); setForm((f) => ({ ...f, roomNumber: "", notes: "" })); // keep hotel + dates for the next room
+      await load(); onChanged && onChanged();
+    } catch (e) { showToastError(e?.response?.data?.message || "Assignment failed", "Error"); }
+    finally { setBusy(false); }
+  };
+
+  const clearRoom = async (ids) => {
+    setBusy(true);
+    try { await clearRooming(tourId, ids); await load(); onChanged && onChanged(); }
+    catch (e) { showToastError("Could not clear room", "Error"); }
+    finally { setBusy(false); }
+  };
+
+  const b = board;
+  const prefBadge = (r) => (
+    <>
+      {r.occupancy ? <Badge color={r.occupancy === "single" ? "soft-secondary" : "soft-info"} className="me-1 text-capitalize">{r.occupancy}</Badge> : null}
+      {r.isSolo ? <Badge color="soft-warning" className="me-1">solo</Badge> : null}
+      {r.smoking ? <Badge color="soft-dark" className="me-1">smoking</Badge> : null}
+      {r.accompanyingCount ? <Badge color="soft-secondary" className="me-1">+{r.accompanyingCount}</Badge> : null}
+    </>
+  );
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="xl" centered scrollable>
+      <ModalHeader toggle={onClose}>Rooming allocation</ModalHeader>
+      <ModalBody>
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : !b ? <p className="text-muted">No data.</p> : (
+          <>
+            <Row className="g-2 mb-3">
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{b.assigned}/{b.total}</h5><small className="text-muted">Assigned</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{b.roomsCount}</h5><small className="text-muted">Rooms</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0 text-warning">{b.unassignedCount}</h5><small className="text-muted">Unassigned</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{b.soloUnassigned}</h5><small className="text-muted">Solo unassigned</small></div></Col>
+            </Row>
+
+            {canEdit && (
+              <Card className="border mb-3"><CardBody className="py-2">
+                <strong className="small"><i className="bx bx-bed me-1" />Assign a room {selected.length ? `(${selected.length} selected)` : ""}</strong>
+                <Row className="g-2 mt-1">
+                  <Col md={3}><Label className="small mb-0">Hotel</Label><Input bsSize="sm" value={form.hotel} onChange={(e) => setForm({ ...form, hotel: e.target.value })} /></Col>
+                  <Col md={2}><Label className="small mb-0">Room no.</Label><Input bsSize="sm" value={form.roomNumber} onChange={(e) => setForm({ ...form, roomNumber: e.target.value })} /></Col>
+                  <Col md={2}><Label className="small mb-0">Type</Label>
+                    <Input type="select" bsSize="sm" value={form.roomType} onChange={(e) => setForm({ ...form, roomType: e.target.value })}>
+                      <option value="">{`auto (${suggestType(selected.length || 1)})`}</option>
+                      <option value="single">single</option><option value="double">double</option><option value="twin">twin</option><option value="triple">triple</option>
+                    </Input>
+                  </Col>
+                  <Col md={2}><Label className="small mb-0">Check-in</Label><Input type="date" bsSize="sm" value={form.checkIn} onChange={(e) => setForm({ ...form, checkIn: e.target.value })} /></Col>
+                  <Col md={2}><Label className="small mb-0">Check-out</Label><Input type="date" bsSize="sm" value={form.checkOut} onChange={(e) => setForm({ ...form, checkOut: e.target.value })} /></Col>
+                  <Col md={1} className="d-flex align-items-end"><Button size="sm" color="primary" className="w-100" disabled={busy || !selected.length} onClick={assign}>{busy ? <Spinner size="sm" /> : "Assign"}</Button></Col>
+                </Row>
+              </CardBody></Card>
+            )}
+
+            <Row>
+              {/* Unassigned pool */}
+              <Col md={6}>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h6 className="mb-0">Unassigned ({unassigned.length})</h6>
+                  <Input style={{ maxWidth: 180 }} bsSize="sm" placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} />
+                </div>
+                <div style={{ maxHeight: 360, overflowY: "auto" }} className="border rounded p-2">
+                  {unassigned.length === 0 ? <p className="text-muted small mb-0">Everyone is assigned 🎉</p> : unassigned.map((r) => (
+                    <div key={r.id} className={`d-flex align-items-start gap-2 p-2 rounded ${selected.includes(r.id) ? "bg-soft-primary" : ""}`}>
+                      {canEdit && <input type="checkbox" className="mt-1" checked={selected.includes(r.id)} onChange={() => toggle(r.id)} />}
+                      <div className="flex-grow-1">
+                        <a href="#!" onClick={(e) => { e.preventDefault(); onOpenParticipant(r.id); }} className="fw-semibold">{r.fullName}</a>
+                        <span className="text-muted small"> · {r.institutionName || "—"}{r.travelCluster ? ` · ${r.travelCluster}` : ""}</span>
+                        <div className="mt-1">{prefBadge(r)}</div>
+                        {r.preferredRoommateName ? <div className="small text-muted">prefers: {r.preferredRoommateName}</div> : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Col>
+
+              {/* Rooms */}
+              <Col md={6}>
+                <h6 className="mb-2">Rooms ({b.rooms.length})</h6>
+                <div style={{ maxHeight: 360, overflowY: "auto" }} className="border rounded p-2">
+                  {b.rooms.length === 0 ? <p className="text-muted small mb-0">No rooms assigned yet.</p> : b.rooms.map((room, ri) => (
+                    <div key={ri} className="border rounded p-2 mb-2">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <strong>Room {room.roomNumber}{room.hotel ? <span className="text-muted fw-normal"> · {room.hotel}</span> : null}</strong>
+                        <span>
+                          <Badge color="soft-info" className="me-2 text-capitalize">{room.roomType || `${room.occupants.length}-bed`}</Badge>
+                          {canEdit && <i className="bx bx-trash text-danger" role="button" title="Clear room" onClick={() => clearRoom(room.occupants.map((o) => o.id))} />}
+                        </span>
+                      </div>
+                      {(room.checkIn || room.checkOut) && <div className="small text-muted">{room.checkIn ? fmt(room.checkIn) : "?"} → {room.checkOut ? fmt(room.checkOut) : "?"}</div>}
+                      <ul className="mb-0 mt-1 ps-3">
+                        {room.occupants.map((o) => (
+                          <li key={o.id} className="small">
+                            <a href="#!" onClick={(e) => { e.preventDefault(); onOpenParticipant(o.id); }}>{o.fullName}</a>
+                            {o.accompanyingCount ? <Badge color="soft-secondary" className="ms-1">+{o.accompanyingCount}</Badge> : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </Col>
+            </Row>
+          </>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button color="light" onClick={onClose}>Close</Button>
+        <Button color="soft-primary" onClick={load}><i className="bx bx-refresh me-1" />Refresh</Button>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
+/* ========================= Visa board modal =========================== */
+const VISA_STATUS_META = {
+  docs_pending: { label: "Docs pending", color: "soft-danger" },
+  ready_to_schedule: { label: "Ready to schedule", color: "soft-warning" },
+  scheduled: { label: "Scheduled", color: "soft-info" },
+  approved: { label: "Approved", color: "soft-success" },
+};
+const RISK_META = {
+  high: { label: "High", color: "danger" },
+  medium: { label: "Medium", color: "soft-warning" },
+  low: { label: "Low", color: "soft-secondary" },
+  none: { label: "", color: "soft-success" },
+};
+const EMPTY_VISA_FORM = { date: "", time: "", centreName: "", centreAddress: "", referenceNumber: "", documentDeadline: "", formLink: "" };
+
+const VisaBoardModal = ({ isOpen, tourId, onClose, onOpenParticipant, onChanged }) => {
+  const { can } = usePermissions();
+  const canEdit = can(ACTIONS.CAN_EDIT, MODULES.STUDY_TOUR_PERMS);
+  const [board, setBoard] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [riskFilter, setRiskFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState([]);
+  const [form, setForm] = useState(EMPTY_VISA_FORM);
+  const [advanceStage, setAdvanceStage] = useState(true);
+  const [notify, setNotify] = useState(false);
+  const [channels, setChannels] = useState({ email: true, whatsapp: false, sms: false });
+  const [applying, setApplying] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try { const r = await getVisaBoard(tourId); setBoard(r?.data?.board || null); }
+    catch (e) { showToastError(e?.response?.data?.message || "Failed to load visa board", "Error"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => {
+    if (isOpen) { load(); setSelected([]); setForm(EMPTY_VISA_FORM); setNotify(false); setStatusFilter(""); setRiskFilter(""); setSearch(""); }
+    /* eslint-disable-next-line */
+  }, [isOpen, tourId]);
+
+  const rows = useMemo(() => {
+    const all = board?.rows || [];
+    return all.filter((r) =>
+      (!statusFilter || r.status === statusFilter) &&
+      (!riskFilter || (r.status !== "approved" && r.risk?.level === riskFilter)) &&
+      (!search || `${r.fullName} ${r.email} ${r.coordinator}`.toLowerCase().includes(search.toLowerCase().trim())),
+    );
+  }, [board, statusFilter, riskFilter, search]);
+
+  const selectableIds = rows.filter((r) => r.status !== "approved").map((r) => r.id);
+  const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.includes(id));
+  const toggleAll = () => setSelected(allSelected ? [] : selectableIds);
+  const toggleOne = (id) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const apply = async () => {
+    if (!selected.length) { showToastError("Select at least one participant", "Validation"); return; }
+    if (!form.date && !form.documentDeadline && !form.centreName) {
+      showToastError("Add at least an appointment date, centre or document deadline", "Validation"); return;
+    }
+    setApplying(true);
+    try {
+      const chans = Object.entries(channels).filter(([, v]) => v).map(([k]) => k);
+      const visaAppointment = {
+        scheduled: true,
+        date: form.date || undefined, time: form.time || undefined,
+        centreName: form.centreName || undefined, centreAddress: form.centreAddress || undefined,
+        referenceNumber: form.referenceNumber || undefined, documentDeadline: form.documentDeadline || undefined,
+        formLink: form.formLink || undefined,
+      };
+      const r = await bulkVisaSchedule({ studyTour: tourId, participantIds: selected, visaAppointment, advanceStage, notify, channels: chans });
+      const d = r?.data || {};
+      showToastSuccess(`${d.updated || 0} scheduled${notify ? `, ${d.notified || 0} notified` : ""}${d.failed ? `, ${d.failed} failed` : ""}`, "Visa scheduling");
+      setSelected([]); setForm(EMPTY_VISA_FORM); setNotify(false);
+      await load();
+      onChanged && onChanged();
+    } catch (e) { showToastError(e?.response?.data?.message || "Bulk scheduling failed", "Error"); }
+    finally { setApplying(false); }
+  };
+
+  const b = board;
+  const expiryText = (r) => {
+    if (!r.passportExpiry) return <span className="text-danger">missing</span>;
+    const d = r.passportExpiryDays;
+    const label = fmt(r.passportExpiry);
+    if (d == null) return label;
+    if (d < 0) return <span className="text-danger">{label} (expired)</span>;
+    if (d < 180) return <span className="text-warning">{label} (&lt;6mo)</span>;
+    return label;
+  };
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="xl" centered scrollable>
+      <ModalHeader toggle={onClose}>Visa operations board</ModalHeader>
+      <ModalBody>
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : !b ? <p className="text-muted">No data.</p> : (
+          <>
+            {/* Summary */}
+            <Row className="g-2 mb-3">
+              {Object.entries(VISA_STATUS_META).map(([k, meta]) => (
+                <Col xs={6} md={3} key={k}>
+                  <div className="border rounded p-2 text-center" role="button" onClick={() => setStatusFilter(statusFilter === k ? "" : k)}
+                       style={{ borderColor: statusFilter === k ? "#556ee6" : undefined, borderWidth: statusFilter === k ? 2 : 1 }}>
+                    <h5 className="mb-0">{b.counts?.[k] || 0}</h5>
+                    <small className="text-muted">{meta.label}</small>
+                  </div>
+                </Col>
+              ))}
+            </Row>
+            <div className="d-flex flex-wrap gap-2 mb-3 align-items-center">
+              {b.travelDays != null && <Badge color="soft-secondary" className="p-2">Travel in {b.travelDays} day(s)</Badge>}
+              <Badge color="danger" className="p-2" role="button" onClick={() => setRiskFilter(riskFilter === "high" ? "" : "high")}>High risk: {b.riskCounts?.high || 0}</Badge>
+              <Badge color="soft-warning" className="p-2" role="button" onClick={() => setRiskFilter(riskFilter === "medium" ? "" : "medium")}>Medium: {b.riskCounts?.medium || 0}</Badge>
+              <Badge color="soft-secondary" className="p-2" role="button" onClick={() => setRiskFilter(riskFilter === "low" ? "" : "low")}>Low: {b.riskCounts?.low || 0}</Badge>
+              <Input style={{ maxWidth: 220 }} bsSize="sm" placeholder="Search name / coordinator" value={search} onChange={(e) => setSearch(e.target.value)} />
+              {(statusFilter || riskFilter || search) && <Button size="sm" color="link" onClick={() => { setStatusFilter(""); setRiskFilter(""); setSearch(""); }}>Clear filters</Button>}
+            </div>
+
+            {/* Bulk scheduling panel */}
+            {canEdit && (
+              <Card className="mb-3 border">
+                <CardBody className="py-2">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <strong className="small"><i className="bx bx-calendar-check me-1" />Bulk schedule {selected.length ? `(${selected.length} selected)` : ""}</strong>
+                    {selected.length > 0 && <Button size="sm" color="link" className="text-muted p-0" onClick={() => setSelected([])}>clear selection</Button>}
+                  </div>
+                  <Row className="g-2 mt-1">
+                    <Col md={3}><Label className="small mb-0">Appointment date</Label><Input type="date" bsSize="sm" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Col>
+                    <Col md={2}><Label className="small mb-0">Time</Label><Input bsSize="sm" placeholder="10:30 AM" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></Col>
+                    <Col md={3}><Label className="small mb-0">Centre name</Label><Input bsSize="sm" value={form.centreName} onChange={(e) => setForm({ ...form, centreName: e.target.value })} /></Col>
+                    <Col md={4}><Label className="small mb-0">Centre address</Label><Input bsSize="sm" value={form.centreAddress} onChange={(e) => setForm({ ...form, centreAddress: e.target.value })} /></Col>
+                    <Col md={3}><Label className="small mb-0">Reference</Label><Input bsSize="sm" value={form.referenceNumber} onChange={(e) => setForm({ ...form, referenceNumber: e.target.value })} /></Col>
+                    <Col md={3}><Label className="small mb-0">Document deadline</Label><Input type="date" bsSize="sm" value={form.documentDeadline} onChange={(e) => setForm({ ...form, documentDeadline: e.target.value })} /></Col>
+                    <Col md={6}><Label className="small mb-0">Visa form link</Label><Input bsSize="sm" value={form.formLink} onChange={(e) => setForm({ ...form, formLink: e.target.value })} /></Col>
+                  </Row>
+                  <div className="d-flex flex-wrap align-items-center gap-3 mt-2">
+                    <Toggle id="visaAdvance" checked={advanceStage} onChange={(e) => setAdvanceStage(e.target.checked)} label="Advance stage to Visa Scheduled" />
+                    <Toggle id="visaNotify" checked={notify} onChange={(e) => setNotify(e.target.checked)} label="Notify participants" />
+                    {notify && ["email", "whatsapp", "sms"].map((c) => (
+                      <div className="form-check" key={c}>
+                        <input className="form-check-input" type="checkbox" id={`vch-${c}`} checked={channels[c]} onChange={(e) => setChannels({ ...channels, [c]: e.target.checked })} />
+                        <Label className="form-check-label text-capitalize" for={`vch-${c}`}>{c}</Label>
+                      </div>
+                    ))}
+                    <Button size="sm" color="primary" className="ms-auto" disabled={applying || !selected.length} onClick={apply}>
+                      {applying ? <Spinner size="sm" /> : <>Apply to {selected.length || 0} selected</>}
+                    </Button>
+                  </div>
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Board table */}
+            {rows.length === 0 ? <p className="text-muted">No participants match these filters.</p> : (
+              <Table className="align-middle" responsive>
+                <thead>
+                  <tr>
+                    <th style={{ width: 30 }}><input type="checkbox" checked={allSelected} onChange={toggleAll} disabled={!selectableIds.length} title="Select all schedulable" /></th>
+                    <th>Participant</th><th>Status</th><th>Risk</th><th>Passport expiry</th><th>Docs</th><th>Doc deadline</th><th>Appointment</th><th>Coordinator</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => {
+                    const sMeta = VISA_STATUS_META[r.status] || { label: r.status, color: "soft-secondary" };
+                    const rMeta = RISK_META[r.risk?.level] || RISK_META.low;
+                    const appt = r.visaAppointment || {};
+                    return (
+                      <tr key={r.id}>
+                        <td>{r.status !== "approved" ? <input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleOne(r.id)} /> : <i className="bx bx-check text-success" />}</td>
+                        <td>
+                          <a href="#!" onClick={(e) => { e.preventDefault(); onOpenParticipant(r.id); }} className="fw-semibold">{r.fullName}</a>
+                          <div className="small text-muted">{r.email}</div>
+                          {r.visaRefusal ? <Badge color="soft-danger" className="me-1">refusal history</Badge> : null}
+                          {r.hasSchengenVisa ? <Badge color="soft-success">has Schengen</Badge> : null}
+                        </td>
+                        <td><Badge color={sMeta.color}>{sMeta.label}</Badge></td>
+                        <td>
+                          {r.status === "approved" ? <span className="text-muted">—</span> : (
+                            <Badge color={rMeta.color} title={(r.risk?.reasons || []).join(", ")}>{rMeta.label}{r.risk?.score ? ` (${r.risk.score})` : ""}</Badge>
+                          )}
+                          {r.status !== "approved" && (r.risk?.reasons || []).length ? <div className="small text-muted" style={{ maxWidth: 220 }}>{r.risk.reasons.slice(0, 2).join(", ")}{r.risk.reasons.length > 2 ? "…" : ""}</div> : null}
+                        </td>
+                        <td className="small">{expiryText(r)}</td>
+                        <td className="small">{r.docDone}/{r.docRequired} <span className="text-muted">({r.docPct}%)</span></td>
+                        <td className="small">{appt.documentDeadline ? <>{fmt(appt.documentDeadline)}{r.documentDeadlineDays != null && r.documentDeadlineDays < 0 ? <span className="text-danger"> (passed)</span> : null}</> : "—"}</td>
+                        <td className="small">{appt.scheduled && appt.date ? <>{fmt(appt.date)}{appt.time ? ` · ${appt.time}` : ""}<br /><span className="text-muted">{appt.centreName || ""}</span></> : <span className="text-muted">not scheduled</span>}</td>
+                        <td className="small">{r.coordinator || <span className="text-muted">—</span>}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            )}
+          </>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button color="light" onClick={onClose}>Close</Button>
+        <Button color="soft-primary" onClick={load}><i className="bx bx-refresh me-1" />Refresh</Button>
+      </ModalFooter>
     </Modal>
   );
 };
@@ -2494,6 +3310,8 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
         startDate: inputDate(tour.startDate),
         endDate: inputDate(tour.endDate),
         summary: tour.summary || "",
+        capacity: tour.capacity || "",
+        waitlistEnabled: !!tour.waitlistEnabled,
         hostName: tour.hostPartner?.name || "",
         hostContactPerson: tour.hostPartner?.contactPerson || "",
         hostEmail: tour.hostPartner?.email || "",
@@ -2530,6 +3348,8 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
         startDate: form.startDate || undefined,
         endDate: form.endDate || undefined,
         summary: form.summary,
+        capacity: numberOrUndefined(form.capacity),
+        waitlistEnabled: !!form.waitlistEnabled,
         hostPartner: {
           name: form.hostName,
           contactPerson: form.hostContactPerson,
@@ -2624,6 +3444,14 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
               <Col md={3}><Label>Start date</Label><Input type="date" value={form.startDate || ""} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></Col>
               <Col md={3}><Label>End date</Label><Input type="date" value={form.endDate || ""} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></Col>
               <Col md={12}><Label>Summary</Label><Input type="textarea" rows={3} value={form.summary || ""} onChange={(e) => setForm({ ...form, summary: e.target.value })} /></Col>
+
+              <Col md={4}><Label>Capacity <small className="text-muted">(0 = unlimited)</small></Label><Input type="number" value={form.capacity || ""} onChange={(e) => setForm({ ...form, capacity: e.target.value })} placeholder="e.g. 30" /></Col>
+              <Col md={4} className="d-flex align-items-end">
+                <Toggle id="waitlistEnabled" checked={form.waitlistEnabled} onChange={(e) => setForm({ ...form, waitlistEnabled: e.target.checked })} label="Waitlist when full" />
+              </Col>
+              <Col md={4} className="d-flex align-items-end">
+                <small className="text-muted">When capacity is reached, the public form {form.waitlistEnabled ? "adds new sign-ups to a waitlist" : "closes registration"}.</small>
+              </Col>
 
               <Col md={12}><h6 className="text-muted mb-0 mt-2">Host partner</h6></Col>
               <Col md={4}><Label>Partner name</Label><Input value={form.hostName || ""} onChange={(e) => setForm({ ...form, hostName: e.target.value })} /></Col>

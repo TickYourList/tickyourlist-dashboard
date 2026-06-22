@@ -8,7 +8,7 @@ import Breadcrumbs from "../../components/Common/Breadcrumb";
 import ConfirmModal from "../../components/Common/ConfirmModal";
 import { showToastSuccess, showToastError } from "../../helpers/toastBuilder";
 import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
-import { getStudyTours, createStudyTour, deleteStudyTour } from "../../apis/educatorStudyTour";
+import { getStudyTours, createStudyTour, deleteStudyTour, duplicateStudyTour } from "../../apis/educatorStudyTour";
 
 const STATUS_COLORS = { draft: "secondary", open: "success", closed: "warning", completed: "info", archived: "dark" };
 
@@ -31,6 +31,8 @@ const StudyTourList = () => {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState(null);
+  const [dup, setDup] = useState(null); // { source, name, slug, year }
+  const [duping, setDuping] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -75,6 +77,23 @@ const StudyTourList = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const openDuplicate = (tour) => {
+    const nextYear = (Number(tour.year) || new Date().getFullYear()) + 1;
+    const baseSlug = (tour.slug || "").replace(/-?\d{4}$/, "");
+    setDup({ source: tour, name: `${tour.name.replace(/\d{4}$/, "").trim()} ${nextYear}`.trim(), slug: `${baseSlug}-${nextYear}`.replace(/^-/, ""), year: nextYear });
+  };
+
+  const submitDuplicate = async () => {
+    if (!dup?.name || !dup?.slug) { showToastError("Name and slug are required", "Validation"); return; }
+    setDuping(true);
+    try {
+      await duplicateStudyTour(dup.source._id, { name: dup.name, slug: dup.slug, year: Number(dup.year) || undefined });
+      showToastSuccess("Tour duplicated as a draft", "Success");
+      setDup(null); load();
+    } catch (e) { showToastError(e?.response?.data?.message || "Duplication failed", "Error"); }
+    finally { setDuping(false); }
   };
 
   const remove = (tour) => {
@@ -134,6 +153,11 @@ const StudyTourList = () => {
                       <Link to={`/educator-study-tours/${t._id}`} className="btn btn-soft-primary btn-sm">
                         <i className="bx bx-group me-1" /> Manage Participants
                       </Link>
+                      {canAdd && (
+                        <Button color="soft-secondary" size="sm" title="Duplicate to a new cohort" onClick={() => openDuplicate(t)}>
+                          <i className="bx bx-copy" />
+                        </Button>
+                      )}
                       {canDelete && (
                         <Button color="soft-danger" size="sm" onClick={() => remove(t)}>
                           <i className="bx bx-trash" />
@@ -210,6 +234,36 @@ const StudyTourList = () => {
       </Modal>
 
       <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
+
+      <Modal isOpen={!!dup} toggle={() => setDup(null)} centered>
+        <ModalHeader toggle={() => setDup(null)}>Duplicate study tour</ModalHeader>
+        <ModalBody>
+          <p className="text-muted small">
+            Clones pricing, document checklist, itinerary, coordinators, host partner and bank details into a new
+            <strong> draft</strong>. Participants are <strong>not</strong> copied.
+          </p>
+          <div className="mb-3">
+            <Label>New name *</Label>
+            <Input value={dup?.name || ""} onChange={(e) => setDup({ ...dup, name: e.target.value })} />
+          </div>
+          <Row>
+            <Col md={7} className="mb-3">
+              <Label>New slug *</Label>
+              <Input value={dup?.slug || ""} onChange={(e) => setDup({ ...dup, slug: e.target.value })} />
+            </Col>
+            <Col md={5} className="mb-3">
+              <Label>Year</Label>
+              <Input type="number" value={dup?.year || ""} onChange={(e) => setDup({ ...dup, year: e.target.value })} />
+            </Col>
+          </Row>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="light" onClick={() => setDup(null)} type="button">Cancel</Button>
+          <Button color="primary" onClick={submitDuplicate} disabled={duping}>
+            {duping ? <Spinner size="sm" /> : "Duplicate"}
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 };

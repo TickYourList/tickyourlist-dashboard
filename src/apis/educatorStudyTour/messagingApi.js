@@ -10,4 +10,7 @@ export const sendMessage = (id, templateKey, channels, vars = {}) =>
 export const bulkMessage = (studyTour, templateKey, channels, vars = {}, stage) =>
   post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/participants/bulk-message`, { studyTour, templateKey, channels, vars, stage });
 
+export const bulkMessagePreview = (studyTour, templateKey, channels, vars = {}, stage) =>
+  post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/participants/bulk-message/preview`, { studyTour, templateKey, channels, vars, stage });
+
 export const getChannelAvailability = () => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/channels`);
