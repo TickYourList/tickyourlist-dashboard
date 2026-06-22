@@ -14,7 +14,7 @@ import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
 import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
   updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, getParticipantInvoice, getVisaDoc, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
-  getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getStudyTourActivity, getCommunicationsTimeline,
+  getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getStudyTourActivity, getCommunicationsTimeline, getConversionAnalytics,
   getTourWeather, getManifest, getManifestPrint, runAutomations, bulkMessage,
   updateStudyTour, bulkImportParticipants, uploadDocument, getChannelAvailability,
   getDefaultDocChecklist,
@@ -359,6 +359,7 @@ const Participants = () => {
   const [activityOpen, setActivityOpen] = useState(false);
   const [financeOpen, setFinanceOpen] = useState(false);
   const [commsLogOpen, setCommsLogOpen] = useState(false);
+  const [conversionOpen, setConversionOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -567,6 +568,7 @@ const Participants = () => {
             <Button color="soft-success" size="sm" className="me-2" onClick={() => setPaymentsOpen(true)}><i className="bx bx-rupee me-1" />Payments</Button>
             <Button color="soft-dark" size="sm" className="me-2" onClick={() => setExpensesOpen(true)}><i className="bx bx-wallet me-1" />Expenses</Button>
             <Button color="soft-success" size="sm" className="me-2" onClick={() => setFinanceOpen(true)}><i className="bx bx-line-chart me-1" />Finance</Button>
+            <Button color="soft-info" size="sm" className="me-2" onClick={() => setConversionOpen(true)}><i className="bx bx-filter me-1" />Funnel</Button>
             <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setCommsLogOpen(true)}><i className="bx bx-message-rounded-dots me-1" />Comms Log</Button>
             <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setActivityOpen(true)}><i className="bx bx-history me-1" />Activity</Button>
             <Button color="soft-secondary" size="sm" className="me-2" onClick={() => setImportOpen(true)}><i className="bx bx-import me-1" />Import CSV</Button>
@@ -823,6 +825,7 @@ const Participants = () => {
       <CommsLogModal isOpen={commsLogOpen} tourId={tourId} onClose={() => setCommsLogOpen(false)} onOpenParticipant={(id) => { setCommsLogOpen(false); openDetail(id); }} />
       <PaymentsModal isOpen={paymentsOpen} tourId={tourId} onClose={() => setPaymentsOpen(false)} onOpenParticipant={(id) => { setPaymentsOpen(false); openDetail(id); }} />
       <FinanceModal isOpen={financeOpen} tourId={tourId} onClose={() => setFinanceOpen(false)} />
+      <ConversionModal isOpen={conversionOpen} tourId={tourId} onClose={() => setConversionOpen(false)} />
       <ExpensesModal isOpen={expensesOpen} tourId={tourId} onClose={() => setExpensesOpen(false)} />
       <BulkImportModal isOpen={importOpen} tourId={tourId} existingParticipants={participants} onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); loadParticipants(); loadTour(); }} />
       <TourSettingsModal isOpen={settingsOpen} tour={tour} onClose={() => setSettingsOpen(false)} onSaved={() => { setSettingsOpen(false); loadTour(); }} />
@@ -2066,7 +2069,7 @@ const BulkActionBar = ({ selectedCount, onClear, onStage, onCluster, onCoordinat
           <Button size="sm" color="soft-secondary" className="me-1" onClick={onCluster}>Cluster</Button>
           <Button size="sm" color="soft-secondary" className="me-1" onClick={onCoordinator}>Coordinator</Button>
           <Button size="sm" color="soft-info" className="me-1" onClick={() => onSolo(true)}>Mark solo</Button>
-          <Button size="sm" color="soft-light" className="me-1" onClick={() => onSolo(false)}>Clear solo</Button>
+          <Button size="sm" color="soft-secondary" className="me-1" onClick={() => onSolo(false)}>Clear solo</Button>
           <Button size="sm" color="soft-warning" className="me-1" onClick={onCancel}>Cancel</Button>
           <Button size="sm" color="soft-success" className="me-1" onClick={onExport}>Export</Button>
           <Button size="sm" color="light" onClick={onClear}>Clear</Button>
@@ -2332,7 +2335,7 @@ const CohortTools = ({ tourId, onChanged }) => {
       <div className="mt-2">
         <span className="text-muted me-2 small">Partner documents (print/PDF):</span>
         {["rooming", "dietary", "flight", "transfer", "insurance"].map((t) => (
-          <Button key={t} size="sm" color="soft-light" className="me-2 text-capitalize" onClick={() => printManifest(t)} disabled={busy === `print-${t}`}>
+          <Button key={t} size="sm" color="soft-secondary" className="me-2 text-capitalize" onClick={() => printManifest(t)} disabled={busy === `print-${t}`}>
             <i className="bx bx-printer me-1" />{t}
           </Button>
         ))}
@@ -2357,6 +2360,9 @@ const Stat = ({ label, value, sub }) => (
 const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
   const [templateKey, setTemplateKey] = useState("custom");
   const [stage, setStage] = useState("");
+  const [segment, setSegment] = useState("");
+  const [city, setCity] = useState("");
+  const [cluster, setCluster] = useState("");
   const [channels, setChannels] = useState({ email: true, whatsapp: false, sms: false });
   const [vars, setVars] = useState({});
   const [busy, setBusy] = useState(false);
@@ -2364,18 +2370,19 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
   const [preview, setPreview] = useState(null);
   const [previewing, setPreviewing] = useState(false);
 
-  useEffect(() => { if (isOpen) { setVars({}); setStage(""); setPreview(null); } }, [isOpen]);
-  // The preview goes stale if the message definition changes — clear it.
-  useEffect(() => { setPreview(null); }, [templateKey, stage, channels, vars]);
+  useEffect(() => { if (isOpen) { setVars({}); setStage(""); setSegment(""); setCity(""); setCluster(""); setPreview(null); } }, [isOpen]);
+  // The preview goes stale if the message definition or targeting changes — clear it.
+  useEffect(() => { setPreview(null); }, [templateKey, stage, segment, city, cluster, channels, vars]);
 
   const selectedChans = () => Object.entries(channels).filter(([, v]) => v).map(([k]) => k);
+  const filters = () => ({ stage: stage || undefined, segment: segment || undefined, city: city.trim() || undefined, cluster: cluster.trim() || undefined });
 
   const runPreview = async () => {
     const chans = selectedChans();
     if (!chans.length) { showToastError("Select a channel", "Validation"); return; }
     setPreviewing(true);
     try {
-      const r = await bulkMessagePreview(tourId, templateKey, chans, vars, stage || undefined);
+      const r = await bulkMessagePreview(tourId, templateKey, chans, vars, filters());
       setPreview(r?.data || null);
     } catch (e) { showToastError(e?.response?.data?.message || "Preview failed", "Error"); }
     finally { setPreviewing(false); }
@@ -2395,7 +2402,7 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
       onConfirm: async () => {
         setBusy(true);
         try {
-          const r = await bulkMessage(tourId, templateKey, chans, vars, stage || undefined);
+          const r = await bulkMessage(tourId, templateKey, chans, vars, filters());
           const d = r?.data || {};
           showToastSuccess(`${d.sent || 0}/${d.recipients || 0} sent`, "Bulk message");
           onSent();
@@ -2418,6 +2425,21 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
           <option value="">All stages</option>
           {PARTICIPANT_STAGES.map((s) => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
         </Input>
+        <Row className="g-2 mt-1">
+          <Col md={4}>
+            <Label className="mb-0 small">Segment</Label>
+            <Input type="select" bsSize="sm" value={segment} onChange={(e) => setSegment(e.target.value)}>
+              <option value="">Everyone</option>
+              <option value="docs_pending">Documents pending</option>
+              <option value="payment_due">Payment outstanding</option>
+              <option value="waitlisted">Waitlisted</option>
+              <option value="solo">Solo travellers</option>
+            </Input>
+          </Col>
+          <Col md={4}><Label className="mb-0 small">City contains</Label><Input bsSize="sm" value={city} onChange={(e) => setCity(e.target.value)} /></Col>
+          <Col md={4}><Label className="mb-0 small">Cluster contains</Label><Input bsSize="sm" value={cluster} onChange={(e) => setCluster(e.target.value)} /></Col>
+        </Row>
+        <small className="text-muted">Filters combine (AND). Use “Preview recipients” to see exactly who matches before sending.</small>
         <Label className="mt-2">Channels</Label>
         <div className="d-flex gap-3">
           {["email", "whatsapp", "sms"].map((c) => (
@@ -3130,6 +3152,60 @@ const VisaBoardModal = ({ isOpen, tourId, onClose, onOpenParticipant, onChanged 
                 </tbody>
               </Table>
             )}
+          </>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button color="light" onClick={onClose}>Close</Button>
+        <Button color="soft-primary" onClick={load}><i className="bx bx-refresh me-1" />Refresh</Button>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
+/* ==================== Conversion funnel + time-in-stage =============== */
+const ConversionModal = ({ isOpen, tourId, onClose }) => {
+  const [c, setC] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try { const r = await getConversionAnalytics(tourId); setC(r?.data?.conversion || null); }
+    catch (e) { showToastError(e?.response?.data?.message || "Failed to load funnel", "Error"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (isOpen) load(); /* eslint-disable-next-line */ }, [isOpen, tourId]);
+
+  const maxReached = c ? Math.max(1, ...c.funnel.map((f) => f.reached)) : 1;
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="lg" centered scrollable>
+      <ModalHeader toggle={onClose}>Conversion funnel &amp; time-in-stage</ModalHeader>
+      <ModalBody>
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : !c ? <p className="text-muted">No data.</p> : (
+          <>
+            <p className="small text-muted">{c.total} participant(s){c.cancelled ? ` · ${c.cancelled} cancelled` : ""}. "Reached" counts anyone who ever got to that stage; "avg days" is the typical time before moving on.</p>
+            <Table className="align-middle">
+              <thead><tr><th>Stage</th><th style={{ width: "40%" }}>Reached</th><th className="text-end">Now</th><th className="text-end">Conv. %</th><th className="text-end">Avg days</th></tr></thead>
+              <tbody>
+                {c.funnel.map((f) => (
+                  <tr key={f.stage}>
+                    <td>{STAGE_LABELS[f.stage] || f.stage}</td>
+                    <td>
+                      <div className="d-flex align-items-center gap-2">
+                        <div className="progress flex-grow-1" style={{ height: 8 }}>
+                          <div className="progress-bar bg-primary" style={{ width: `${Math.round((f.reached / maxReached) * 100)}%` }} />
+                        </div>
+                        <span className="small fw-semibold">{f.reached}</span>
+                      </div>
+                    </td>
+                    <td className="text-end">{f.current}</td>
+                    <td className="text-end">{f.conversionFromPrev == null ? "—" : <Badge color={f.conversionFromPrev >= 70 ? "soft-success" : f.conversionFromPrev >= 40 ? "soft-warning" : "soft-danger"}>{f.conversionFromPrev}%</Badge>}</td>
+                    <td className="text-end small">{f.avgDaysInStage == null ? "—" : `${f.avgDaysInStage}d`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
           </>
         )}
       </ModalBody>

@@ -3,12 +3,29 @@ import { Link } from "react-router-dom";
 import {
   Container, Row, Col, Card, CardBody, Button, Badge, Spinner,
   Modal, ModalHeader, ModalBody, ModalFooter, Form, Label, Input,
+  UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem,
 } from "reactstrap";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 import ConfirmModal from "../../components/Common/ConfirmModal";
 import { showToastSuccess, showToastError } from "../../helpers/toastBuilder";
 import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
-import { getStudyTours, createStudyTour, deleteStudyTour, duplicateStudyTour } from "../../apis/educatorStudyTour";
+import { getStudyTours, createStudyTour, deleteStudyTour, duplicateStudyTour, updateStudyTour } from "../../apis/educatorStudyTour";
+
+/** Lifecycle transitions available from each status. */
+const STATUS_ACTIONS = {
+  draft: [{ to: "open", label: "Open for registration" }],
+  open: [{ to: "closed", label: "Close registration" }, { to: "completed", label: "Mark completed" }],
+  closed: [{ to: "open", label: "Reopen registration" }, { to: "completed", label: "Mark completed" }, { to: "archived", label: "Archive" }],
+  completed: [{ to: "archived", label: "Archive" }],
+  archived: [{ to: "draft", label: "Restore to draft" }],
+};
+const publishWarnings = (t) => {
+  const w = [];
+  if (!t.startDate) w.push("no start date");
+  if (!t.pricing?.doubleOccupancyPerPerson) w.push("no pricing set");
+  if (!t.summary) w.push("no summary");
+  return w;
+};
 
 const STATUS_COLORS = { draft: "secondary", open: "success", closed: "warning", completed: "info", archived: "dark" };
 
@@ -23,6 +40,7 @@ const StudyTourList = () => {
 
   const { can } = usePermissions();
   const canAdd = can(ACTIONS.CAN_ADD, MODULES.STUDY_TOUR_PERMS);
+  const canEdit = can(ACTIONS.CAN_EDIT, MODULES.STUDY_TOUR_PERMS);
   const canDelete = can(ACTIONS.CAN_DELETE, MODULES.STUDY_TOUR_PERMS);
 
   const [tours, setTours] = useState([]);
@@ -77,6 +95,25 @@ const StudyTourList = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const changeStatus = (tour, to, label) => {
+    let message = `Move “${tour.name}” to “${to}”?`;
+    if (to === "open") {
+      const w = publishWarnings(tour);
+      if (w.length) message += ` ⚠ This tour has ${w.join(", ")} — the public page will look incomplete. You can still open it.`;
+    }
+    if (to === "closed") message += " New registrations will be blocked (or waitlisted if enabled).";
+    setConfirm({
+      title: label,
+      message,
+      confirmLabel: label,
+      confirmColor: to === "archived" ? "dark" : to === "open" ? "success" : "primary",
+      onConfirm: async () => {
+        try { await updateStudyTour(tour._id, { status: to }); showToastSuccess(`Status changed to ${to}`, "Updated"); load(); }
+        catch (e) { showToastError(e?.response?.data?.message || "Status change failed", "Error"); throw e; }
+      },
+    });
   };
 
   const openDuplicate = (tour) => {
@@ -139,7 +176,21 @@ const StudyTourList = () => {
                   <CardBody>
                     <div className="d-flex justify-content-between align-items-start">
                       <h5 className="mb-1">{t.name}</h5>
-                      <Badge color={STATUS_COLORS[t.status] || "secondary"}>{t.status}</Badge>
+                      {canEdit && (STATUS_ACTIONS[t.status] || []).length ? (
+                        <UncontrolledDropdown>
+                          <DropdownToggle tag="span" role="button" className="d-inline-flex align-items-center" style={{ cursor: "pointer" }}>
+                            <Badge color={STATUS_COLORS[t.status] || "secondary"}>{t.status} <i className="bx bx-chevron-down" /></Badge>
+                          </DropdownToggle>
+                          <DropdownMenu end>
+                            <DropdownItem header>Change status</DropdownItem>
+                            {(STATUS_ACTIONS[t.status] || []).map((a) => (
+                              <DropdownItem key={a.to} onClick={() => changeStatus(t, a.to, a.label)}>{a.label}</DropdownItem>
+                            ))}
+                          </DropdownMenu>
+                        </UncontrolledDropdown>
+                      ) : (
+                        <Badge color={STATUS_COLORS[t.status] || "secondary"}>{t.status}</Badge>
+                      )}
                     </div>
                     <p className="text-muted mb-2">
                       <i className="bx bx-map me-1" />{t.destinationCountry}{t.year ? ` · ${t.year}` : ""}
