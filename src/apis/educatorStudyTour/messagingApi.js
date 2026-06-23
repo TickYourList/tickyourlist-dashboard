@@ -14,3 +14,7 @@ export const bulkMessagePreview = (studyTour, templateKey, channels, vars = {}, 
   post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/participants/bulk-message/preview`, { studyTour, templateKey, channels, vars, ...filters });
 
 export const getChannelAvailability = () => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/channels`);
+
+export const scheduleCampaign = (payload) => post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/campaigns`, payload);
+export const getCampaigns = (tourId) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${tourId}/campaigns`);
+export const cancelCampaign = (id) => post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/campaigns/${id}/cancel`, {});

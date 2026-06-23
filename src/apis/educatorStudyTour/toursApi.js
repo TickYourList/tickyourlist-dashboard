@@ -18,6 +18,7 @@ export const getVisaBoard = (id) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours
 export const getRoomingBoard = (id) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/rooming`);
 export const getReadinessBoard = (id) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/readiness`);
 export const getStudyTourActivity = (params = {}) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/activity${buildQuery(params)}`);
+export const getJobLogs = (params = {}) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/job-logs${buildQuery(params)}`);
 export const getCommunicationsTimeline = (id, params = {}) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/communications${buildQuery(params)}`);
 export const getConversionAnalytics = (id) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/conversion`);
 export const assignRoom = (id, payload) => post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/tours/${id}/rooming/assign`, payload);

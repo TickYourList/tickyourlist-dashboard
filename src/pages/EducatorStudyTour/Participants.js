@@ -14,7 +14,8 @@ import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
 import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
   updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, getParticipantInvoice, getVisaDoc, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
-  getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getStudyTourActivity, getCommunicationsTimeline, getConversionAnalytics,
+  scheduleCampaign, getCampaigns, cancelCampaign,
+  getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getStudyTourActivity, getJobLogs, getCommunicationsTimeline, getConversionAnalytics,
   getTourWeather, getManifest, getManifestPrint, runAutomations, bulkMessage,
   updateStudyTour, bulkImportParticipants, uploadDocument, getChannelAvailability,
   getDefaultDocChecklist,
@@ -56,6 +57,9 @@ const Toggle = ({ id, checked, onChange, label }) => (
 
 /** Date helper used across read-only displays. */
 const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—");
+
+/** Selectable file types for the document-requirement builder. */
+const DOC_FILE_TYPES = ["pdf", "jpg", "jpeg", "png", "doc", "docx"];
 
 /** Compute "needs attention" reasons for a participant (client-side). */
 const attentionReasons = (p) => {
@@ -2369,8 +2373,14 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
   const [confirm, setConfirm] = useState(null);
   const [preview, setPreview] = useState(null);
   const [previewing, setPreviewing] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [scheduling, setScheduling] = useState(false);
+  const [campaigns, setCampaigns] = useState([]);
 
-  useEffect(() => { if (isOpen) { setVars({}); setStage(""); setSegment(""); setCity(""); setCluster(""); setPreview(null); } }, [isOpen]);
+  const loadCampaigns = async () => {
+    try { const r = await getCampaigns(tourId); setCampaigns(r?.data?.campaigns || []); } catch (e) { /* silent */ }
+  };
+  useEffect(() => { if (isOpen) { setVars({}); setStage(""); setSegment(""); setCity(""); setCluster(""); setPreview(null); setScheduleAt(""); loadCampaigns(); } /* eslint-disable-next-line */ }, [isOpen]);
   // The preview goes stale if the message definition or targeting changes — clear it.
   useEffect(() => { setPreview(null); }, [templateKey, stage, segment, city, cluster, channels, vars]);
 
@@ -2386,6 +2396,26 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
       setPreview(r?.data || null);
     } catch (e) { showToastError(e?.response?.data?.message || "Preview failed", "Error"); }
     finally { setPreviewing(false); }
+  };
+
+  const schedule = async () => {
+    const chans = selectedChans();
+    if (!chans.length) { showToastError("Select a channel", "Validation"); return; }
+    if (!scheduleAt) { showToastError("Pick a date & time", "Validation"); return; }
+    if (new Date(scheduleAt).getTime() <= Date.now()) { showToastError("Schedule a time in the future", "Validation"); return; }
+    setScheduling(true);
+    try {
+      await scheduleCampaign({ studyTour: tourId, templateKey, channels: chans, vars, ...filters(), scheduledFor: new Date(scheduleAt).toISOString() });
+      showToastSuccess("Campaign scheduled", "Scheduled");
+      setScheduleAt("");
+      loadCampaigns();
+    } catch (e) { showToastError(e?.response?.data?.message || "Scheduling failed", "Error"); }
+    finally { setScheduling(false); }
+  };
+
+  const dropCampaign = async (c) => {
+    try { await cancelCampaign(c._id); showToastSuccess("Campaign cancelled", "Cancelled"); loadCampaigns(); }
+    catch (e) { showToastError(e?.response?.data?.message || "Cancel failed", "Error"); }
   };
 
   const send = () => {
@@ -2497,13 +2527,47 @@ const BulkMessageModal = ({ isOpen, tourId, onClose, onSent }) => {
             </div>
           </div>
         )}
+
+        {/* Schedule for later */}
+        <div className="border rounded p-2 mt-3">
+          <div className="d-flex flex-wrap align-items-end gap-2">
+            <div>
+              <Label className="mb-0 small">Or schedule for later</Label>
+              <Input type="datetime-local" bsSize="sm" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} style={{ maxWidth: 230 }} />
+            </div>
+            <Button size="sm" color="soft-primary" disabled={scheduling || !scheduleAt} onClick={schedule}>
+              {scheduling ? <Spinner size="sm" /> : <><i className="bx bx-time me-1" />Schedule campaign</>}
+            </Button>
+          </div>
+          {campaigns.length > 0 && (
+            <div className="mt-2" style={{ maxHeight: 150, overflowY: "auto" }}>
+              <Table size="sm" className="mb-0">
+                <thead><tr><th>When</th><th>Template</th><th>Target</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                  {campaigns.map((c) => (
+                    <tr key={c._id}>
+                      <td className="small">{new Date(c.scheduledFor).toLocaleString("en-IN")}</td>
+                      <td className="small">{(MESSAGE_TEMPLATES.find((t) => t.key === c.templateKey)?.label) || c.templateKey}</td>
+                      <td className="small">{[c.stage && STAGE_LABELS[c.stage], c.segment, c.city, c.cluster].filter(Boolean).join(", ") || "all"}</td>
+                      <td>
+                        <Badge color={c.status === "sent" ? "soft-success" : c.status === "scheduled" ? "soft-info" : c.status === "failed" ? "soft-danger" : "soft-secondary"}>{c.status}</Badge>
+                        {c.result ? <span className="text-muted small ms-1">{c.result.sent}/{c.result.recipients}</span> : null}
+                      </td>
+                      <td>{c.status === "scheduled" ? <i className="bx bx-trash text-danger" role="button" title="Cancel" onClick={() => dropCampaign(c)} /> : null}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </div>
       </ModalBody>
       <ModalFooter>
         <Button color="light" onClick={onClose}>Cancel</Button>
         <Button color="soft-info" onClick={runPreview} disabled={previewing}>
           {previewing ? <Spinner size="sm" /> : <><i className="bx bx-show me-1" />Preview recipients</>}
         </Button>
-        <Button color="success" onClick={send} disabled={busy}>{busy ? <Spinner size="sm" /> : "Send to cohort"}</Button>
+        <Button color="success" onClick={send} disabled={busy}>{busy ? <Spinner size="sm" /> : "Send now"}</Button>
       </ModalFooter>
       <ConfirmModal config={confirm} onClose={() => setConfirm(null)} />
     </Modal>
@@ -2638,7 +2702,9 @@ const describeActivity = (it) => {
 const ACTION_COLORS = { create: "soft-success", update: "soft-info", delete: "soft-danger", other: "soft-secondary" };
 
 const ActivityModal = ({ isOpen, onClose }) => {
+  const [view, setView] = useState("audit"); // "audit" | "jobs"
   const [items, setItems] = useState([]);
+  const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -2647,21 +2713,52 @@ const ActivityModal = ({ isOpen, onClose }) => {
   const load = async (pg = page) => {
     setLoading(true);
     try {
-      const r = await getStudyTourActivity({ page: pg, limit });
-      setItems(r?.data?.items || []);
-      setTotal(Number(r?.data?.total || 0));
-      setPage(pg);
-    } catch (e) { showToastError(e?.response?.data?.message || "Failed to load activity", "Error"); }
+      if (view === "jobs") {
+        const r = await getJobLogs({ limit });
+        setJobs(r?.data?.logs || []);
+      } else {
+        const r = await getStudyTourActivity({ page: pg, limit });
+        setItems(r?.data?.items || []);
+        setTotal(Number(r?.data?.total || 0));
+        setPage(pg);
+      }
+    } catch (e) { showToastError(e?.response?.data?.message || "Failed to load", "Error"); }
     finally { setLoading(false); }
   };
-  useEffect(() => { if (isOpen) load(1); /* eslint-disable-next-line */ }, [isOpen]);
+  useEffect(() => { if (isOpen) load(1); /* eslint-disable-next-line */ }, [isOpen, view]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
   return (
     <Modal isOpen={isOpen} toggle={onClose} size="lg" centered scrollable>
-      <ModalHeader toggle={onClose}>Activity log — who changed what</ModalHeader>
+      <ModalHeader toggle={onClose}>{view === "jobs" ? "Background jobs — scheduler runs" : "Activity log — who changed what"}</ModalHeader>
       <ModalBody>
-        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : items.length === 0 ? (
+        <div className="btn-group btn-group-sm mb-3">
+          <Button color={view === "audit" ? "primary" : "soft-secondary"} onClick={() => setView("audit")}>Admin actions</Button>
+          <Button color={view === "jobs" ? "primary" : "soft-secondary"} onClick={() => setView("jobs")}>Scheduler runs</Button>
+        </div>
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : view === "jobs" ? (
+          jobs.length === 0 ? <p className="text-muted">No scheduler runs recorded yet. Reminder automations + scheduled campaigns log a row here when they do work.</p> : (
+            <Table className="align-middle" responsive>
+              <thead><tr><th>When</th><th>Type</th><th>Result</th><th>Status</th></tr></thead>
+              <tbody>
+                {jobs.map((j, i) => {
+                  const s = j.summary || {};
+                  const detail = j.type === "automation"
+                    ? `${s.sent || 0} sent, ${s.skipped || 0} skipped, ${s.failed || 0} failed (${s.participants || 0} participants)`
+                    : `${s.processed || 0} campaign(s)${(s.campaigns || []).length ? ` — ${s.campaigns.reduce((a, c) => a + (c.sent || 0), 0)} sent` : ""}`;
+                  return (
+                    <tr key={j._id || i}>
+                      <td className="small">{new Date(j.createdAt).toLocaleString("en-IN")}{j.durationMs != null ? <div className="text-muted" style={{ fontSize: 11 }}>{j.durationMs}ms</div> : null}</td>
+                      <td><Badge color={j.type === "automation" ? "soft-info" : "soft-primary"} className="text-capitalize">{j.type}</Badge></td>
+                      <td className="small">{detail}</td>
+                      <td><Badge color={j.ok ? "soft-success" : "soft-danger"}>{j.ok ? "ok" : "issues"}</Badge></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          )
+        ) : items.length === 0 ? (
           <p className="text-muted">No activity recorded yet. Admin actions (create/update/delete/messages) appear here.</p>
         ) : (
           <Table className="align-middle" responsive>
@@ -2680,9 +2777,13 @@ const ActivityModal = ({ isOpen, onClose }) => {
         )}
       </ModalBody>
       <ModalFooter>
-        <span className="text-muted small me-auto">{total} event(s) · page {page}/{totalPages}</span>
-        <Button color="light" disabled={page <= 1 || loading} onClick={() => load(page - 1)}>Prev</Button>
-        <Button color="light" disabled={page >= totalPages || loading} onClick={() => load(page + 1)}>Next</Button>
+        {view === "audit" ? (
+          <>
+            <span className="text-muted small me-auto">{total} event(s) · page {page}/{totalPages}</span>
+            <Button color="light" disabled={page <= 1 || loading} onClick={() => load(page - 1)}>Prev</Button>
+            <Button color="light" disabled={page >= totalPages || loading} onClick={() => load(page + 1)}>Next</Button>
+          </>
+        ) : <span className="text-muted small me-auto">{jobs.length} run(s)</span>}
         <Button color="soft-primary" onClick={() => load(1)}><i className="bx bx-refresh me-1" />Refresh</Button>
       </ModalFooter>
     </Modal>
@@ -3635,6 +3736,8 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
   const [coordinators, setCoordinators] = useState([]);
   const [itinerary, setItinerary] = useState([]);
   const [docs, setDocs] = useState({ individual: [], schoolSponsored: [] });
+  const [visits, setVisits] = useState([]);
+  const [pub, setPub] = useState({ heroTagline: "", highlights: "", eligibility: "", priceNote: "", cancellationPolicy: "", faqs: [] });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -3669,6 +3772,13 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
       setDocs({
         individual: tour.documentChecklist?.individual || [],
         schoolSponsored: tour.documentChecklist?.schoolSponsored || [],
+      });
+      setVisits((tour.visitPartners || []).map((v) => ({ ...v, date: inputDate(v.date) })));
+      const pc = tour.publicContent || {};
+      setPub({
+        heroTagline: pc.heroTagline || "", highlights: (pc.highlights || []).join("\n"),
+        eligibility: pc.eligibility || "", priceNote: pc.priceNote || "",
+        cancellationPolicy: pc.cancellationPolicy || "", faqs: pc.faqs || [],
       });
     }
   }, [isOpen, tour]);
@@ -3715,6 +3825,15 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
         bankDetails: bank,
         coordinators: coordinators.filter((c) => c.name || c.role || c.phone || c.email),
         documentChecklist: docs,
+        visitPartners: visits.filter((v) => v.name).map((v) => ({ ...v, date: v.date || undefined })),
+        publicContent: {
+          heroTagline: pub.heroTagline || undefined,
+          highlights: multilineToList(pub.highlights),
+          eligibility: pub.eligibility || undefined,
+          priceNote: pub.priceNote || undefined,
+          cancellationPolicy: pub.cancellationPolicy || undefined,
+          faqs: (pub.faqs || []).filter((f) => f.q || f.a),
+        },
       });
       showToastSuccess("Tour settings saved", "Success");
       onSaved();
@@ -3727,28 +3846,127 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
   };
   const addDoc = (list) => setDocs((d) => ({ ...d, [list]: [...d[list], { key: `doc_${Date.now()}`, label: "", required: true, multiple: false, acceptTypes: [] }] }));
   const removeDoc = (list, idx) => setDocs((d) => ({ ...d, [list]: d[list].filter((_, i) => i !== idx) }));
+  const setVisitField = (idx, field, value) => setVisits((vs) => vs.map((v, i) => (i === idx ? { ...v, [field]: value } : v)));
+  const addVisit = () => setVisits((vs) => [...vs, { name: "", type: "School", status: "proposed" }]);
+  const removeVisit = (idx) => setVisits((vs) => vs.filter((_, i) => i !== idx));
+
+  // Inline render fn (not a nested component) so inputs keep focus while typing.
+  const renderVisitBuilder = () => (
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-1">
+        <small className="text-muted">Schools, universities and speaker sessions being visited.</small>
+        <Button size="sm" color="soft-primary" onClick={addVisit}><i className="bx bx-plus" /> Add visit</Button>
+      </div>
+      {visits.length === 0 ? <small className="text-muted">No visits added yet.</small> : null}
+      {visits.map((v, idx) => (
+        <div key={idx} className="border rounded p-2 mt-2">
+          <Row className="g-2">
+            <Col md={4}><Label className="mb-0 small">Name</Label><Input bsSize="sm" placeholder="e.g. Helsinki Int’l School" value={v.name} onChange={(e) => setVisitField(idx, "name", e.target.value)} /></Col>
+            <Col md={2}><Label className="mb-0 small">Type</Label>
+              <Input type="select" bsSize="sm" value={v.type || "School"} onChange={(e) => setVisitField(idx, "type", e.target.value)}>
+                <option>School</option><option>University</option><option>Institute</option><option>Speaker session</option><option>Other</option>
+              </Input>
+            </Col>
+            <Col md={3}><Label className="mb-0 small">Contact person</Label><Input bsSize="sm" value={v.contactPerson || ""} onChange={(e) => setVisitField(idx, "contactPerson", e.target.value)} /></Col>
+            <Col md={3}><Label className="mb-0 small">Status</Label>
+              <Input type="select" bsSize="sm" value={v.status || "proposed"} onChange={(e) => setVisitField(idx, "status", e.target.value)}>
+                <option value="proposed">Proposed</option><option value="confirmed">Confirmed</option><option value="declined">Declined</option>
+              </Input>
+            </Col>
+            <Col md={3}><Label className="mb-0 small">Email</Label><Input bsSize="sm" value={v.email || ""} onChange={(e) => setVisitField(idx, "email", e.target.value)} /></Col>
+            <Col md={3}><Label className="mb-0 small">Phone</Label><Input bsSize="sm" value={v.phone || ""} onChange={(e) => setVisitField(idx, "phone", e.target.value)} /></Col>
+            <Col md={2}><Label className="mb-0 small">Date</Label><Input type="date" bsSize="sm" value={v.date || ""} onChange={(e) => setVisitField(idx, "date", e.target.value)} /></Col>
+            <Col md={2}><Label className="mb-0 small">Time</Label><Input bsSize="sm" placeholder="10:00" value={v.time || ""} onChange={(e) => setVisitField(idx, "time", e.target.value)} /></Col>
+            <Col md={2} className="d-flex align-items-end"><i className="bx bx-trash text-danger fs-5" role="button" onClick={() => removeVisit(idx)} /></Col>
+            <Col md={12}><Label className="mb-0 small">Address / notes</Label><Input bsSize="sm" value={v.address || ""} onChange={(e) => setVisitField(idx, "address", e.target.value)} /></Col>
+          </Row>
+        </div>
+      ))}
+    </div>
+  );
+
+  const setFaq = (idx, field, value) => setPub((p) => ({ ...p, faqs: p.faqs.map((f, i) => (i === idx ? { ...f, [field]: value } : f)) }));
+  const addFaq = () => setPub((p) => ({ ...p, faqs: [...(p.faqs || []), { q: "", a: "" }] }));
+  const removeFaq = (idx) => setPub((p) => ({ ...p, faqs: p.faqs.filter((_, i) => i !== idx) }));
+
+  const renderPublicContent = () => (
+    <Row className="g-3">
+      <Col md={12}><Label>Hero tagline</Label><Input value={pub.heroTagline} onChange={(e) => setPub({ ...pub, heroTagline: e.target.value })} placeholder="One punchy line under the title" /></Col>
+      <Col md={12}><Label>Highlights <small className="text-muted">(one per line)</small></Label><Input type="textarea" rows={4} value={pub.highlights} onChange={(e) => setPub({ ...pub, highlights: e.target.value })} placeholder={"Visit 6 Finnish schools\nMeet education leaders\nCertificate of participation"} /></Col>
+      <Col md={12}><Label>Eligibility / who can apply</Label><Input type="textarea" rows={2} value={pub.eligibility} onChange={(e) => setPub({ ...pub, eligibility: e.target.value })} /></Col>
+      <Col md={6}><Label>Price note</Label><Input value={pub.priceNote} onChange={(e) => setPub({ ...pub, priceNote: e.target.value })} placeholder="e.g. ₹2,40,000 per person on twin-sharing; excludes visa fee" /></Col>
+      <Col md={6}><Label>Cancellation policy</Label><Input type="textarea" rows={2} value={pub.cancellationPolicy} onChange={(e) => setPub({ ...pub, cancellationPolicy: e.target.value })} /></Col>
+      <Col md={12}>
+        <div className="d-flex justify-content-between align-items-center">
+          <Label className="mb-0">FAQs</Label>
+          <Button size="sm" color="soft-primary" onClick={addFaq}><i className="bx bx-plus" /> Add FAQ</Button>
+        </div>
+        {(pub.faqs || []).map((f, idx) => (
+          <div key={idx} className="border rounded p-2 mt-2">
+            <div className="d-flex gap-2">
+              <Input bsSize="sm" placeholder="Question" value={f.q} onChange={(e) => setFaq(idx, "q", e.target.value)} />
+              <i className="bx bx-trash text-danger fs-5" role="button" onClick={() => removeFaq(idx)} />
+            </div>
+            <Input bsSize="sm" type="textarea" rows={2} className="mt-1" placeholder="Answer" value={f.a} onChange={(e) => setFaq(idx, "a", e.target.value)} />
+          </div>
+        ))}
+      </Col>
+      <Col md={12}><small className="text-muted">These render on the public registration page (highlights, what&apos;s included from Pricing, eligibility, FAQ, cancellation).</small></Col>
+    </Row>
+  );
+
   const setItineraryField = (idx, field, value) => {
     setItinerary((days) => days.map((day, i) => i === idx ? { ...day, [field]: value } : day));
   };
   const addItineraryDay = () => setItinerary((days) => ([...days, { day: days.length + 1, title: "", city: "", details: "" }]));
   const removeItineraryDay = (idx) => setItinerary((days) => days.filter((_, i) => i !== idx));
 
-  const DocBuilder = ({ list, title }) => (
+  const toggleDocType = (list, idx, ft) => setDocs((d) => ({
+    ...d,
+    [list]: d[list].map((it, i) => {
+      if (i !== idx) return it;
+      const cur = it.acceptTypes || [];
+      return { ...it, acceptTypes: cur.includes(ft) ? cur.filter((x) => x !== ft) : [...cur, ft] };
+    }),
+  }));
+
+  // NOTE: rendered via a function call (not <DocBuilder/>) so the inputs don't
+  // remount on every keystroke — that nested-component pattern was eating focus.
+  const renderDocBuilder = (list, title) => (
     <div className="mb-3">
-      <div className="d-flex justify-content-between align-items-center">
+      <div className="d-flex justify-content-between align-items-center mb-1">
         <h6 className="mb-0">{title}</h6>
         <Button size="sm" color="soft-primary" onClick={() => addDoc(list)}><i className="bx bx-plus" /> Add field</Button>
       </div>
+      {(docs[list] || []).length === 0 ? <small className="text-muted">No documents yet — add the ones participants must upload.</small> : null}
       {(docs[list] || []).map((it, idx) => (
-        <Row key={idx} className="g-2 mt-1 align-items-center">
-          <Col md={3}><Input bsSize="sm" placeholder="Document label" value={it.label} onChange={(e) => setDocField(list, idx, "label", e.target.value)} /></Col>
-          <Col md={3}><Input bsSize="sm" placeholder="Description / helper text" value={it.description || ""} onChange={(e) => setDocField(list, idx, "description", e.target.value)} /></Col>
-          <Col md={2}><Input bsSize="sm" placeholder="types e.g. pdf,jpg" value={(it.acceptTypes || []).join(",")} onChange={(e) => setDocField(list, idx, "acceptTypes", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} /></Col>
-          <Col md={2}><Input bsSize="sm" type="number" placeholder="max MB" value={it.maxSizeMB || ""} onChange={(e) => setDocField(list, idx, "maxSizeMB", e.target.value ? Number(e.target.value) : undefined)} /></Col>
-          <Col md={1}><Toggle id={`req-${list}-${idx}`} checked={it.required} onChange={(e) => setDocField(list, idx, "required", e.target.checked)} label="Req" /></Col>
-          <Col md={1}><Toggle id={`mul-${list}-${idx}`} checked={it.multiple} onChange={(e) => setDocField(list, idx, "multiple", e.target.checked)} label="Multi" /></Col>
-          <Col md={1}><i className="bx bx-trash text-danger" role="button" onClick={() => removeDoc(list, idx)} /></Col>
-        </Row>
+        <div key={it.key || idx} className="border rounded p-2 mt-2">
+          <Row className="g-2 align-items-center">
+            <Col md={4}><Label className="mb-0 small">Label</Label><Input bsSize="sm" placeholder="e.g. Passport (front & back)" value={it.label} onChange={(e) => setDocField(list, idx, "label", e.target.value)} /></Col>
+            <Col md={4}><Label className="mb-0 small">Helper text</Label><Input bsSize="sm" placeholder="Instructions shown to the uploader" value={it.description || ""} onChange={(e) => setDocField(list, idx, "description", e.target.value)} /></Col>
+            <Col md={2}><Label className="mb-0 small">Max size (MB)</Label><Input bsSize="sm" type="number" placeholder="15" value={it.maxSizeMB || ""} onChange={(e) => setDocField(list, idx, "maxSizeMB", e.target.value ? Number(e.target.value) : undefined)} /></Col>
+            <Col md={2} className="d-flex align-items-end justify-content-between">
+              <Toggle id={`req-${list}-${idx}`} checked={it.required} onChange={(e) => setDocField(list, idx, "required", e.target.checked)} label="Required" />
+              <i className="bx bx-trash text-danger fs-5" role="button" title="Remove" onClick={() => removeDoc(list, idx)} />
+            </Col>
+          </Row>
+          <div className="d-flex flex-wrap align-items-center gap-1 mt-2">
+            <span className="text-muted small me-1">Allowed file types:</span>
+            {DOC_FILE_TYPES.map((ft) => {
+              const on = (it.acceptTypes || []).includes(ft);
+              return (
+                <Button key={ft} size="sm" color={on ? "primary" : "soft-secondary"} className="py-0 px-2 text-uppercase"
+                        style={{ fontSize: 11 }} onClick={() => toggleDocType(list, idx, ft)}>
+                  {ft}
+                </Button>
+              );
+            })}
+            {(it.acceptTypes || []).length === 0 ? <small className="text-muted ms-1">any common doc/image</small> : null}
+            <span className="ms-3">
+              <Toggle id={`mul-${list}-${idx}`} checked={it.multiple} onChange={(e) => setDocField(list, idx, "multiple", e.target.checked)} label="Allow multiple files" />
+            </span>
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -3760,8 +3978,8 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
       <ModalHeader toggle={onClose}>Tour settings — {tour.name}</ModalHeader>
       <ModalBody>
         <Nav tabs className="mb-3">
-          {["details", "pricing", "itinerary", "bank", "coordinators", "documents"].map((t) => (
-            <NavItem key={t}><NavLink className={classnames({ active: tab === t })} role="button" onClick={() => setTab(t)}><span className="text-capitalize">{t === "bank" ? "Bank details" : t}</span></NavLink></NavItem>
+          {["details", "pricing", "itinerary", "visits", "publicpage", "bank", "coordinators", "documents"].map((t) => (
+            <NavItem key={t}><NavLink className={classnames({ active: tab === t })} role="button" onClick={() => setTab(t)}><span className="text-capitalize">{t === "bank" ? "Bank details" : t === "publicpage" ? "Public page" : t}</span></NavLink></NavItem>
           ))}
         </Nav>
         <TabContent activeTab={tab}>
@@ -3836,6 +4054,14 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
             ))}
           </TabPane>
 
+          <TabPane tabId="visits">
+            {renderVisitBuilder()}
+          </TabPane>
+
+          <TabPane tabId="publicpage">
+            {renderPublicContent()}
+          </TabPane>
+
           <TabPane tabId="bank">
             <p className="text-muted small">Global bank details for this tour — shared with participants in the payment email.</p>
             <Row className="g-3">
@@ -3871,8 +4097,8 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
                 catch (e) { showToastError("Could not load defaults", "Error"); }
               }}><i className="bx bx-list-ul me-1" />Load Schengen defaults</Button>
             </div>
-            <DocBuilder list="individual" title="Individual applicant" />
-            <DocBuilder list="schoolSponsored" title="School-sponsored" />
+            {renderDocBuilder("individual", "Individual applicant")}
+            {renderDocBuilder("schoolSponsored", "School-sponsored")}
           </TabPane>
         </TabContent>
       </ModalBody>
