@@ -15,7 +15,7 @@ import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
   updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, getParticipantInvoice, getVisaDoc, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
   scheduleCampaign, getCampaigns, cancelCampaign,
-  getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getStudyTourActivity, getJobLogs, getCommunicationsTimeline, getConversionAnalytics,
+  getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getRiskBoard, getStudyTourActivity, getJobLogs, getCommunicationsTimeline, getConversionAnalytics,
   getTourWeather, getManifest, getManifestPrint, runAutomations, bulkMessage,
   updateStudyTour, bulkImportParticipants, uploadDocument, getChannelAvailability,
   getDefaultDocChecklist,
@@ -360,6 +360,7 @@ const Participants = () => {
   const [visaOpen, setVisaOpen] = useState(false);
   const [roomingOpen, setRoomingOpen] = useState(false);
   const [readinessOpen, setReadinessOpen] = useState(false);
+  const [riskOpen, setRiskOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [financeOpen, setFinanceOpen] = useState(false);
   const [commsLogOpen, setCommsLogOpen] = useState(false);
@@ -569,6 +570,7 @@ const Participants = () => {
             <Button color="soft-info" size="sm" className="me-2" onClick={() => setVisaOpen(true)}><i className="bx bx-id-card me-1" />Visa Board</Button>
             <Button color="soft-warning" size="sm" className="me-2" onClick={() => setRoomingOpen(true)}><i className="bx bx-bed me-1" />Rooming</Button>
             <Button color="soft-primary" size="sm" className="me-2" onClick={() => setReadinessOpen(true)}><i className="bx bx-check-shield me-1" />Readiness</Button>
+            <Button color="soft-danger" size="sm" className="me-2" onClick={() => setRiskOpen(true)}><i className="bx bx-error me-1" />Risk</Button>
             <Button color="soft-success" size="sm" className="me-2" onClick={() => setPaymentsOpen(true)}><i className="bx bx-rupee me-1" />Payments</Button>
             <Button color="soft-dark" size="sm" className="me-2" onClick={() => setExpensesOpen(true)}><i className="bx bx-wallet me-1" />Expenses</Button>
             <Button color="soft-success" size="sm" className="me-2" onClick={() => setFinanceOpen(true)}><i className="bx bx-line-chart me-1" />Finance</Button>
@@ -825,6 +827,7 @@ const Participants = () => {
       <VisaBoardModal isOpen={visaOpen} tourId={tourId} onClose={() => setVisaOpen(false)} onOpenParticipant={(id) => { setVisaOpen(false); openDetail(id); }} onChanged={() => { loadParticipants(); loadTour(); }} />
       <RoomingModal isOpen={roomingOpen} tourId={tourId} onClose={() => setRoomingOpen(false)} onOpenParticipant={(id) => { setRoomingOpen(false); openDetail(id); }} onChanged={() => { loadParticipants(); loadTour(); }} />
       <ReadinessModal isOpen={readinessOpen} tourId={tourId} onClose={() => setReadinessOpen(false)} onOpenParticipant={(id) => { setReadinessOpen(false); openDetail(id); }} />
+      <RiskModal isOpen={riskOpen} tourId={tourId} onClose={() => setRiskOpen(false)} onOpenParticipant={(id) => { setRiskOpen(false); openDetail(id); }} />
       <ActivityModal isOpen={activityOpen} onClose={() => setActivityOpen(false)} />
       <CommsLogModal isOpen={commsLogOpen} tourId={tourId} onClose={() => setCommsLogOpen(false)} onOpenParticipant={(id) => { setCommsLogOpen(false); openDetail(id); }} />
       <PaymentsModal isOpen={paymentsOpen} tourId={tourId} onClose={() => setPaymentsOpen(false)} onOpenParticipant={(id) => { setPaymentsOpen(false); openDetail(id); }} />
@@ -2785,6 +2788,78 @@ const ActivityModal = ({ isOpen, onClose }) => {
           </>
         ) : <span className="text-muted small me-auto">{jobs.length} run(s)</span>}
         <Button color="soft-primary" onClick={() => load(1)}><i className="bx bx-refresh me-1" />Refresh</Button>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
+/* ========================= Risk dashboard ============================= */
+const SEVERITY_COLOR = { critical: "danger", high: "soft-danger", medium: "soft-warning", low: "soft-secondary" };
+const LEVEL_COLOR = { critical: "danger", high: "soft-danger", medium: "soft-warning", low: "soft-secondary", none: "soft-success" };
+const RiskModal = ({ isOpen, tourId, onClose, onOpenParticipant }) => {
+  const [b, setB] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [cat, setCat] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    try { const r = await getRiskBoard(tourId); setB(r?.data?.board || null); }
+    catch (e) { showToastError(e?.response?.data?.message || "Failed to load risk board", "Error"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (isOpen) { setCat(""); load(); } /* eslint-disable-next-line */ }, [isOpen, tourId]);
+
+  const rows = useMemo(() => {
+    const all = b?.rows || [];
+    return cat ? all.filter((r) => r.reasons.some((x) => x.category === cat)) : all;
+  }, [b, cat]);
+
+  return (
+    <Modal isOpen={isOpen} toggle={onClose} size="xl" centered scrollable>
+      <ModalHeader toggle={onClose}>Risk dashboard — who needs attention</ModalHeader>
+      <ModalBody>
+        {loading ? <div className="text-center py-4"><Spinner color="primary" /></div> : !b ? <p className="text-muted">No data.</p> : (
+          <>
+            <Row className="g-2 mb-3">
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0 text-danger">{b.atRisk}</h5><small className="text-muted">Need attention</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{b.total}</h5><small className="text-muted">Total</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0 text-danger">{(b.levelCounts?.critical || 0) + (b.levelCounts?.high || 0)}</h5><small className="text-muted">Critical / high</small></div></Col>
+              <Col xs={6} md={3}><div className="border rounded p-2 text-center"><h5 className="mb-0">{b.travelDays != null ? `${b.travelDays}d` : "—"}</h5><small className="text-muted">To departure</small></div></Col>
+            </Row>
+            <div className="d-flex flex-wrap gap-2 mb-3 align-items-center">
+              <span className="text-muted small">By category:</span>
+              {Object.entries(b.byCategory || {}).map(([c, n]) => (
+                <Badge key={c} color={cat === c ? "primary" : "soft-secondary"} className="p-2 text-capitalize" role="button" onClick={() => setCat(cat === c ? "" : c)}>{c}: {n}</Badge>
+              ))}
+              {cat ? <Button size="sm" color="link" onClick={() => setCat("")}>clear</Button> : null}
+            </div>
+            {rows.length === 0 ? <p className="text-muted">🎉 No outstanding risks in this view.</p> : (
+              <Table className="align-middle" responsive>
+                <thead><tr><th>#</th><th>Participant</th><th>Stage</th><th>Score</th><th>Issues</th><th>Coordinator</th></tr></thead>
+                <tbody>
+                  {rows.map((r, i) => (
+                    <tr key={r.id}>
+                      <td className="text-muted">{i + 1}</td>
+                      <td><a href="#!" onClick={(e) => { e.preventDefault(); onOpenParticipant(r.id); }} className="fw-semibold">{r.fullName}</a><div className="small text-muted">{r.email}</div></td>
+                      <td><Badge color="soft-secondary">{STAGE_LABELS[r.stage] || r.stage}</Badge></td>
+                      <td><Badge color={LEVEL_COLOR[r.level] || "soft-secondary"}>{r.score} · {r.level}</Badge></td>
+                      <td>
+                        <div className="d-flex flex-wrap gap-1">
+                          {r.reasons.map((x, j) => <Badge key={j} color={SEVERITY_COLOR[x.severity] || "soft-secondary"} title={x.severity}>{x.label}</Badge>)}
+                        </div>
+                      </td>
+                      <td className="small">{r.coordinator || <span className="text-muted">—</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+          </>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button color="light" onClick={onClose}>Close</Button>
+        <Button color="soft-primary" onClick={load}><i className="bx bx-refresh me-1" />Refresh</Button>
       </ModalFooter>
     </Modal>
   );
