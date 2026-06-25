@@ -805,6 +805,10 @@ const Participants = () => {
         onClose={() => setDetail(null)}
         onPatch={patch}
         onCancel={cancel}
+        onArchive={() => detail && archive(detail)}
+        onDelete={() => detail && remove(detail)}
+        canDelete={canDelete}
+        canEdit={canEdit}
         onMessage={() => setMsgModal(true)}
       />
 
@@ -913,7 +917,7 @@ const QuoteBuilder = ({ tour, participant, onApplyQuote, onApplySchedule }) => {
 };
 
 /* ----------------------- Detail modal (tabs) --------------------------- */
-const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, onClose, onPatch, onCancel, onMessage }) => {
+const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, onClose, onPatch, onCancel, onArchive, onDelete, canDelete, canEdit, onMessage }) => {
   const [ops, setOps] = useState({});
   const [reg, setReg] = useState({});
   const [companions, setCompanions] = useState([]);
@@ -1780,6 +1784,12 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
       </ModalBody>
       <ModalFooter>
         <Button color="success" onClick={onMessage}><i className="bx bx-envelope me-1" /> Send Message</Button>
+        {canEdit && !participant.archived && (
+          <Button color="soft-warning" onClick={onArchive}><i className="bx bx-archive-in me-1" />Archive</Button>
+        )}
+        {canDelete && (
+          <Button color="soft-danger" onClick={onDelete}><i className="bx bx-trash me-1" />Delete</Button>
+        )}
         <Button color="light" onClick={onClose}>Close</Button>
       </ModalFooter>
     </Modal>
@@ -3813,6 +3823,7 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
   const [docs, setDocs] = useState({ individual: [], schoolSponsored: [] });
   const [visits, setVisits] = useState([]);
   const [pub, setPub] = useState({ heroTagline: "", highlights: "", eligibility: "", priceNote: "", cancellationPolicy: "", faqs: [] });
+  const [msgOverrides, setMsgOverrides] = useState({});
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -3849,6 +3860,7 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
         schoolSponsored: tour.documentChecklist?.schoolSponsored || [],
       });
       setVisits((tour.visitPartners || []).map((v) => ({ ...v, date: inputDate(v.date) })));
+      setMsgOverrides(tour.messageOverrides || {});
       const pc = tour.publicContent || {};
       setPub({
         heroTagline: pc.heroTagline || "", highlights: (pc.highlights || []).join("\n"),
@@ -3901,6 +3913,7 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
         coordinators: coordinators.filter((c) => c.name || c.role || c.phone || c.email),
         documentChecklist: docs,
         visitPartners: visits.filter((v) => v.name).map((v) => ({ ...v, date: v.date || undefined })),
+        messageOverrides: msgOverrides,
         publicContent: {
           heroTagline: pub.heroTagline || undefined,
           highlights: multilineToList(pub.highlights),
@@ -3990,6 +4003,30 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
     </Row>
   );
 
+  const setOverride = (key, field, value) => setMsgOverrides((o) => ({ ...o, [key]: { ...(o[key] || {}), [field]: value } }));
+
+  const renderTemplateEditor = () => (
+    <div>
+      <p className="text-muted small mb-2">
+        Override the email <strong>subject</strong> and the <strong>WhatsApp/SMS</strong> text per template (blank = use the built-in default).
+        Placeholders: <code>{"{{name}}"}</code>, <code>{"{{tour}}"}</code>. The rich email body keeps its built-in design.
+      </p>
+      {MESSAGE_TEMPLATES.map((t) => {
+        const ov = msgOverrides[t.key] || {};
+        return (
+          <div key={t.key} className="border rounded p-2 mb-2">
+            <strong className="small">{t.label}</strong>
+            <Row className="g-2 mt-1">
+              <Col md={12}><Label className="mb-0 small">Email subject</Label><Input bsSize="sm" placeholder="(default)" value={ov.subject || ""} onChange={(e) => setOverride(t.key, "subject", e.target.value)} /></Col>
+              <Col md={6}><Label className="mb-0 small">WhatsApp text</Label><Input bsSize="sm" type="textarea" rows={2} placeholder="(default)" value={ov.whatsapp || ""} onChange={(e) => setOverride(t.key, "whatsapp", e.target.value)} /></Col>
+              <Col md={6}><Label className="mb-0 small">SMS text</Label><Input bsSize="sm" type="textarea" rows={2} placeholder="(default)" value={ov.sms || ""} onChange={(e) => setOverride(t.key, "sms", e.target.value)} /></Col>
+            </Row>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   const setItineraryField = (idx, field, value) => {
     setItinerary((days) => days.map((day, i) => i === idx ? { ...day, [field]: value } : day));
   };
@@ -4053,8 +4090,8 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
       <ModalHeader toggle={onClose}>Tour settings — {tour.name}</ModalHeader>
       <ModalBody>
         <Nav tabs className="mb-3">
-          {["details", "pricing", "itinerary", "visits", "publicpage", "bank", "coordinators", "documents"].map((t) => (
-            <NavItem key={t}><NavLink className={classnames({ active: tab === t })} role="button" onClick={() => setTab(t)}><span className="text-capitalize">{t === "bank" ? "Bank details" : t === "publicpage" ? "Public page" : t}</span></NavLink></NavItem>
+          {["details", "pricing", "itinerary", "visits", "publicpage", "bank", "coordinators", "documents", "templates"].map((t) => (
+            <NavItem key={t}><NavLink className={classnames({ active: tab === t })} role="button" onClick={() => setTab(t)}><span className="text-capitalize">{t === "bank" ? "Bank details" : t === "publicpage" ? "Public page" : t === "templates" ? "Message templates" : t}</span></NavLink></NavItem>
           ))}
         </Nav>
         <TabContent activeTab={tab}>
@@ -4135,6 +4172,10 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
 
           <TabPane tabId="publicpage">
             {renderPublicContent()}
+          </TabPane>
+
+          <TabPane tabId="templates">
+            {renderTemplateEditor()}
           </TabPane>
 
           <TabPane tabId="bank">
