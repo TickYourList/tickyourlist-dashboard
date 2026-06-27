@@ -4,6 +4,7 @@ import {
   Container, Row, Col, Card, CardBody, Button, Badge, Spinner, Input, Label,
   Modal, ModalHeader, ModalBody, ModalFooter, Form, Nav, NavItem, NavLink,
   TabContent, TabPane, Table,
+  UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem,
 } from "reactstrap";
 import classnames from "classnames";
 import Switch from "react-switch";
@@ -13,7 +14,7 @@ import { showToastSuccess, showToastError } from "../../helpers/toastBuilder";
 import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
 import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
-  updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, getParticipantInvoice, getVisaDoc, emailDocument, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
+  updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, getParticipantInvoice, getVisaDoc, emailDocument, emailVisaPack, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
   scheduleCampaign, getCampaigns, cancelCampaign,
   getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getRiskBoard, getStudyTourActivity, getJobLogs, getCommunicationsTimeline, getConversionAnalytics,
   getTourWeather, getManifest, getManifestPrint, runAutomations, bulkMessage,
@@ -478,6 +479,28 @@ const Participants = () => {
     loadParticipants(); loadTour();
   };
 
+  // Row-level quick actions (operate directly on a list row, no modal needed).
+  const rowPortalUrl = (p) => (p.portalToken ? `${publicBaseUrl()}/educator-study-tours/portal/${p.portalToken}` : "");
+  const rowOpenPortal = (p) => { const u = rowPortalUrl(p); if (u) window.open(u, "_blank"); else showToastError("No portal link yet", "Portal"); };
+  const rowCopyPortal = async (p) => {
+    const u = rowPortalUrl(p); if (!u) return showToastError("No portal link yet", "Portal");
+    try { await navigator.clipboard.writeText(u); showToastSuccess("Portal link copied", "Copied"); } catch (e) { showToastError("Could not copy", "Clipboard"); }
+  };
+  const rowEmailInvoice = async (p) => {
+    try { const r = await emailDocument(p._id, "invoice", "proforma"); showToastSuccess(`Proforma emailed to ${r?.data?.to || p.email}`, "Sent"); }
+    catch (e) { showToastError(e?.response?.data?.message || "Could not email invoice", "Error"); }
+  };
+  const rowEmailVisaPack = async (p) => {
+    try { const r = await emailVisaPack(p._id); showToastSuccess(`${r?.data?.count || 4} letters emailed to ${r?.data?.to || p.email}`, "Visa pack sent"); }
+    catch (e) { showToastError(e?.response?.data?.message || "Could not email visa pack", "Error"); }
+  };
+  const rowOpenDoc = async (fetcher, id, type, label) => {
+    const w = window.open("", "_blank");
+    if (w) w.document.write("<p style='font-family:sans-serif;padding:24px'>Generating…</p>");
+    try { const r = await fetcher(id, type); const html = r?.data?.html; if (!html) throw new Error("none"); if (w) { w.document.open(); w.document.write(html); w.document.close(); } }
+    catch (e) { if (w) w.close(); showToastError(`Could not open ${label}`, "Error"); }
+  };
+
   const filtered = useMemo(
     () => participants
       .filter((p) => (attnOnly ? attentionReasons(p).length : true))
@@ -791,40 +814,39 @@ const Participants = () => {
                         <td>{p.travelCluster || "—"}</td>
                         <td><div className="small">{p.email}<br />{p.mobile}</div></td>
                         <td className="text-end">
-                          <Button color="soft-primary" size="sm" className="me-1" onClick={() => openDetail(p._id)}>
+                          <Button color="soft-primary" size="sm" className="me-1" title="View" onClick={() => openDetail(p._id)}>
                             <i className="bx bx-show" />
                           </Button>
-                          <Button color="soft-success" size="sm" className="me-1"
+                          <Button color="soft-success" size="sm" className="me-1" title="Send message"
                                   onClick={() => { setDetail(p); setMsgModal(true); }}>
                             <i className="bx bx-envelope" />
                           </Button>
-                          {archivedView ? (
-                            <>
-                              {canEdit && (
-                                <Button color="soft-success" size="sm" className="me-1" title="Restore" onClick={() => restore(p)}>
-                                  <i className="bx bx-undo" />
-                                </Button>
-                              )}
-                              {canDelete && (
-                                <Button color="soft-danger" size="sm" title="Delete permanently" onClick={() => remove(p)}>
-                                  <i className="bx bx-trash" />
-                                </Button>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              {canEdit && (
-                                <Button color="soft-warning" size="sm" className="me-1" title="Archive (reversible)" onClick={() => archive(p)}>
-                                  <i className="bx bx-archive-in" />
-                                </Button>
-                              )}
-                              {canDelete && (
-                                <Button color="soft-danger" size="sm" title="Delete permanently" onClick={() => remove(p)}>
-                                  <i className="bx bx-trash" />
-                                </Button>
-                              )}
-                            </>
-                          )}
+                          <UncontrolledDropdown className="d-inline-block">
+                            <DropdownToggle color="soft-secondary" size="sm" caret title="More actions"><i className="bx bx-dots-horizontal-rounded" /></DropdownToggle>
+                            <DropdownMenu end>
+                              <DropdownItem header>View</DropdownItem>
+                              <DropdownItem onClick={() => openDetail(p._id)}><i className="bx bx-show me-2" />Open details</DropdownItem>
+                              {p.portalToken && <DropdownItem onClick={() => rowOpenPortal(p)}><i className="bx bx-link-external me-2" />Open customer portal</DropdownItem>}
+                              {p.portalToken && <DropdownItem onClick={() => rowCopyPortal(p)}><i className="bx bx-copy me-2" />Copy portal link</DropdownItem>}
+                              <DropdownItem divider />
+                              <DropdownItem header>Documents — open</DropdownItem>
+                              <DropdownItem onClick={() => rowOpenDoc(getParticipantInvoice, p._id, "proforma", "invoice")}><i className="bx bx-receipt me-2" />Proforma invoice</DropdownItem>
+                              <DropdownItem onClick={() => rowOpenDoc(getParticipantInvoice, p._id, "receipt", "receipt")}><i className="bx bx-receipt me-2" />Receipt</DropdownItem>
+                              <DropdownItem onClick={() => rowOpenDoc(getVisaDoc, p._id, "cover_letter", "cover letter")}><i className="bx bx-file me-2" />Visa cover letter</DropdownItem>
+                              <DropdownItem onClick={() => rowOpenDoc(getVisaDoc, p._id, "checklist", "checklist")}><i className="bx bx-list-check me-2" />Visa checklist</DropdownItem>
+                              {canEdit && <>
+                                <DropdownItem divider />
+                                <DropdownItem header>Email to customer</DropdownItem>
+                                <DropdownItem onClick={() => rowEmailInvoice(p)}><i className="bx bx-envelope me-2" />Email proforma invoice</DropdownItem>
+                                <DropdownItem onClick={() => rowEmailVisaPack(p)}><i className="bx bx-package me-2" />Email visa pack (4 letters)</DropdownItem>
+                              </>}
+                              <DropdownItem divider />
+                              {archivedView
+                                ? (canEdit && <DropdownItem onClick={() => restore(p)}><i className="bx bx-undo me-2" />Restore</DropdownItem>)
+                                : (canEdit && <DropdownItem onClick={() => archive(p)}><i className="bx bx-archive-in me-2" />Archive</DropdownItem>)}
+                              {canDelete && <DropdownItem className="text-danger" onClick={() => remove(p)}><i className="bx bx-trash me-2" />Delete permanently</DropdownItem>}
+                            </DropdownMenu>
+                          </UncontrolledDropdown>
                         </td>
                       </tr>
                     );
@@ -1272,6 +1294,14 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
     } catch (e) { showToastError(e?.response?.data?.message || "Could not email document", "Error"); }
     finally { setEmailingDoc(""); }
   };
+  const emailPack = async () => {
+    setEmailingDoc("visa-pack");
+    try {
+      const r = await emailVisaPack(p._id);
+      showToastSuccess(`${r?.data?.count || 4} letters emailed to ${r?.data?.to || p.email}`, "Visa pack sent");
+    } catch (e) { showToastError(e?.response?.data?.message || "Could not email visa pack", "Error"); }
+    finally { setEmailingDoc(""); }
+  };
 
   const resendComm = async (c) => {
     try {
@@ -1402,7 +1432,17 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
           {/* PROFILE — editable registration */}
           <TabPane tabId="profile">
             <Row className="g-3">
-              <Col md={12} className="d-flex justify-content-between align-items-center border-bottom pb-1 mb-1">
+              {portalUrl && (
+                <Col md={12}>
+                  <Label>Customer portal link <small className="text-muted">(auto-generated at registration — share with the customer)</small></Label>
+                  <div className="d-flex gap-2">
+                    <Input value={portalUrl} readOnly onFocus={(e) => e.target.select()} />
+                    <Button color="soft-secondary" onClick={copyPortal} title="Copy"><i className="bx bx-copy" /></Button>
+                    <Button color="soft-info" onClick={openPortal} title="Open"><i className="bx bx-link-external" /></Button>
+                  </div>
+                </Col>
+              )}
+              <Col md={12} className="d-flex justify-content-between align-items-center border-bottom pb-1 mb-1 mt-2">
                 <h6 className="text-muted mb-0 text-uppercase" style={{ letterSpacing: 0.5, fontSize: 12 }}>Personal details</h6>
                 <small className="text-muted"><span className="text-danger">*</span> required at registration</small>
               </Col>
@@ -1781,6 +1821,9 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
                     {emailingDoc === `visa-${t}` ? <Spinner size="sm" /> : <><i className="bx bx-envelope me-1" />{t.replace("_", " ")}</>}
                   </Button>
                 ))}
+                <Button size="sm" color="success" className="mb-1" disabled={emailingDoc === "visa-pack"} onClick={emailPack}>
+                  {emailingDoc === "visa-pack" ? <Spinner size="sm" /> : <><i className="bx bx-package me-1" />Email whole pack</>}
+                </Button>
               </div>
             </div>
           </TabPane>
@@ -3955,6 +3998,8 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
   const [visits, setVisits] = useState([]);
   const [pub, setPub] = useState({ heroTagline: "", highlights: "", eligibility: "", priceNote: "", cancellationPolicy: "", faqs: [] });
   const [msgOverrides, setMsgOverrides] = useState({});
+  const [letters, setLetters] = useState({});
+  const [letterUploading, setLetterUploading] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -3992,6 +4037,7 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
       });
       setVisits((tour.visitPartners || []).map((v) => ({ ...v, date: inputDate(v.date) })));
       setMsgOverrides(tour.messageOverrides || {});
+      setLetters(tour.letterSettings || {});
       const pc = tour.publicContent || {};
       setPub({
         heroTagline: pc.heroTagline || "", highlights: (pc.highlights || []).join("\n"),
@@ -4045,6 +4091,7 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
         documentChecklist: docs,
         visitPartners: visits.filter((v) => v.name).map((v) => ({ ...v, date: v.date || undefined })),
         messageOverrides: msgOverrides,
+        letterSettings: letters,
         publicContent: {
           heroTagline: pub.heroTagline || undefined,
           highlights: multilineToList(pub.highlights),
@@ -4158,6 +4205,56 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
     </div>
   );
 
+  const uploadLetterAsset = async (field, fileList) => {
+    const f = Array.from(fileList || [])[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { showToastError("Image must be under 5MB", "Too large"); return; }
+    setLetterUploading(field);
+    try {
+      const r = await uploadDocument(f);
+      if (r?.data?.url) setLetters((l) => ({ ...l, [field]: r.data.url }));
+      showToastSuccess("Uploaded — remember to Save", "Uploaded");
+    } catch (e) { showToastError("Upload failed", "Error"); }
+    finally { setLetterUploading(""); }
+  };
+
+  const renderLetterEditor = () => (
+    <Row className="g-3">
+      <Col md={12}><small className="text-muted">Customise the letterhead and the visa cover letter used for all generated documents (cover letter, invitation, NOC, checklist).</small></Col>
+      <Col md={6}>
+        <Label>Logo</Label>
+        <div className="d-flex align-items-center gap-2">
+          <Label className="btn btn-soft-primary btn-sm mb-0">
+            {letterUploading === "logoUrl" ? <Spinner size="sm" /> : <><i className="bx bx-upload me-1" />Upload logo</>}
+            <input type="file" hidden accept="image/*" onChange={(e) => { uploadLetterAsset("logoUrl", e.target.files); e.target.value = ""; }} />
+          </Label>
+          {letters.logoUrl ? <a href={letters.logoUrl} target="_blank" rel="noreferrer" className="small">view</a> : <span className="text-muted small">none</span>}
+          {letters.logoUrl && <i className="bx bx-x text-danger" role="button" onClick={() => setLetters({ ...letters, logoUrl: "" })} />}
+        </div>
+      </Col>
+      <Col md={6}>
+        <Label>Letterhead banner <small className="text-muted">(full-width image, overrides logo)</small></Label>
+        <div className="d-flex align-items-center gap-2">
+          <Label className="btn btn-soft-primary btn-sm mb-0">
+            {letterUploading === "letterheadUrl" ? <Spinner size="sm" /> : <><i className="bx bx-upload me-1" />Upload letterhead</>}
+            <input type="file" hidden accept="image/*" onChange={(e) => { uploadLetterAsset("letterheadUrl", e.target.files); e.target.value = ""; }} />
+          </Label>
+          {letters.letterheadUrl ? <a href={letters.letterheadUrl} target="_blank" rel="noreferrer" className="small">view</a> : <span className="text-muted small">none</span>}
+          {letters.letterheadUrl && <i className="bx bx-x text-danger" role="button" onClick={() => setLetters({ ...letters, letterheadUrl: "" })} />}
+        </div>
+      </Col>
+      <Col md={6}><Label>Signatory name</Label><Input value={letters.signatoryName || ""} onChange={(e) => setLetters({ ...letters, signatoryName: e.target.value })} placeholder="e.g. Priya Sharma" /></Col>
+      <Col md={6}><Label>Signatory title</Label><Input value={letters.signatoryTitle || ""} onChange={(e) => setLetters({ ...letters, signatoryTitle: e.target.value })} placeholder="e.g. Programme Director, TickYourList" /></Col>
+      <Col md={12}>
+        <Label>Cover letter body <small className="text-muted">(blank = built-in default)</small></Label>
+        <Input type="textarea" rows={8} value={letters.coverLetterBody || ""} onChange={(e) => setLetters({ ...letters, coverLetterBody: e.target.value })}
+               placeholder={"To,\nThe Visa Officer, Embassy of {{country}}\n\nRespected Sir/Madam,\n\nI, {{name}} ({{designation}} at {{institution}}, passport {{passport}}), am applying for a visa to attend {{tour}} from {{dates}}...\n\nThanking you,"} />
+        <small className="text-muted">Placeholders: <code>{"{{name}}"}</code> <code>{"{{salutation}}"}</code> <code>{"{{tour}}"}</code> <code>{"{{country}}"}</code> <code>{"{{dates}}"}</code> <code>{"{{passport}}"}</code> <code>{"{{institution}}"}</code> <code>{"{{designation}}"}</code></small>
+      </Col>
+      <Col md={12}><Label>Footer note</Label><Input value={letters.footerNote || ""} onChange={(e) => setLetters({ ...letters, footerNote: e.target.value })} placeholder="Shown at the bottom of every letter" /></Col>
+    </Row>
+  );
+
   const setItineraryField = (idx, field, value) => {
     setItinerary((days) => days.map((day, i) => i === idx ? { ...day, [field]: value } : day));
   };
@@ -4221,8 +4318,8 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
       <ModalHeader toggle={onClose}>Tour settings — {tour.name}</ModalHeader>
       <ModalBody>
         <Nav tabs className="mb-3">
-          {["details", "pricing", "itinerary", "visits", "publicpage", "bank", "coordinators", "documents", "templates"].map((t) => (
-            <NavItem key={t}><NavLink className={classnames({ active: tab === t })} role="button" onClick={() => setTab(t)}><span className="text-capitalize">{t === "bank" ? "Bank details" : t === "publicpage" ? "Public page" : t === "templates" ? "Message templates" : t}</span></NavLink></NavItem>
+          {["details", "pricing", "itinerary", "visits", "publicpage", "bank", "coordinators", "documents", "templates", "letters"].map((t) => (
+            <NavItem key={t}><NavLink className={classnames({ active: tab === t })} role="button" onClick={() => setTab(t)}><span className="text-capitalize">{t === "bank" ? "Bank details" : t === "publicpage" ? "Public page" : t === "templates" ? "Message templates" : t === "letters" ? "Letters & letterhead" : t}</span></NavLink></NavItem>
           ))}
         </Nav>
         <TabContent activeTab={tab}>
@@ -4307,6 +4404,10 @@ const TourSettingsModal = ({ isOpen, tour, onClose, onSaved }) => {
 
           <TabPane tabId="templates">
             {renderTemplateEditor()}
+          </TabPane>
+
+          <TabPane tabId="letters">
+            {renderLetterEditor()}
           </TabPane>
 
           <TabPane tabId="bank">

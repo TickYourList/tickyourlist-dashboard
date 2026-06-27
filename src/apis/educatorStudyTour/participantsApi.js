@@ -15,6 +15,7 @@ export const cancelParticipant = (id, payload) => post(`${EDUCATOR_STUDY_TOUR_BA
 export const getParticipantInvoice = (id, type) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/participants/${id}/invoice?type=${type}`);
 export const getVisaDoc = (id, type) => get(`${EDUCATOR_STUDY_TOUR_BASE}/admin/participants/${id}/visa-doc?type=${type}`);
 export const emailDocument = (id, kind, type) => post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/participants/${id}/email-document`, { kind, type });
+export const emailVisaPack = (id) => post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/participants/${id}/email-visa-pack`, {});
 
 export const bulkImportParticipants = (studyTour, participants) =>
   post(`${EDUCATOR_STUDY_TOUR_BASE}/admin/participants/bulk-import`, { studyTour, participants });
