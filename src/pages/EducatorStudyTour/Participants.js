@@ -61,6 +61,9 @@ const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric"
 /** Red asterisk marking a field that's required at registration. */
 const Req = () => <span className="text-danger"> *</span>;
 
+/** Salutation options (incl. Dr / Prof). */
+const SALUTATIONS = ["Mr", "Mrs", "Ms", "Dr", "Prof"];
+
 /** Selectable file types for the document-requirement builder. */
 const DOC_FILE_TYPES = ["pdf", "jpg", "jpeg", "png", "doc", "docx"];
 
@@ -1403,7 +1406,12 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
                 <h6 className="text-muted mb-0 text-uppercase" style={{ letterSpacing: 0.5, fontSize: 12 }}>Personal details</h6>
                 <small className="text-muted"><span className="text-danger">*</span> required at registration</small>
               </Col>
-              <Col md={2}><Label>Salutation</Label><Input value={reg.salutation} onChange={(e) => setReg({ ...reg, salutation: e.target.value })} /></Col>
+              <Col md={2}><Label>Salutation</Label>
+                <Input type="select" value={reg.salutation || ""} onChange={(e) => setReg({ ...reg, salutation: e.target.value })}>
+                  <option value="">—</option>
+                  {SALUTATIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </Input>
+              </Col>
               <Col md={5}><Label>Full name<Req /></Label><Input value={reg.fullName} onChange={(e) => setReg({ ...reg, fullName: e.target.value })} /></Col>
               <Col md={2}><Label>Date of birth</Label><Input type="date" value={reg.dob || ""} onChange={(e) => setReg({ ...reg, dob: e.target.value })} /></Col>
               <Col md={3}><Label>Gender</Label><Input value={reg.gender || ""} onChange={(e) => setReg({ ...reg, gender: e.target.value })} /></Col>
