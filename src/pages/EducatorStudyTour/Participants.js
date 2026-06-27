@@ -13,7 +13,7 @@ import { showToastSuccess, showToastError } from "../../helpers/toastBuilder";
 import { usePermissions, ACTIONS, MODULES } from "../../helpers/permissions";
 import {
   getStudyTour, getParticipants, getParticipant, createParticipant,
-  updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, getParticipantInvoice, getVisaDoc, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
+  updateParticipant, deleteParticipant, archiveParticipant, restoreParticipant, cancelParticipant, getParticipantInvoice, getVisaDoc, emailDocument, previewMessage, sendMessage, bulkVisaSchedule, bulkMessagePreview,
   scheduleCampaign, getCampaigns, cancelCampaign,
   getTourAnalytics, getPaymentsReport, getVisaBoard, getRoomingBoard, assignRoom, clearRooming, getReadinessBoard, getRiskBoard, getStudyTourActivity, getJobLogs, getCommunicationsTimeline, getConversionAnalytics,
   getTourWeather, getManifest, getManifestPrint, runAutomations, bulkMessage,
@@ -57,6 +57,9 @@ const Toggle = ({ id, checked, onChange, label }) => (
 
 /** Date helper used across read-only displays. */
 const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—");
+
+/** Red asterisk marking a field that's required at registration. */
+const Req = () => <span className="text-danger"> *</span>;
 
 /** Selectable file types for the document-requirement builder. */
 const DOC_FILE_TYPES = ["pdf", "jpg", "jpeg", "png", "doc", "docx"];
@@ -1257,6 +1260,16 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
   const openInvoice = (type) => openPrintable(getParticipantInvoice, type, "invoice");
   const openVisaDoc = (type) => openPrintable(getVisaDoc, type, "document");
 
+  const [emailingDoc, setEmailingDoc] = useState("");
+  const emailDoc = async (kind, type) => {
+    setEmailingDoc(`${kind}-${type}`);
+    try {
+      const r = await emailDocument(p._id, kind, type);
+      showToastSuccess(`Emailed to ${r?.data?.to || p.email}`, "Sent to customer");
+    } catch (e) { showToastError(e?.response?.data?.message || "Could not email document", "Error"); }
+    finally { setEmailingDoc(""); }
+  };
+
   const resendComm = async (c) => {
     try {
       await sendMessage(p._id, c.templateKey, [c.channel], {});
@@ -1386,25 +1399,30 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
           {/* PROFILE — editable registration */}
           <TabPane tabId="profile">
             <Row className="g-3">
-              <Col md={12}><h6 className="text-muted mb-0">Personal &amp; institution</h6></Col>
+              <Col md={12} className="d-flex justify-content-between align-items-center border-bottom pb-1 mb-1">
+                <h6 className="text-muted mb-0 text-uppercase" style={{ letterSpacing: 0.5, fontSize: 12 }}>Personal details</h6>
+                <small className="text-muted"><span className="text-danger">*</span> required at registration</small>
+              </Col>
               <Col md={2}><Label>Salutation</Label><Input value={reg.salutation} onChange={(e) => setReg({ ...reg, salutation: e.target.value })} /></Col>
-              <Col md={5}><Label>Full name</Label><Input value={reg.fullName} onChange={(e) => setReg({ ...reg, fullName: e.target.value })} /></Col>
-              <Col md={5}><Label>Designation</Label><Input value={reg.designation} onChange={(e) => setReg({ ...reg, designation: e.target.value })} /></Col>
-              <Col md={6}><Label>Institution</Label><Input value={reg.institutionName} onChange={(e) => setReg({ ...reg, institutionName: e.target.value })} /></Col>
-              <Col md={3}><Label>Email</Label><Input type="email" value={reg.email} onChange={(e) => setReg({ ...reg, email: e.target.value })} /></Col>
-              <Col md={3}><Label>Mobile</Label><Input value={reg.mobile} onChange={(e) => setReg({ ...reg, mobile: e.target.value })} /></Col>
-              <Col md={3}><Label>Date of birth</Label><Input type="date" value={reg.dob || ""} onChange={(e) => setReg({ ...reg, dob: e.target.value })} /></Col>
+              <Col md={5}><Label>Full name<Req /></Label><Input value={reg.fullName} onChange={(e) => setReg({ ...reg, fullName: e.target.value })} /></Col>
+              <Col md={2}><Label>Date of birth</Label><Input type="date" value={reg.dob || ""} onChange={(e) => setReg({ ...reg, dob: e.target.value })} /></Col>
               <Col md={3}><Label>Gender</Label><Input value={reg.gender || ""} onChange={(e) => setReg({ ...reg, gender: e.target.value })} /></Col>
+              <Col md={3}><Label>Email<Req /></Label><Input type="email" value={reg.email} onChange={(e) => setReg({ ...reg, email: e.target.value })} /></Col>
+              <Col md={3}><Label>Mobile<Req /></Label><Input value={reg.mobile} onChange={(e) => setReg({ ...reg, mobile: e.target.value })} /></Col>
               <Col md={3}><Label>Preferred communication</Label>
                 <Input type="select" value={reg.communicationMethod || ""} onChange={(e) => setReg({ ...reg, communicationMethod: e.target.value })}>
                   <option value="">—</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="phone">Phone</option>
                 </Input>
               </Col>
+              <Col md={3}><Label>Nationality</Label><Input value={reg.nationality} onChange={(e) => setReg({ ...reg, nationality: e.target.value })} /></Col>
+              <Col md={4}><Label>City<Req /></Label><Input value={reg.city} onChange={(e) => setReg({ ...reg, city: e.target.value })} /></Col>
+              <Col md={4}><Label>State<Req /></Label><Input value={reg.state} onChange={(e) => setReg({ ...reg, state: e.target.value })} /></Col>
+
+              <Col md={12} className="border-bottom pb-1 mb-1 mt-2"><h6 className="text-muted mb-0 text-uppercase" style={{ letterSpacing: 0.5, fontSize: 12 }}>Institution</h6></Col>
+              <Col md={6}><Label>Institution<Req /></Label><Input value={reg.institutionName} onChange={(e) => setReg({ ...reg, institutionName: e.target.value })} /></Col>
+              <Col md={3}><Label>Designation<Req /></Label><Input value={reg.designation} onChange={(e) => setReg({ ...reg, designation: e.target.value })} /></Col>
+              <Col md={3}><Label>Institution type</Label><Input value={reg.institutionType || ""} onChange={(e) => setReg({ ...reg, institutionType: e.target.value })} /></Col>
               <Col md={3}><Label>Official email</Label><Input type="email" value={reg.officialEmail || ""} onChange={(e) => setReg({ ...reg, officialEmail: e.target.value })} /></Col>
-              <Col md={4}><Label>City</Label><Input value={reg.city} onChange={(e) => setReg({ ...reg, city: e.target.value })} /></Col>
-              <Col md={4}><Label>State</Label><Input value={reg.state} onChange={(e) => setReg({ ...reg, state: e.target.value })} /></Col>
-              <Col md={4}><Label>Nationality</Label><Input value={reg.nationality} onChange={(e) => setReg({ ...reg, nationality: e.target.value })} /></Col>
-              <Col md={4}><Label>Institution type</Label><Input value={reg.institutionType || ""} onChange={(e) => setReg({ ...reg, institutionType: e.target.value })} /></Col>
               <Col md={4}><Label>Website</Label><Input value={reg.website || ""} onChange={(e) => setReg({ ...reg, website: e.target.value })} /></Col>
               <Col md={4}><Label>Years experience</Label><Input type="number" value={reg.yearsExperience || ""} onChange={(e) => setReg({ ...reg, yearsExperience: e.target.value })} /></Col>
               <Col md={4}><Label>Students count</Label><Input type="number" value={reg.studentsCount || ""} onChange={(e) => setReg({ ...reg, studentsCount: e.target.value })} /></Col>
@@ -1597,7 +1615,12 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
                 <Button size="sm" color="soft-secondary" className="me-2" onClick={() => openInvoice("proforma")}><i className="bx bx-receipt me-1" />Proforma</Button>
                 <Button size="sm" color="soft-secondary" className="me-2" onClick={() => openInvoice("gst")}><i className="bx bx-receipt me-1" />Tax invoice</Button>
                 <Button size="sm" color="soft-secondary" onClick={() => openInvoice("receipt")}><i className="bx bx-receipt me-1" />Receipt</Button>
-                <small className="text-muted d-block mt-1">Opens a printable document (save as PDF). Uses the saved quote &amp; payments — save ops first.</small>
+                <div className="mt-1">
+                  <span className="text-muted me-2 small">Email PDF to customer:</span>
+                  <Button size="sm" color="soft-success" className="me-2" disabled={emailingDoc === "invoice-proforma"} onClick={() => emailDoc("invoice", "proforma")}>{emailingDoc === "invoice-proforma" ? <Spinner size="sm" /> : <><i className="bx bx-envelope me-1" />Proforma</>}</Button>
+                  <Button size="sm" color="soft-success" disabled={emailingDoc === "invoice-receipt"} onClick={() => emailDoc("invoice", "receipt")}>{emailingDoc === "invoice-receipt" ? <Spinner size="sm" /> : <><i className="bx bx-envelope me-1" />Receipt</>}</Button>
+                </div>
+                <small className="text-muted d-block mt-1">"Opens" = printable in a tab. "Email PDF" = sends the PDF to the customer (BCC to your inbox). Save ops first.</small>
               </Col>
 
               {/* Payment milestones editor */}
@@ -1743,6 +1766,14 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
               <Button size="sm" color="soft-secondary" className="me-2 mb-1" onClick={() => openVisaDoc("noc")}><i className="bx bx-file me-1" />NOC</Button>
               <Button size="sm" color="soft-secondary" className="mb-1" onClick={() => openVisaDoc("checklist")}><i className="bx bx-list-check me-1" />Checklist</Button>
               <small className="text-muted d-block mt-1">Pre-filled drafts — open, review, print on letterhead and sign.</small>
+              <div className="mt-1">
+                <span className="text-muted me-2 small">Email PDF to customer:</span>
+                {["cover_letter", "invitation", "noc", "checklist"].map((t) => (
+                  <Button key={t} size="sm" color="soft-success" className="me-2 mb-1 text-capitalize" disabled={emailingDoc === `visa-${t}`} onClick={() => emailDoc("visa", t)}>
+                    {emailingDoc === `visa-${t}` ? <Spinner size="sm" /> : <><i className="bx bx-envelope me-1" />{t.replace("_", " ")}</>}
+                  </Button>
+                ))}
+              </div>
             </div>
           </TabPane>
 
@@ -1778,6 +1809,21 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
             </Row>
             <Button color="primary" className="mt-3" onClick={saveFlight}>Save flight details</Button>
             <span className="text-muted ms-2 small">Then use "Send Message → Flight Confirmation".</span>
+
+            {(p.customerUploads || []).length > 0 && (
+              <div className="mt-3 border rounded p-2 bg-light">
+                <strong className="small"><i className="bx bx-cloud-upload me-1" />Customer-uploaded travel documents</strong>
+                <ul className="mb-0 mt-1">
+                  {(p.customerUploads || []).map((f, i) => (
+                    <li key={i} className="small">
+                      <a href={f.url} target="_blank" rel="noreferrer">{f.name || "file"}</a>
+                      {f.label ? <span className="text-muted"> · {f.label}</span> : null}
+                      {f.uploadedAt ? <span className="text-muted"> · {fmt(f.uploadedAt)}</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </TabPane>
 
           {/* INSURANCE & TRANSFER */}
