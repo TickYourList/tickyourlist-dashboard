@@ -768,11 +768,18 @@ const Participants = () => {
                               )}
                             </>
                           ) : (
-                            canEdit && (
-                              <Button color="soft-warning" size="sm" title="Archive" onClick={() => archive(p)}>
-                                <i className="bx bx-archive-in" />
-                              </Button>
-                            )
+                            <>
+                              {canEdit && (
+                                <Button color="soft-warning" size="sm" className="me-1" title="Archive (reversible)" onClick={() => archive(p)}>
+                                  <i className="bx bx-archive-in" />
+                                </Button>
+                              )}
+                              {canDelete && (
+                                <Button color="soft-danger" size="sm" title="Delete permanently" onClick={() => remove(p)}>
+                                  <i className="bx bx-trash" />
+                                </Button>
+                              )}
+                            </>
                           )}
                         </td>
                       </tr>
