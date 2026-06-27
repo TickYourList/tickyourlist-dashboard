@@ -544,6 +544,42 @@ const Participants = () => {
       setLoading(false);
     }
   };
+  const bulkArchive = () => {
+    if (!selectedParticipants.length) return;
+    setConfirm({
+      title: "Archive participants",
+      message: `Archive ${selectedParticipants.length} selected participant(s)? They'll be hidden from lists but can be restored.`,
+      confirmLabel: "Archive", confirmColor: "warning",
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await Promise.all(selectedParticipants.map((p) => archiveParticipant(p._id)));
+          showToastSuccess(`${selectedParticipants.length} archived`, "Archived");
+          setSelectedIds([]); await Promise.all([loadParticipants(), loadTour()]);
+        } catch (e) { showToastError(e?.response?.data?.message || "Bulk archive failed", "Error"); throw e; }
+        finally { setLoading(false); }
+      },
+    });
+  };
+
+  const bulkDelete = () => {
+    if (!selectedParticipants.length) return;
+    setConfirm({
+      title: "Delete participants permanently",
+      message: `Permanently delete ${selectedParticipants.length} selected participant(s)? This removes their registration, documents and history and CANNOT be undone. Consider Archive instead.`,
+      confirmLabel: "Delete permanently", confirmWord: "DELETE", confirmColor: "danger",
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await Promise.all(selectedParticipants.map((p) => deleteParticipant(p._id)));
+          showToastSuccess(`${selectedParticipants.length} deleted`, "Deleted");
+          setSelectedIds([]); await Promise.all([loadParticipants(), loadTour()]);
+        } catch (e) { showToastError(e?.response?.data?.message || "Bulk delete failed", "Error"); throw e; }
+        finally { setLoading(false); }
+      },
+    });
+  };
+
   const exportSelected = () => {
     const list = selectedParticipants.length ? selectedParticipants : filtered;
     if (!list.length) { showToastError("No participants to export", "Export"); return; }
@@ -681,6 +717,8 @@ const Participants = () => {
               onConfirm: () => bulkUpdate({ stage: "cancelled" }, "Participants cancelled"),
             })}
             onExport={exportSelected}
+            onArchive={canEdit ? bulkArchive : null}
+            onDelete={canDelete ? bulkDelete : null}
           />
           <ParticipantPagination
             page={page}
@@ -1224,6 +1262,27 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
       await sendMessage(p._id, c.templateKey, [c.channel], {});
       onPatch(p._id, {}, "Message re-sent"); // re-dispatches + reloads the participant
     } catch (e) { showToastError(e?.response?.data?.message || "Resend failed", "Error"); }
+  };
+
+  // Preview an email as it was/would be rendered for this participant.
+  const previewComm = async (templateKey) => {
+    const w = window.open("", "_blank");
+    if (w) w.document.write("<p style='font-family:sans-serif;padding:24px'>Rendering preview…</p>");
+    try {
+      const r = await previewMessage(p._id, templateKey, {});
+      const html = r?.data?.rendered?.html;
+      if (!html) throw new Error("No preview");
+      if (w) { w.document.open(); w.document.write(html); w.document.close(); }
+    } catch (e) { if (w) w.close(); showToastError(e?.response?.data?.message || "Preview failed", "Error"); }
+  };
+
+  // Open the customer's own portal (exactly what they see).
+  const portalUrl = p.portalToken ? `${publicBaseUrl()}/educator-study-tours/portal/${p.portalToken}` : "";
+  const openPortal = () => { if (portalUrl) window.open(portalUrl, "_blank"); };
+  const copyPortal = async () => {
+    if (!portalUrl) return;
+    try { await navigator.clipboard.writeText(portalUrl); showToastSuccess("Portal link copied", "Copied"); }
+    catch (e) { showToastError("Could not copy", "Clipboard"); }
   };
 
   const submitCancel = async () => {
@@ -1777,6 +1836,9 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
                       <td className="small">{c.to || "—"}</td>
                       <td><Badge color={c.status === "sent" ? "success" : c.status === "failed" ? "danger" : "warning"}>{c.status}</Badge>{c.error ? <i className="bx bx-info-circle text-danger ms-1" title={c.error} /> : null}</td>
                       <td>
+                        {c.channel === "email" && (
+                          <Button size="sm" color="soft-secondary" className="me-1" title="Preview email" onClick={() => previewComm(c.templateKey)}><i className="bx bx-show" /></Button>
+                        )}
                         {c.status === "failed" && (
                           <Button size="sm" color="soft-primary" title="Resend" onClick={() => resendComm(c)}><i className="bx bx-refresh" /></Button>
                         )}
@@ -1790,6 +1852,12 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
         </TabContent>
       </ModalBody>
       <ModalFooter>
+        {portalUrl && (
+          <>
+            <Button color="soft-info" onClick={openPortal} title="Open the customer's portal (what they see)"><i className="bx bx-link-external me-1" />Customer portal</Button>
+            <Button color="soft-secondary" onClick={copyPortal} title="Copy portal link"><i className="bx bx-copy" /></Button>
+          </>
+        )}
         <Button color="success" onClick={onMessage}><i className="bx bx-envelope me-1" /> Send Message</Button>
         {canEdit && !participant.archived && (
           <Button color="soft-warning" onClick={onArchive}><i className="bx bx-archive-in me-1" />Archive</Button>
@@ -2071,7 +2139,7 @@ const ParticipantPagination = ({ page, pageSize, total, totalPages, currentCount
 };
 
 /* ----------------------- Bulk participant actions ----------------------- */
-const BulkActionBar = ({ selectedCount, onClear, onStage, onCluster, onCoordinator, onSolo, onCancel, onExport }) => {
+const BulkActionBar = ({ selectedCount, onClear, onStage, onCluster, onCoordinator, onSolo, onCancel, onExport, onArchive, onDelete }) => {
   const [stage, setStage] = useState("");
 
   if (!selectedCount) return null;
@@ -2096,6 +2164,8 @@ const BulkActionBar = ({ selectedCount, onClear, onStage, onCluster, onCoordinat
           <Button size="sm" color="soft-secondary" className="me-1" onClick={() => onSolo(false)}>Clear solo</Button>
           <Button size="sm" color="soft-warning" className="me-1" onClick={onCancel}>Cancel</Button>
           <Button size="sm" color="soft-success" className="me-1" onClick={onExport}>Export</Button>
+          {onArchive && <Button size="sm" color="soft-warning" className="me-1" onClick={onArchive}><i className="bx bx-archive-in me-1" />Archive</Button>}
+          {onDelete && <Button size="sm" color="soft-danger" className="me-1" onClick={onDelete}><i className="bx bx-trash me-1" />Delete</Button>}
           <Button size="sm" color="light" onClick={onClear}>Clear</Button>
         </Col>
       </Row>
