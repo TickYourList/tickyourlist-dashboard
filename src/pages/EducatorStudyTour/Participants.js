@@ -998,6 +998,7 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
   const [flight, setFlight] = useState({});
   const [logistics, setLogistics] = useState({});
   const [logUploading, setLogUploading] = useState(false);
+  const [emailingDoc, setEmailingDoc] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelForm, setCancelForm] = useState({ reason: "", refundAmount: "", refundStatus: "none", refundReference: "", creditNoteRef: "", notes: "" });
   const [cancelBusy, setCancelBusy] = useState(false);
@@ -1285,7 +1286,6 @@ const ParticipantDetailModal = ({ participant, tour, activeTab, setActiveTab, on
   const openInvoice = (type) => openPrintable(getParticipantInvoice, type, "invoice");
   const openVisaDoc = (type) => openPrintable(getVisaDoc, type, "document");
 
-  const [emailingDoc, setEmailingDoc] = useState("");
   const emailDoc = async (kind, type) => {
     setEmailingDoc(`${kind}-${type}`);
     try {
